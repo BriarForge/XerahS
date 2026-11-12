@@ -56,7 +56,8 @@
     "platforms/linux/linux-qt/app/PipelineHistoryDialog.cpp",
     "platforms/linux/linux-qt/app/PipelineResultDialog.cpp",
     "platforms/linux/linux-qt/app/FileUploadController.cpp",
-    "platforms/linux/linux-qt/app/WatchFolderService.cpp"
+    "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+    "platforms/linux/linux-qt/src/workflows/FileOperationExecution.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/app/SAVED-WORKFLOWS.md",
@@ -94,23 +95,23 @@
         "classification": "not-started",
         "spec_line": 9,
         "coverage": "Exhaustive action-ledger approved schemas/authority/dispositions for every family are not complete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
@@ -128,10 +129,10 @@
       ]
     },
     "WFCAT-002": {
-      "status": "implemented",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Capture, recording, file upload and watch-folder copy/move/upload each create one WorkflowExecution with stable ID, start time, origin (file-upload/watch-folder), redacted effective-settings snapshot (operation, destination id/name, rule action/recursive/filters; no paths/URLs/secrets), ordered read-file/upload-file/copy-file/remove-source steps, terminal state and fixed diagnostics. FileUploadHistoryRecord shares the execution ID and stays readable. MCP and automation entry points remain absent (WFCAT-003). Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+      "note": "Supported capture, recording and upload/watch operations now use WorkflowExecution with stable IDs, start/origin/settings, ordered results and terminal projection. FileUploadController still continues to network transfer when execution admit/start or read-file-step persistence fails; one traceable durable execution is therefore not guaranteed at that boundary.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -153,19 +154,15 @@
         "platforms/linux/linux-qt/app/WatchFolderService.cpp"
       ],
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 13,
-        "coverage": "Every clause is proven for capture/recording and for file upload and watch-folder operations by WorkflowExecutionTest::fileOperationExecutionHasTheSharedRecordFields, fileOperationSnapshotsRejectSecretsPathsAndUnknownFields, FileUploadTest::uploadWritesAnExecutionThatAgreesWithHistoryAndDialog and WatchFolderServiceTest::copyAndMoveWriteExecutionsAndNotifyFromTerminalState/watchUploadRecordsTheRuleAndNotifiesFromItsTerminalState. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+        "coverage": "Supported capture, recording and upload/watch operations now use WorkflowExecution with stable IDs, start/origin/settings, ordered results and terminal projection. FileUploadController still continues to network transfer when execution admit/start or read-file-step persistence fails; one traceable durable execution is therefore not guaranteed at that boundary.",
         "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
             "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
-          },
-          {
-            "path": "platforms/linux/linux-qt/src/workflows/FileOperationExecution.cpp",
-            "sha256": "3f478f794f62010cb4c2eabe2f89af500b63f7ae2e433665a159a79793ea0774"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
@@ -177,12 +174,6 @@
           }
         ],
         "test_anchors": [
-          {
-            "path": "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
-            "sha256": "b01fcf2bcf0ccc46837c6c819673e769a4b32841ae78b54466ab6cdd354da592",
-            "method": "actualPipelineStatesAndRedactedOrderedSteps",
-            "line": 65
-          },
           {
             "path": "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
             "sha256": "b01fcf2bcf0ccc46837c6c819673e769a4b32841ae78b54466ab6cdd354da592",
@@ -198,24 +189,22 @@
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
             "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
-            "method": "copyAndMoveWriteExecutionsAndNotifyFromTerminalState",
-            "line": 99
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
             "method": "storageFailuresNeverSilentlyCompleteFileWork",
             "line": 162
           }
         ]
       },
-      "previous_note": "Configured captures freeze workflow ID/name/type/actions/chooser intent, use existing pipeline task IDs/timings/results, and retain safe snapshot metadata in private journals. Full invocation origin/settings/acquisition-failure coverage remains Required. Effective output folder/pattern now freeze before acquisition and remain in known-field result/journal/retry snapshots. Explicit-ID invocation freezes the saved profile/output at primary admission before acknowledgement. Private portal/controller evidence proves original output after a profile edit, then changed output on the next invocation. Activation request ID is not the pipeline task ID; origin/result linkage remains Required. Desktop shortcut activation now reaches the same workflow-ID admission snapshot and actual controller as Run selected/CLI. Synthetic private-portal output evidence verifies saved settings and actual PNG pixels; full execution-origin/task/result linkage remains Required. Admitted region captures now durably record request/execution UUID, admission start, trusted boundary origin and frozen effective settings before ACK/acquisition; early denial/cancellation/source failure and actual pipeline terminal/order are linked to a separate task ID. Canonical/private PCA metadata links back to the execution. Headless read-only lookup reports nonterminal observations as unconfirmed without querying runtime. Full families/settings, retry invocation indexing, retention and target/human gates remain Required. Native workflow discovery and GUI execution now share the implemented action list including upload, URL clipboard, pin and print. Execution snapshot parsing validates the bounded versioned definition without requiring its actions to remain executable in the current build. Native admission still rejects unknown actions before capture or persistence. Regression tests cover all four output definitions, permission denial before side effects, pin/print port dispatch, unknown-action admission refusal and byte-preserving execution-record reopen. Upload/credential approval and full catalogue, entry-point, platform and human qualification remain Required. Native Workflow execution history now lists bounded, redacted observations through one registry command shared by window/tray/capture menu. Explicit default-Cancel confirmation removes only the selected unchanged metadata record using the existing private descriptor store; files, pipeline results, credentials and clipboard are untouched. Storage runs through OwnedWork, capture defers refresh and prevents pending removal, and owner teardown abandons late reads. Corrupt/newer/stale records are preserved. Automated native tests cover actual removal/cancellation/conflict, unconfirmed status, worker ownership, failed/throwing ports and freeing the 1024-record admission limit. Full retention policy, history/resource scope, configured limits, supported-target and human qualification remain Required. PortalScreenshotTest additionally exercises a configured quick-task invocation through the real native CaptureController and private test portal: region pixels reach the chooser, run-only Save replaces the clipboard choice, the PNG and effective-plan journal are durable, and the workflow settings snapshot plus borrowed source bytes stay unchanged. Physical desktop qualification remains open. Resume verification (2026-11-03): Full-screen/monitor and active-window prepared captures now have explicit execution-record assertions (PortalScreenshotTest::wholeSourceWorkflowSavesWithoutAnOverlay and activeWindowCropsToTheWindowOrFails). RecordingController admits through the same private WorkflowExecution store before permission/acquisition; RecordingWorkflowTest::recordingUsesTheSameDurableExecutionRecord proves stable ID, start/origin, full frozen request settings, ordered start/pause/resume/stop, terminal state and redacted restart lookup; nativeControllerValidationUsesRecorderAndStorageRefusalPreventsStart proves validation and admission refusal. Rationale: one admitted acquisition owns one immutable execution, matching region behavior. Private-portal tests cannot run in this sandbox; full invocation-family/target/human qualification remains Required. Audit 2026-11-03: every clause (stable ID, start time, origin, effective settings snapshot, ordered step results, terminal state, redacted diagnostics) is proven for region/full-screen/monitor/active-window captures and recording by passing tests PortalScreenshotTest::wholeSourceWorkflowSavesWithoutAnOverlay, activeWindowCropsToTheWindowOrFails, counterPersistenceFailurePublishesNothingAndReportsPartialExecution, RecordingWorkflowTest::recordingUsesTheSameDurableExecutionRecord, nativeControllerValidationUsesRecorderAndStorageRefusalPreventsStart, recordingFailuresAndAbortHaveOneRedactedTerminal and WorkflowExecutionTest (full suite 142/142 outside the sandbox, including the private-bus cases)."
+      "previous_note": "Configured captures freeze workflow ID/name/type/actions/chooser intent, use existing pipeline task IDs/timings/results, and retain safe snapshot metadata in private journals. Full invocation origin/settings/acquisition-failure coverage remains Required. Effective output folder/pattern now freeze before acquisition and remain in known-field result/journal/retry snapshots. Explicit-ID invocation freezes the saved profile/output at primary admission before acknowledgement. Private portal/controller evidence proves original output after a profile edit, then changed output on the next invocation. Activation request ID is not the pipeline task ID; origin/result linkage remains Required. Desktop shortcut activation now reaches the same workflow-ID admission snapshot and actual controller as Run selected/CLI. Synthetic private-portal output evidence verifies saved settings and actual PNG pixels; full execution-origin/task/result linkage remains Required. Admitted region captures now durably record request/execution UUID, admission start, trusted boundary origin and frozen effective settings before ACK/acquisition; early denial/cancellation/source failure and actual pipeline terminal/order are linked to a separate task ID. Canonical/private PCA metadata links back to the execution. Headless read-only lookup reports nonterminal observations as unconfirmed without querying runtime. Full families/settings, retry invocation indexing, retention and target/human gates remain Required. Native workflow discovery and GUI execution now share the implemented action list including upload, URL clipboard, pin and print. Execution snapshot parsing validates the bounded versioned definition without requiring its actions to remain executable in the current build. Native admission still rejects unknown actions before capture or persistence. Regression tests cover all four output definitions, permission denial before side effects, pin/print port dispatch, unknown-action admission refusal and byte-preserving execution-record reopen. Upload/credential approval and full catalogue, entry-point, platform and human qualification remain Required. Native Workflow execution history now lists bounded, redacted observations through one registry command shared by window/tray/capture menu. Explicit default-Cancel confirmation removes only the selected unchanged metadata record using the existing private descriptor store; files, pipeline results, credentials and clipboard are untouched. Storage runs through OwnedWork, capture defers refresh and prevents pending removal, and owner teardown abandons late reads. Corrupt/newer/stale records are preserved. Automated native tests cover actual removal/cancellation/conflict, unconfirmed status, worker ownership, failed/throwing ports and freeing the 1024-record admission limit. Full retention policy, history/resource scope, configured limits, supported-target and human qualification remain Required. PortalScreenshotTest additionally exercises a configured quick-task invocation through the real native CaptureController and private test portal: region pixels reach the chooser, run-only Save replaces the clipboard choice, the PNG and effective-plan journal are durable, and the workflow settings snapshot plus borrowed source bytes stay unchanged. Physical desktop qualification remains open. Resume verification (2026-11-03): Full-screen/monitor and active-window prepared captures now have explicit execution-record assertions (PortalScreenshotTest::wholeSourceWorkflowSavesWithoutAnOverlay and activeWindowCropsToTheWindowOrFails). RecordingController admits through the same private WorkflowExecution store before permission/acquisition; RecordingWorkflowTest::recordingUsesTheSameDurableExecutionRecord proves stable ID, start/origin, full frozen request settings, ordered start/pause/resume/stop, terminal state and redacted restart lookup; nativeControllerValidationUsesRecorderAndStorageRefusalPreventsStart proves validation and admission refusal. Rationale: one admitted acquisition owns one immutable execution, matching region behavior. Private-portal tests cannot run in this sandbox; full invocation-family/target/human qualification remains Required. Audit 2026-11-03: every clause (stable ID, start time, origin, effective settings snapshot, ordered step results, terminal state, redacted diagnostics) is proven for region/full-screen/monitor/active-window captures and recording by passing tests PortalScreenshotTest::wholeSourceWorkflowSavesWithoutAnOverlay, activeWindowCropsToTheWindowOrFails, counterPersistenceFailurePublishesNothingAndReportsPartialExecution, RecordingWorkflowTest::recordingUsesTheSameDurableExecutionRecord, nativeControllerValidationUsesRecorderAndStorageRefusalPreventsStart, recordingFailuresAndAbortHaveOneRedactedTerminal and WorkflowExecutionTest (full suite 142/142 outside the sandbox, including the private-bus cases).",
+      "incremental_note": {
+        "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "note": "Capture, recording, file upload and watch-folder copy/move/upload each create one WorkflowExecution with stable ID, start time, origin (file-upload/watch-folder), redacted effective-settings snapshot (operation, destination id/name, rule action/recursive/filters; no paths/URLs/secrets), ordered read-file/upload-file/copy-file/remove-source steps, terminal state and fixed diagnostics. FileUploadHistoryRecord shares the execution ID and stays readable. MCP and automation entry points remain absent (WFCAT-003). Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation."
+      }
     },
     "WFCAT-003": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "GUI/tray/hotkey/CLI share capture requests; MCP/assistant are absent and watch-folder/file-upload execution/result semantics are separate.",
+      "note": "Capture/recording and file upload/watch now share execution records; GUI/tray/hotkey/CLI use shared operation seams. Full action-family request/result equivalence and absent MCP/assistant authority are not implemented. Do not repeat the already-finished file/watch integration.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-CLI.md",
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
@@ -233,24 +222,24 @@
       "audit": {
         "classification": "partial",
         "spec_line": 16,
-        "coverage": "GUI/tray/hotkey/CLI share capture requests; MCP/assistant are absent and watch-folder/file-upload execution/result semantics are separate.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Capture/recording and file upload/watch now share execution records; GUI/tray/hotkey/CLI use shared operation seams. Full action-family request/result equivalence and absent MCP/assistant authority are not implemented. Do not repeat the already-finished file/watch integration.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
@@ -265,10 +254,10 @@
       "previous_note": "Explicit full-UUID CLI activation now shares the authenticated dispatcher and actual controller with Run selected. Read-only workflow IDs are available in the manager. Global hotkeys, discovery, MCP/watch-folder/automation entry points remain Required. Explicit session global shortcut Enable/Configure/Disable now uses supported saved workflow IDs and the shared dispatcher/controller. Desktop chooses keys; held repeats are suppressed. Saving/reloading workflows disables obsolete session bindings. Persisted opt-in, full catalogue, MCP/watch-folder/automation and all target/human qualification remain Required. Read-only CLI discovery now supplies saved IDs/default/definition support for normal full-UUID execution without GUI initialization or primary activation. Saved disk scope and unqueried runtime state are explicit; the running primary still admits execution independently. Invocation/execution/result correlation, full interface families and shared schemas remain Required. Default/choose-actions, explicit-ID, native-shell and accepted shortcut capture admission now share request-aware Core preparation and controller execution observations. Headless execution lookup is read-only. All other entry points and shared schemas remain Required. Built-in global shortcuts route through shared shell QActions and capture admission. A single portal plan includes workflow UUIDs and capture IDs; preferred triggers never override desktop authority. Full interface coverage and human qualification remain Required. Native workflow discovery and GUI execution now share the implemented action list including upload, URL clipboard, pin and print. Execution snapshot parsing validates the bounded versioned definition without requiring its actions to remain executable in the current build. Native admission still rejects unknown actions before capture or persistence. Regression tests cover all four output definitions, permission denial before side effects, pin/print port dispatch, unknown-action admission refusal and byte-preserving execution-record reopen. Upload/credential approval and full catalogue, entry-point, platform and human qualification remain Required."
     },
     "WFCAT-004": {
-      "status": "implemented",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "File upload and watch operations map to the shared taxonomy: HTTP 4xx and missing file permanent, 5xx/timeout/network transient, not-a-file/too-large validation, unreadable permission-denied, missing destination unavailable-dependency, cancellation cancelled. Steps record success only after the effect committed (upload response parsed, copy committed); a move whose source removal fails is partial and keeps the copy reference. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/history/notification path. Broader retry/restart and action-family qualification remain incomplete. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+      "note": "Shared file-operation failure taxonomy distinguishes validation, permission, unavailable, transient/permanent, partial and cancelled states. Watch storage failures stop new effects and retain completed output honestly. File upload still crosses admission/start/step storage failure before transfer, so durable workflow reporting at all side-effect boundaries remains incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
@@ -281,10 +270,10 @@
         "platforms/linux/linux-qt/app/WatchFolderService.cpp"
       ],
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 19,
-        "coverage": "Taxonomy rows and no-success-before-commit proven by WorkflowExecutionTest::fileOperationFailureTaxonomy and cancellationAndPartialStatesAndNoSuccessBeforeCommit, FileUploadTest::failuresMapToTheSharedTaxonomyAndNeverReadAsCompleted (real HTTP 404/500, missing file, directory, no destination) and cancellationIsTerminalCancelledWithoutOutputs, WatchFolderServiceTest::copyAndMoveWriteExecutionsAndNotifyFromTerminalState (partial) and copyFailureIsAFailedExecutionNeverSucceeded. Timeout and network error are covered at the classifier, not through a live socket. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
-        "reviewed_at_revision": "72a143d9d3f01f26349af2325e3014a686de0b5b",
+        "coverage": "Shared file-operation failure taxonomy distinguishes validation, permission, unavailable, transient/permanent, partial and cancelled states. Watch storage failures stop new effects and retain completed output honestly. File upload still crosses admission/start/step storage failure before transfer, so durable workflow reporting at all side-effect boundaries remains incomplete.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
         "production_anchors": [
           {
@@ -343,7 +332,11 @@
           }
         ]
       },
-      "previous_note": "Configured supported actions retain existing PCA succeeded/failed/skipped/cancelled and interruption facts; unavailable definitions fail before acquisition. Complete workflow status taxonomy/families remain Required. Region execution records now distinguish early permission-denied, cancelled, failed and undispatched not-started; actual PCA receipts supply succeeded/partial/cancelled/interrupted states. Missing terminal durability or in-flight destruction remains outcome-unconfirmed. Full family status taxonomy remains Required. Resume verification (2026-11-03): FailureClass represents permission-denied, validation-failure, unavailable-dependency, transient-failure and permanent-failure independently of succeeded/skipped/cancelled and partial terminal observations. PipelineJournalTest::failureTaxonomyIsPersistedAndLegacyJournalsRemainReadable passes all eight rows through real configured pipelines; saveHasNoSuccessBeforeDurablePublication verifies write-ahead intent before PNG publication. Journals write v3 and read v1/v2; execution records write v2 and read v1. CaptureUploadTest::transfer maps actual HTTP 4xx/5xx/timeouts; uploadCannotSucceedBeforeRemoteResponseCompletes checks the pending upload before response completion. Those socket-dependent cases require orchestrator rerun. Rationale: missing engines/destination are unavailable; timeout/5xx are transient; 4xx/invalid destination configuration are permanent for this attempt. Full failure-source and target qualification remains Required. Audit 2026-11-03: all nine states are distinguished (succeeded/partial/skipped/cancelled and the five failure classes) and no success precedes durable effects. Proven by PipelineJournalTest::failureTaxonomyIsPersistedAndLegacyJournalsRemainReadable, saveHasNoSuccessBeforeDurablePublication, CapturePairedSaveTest::partialFailureRetriesOnlyTheCompanionWithoutRepeatingConsumers (journal rebuild regression fixed in bd1fecb), CaptureUploadTest::transfer and uploadCannotSucceedBeforeRemoteResponseCompletes (real HTTP 4xx/5xx/timeout, now run with sockets), PostCapturePipelineTest. A lone failed save with no published output is permanent-failure, not partial (nothing partially succeeded)."
+      "previous_note": "Configured supported actions retain existing PCA succeeded/failed/skipped/cancelled and interruption facts; unavailable definitions fail before acquisition. Complete workflow status taxonomy/families remain Required. Region execution records now distinguish early permission-denied, cancelled, failed and undispatched not-started; actual PCA receipts supply succeeded/partial/cancelled/interrupted states. Missing terminal durability or in-flight destruction remains outcome-unconfirmed. Full family status taxonomy remains Required. Resume verification (2026-11-03): FailureClass represents permission-denied, validation-failure, unavailable-dependency, transient-failure and permanent-failure independently of succeeded/skipped/cancelled and partial terminal observations. PipelineJournalTest::failureTaxonomyIsPersistedAndLegacyJournalsRemainReadable passes all eight rows through real configured pipelines; saveHasNoSuccessBeforeDurablePublication verifies write-ahead intent before PNG publication. Journals write v3 and read v1/v2; execution records write v2 and read v1. CaptureUploadTest::transfer maps actual HTTP 4xx/5xx/timeouts; uploadCannotSucceedBeforeRemoteResponseCompletes checks the pending upload before response completion. Those socket-dependent cases require orchestrator rerun. Rationale: missing engines/destination are unavailable; timeout/5xx are transient; 4xx/invalid destination configuration are permanent for this attempt. Full failure-source and target qualification remains Required. Audit 2026-11-03: all nine states are distinguished (succeeded/partial/skipped/cancelled and the five failure classes) and no success precedes durable effects. Proven by PipelineJournalTest::failureTaxonomyIsPersistedAndLegacyJournalsRemainReadable, saveHasNoSuccessBeforeDurablePublication, CapturePairedSaveTest::partialFailureRetriesOnlyTheCompanionWithoutRepeatingConsumers (journal rebuild regression fixed in bd1fecb), CaptureUploadTest::transfer and uploadCannotSucceedBeforeRemoteResponseCompletes (real HTTP 4xx/5xx/timeout, now run with sockets), PostCapturePipelineTest. A lone failed save with no published output is permanent-failure, not partial (nothing partially succeeded).",
+      "incremental_note": {
+        "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "note": "File upload and watch operations map to the shared taxonomy: HTTP 4xx and missing file permanent, 5xx/timeout/network transient, not-a-file/too-large validation, unreadable permission-denied, missing destination unavailable-dependency, cancellation cancelled. Steps record success only after the effect committed (upload response parsed, copy committed); a move whose source removal fails is partial and keeps the copy reference. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/history/notification path. Broader retry/restart and action-family qualification remain incomplete. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation."
+      }
     },
     "WFCAT-005": {
       "status": "partial",
@@ -354,23 +347,23 @@
         "classification": "partial",
         "spec_line": 23,
         "coverage": "Shared PCA graph orders capture/post-upload actions; complete declared failure/compensate/request-user behavior for every ledger family remains incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
@@ -392,7 +385,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move now runs on an owned cancellable worker with progress and durable processed checkpoint, but cooperative cancellation is not established for all workflows. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/history/notification path. Broader retry/restart and action-family qualification remain incomplete. File-upload cancellation now drops only the queue present at Cancel; a later explicit upload runs once rather than disappearing behind the stop flag. Destroying a dialog owner disconnects its progress-cancel signal without fabricating cancellation, and destroying the controller leaves the execution outcome unconfirmed without another request or success history. A later parentless upload still honors its own Cancel button. Known receipt retention and non-repetition remain covered by native tests.",
+      "note": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move now runs on an owned cancellable worker with progress and durable processed checkpoint, but cooperative cancellation is not established for all workflows. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/hi...",
       "evidence": [
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
@@ -405,28 +398,28 @@
       "audit": {
         "classification": "partial",
         "spec_line": 26,
-        "coverage": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move now runs on an owned cancellable worker with progress and durable processed checkpoint, but cooperative cancellation is not established for all workflows.",
-        "reviewed_at_revision": "72a143d9d3f01f26349af2325e3014a686de0b5b",
+        "coverage": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move now runs on an owned cancellable worker with progress and durable processed checkpoint, but cooperative cancellation is not established for all workflows. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/hi...",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "f002ad8534cf72dfd0d0a1d9e5e367576d8681af86361596ee1a81b0be19f2a5"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "f002ad8534cf72dfd0d0a1d9e5e367576d8681af86361596ee1a81b0be19f2a5"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           }
         ],
         "test_anchors": [
@@ -438,18 +431,23 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "0db89214af6d376525c64d231db42fe075056b739f59aba68b45dad3b2fbc35d",
+            "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
             "method": "destroyingServiceMidCopyIsSafe",
-            "line": 600
+            "line": 686
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "0db89214af6d376525c64d231db42fe075056b739f59aba68b45dad3b2fbc35d",
-            "method": "stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial"
+            "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+            "method": "stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial",
+            "line": 262
           }
         ]
       },
-      "previous_note": "Configured runs use existing observable controller/pipeline cancellation and retain their frozen profile in results/retry. Full family cancellation/cleanup matrices remain Required. Early portal/selection/composition cancellation is durable without inventing a pipeline. Failed admission/start/link persistence blocks the next boundary; terminal write failure keeps completed outputs and reports unconfirmed storage. Full family cancellation/cleanup remains Required. PortalScreenshotTest additionally exercises a configured quick-task invocation through the real native CaptureController and private test portal: region pixels reach the chooser, run-only Save replaces the clipboard choice, the PNG and effective-plan journal are durable, and the workflow settings snapshot plus borrowed source bytes stay unchanged. Physical desktop qualification remains open."
+      "previous_note": "Configured runs use existing observable controller/pipeline cancellation and retain their frozen profile in results/retry. Full family cancellation/cleanup matrices remain Required. Early portal/selection/composition cancellation is durable without inventing a pipeline. Failed admission/start/link persistence blocks the next boundary; terminal write failure keeps completed outputs and reports unconfirmed storage. Full family cancellation/cleanup remains Required. PortalScreenshotTest additionally exercises a configured quick-task invocation through the real native CaptureController and private test portal: region pixels reach the chooser, run-only Save replaces the clipboard choice, the PNG and effective-plan journal are durable, and the workflow settings snapshot plus borrowed source bytes stay unchanged. Physical desktop qualification remains open.",
+      "incremental_note": {
+        "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "note": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move now runs on an owned cancellable worker with progress and durable processed checkpoint, but cooperative cancellation is not established for all workflows. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/history/notification path. Broader retry/restart and action-family qualification remain incomplete. File-upload cancellation now drops only the queue present at Cancel; a later explicit upload runs once rather than disappearing behind the stop flag. Destroying a dialog owner disconnects its progress-cancel signal without fabricating cancellation, and destroying the controller leaves the execution outcome unconfirmed without another request or success history. A later parentless upload still honors its own Cancel button. Known receipt retention and non-repetition remain covered by native tests."
+      }
     },
     "WFCAT-007": {
       "status": "partial",
@@ -465,23 +463,23 @@
         "classification": "partial",
         "spec_line": 29,
         "coverage": "Native screenshot/ScreenCast consent/cancellation exist; mixed-scale coordinate, screenshot cursor and physical audio permission/degraded-mode guarantees remain incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
@@ -504,24 +502,24 @@
         "classification": "implemented",
         "spec_line": 32,
         "coverage": "Shared WorkflowClipboard validates promised formats before replacement, publishes privacy classification and explicitly reports unsupported/unknown/failed delivery; native clipboard fixtures retain foreign content.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
@@ -557,23 +555,23 @@
         "classification": "partial",
         "spec_line": 35,
         "coverage": "Native saves/delete confirmation and descriptor guards exist; complete external-program/index/folder/explorer action authority/path/collision inventory is not implemented.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
@@ -601,23 +599,23 @@
         "classification": "partial",
         "spec_line": 39,
         "coverage": "Explicit destination review/secret refs and cancellable upload receipts exist; full provider/authentication/URL authority and outcome semantics across every workflow family remain partial.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
@@ -635,31 +633,31 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Represented image/media tools have accepted formats, parameters and cancellation tests; full workflow-ledger media/metadata family matrix is incomplete and recognition dependencies remain user-blocked. Codex queue evidence (2026-11-08): saved workflows can embed one native effects preset, chosen after a sample preview and applied on the pipeline worker before annotation and save (NativeCaptureWorkflowsTest::workflowEffectsSelectionRequiresPreviewApplyAndExplicitSave, CaptureWorkflowsTest). Hash and combine/split workflow actions remain open.",
+      "note": "Represented image/media tools have accepted formats, parameters and cancellation tests; full workflow-ledger media/metadata family matrix is incomplete and recognition dependencies remain user-blocked.",
       "audit": {
         "classification": "partial",
         "spec_line": 42,
         "coverage": "Represented image/media tools have accepted formats, parameters and cancellation tests; full workflow-ledger media/metadata family matrix is incomplete and recognition dependencies remain user-blocked.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
         ],
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
@@ -695,32 +693,32 @@
         "classification": "implemented",
         "spec_line": 45,
         "coverage": "Explicit recorder request/session IDs and safe idempotent pause/stop/abort transitions preserve completed output and recover encoder failures; target-control tests exercise refusal/repetition.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/RecordingTest.cpp",
-            "sha256": "ae3e1d95befb2b3f766a5c81c61a7323593c46799c62f281f816ec76d428048f",
+            "sha256": "7a687368d55cb8f6cc887253b5ce2a22f251e566b37d927e00877254cccfee5a",
             "method": "targetedControlsAreIdempotentAndKeepThePublishedOutput",
-            "line": 144
+            "line": 157
           }
         ]
       },
@@ -750,31 +748,31 @@
         "classification": "implemented",
         "spec_line": 49,
         "coverage": "Shared application controls refuse modal/busy/dirty operations and headless presentation returns an actionable refusal; native keyboard/shared-command tests exercise actual handlers.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
+            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
             "method": "applicationControlsRespectModalWorkAndHeadlessAuthority",
-            "line": 67
+            "line": 103
           }
         ]
       },
@@ -800,23 +798,23 @@
         "classification": "partial",
         "spec_line": 53,
         "coverage": "Capture admission serializes active sessions and per-task pipelines isolate state; full deterministic clipboard/recording/file/history/credential arbitration across all invocation families remains unproven.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
@@ -851,23 +849,23 @@
         "classification": "partial",
         "spec_line": 57,
         "coverage": "PCA linked retry preserves successful non-idempotent work and attempt lineage; other workflow families lack the same bounded retry/idempotency contract.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
@@ -905,32 +903,32 @@
         "classification": "implemented",
         "spec_line": 60,
         "coverage": "Saved native workflow definitions are versioned, use stable IDs, retain safe unknown fields, validate before acquisition and expose unsupported/migration results with actual UI/restart tests.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
-            "sha256": "c5110c740d4565ba8ac02fcdfa56ceecbf51b2f9a3ac711bc3dfa1063a95b32b",
+            "sha256": "6c57afc5556681e8902c941e897811270f76d9ef4661644a9ef4e96aee6bf3d1",
             "method": "legacyMigrationIsPresentedAndClosePreservesOriginalBytes",
-            "line": 175
+            "line": 250
           }
         ]
       },
@@ -974,7 +972,7 @@
         "spec_line": 63,
         "coverage": "Capture acquisition, capture-action pipelines, recording, file upload and watch-folder copy/move/upload now expose consistent terminal states and opaque output references in qInfo logs, native shell activity, notifications and durable workflow history. Real native tests compare the projections for success, partial failure, cancellation, denial and storage faults; no private filename, path, URL, credential or payload is published in ordinary terminal text. File-operation observations read the last successfully stored execution snapshot, so failed publication reports outcome-unconfirmed and suppresses references absent from history while private results retain actual effects. Watch upload completion still checkpoints the actual remote effect against replay. The former file-operation log/progress gap and pre-pipeline capture reporting omissions are fixed. Full catalogue coverage, including utility/application-control and other unimplemented admitted workflow families, remains partial.",
         "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
-        "reviewed_at_revision": "72a143d9d3f01f26349af2325e3014a686de0b5b",
+        "reviewed_at_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
@@ -986,7 +984,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "7adb53ee1c6f38bb7891446543cd2660b9d468d51c184e68e4383160f52c2ae2"
+            "sha256": "1a9875d62f5264af87d01100ef4baddcdd08349c7265e005c3874e9b6b11cc5f"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
@@ -1002,9 +1000,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
-            "sha256": "c1409dc09f153cc28d51b6ed9de519a24b915c4336610da7b81caf6930a24fba",
+            "sha256": "30eb55d01ac076f8e93ca5825fbc496c07f04778508c11178c85a794b57e3396",
             "method": "uploadWritesAnExecutionThatAgreesWithHistoryAndDialog",
-            "line": 342
+            "line": 343
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
@@ -1026,7 +1024,11 @@
           }
         ]
       },
-      "previous_note": "Results and private restart journals retain a known-field-only workflow snapshot and existing truthful outcomes. Unknown extensions are excluded from reports. Full notifications/log/privacy/terminal-state convergence remains Required. Nested output extensions are excluded from reports while known private folder/pattern fields stay available to explicit review. Versioned CLI JSON contains admission/delivery, stable errors and valid opaque IDs only; it does not publish private names/actions/folders/patterns or claim terminal output success. Complete result convergence and execution/result lookup remain Required. The native command window reports actual desktop binding descriptions/empty results and fixed setup failures as plain accessible text; registration does not claim capture success. Full terminal-state convergence, origin/result linkage and human privacy/accessibility qualification remain Required. Explicit discovery reveals saved workflow IDs/names and fixed definition diagnostics while excluding private output fields, action choices and unknown extensions/capture labels. It creates no execution ID or terminal-success claim and queries no runtime permissions. Complete execution/result linkage, privacy and shared convergence remain Required. Explicit headless lookup reports only IDs, trusted origin, times, ordered action/state pairs, fixed diagnostics and pipeline link. Known private settings stay in owner-only execution storage; canonical history/report includes execution reference. Unfinished/failed-persistence observations remain unconfirmed, completed outputs are kept. Full convergence, retention and human privacy/security review remain Required. Native workflow discovery and GUI execution now share the implemented action list including upload, URL clipboard, pin and print. Execution snapshot parsing validates the bounded versioned definition without requiring its actions to remain executable in the current build. Native admission still rejects unknown actions before capture or persistence. Regression tests cover all four output definitions, permission denial before side effects, pin/print port dispatch, unknown-action admission refusal and byte-preserving execution-record reopen. Upload/credential approval and full catalogue, entry-point, platform and human qualification remain Required. Native Workflow execution history now lists bounded, redacted observations through one registry command shared by window/tray/capture menu. Explicit default-Cancel confirmation removes only the selected unchanged metadata record using the existing private descriptor store; files, pipeline results, credentials and clipboard are untouched. Storage runs through OwnedWork, capture defers refresh and prevents pending removal, and owner teardown abandons late reads. Corrupt/newer/stale records are preserved. Automated native tests cover actual removal/cancellation/conflict, unconfirmed status, worker ownership, failed/throwing ports and freeing the 1024-record admission limit. Full retention policy, history/resource scope, configured limits, supported-target and human qualification remain Required. Resume verification (2026-11-03): Capture pipeline log, terminal activity, history and desktop notification now derive state plus opaque output references from one public observation; paths, OCR/clipboard payloads and remote error bodies are excluded from those observations. PipelineJournalTest::publicTerminalObservationRejectsTamperingAndUpgradesLegacyReads passes and rebuilds observations from validated journal facts. PortalScreenshotTest::partialFailureAllFourTerminalSurfaces exercises one real save plus clipboard exception and asserts all four surfaces report partial with the same save.file reference and no private/secret content; private D-Bus creation is denied here, so that exact test remains unverified. CapturePipelineTest::actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads passes directly. Rationale: partial failure must never use a completion notification. Full recording/other-family surface convergence, privacy/security and target/human qualification remain Required. Audit 2026-11-03: capture log, progress, history and notification carry the same terminal state and opaque output references and partial failure never claims completion (PortalScreenshotTest::partialFailureAllFourTerminalSurfaces, PipelineJournalTest::publicTerminalObservationRejectsTamperingAndUpgradesLegacyReads, CapturePipelineTest; all pass). Gap: recording and other workflow families do not yet publish through the same four-surface observation, so the requirement is proven for capture pipelines only. Audit 2026-11-04: clauses: same terminal state and opaque output references across log/history/notification/progress with private-content redaction \u2014 RecordingWorkflowTest::recordingAllFourTerminalSurfacesShareStateAndOpaqueOutputs passes for stop, abort, partial-encoder-failure and denied. Production RecordingObservation is shared by RecordingController and tests; it emits the same redacted observation text to qInfo, progress and notification after Session persists history. Reopened history matches state/references; private path injection is rejected. Notifications for every nonsuccess use needs-review and never completed. nativeControllerValidationUsesRecorderAndStorageRefusalPreventsStart proves actual controller forwarding. Recording workflow CTest: 100% tests passed out of 1. Capture remains covered by PortalScreenshotTest::partialFailureAllFourTerminalSurfaces (private-bus startup unavailable in this sandbox) and PipelineJournalTest::publicTerminalObservationRejectsTamperingAndUpgradesLegacyReads. Optional typed opaque recording outputs extend private v2 records; old records without outputs remain readable. No path or retry authority is reconstructed."
+      "previous_note": "Results and private restart journals retain a known-field-only workflow snapshot and existing truthful outcomes. Unknown extensions are excluded from reports. Full notifications/log/privacy/terminal-state convergence remains Required. Nested output extensions are excluded from reports while known private folder/pattern fields stay available to explicit review. Versioned CLI JSON contains admission/delivery, stable errors and valid opaque IDs only; it does not publish private names/actions/folders/patterns or claim terminal output success. Complete result convergence and execution/result lookup remain Required. The native command window reports actual desktop binding descriptions/empty results and fixed setup failures as plain accessible text; registration does not claim capture success. Full terminal-state convergence, origin/result linkage and human privacy/accessibility qualification remain Required. Explicit discovery reveals saved workflow IDs/names and fixed definition diagnostics while excluding private output fields, action choices and unknown extensions/capture labels. It creates no execution ID or terminal-success claim and queries no runtime permissions. Complete execution/result linkage, privacy and shared convergence remain Required. Explicit headless lookup reports only IDs, trusted origin, times, ordered action/state pairs, fixed diagnostics and pipeline link. Known private settings stay in owner-only execution storage; canonical history/report includes execution reference. Unfinished/failed-persistence observations remain unconfirmed, completed outputs are kept. Full convergence, retention and human privacy/security review remain Required. Native workflow discovery and GUI execution now share the implemented action list including upload, URL clipboard, pin and print. Execution snapshot parsing validates the bounded versioned definition without requiring its actions to remain executable in the current build. Native admission still rejects unknown actions before capture or persistence. Regression tests cover all four output definitions, permission denial before side effects, pin/print port dispatch, unknown-action admission refusal and byte-preserving execution-record reopen. Upload/credential approval and full catalogue, entry-point, platform and human qualification remain Required. Native Workflow execution history now lists bounded, redacted observations through one registry command shared by window/tray/capture menu. Explicit default-Cancel confirmation removes only the selected unchanged metadata record using the existing private descriptor store; files, pipeline results, credentials and clipboard are untouched. Storage runs through OwnedWork, capture defers refresh and prevents pending removal, and owner teardown abandons late reads. Corrupt/newer/stale records are preserved. Automated native tests cover actual removal/cancellation/conflict, unconfirmed status, worker ownership, failed/throwing ports and freeing the 1024-record admission limit. Full retention policy, history/resource scope, configured limits, supported-target and human qualification remain Required. Resume verification (2026-11-03): Capture pipeline log, terminal activity, history and desktop notification now derive state plus opaque output references from one public observation; paths, OCR/clipboard payloads and remote error bodies are excluded from those observations. PipelineJournalTest::publicTerminalObservationRejectsTamperingAndUpgradesLegacyReads passes and rebuilds observations from validated journal facts. PortalScreenshotTest::partialFailureAllFourTerminalSurfaces exercises one real save plus clipboard exception and asserts all four surfaces report partial with the same save.file reference and no private/secret content; private D-Bus creation is denied here, so that exact test remains unverified. CapturePipelineTest::actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads passes directly. Rationale: partial failure must never use a completion notification. Full recording/other-family surface convergence, privacy/security and target/human qualification remain Required. Audit 2026-11-03: capture log, progress, history and notification carry the same terminal state and opaque output references and partial failure never claims completion (PortalScreenshotTest::partialFailureAllFourTerminalSurfaces, PipelineJournalTest::publicTerminalObservationRejectsTamperingAndUpgradesLegacyReads, CapturePipelineTest; all pass). Gap: recording and other workflow families do not yet publish through the same four-surface observation, so the requirement is proven for capture pipelines only. Audit 2026-11-04: clauses: same terminal state and opaque output references across log/history/notification/progress with private-content redaction \u2014 RecordingWorkflowTest::recordingAllFourTerminalSurfacesShareStateAndOpaqueOutputs passes for stop, abort, partial-encoder-failure and denied. Production RecordingObservation is shared by RecordingController and tests; it emits the same redacted observation text to qInfo, progress and notification after Session persists history. Reopened history matches state/references; private path injection is rejected. Notifications for every nonsuccess use needs-review and never completed. nativeControllerValidationUsesRecorderAndStorageRefusalPreventsStart proves actual controller forwarding. Recording workflow CTest: 100% tests passed out of 1. Capture remains covered by PortalScreenshotTest::partialFailureAllFourTerminalSurfaces (private-bus startup unavailable in this sandbox) and PipelineJournalTest::publicTerminalObservationRejectsTamperingAndUpgradesLegacyReads. Optional typed opaque recording outputs extend private v2 records; old records without outputs remain readable. No path or retry authority is reconstructed.",
+      "incremental_note": {
+        "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "note": "Capture acquisition, capture-action pipelines, recording, file upload and watch-folder copy/move/upload now expose consistent terminal states and opaque output references in qInfo logs, native shell activity, notifications and durable workflow history. Real native tests compare the projections for success, partial failure, cancellation, denial and storage faults; no private filename, path, URL, credential or payload is published in ordinary terminal text. File-operation observations read the last successfully stored execution snapshot, so failed publication reports outcome-unconfirmed and suppresses references absent from history while private results retain actual effects. Watch upload completion still checkpoints the actual remote effect against replay. The former file-operation log/progress gap and pre-pipeline capture reporting omissions are fixed. Full catalogue coverage, including utility/application-control and other unimplemented admitted workflow families, remains partial."
+      }
     },
     "WFCAT-018": {
       "status": "partial",
@@ -1050,23 +1052,23 @@
         "classification": "blocked",
         "spec_line": 66,
         "coverage": "Activation requires full action-family matrix and accepted tests on all supported platform adapters, including human permission/security/accessibility gates; native Linux tests alone are insufficient.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
           }
         ],
         "test_anchors": [
@@ -1082,22 +1084,34 @@
       "blocked_reason": "Activation requires full action-family matrix and accepted tests on all supported platform adapters, including human permission/security/accessibility gates; native Linux tests alone are insufficient."
     }
   },
-  "audit_scope": "All normative Linux-applicable clauses reviewed against current production and automated test bodies; candidate implementation is separate from physical, cross-platform and human acceptance.",
+  "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
-    "checked_at": "2026-11-04T14:04:38.855452+00:00",
+    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+    "checked_at": "2026-11-11T15:27:15.305729+00:00",
     "specification": "product-contract/capabilities/WORKFLOW-CATALOG-001/SPEC.md",
     "specification_sha256": "fb344e427f34b808ab66a81b1c95779c2ae6175057d2746389e1e2488e6f8331",
-    "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "reviewed_requirement_count": 18,
+    "counts": {
+      "blocked": 1,
+      "implemented": 4,
+      "not-started": 1,
+      "partial": 12
+    },
     "production_surfaces": [
       "platforms/linux/linux-qt/app/CaptureController.cpp",
       "platforms/linux/linux-qt/app/FileUploadController.cpp",
       "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+      "platforms/linux/linux-qt/src/workflows/FileOperationExecution.cpp",
       "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp"
     ],
     "automated_test_surfaces": {
       "platforms/linux/linux-qt/tests/ClipboardWorkflowTest.cpp": [
         "explicitPublicClassificationSurvivesPublication"
+      ],
+      "platforms/linux/linux-qt/tests/FileUploadTest.cpp": [
+        "failuresMapToTheSharedTaxonomyAndNeverReadAsCompleted",
+        "uploadWritesAnExecutionThatAgreesWithHistoryAndDialog"
       ],
       "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp": [
         "legacyMigrationIsPresentedAndClosePreservesOriginalBytes"
@@ -1108,26 +1122,35 @@
       "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp": [
         "applicationControlsRespectModalWorkAndHeadlessAuthority"
       ],
+      "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp": [
+        "copyAndMoveWriteExecutionsAndNotifyFromTerminalState",
+        "copyFailureIsAFailedExecutionNeverSucceeded",
+        "destroyingServiceMidCopyIsSafe",
+        "stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial",
+        "storageFailuresNeverSilentlyCompleteFileWork"
+      ],
       "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp": [
-        "actualPipelineStatesAndRedactedOrderedSteps"
+        "actualPipelineStatesAndRedactedOrderedSteps",
+        "fileOperationExecutionHasTheSharedRecordFields",
+        "fileOperationFailureTaxonomy"
       ]
     },
-    "remaining_scope": "WFCAT-001; WFCAT-002; WFCAT-003; WFCAT-004; WFCAT-005; WFCAT-006; WFCAT-007; WFCAT-009; WFCAT-010; WFCAT-011; WFCAT-014; WFCAT-015; WFCAT-017; WFCAT-018",
-    "reviewed_requirement_count": 18,
-    "finding": "Current source review: {'not-started': 1, 'partial': 12, 'implemented': 4, 'blocked': 1}. Per-row reasons and exact hashed anchors record scope and limitations.",
-    "review_anchor": {
-      "production": {
-        "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-        "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+    "findings": [
+      {
+        "kind": "source-extracted-gap",
+        "requirement": "WFCAT-002",
+        "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
+        "lines": "142-160",
+        "detail": "Failed admit/start or read-file step persistence only changes a flag; UploadExecutor starts unconditionally. Not runtime-confirmed by this audit. Next regression should inject execution writer failures before HTTP transfer."
       },
-      "test": {
-        "path": "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
-        "sha256": "b01fcf2bcf0ccc46837c6c819673e769a4b32841ae78b54466ab6cdd354da592",
-        "method": "actualPipelineStatesAndRedactedOrderedSteps",
-        "line": 65
-      },
-      "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
-    }
+      {
+        "kind": "implemented-progress",
+        "requirement": "WFCAT-002",
+        "detail": "Do not redo shared upload/watch execution fields: current successful/failure fixtures inspect records/history/dialog and notification. Remaining storage fence is narrower."
+      }
+    ],
+    "remaining_scope": "WFCAT-001, WFCAT-002, WFCAT-003, WFCAT-004, WFCAT-005, WFCAT-006, WFCAT-007, WFCAT-009, WFCAT-010, WFCAT-011, WFCAT-014, WFCAT-015, WFCAT-017, WFCAT-018",
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
   },
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
@@ -1279,5 +1302,439 @@
       },
       "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
     }
+  },
+  "audit_history": [
+    {
+      "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+      "checked_at": "2026-11-04T14:04:38.855452+00:00",
+      "specification": "product-contract/capabilities/WORKFLOW-CATALOG-001/SPEC.md",
+      "specification_sha256": "fb344e427f34b808ab66a81b1c95779c2ae6175057d2746389e1e2488e6f8331",
+      "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/app/FileUploadController.cpp",
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/ClipboardWorkflowTest.cpp": [
+          "explicitPublicClassificationSurvivesPublication"
+        ],
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp": [
+          "legacyMigrationIsPresentedAndClosePreservesOriginalBytes"
+        ],
+        "platforms/linux/linux-qt/tests/RecordingTest.cpp": [
+          "targetedControlsAreIdempotentAndKeepThePublishedOutput"
+        ],
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp": [
+          "applicationControlsRespectModalWorkAndHeadlessAuthority"
+        ],
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp": [
+          "actualPipelineStatesAndRedactedOrderedSteps"
+        ]
+      },
+      "remaining_scope": "WFCAT-001; WFCAT-002; WFCAT-003; WFCAT-004; WFCAT-005; WFCAT-006; WFCAT-007; WFCAT-009; WFCAT-010; WFCAT-011; WFCAT-014; WFCAT-015; WFCAT-017; WFCAT-018",
+      "reviewed_requirement_count": 18,
+      "finding": "Current source review: {'not-started': 1, 'partial': 12, 'implemented': 4, 'blocked': 1}. Per-row reasons and exact hashed anchors record scope and limitations.",
+      "review_anchor": {
+        "production": {
+          "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
+          "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+        },
+        "test": {
+          "path": "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+          "sha256": "b01fcf2bcf0ccc46837c6c819673e769a4b32841ae78b54466ab6cdd354da592",
+          "method": "actualPipelineStatesAndRedactedOrderedSteps",
+          "line": 65
+        },
+        "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
+      }
+    }
+  ],
+  "upstream_incremental_reviews": [
+    {
+      "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+      "interpretation": "Upstream records preserved verbatim as incremental evidence. Current classification follows the reviewed row, not an unreviewed upstream coverage claim.",
+      "rows": {
+        "WFCAT-002": {
+          "status": "implemented",
+          "disposition": "Required",
+          "vectors": [],
+          "note": "Capture, recording, file upload and watch-folder copy/move/upload each create one WorkflowExecution with stable ID, start time, origin (file-upload/watch-folder), redacted effective-settings snapshot (operation, destination id/name, rule action/recursive/filters; no paths/URLs/secrets), ordered read-file/upload-file/copy-file/remove-source steps, terminal state and fixed diagnostics. FileUploadHistoryRecord shares the execution ID and stays readable. MCP and automation entry points remain absent (WFCAT-003). Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+          "evidence": [
+            "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+            "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+            "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+            "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+            "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+            "platforms/linux/linux-qt/app/WORKFLOW-CLI.md",
+            "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+            "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+            "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
+            "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
+            "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+            "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
+            "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
+            "platforms/linux/linux-qt/tests/RecordingWorkflowTest.cpp",
+            "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "platforms/linux/linux-qt/src/workflows/FileOperationExecution.cpp",
+            "platforms/linux/linux-qt/app/WatchFolderService.cpp"
+          ],
+          "audit": {
+            "classification": "implemented",
+            "spec_line": 13,
+            "coverage": "Every clause is proven for capture/recording and for file upload and watch-folder operations by WorkflowExecutionTest::fileOperationExecutionHasTheSharedRecordFields, fileOperationSnapshotsRejectSecretsPathsAndUnknownFields, FileUploadTest::uploadWritesAnExecutionThatAgreesWithHistoryAndDialog and WatchFolderServiceTest::copyAndMoveWriteExecutionsAndNotifyFromTerminalState/watchUploadRecordsTheRuleAndNotifiesFromItsTerminalState. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+            "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
+            "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+            "production_anchors": [
+              {
+                "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
+                "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
+              },
+              {
+                "path": "platforms/linux/linux-qt/src/workflows/FileOperationExecution.cpp",
+                "sha256": "3f478f794f62010cb4c2eabe2f89af500b63f7ae2e433665a159a79793ea0774"
+              },
+              {
+                "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
+                "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
+              },
+              {
+                "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+                "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
+              }
+            ],
+            "test_anchors": [
+              {
+                "path": "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+                "sha256": "b01fcf2bcf0ccc46837c6c819673e769a4b32841ae78b54466ab6cdd354da592",
+                "method": "actualPipelineStatesAndRedactedOrderedSteps",
+                "line": 65
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+                "sha256": "b01fcf2bcf0ccc46837c6c819673e769a4b32841ae78b54466ab6cdd354da592",
+                "method": "fileOperationExecutionHasTheSharedRecordFields",
+                "line": 178
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
+                "sha256": "803dd719676607daba679a753cbd9a8065a8d05e997112d67c3335d1735a89bf",
+                "method": "uploadWritesAnExecutionThatAgreesWithHistoryAndDialog",
+                "line": 339
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+                "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+                "method": "copyAndMoveWriteExecutionsAndNotifyFromTerminalState",
+                "line": 99
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+                "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+                "method": "storageFailuresNeverSilentlyCompleteFileWork",
+                "line": 162
+              }
+            ]
+          },
+          "previous_note": "Configured captures freeze workflow ID/name/type/actions/chooser intent, use existing pipeline task IDs/timings/results, and retain safe snapshot metadata in private journals. Full invocation origin/settings/acquisition-failure coverage remains Required. Effective output folder/pattern now freeze before acquisition and remain in known-field result/journal/retry snapshots. Explicit-ID invocation freezes the saved profile/output at primary admission before acknowledgement. Private portal/controller evidence proves original output after a profile edit, then changed output on the next invocation. Activation request ID is not the pipeline task ID; origin/result linkage remains Required. Desktop shortcut activation now reaches the same workflow-ID admission snapshot and actual controller as Run selected/CLI. Synthetic private-portal output evidence verifies saved settings and actual PNG pixels; full execution-origin/task/result linkage remains Required. Admitted region captures now durably record request/execution UUID, admission start, trusted boundary origin and frozen effective settings before ACK/acquisition; early denial/cancellation/source failure and actual pipeline terminal/order are linked to a separate task ID. Canonical/private PCA metadata links back to the execution. Headless read-only lookup reports nonterminal observations as unconfirmed without querying runtime. Full families/settings, retry invocation indexing, retention and target/human gates remain Required. Native workflow discovery and GUI execution now share the implemented action list including upload, URL clipboard, pin and print. Execution snapshot parsing validates the bounded versioned definition without requiring its actions to remain executable in the current build. Native admission still rejects unknown actions before capture or persistence. Regression tests cover all four output definitions, permission denial before side effects, pin/print port dispatch, unknown-action admission refusal and byte-preserving execution-record reopen. Upload/credential approval and full catalogue, entry-point, platform and human qualification remain Required. Native Workflow execution history now lists bounded, redacted observations through one registry command shared by window/tray/capture menu. Explicit default-Cancel confirmation removes only the selected unchanged metadata record using the existing private descriptor store; files, pipeline results, credentials and clipboard are untouched. Storage runs through OwnedWork, capture defers refresh and prevents pending removal, and owner teardown abandons late reads. Corrupt/newer/stale records are preserved. Automated native tests cover actual removal/cancellation/conflict, unconfirmed status, worker ownership, failed/throwing ports and freeing the 1024-record admission limit. Full retention policy, history/resource scope, configured limits, supported-target and human qualification remain Required. PortalScreenshotTest additionally exercises a configured quick-task invocation through the real native CaptureController and private test portal: region pixels reach the chooser, run-only Save replaces the clipboard choice, the PNG and effective-plan journal are durable, and the workflow settings snapshot plus borrowed source bytes stay unchanged. Physical desktop qualification remains open. Resume verification (2026-11-03): Full-screen/monitor and active-window prepared captures now have explicit execution-record assertions (PortalScreenshotTest::wholeSourceWorkflowSavesWithoutAnOverlay and activeWindowCropsToTheWindowOrFails). RecordingController admits through the same private WorkflowExecution store before permission/acquisition; RecordingWorkflowTest::recordingUsesTheSameDurableExecutionRecord proves stable ID, start/origin, full frozen request settings, ordered start/pause/resume/stop, terminal state and redacted restart lookup; nativeControllerValidationUsesRecorderAndStorageRefusalPreventsStart proves validation and admission refusal. Rationale: one admitted acquisition owns one immutable execution, matching region behavior. Private-portal tests cannot run in this sandbox; full invocation-family/target/human qualification remains Required. Audit 2026-11-03: every clause (stable ID, start time, origin, effective settings snapshot, ordered step results, terminal state, redacted diagnostics) is proven for region/full-screen/monitor/active-window captures and recording by passing tests PortalScreenshotTest::wholeSourceWorkflowSavesWithoutAnOverlay, activeWindowCropsToTheWindowOrFails, counterPersistenceFailurePublishesNothingAndReportsPartialExecution, RecordingWorkflowTest::recordingUsesTheSameDurableExecutionRecord, nativeControllerValidationUsesRecorderAndStorageRefusalPreventsStart, recordingFailuresAndAbortHaveOneRedactedTerminal and WorkflowExecutionTest (full suite 142/142 outside the sandbox, including the private-bus cases)."
+        },
+        "WFCAT-004": {
+          "status": "implemented",
+          "disposition": "Required",
+          "vectors": [],
+          "note": "File upload and watch operations map to the shared taxonomy: HTTP 4xx and missing file permanent, 5xx/timeout/network transient, not-a-file/too-large validation, unreadable permission-denied, missing destination unavailable-dependency, cancellation cancelled. Steps record success only after the effect committed (upload response parsed, copy committed); a move whose source removal fails is partial and keeps the copy reference. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/history/notification path. Broader retry/restart and action-family qualification remain incomplete. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+            "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
+            "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
+            "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp",
+            "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
+            "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "platforms/linux/linux-qt/src/workflows/FileOperationExecution.cpp",
+            "platforms/linux/linux-qt/app/WatchFolderService.cpp"
+          ],
+          "audit": {
+            "classification": "implemented",
+            "spec_line": 19,
+            "coverage": "Taxonomy rows and no-success-before-commit proven by WorkflowExecutionTest::fileOperationFailureTaxonomy and cancellationAndPartialStatesAndNoSuccessBeforeCommit, FileUploadTest::failuresMapToTheSharedTaxonomyAndNeverReadAsCompleted (real HTTP 404/500, missing file, directory, no destination) and cancellationIsTerminalCancelledWithoutOutputs, WatchFolderServiceTest::copyAndMoveWriteExecutionsAndNotifyFromTerminalState (partial) and copyFailureIsAFailedExecutionNeverSucceeded. Timeout and network error are covered at the classifier, not through a live socket. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+            "reviewed_at_revision": "72a143d9d3f01f26349af2325e3014a686de0b5b",
+            "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
+            "production_anchors": [
+              {
+                "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
+                "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
+              },
+              {
+                "path": "platforms/linux/linux-qt/src/workflows/FileOperationExecution.cpp",
+                "sha256": "3f478f794f62010cb4c2eabe2f89af500b63f7ae2e433665a159a79793ea0774"
+              },
+              {
+                "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
+                "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
+              },
+              {
+                "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+                "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
+              }
+            ],
+            "test_anchors": [
+              {
+                "path": "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+                "sha256": "b01fcf2bcf0ccc46837c6c819673e769a4b32841ae78b54466ab6cdd354da592",
+                "method": "actualPipelineStatesAndRedactedOrderedSteps",
+                "line": 65
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+                "sha256": "b01fcf2bcf0ccc46837c6c819673e769a4b32841ae78b54466ab6cdd354da592",
+                "method": "fileOperationFailureTaxonomy",
+                "line": 239
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
+                "sha256": "803dd719676607daba679a753cbd9a8065a8d05e997112d67c3335d1735a89bf",
+                "method": "failuresMapToTheSharedTaxonomyAndNeverReadAsCompleted",
+                "line": 392
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+                "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+                "method": "copyFailureIsAFailedExecutionNeverSucceeded",
+                "line": 205
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+                "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+                "method": "stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial",
+                "line": 262
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+                "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+                "method": "storageFailuresNeverSilentlyCompleteFileWork",
+                "line": 162
+              }
+            ]
+          },
+          "previous_note": "Configured supported actions retain existing PCA succeeded/failed/skipped/cancelled and interruption facts; unavailable definitions fail before acquisition. Complete workflow status taxonomy/families remain Required. Region execution records now distinguish early permission-denied, cancelled, failed and undispatched not-started; actual PCA receipts supply succeeded/partial/cancelled/interrupted states. Missing terminal durability or in-flight destruction remains outcome-unconfirmed. Full family status taxonomy remains Required. Resume verification (2026-11-03): FailureClass represents permission-denied, validation-failure, unavailable-dependency, transient-failure and permanent-failure independently of succeeded/skipped/cancelled and partial terminal observations. PipelineJournalTest::failureTaxonomyIsPersistedAndLegacyJournalsRemainReadable passes all eight rows through real configured pipelines; saveHasNoSuccessBeforeDurablePublication verifies write-ahead intent before PNG publication. Journals write v3 and read v1/v2; execution records write v2 and read v1. CaptureUploadTest::transfer maps actual HTTP 4xx/5xx/timeouts; uploadCannotSucceedBeforeRemoteResponseCompletes checks the pending upload before response completion. Those socket-dependent cases require orchestrator rerun. Rationale: missing engines/destination are unavailable; timeout/5xx are transient; 4xx/invalid destination configuration are permanent for this attempt. Full failure-source and target qualification remains Required. Audit 2026-11-03: all nine states are distinguished (succeeded/partial/skipped/cancelled and the five failure classes) and no success precedes durable effects. Proven by PipelineJournalTest::failureTaxonomyIsPersistedAndLegacyJournalsRemainReadable, saveHasNoSuccessBeforeDurablePublication, CapturePairedSaveTest::partialFailureRetriesOnlyTheCompanionWithoutRepeatingConsumers (journal rebuild regression fixed in bd1fecb), CaptureUploadTest::transfer and uploadCannotSucceedBeforeRemoteResponseCompletes (real HTTP 4xx/5xx/timeout, now run with sockets), PostCapturePipelineTest. A lone failed save with no published output is permanent-failure, not partial (nothing partially succeeded)."
+        },
+        "WFCAT-006": {
+          "status": "partial",
+          "disposition": "Required",
+          "vectors": [],
+          "note": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move now runs on an owned cancellable worker with progress and durable processed checkpoint, but cooperative cancellation is not established for all workflows. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/history/notification path. Broader retry/restart and action-family qualification remain incomplete. File-upload cancellation now drops only the queue present at Cancel; a later explicit upload runs once rather than disappearing behind the stop flag. Destroying a dialog owner disconnects its progress-cancel signal without fabricating cancellation, and destroying the controller leaves the execution outcome unconfirmed without another request or success history. A later parentless upload still honors its own Cancel button. Known receipt retention and non-repetition remain covered by native tests.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+            "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
+            "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "platforms/linux/linux-qt/app/FileUploadController.cpp",
+            "platforms/linux/linux-qt/app/FileUploadController.h",
+            "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
+          ],
+          "audit": {
+            "classification": "partial",
+            "spec_line": 26,
+            "coverage": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move now runs on an owned cancellable worker with progress and durable processed checkpoint, but cooperative cancellation is not established for all workflows.",
+            "reviewed_at_revision": "72a143d9d3f01f26349af2325e3014a686de0b5b",
+            "production_anchors": [
+              {
+                "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
+                "sha256": "57ce306bbaff51fbe174666a61308fa342102bfc833f05b445fe1fe8781a0e5e"
+              },
+              {
+                "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
+                "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+              },
+              {
+                "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+                "sha256": "f002ad8534cf72dfd0d0a1d9e5e367576d8681af86361596ee1a81b0be19f2a5"
+              },
+              {
+                "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
+                "sha256": "d38761dcd6217f58fbddf4fc8ddd6d69257467b3a140ed318ea5b7256fe1718e"
+              },
+              {
+                "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+                "sha256": "f002ad8534cf72dfd0d0a1d9e5e367576d8681af86361596ee1a81b0be19f2a5"
+              }
+            ],
+            "test_anchors": [
+              {
+                "path": "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+                "sha256": "b01fcf2bcf0ccc46837c6c819673e769a4b32841ae78b54466ab6cdd354da592",
+                "method": "actualPipelineStatesAndRedactedOrderedSteps",
+                "line": 65
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+                "sha256": "0db89214af6d376525c64d231db42fe075056b739f59aba68b45dad3b2fbc35d",
+                "method": "destroyingServiceMidCopyIsSafe",
+                "line": 600
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+                "sha256": "0db89214af6d376525c64d231db42fe075056b739f59aba68b45dad3b2fbc35d",
+                "method": "stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial"
+              }
+            ]
+          },
+          "previous_note": "Configured runs use existing observable controller/pipeline cancellation and retain their frozen profile in results/retry. Full family cancellation/cleanup matrices remain Required. Early portal/selection/composition cancellation is durable without inventing a pipeline. Failed admission/start/link persistence blocks the next boundary; terminal write failure keeps completed outputs and reports unconfirmed storage. Full family cancellation/cleanup remains Required. PortalScreenshotTest additionally exercises a configured quick-task invocation through the real native CaptureController and private test portal: region pixels reach the chooser, run-only Save replaces the clipboard choice, the PNG and effective-plan journal are durable, and the workflow settings snapshot plus borrowed source bytes stay unchanged. Physical desktop qualification remains open."
+        },
+        "WFCAT-017": {
+          "status": "partial",
+          "disposition": "Required",
+          "vectors": [],
+          "note": "Capture acquisition, capture-action pipelines, recording, file upload and watch-folder copy/move/upload now expose consistent terminal states and opaque output references in qInfo logs, native shell activity, notifications and durable workflow history. Real native tests compare the projections for success, partial failure, cancellation, denial and storage faults; no private filename, path, URL, credential or payload is published in ordinary terminal text. File-operation observations read the last successfully stored execution snapshot, so failed publication reports outcome-unconfirmed and suppresses references absent from history while private results retain actual effects. Watch upload completion still checkpoints the actual remote effect against replay. The former file-operation log/progress gap and pre-pipeline capture reporting omissions are fixed. Full catalogue coverage, including utility/application-control and other unimplemented admitted workflow families, remains partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+            "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+            "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+            "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+            "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+            "platforms/linux/linux-qt/app/WORKFLOW-CLI.md",
+            "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+            "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+            "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
+            "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
+            "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
+            "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+            "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
+            "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
+            "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
+            "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
+            "platforms/linux/linux-qt/app/RecordingObservation.cpp",
+            "platforms/linux/linux-qt/tests/RecordingWorkflowTest.cpp",
+            "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "platforms/linux/linux-qt/src/workflows/FileOperationExecution.cpp",
+            "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "platforms/linux/linux-qt/app/CaptureController.cpp",
+            "platforms/linux/linux-qt/app/FileUploadController.cpp",
+            "platforms/linux/linux-qt/app/features/UploadFeature.cpp",
+            "platforms/linux/linux-qt/tests/TerminalLogCapture.h"
+          ],
+          "audit": {
+            "classification": "partial",
+            "spec_line": 63,
+            "coverage": "Capture acquisition, capture-action pipelines, recording, file upload and watch-folder copy/move/upload now expose consistent terminal states and opaque output references in qInfo logs, native shell activity, notifications and durable workflow history. Real native tests compare the projections for success, partial failure, cancellation, denial and storage faults; no private filename, path, URL, credential or payload is published in ordinary terminal text. File-operation observations read the last successfully stored execution snapshot, so failed publication reports outcome-unconfirmed and suppresses references absent from history while private results retain actual effects. Watch upload completion still checkpoints the actual remote effect against replay. The former file-operation log/progress gap and pre-pipeline capture reporting omissions are fixed. Full catalogue coverage, including utility/application-control and other unimplemented admitted workflow families, remains partial.",
+            "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
+            "reviewed_at_revision": "72a143d9d3f01f26349af2325e3014a686de0b5b",
+            "production_anchors": [
+              {
+                "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
+                "sha256": "e76358e69482c9e32779fd8ceca40d85d8c0b6befa44e26af9d8840809f3dfeb"
+              },
+              {
+                "path": "platforms/linux/linux-qt/src/workflows/FileOperationExecution.cpp",
+                "sha256": "3f478f794f62010cb4c2eabe2f89af500b63f7ae2e433665a159a79793ea0774"
+              },
+              {
+                "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
+                "sha256": "7adb53ee1c6f38bb7891446543cd2660b9d468d51c184e68e4383160f52c2ae2"
+              },
+              {
+                "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+                "sha256": "4cb414003a5293da0de36061aa804f022ff37bbbd680a595c77df01938d95968"
+              }
+            ],
+            "test_anchors": [
+              {
+                "path": "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+                "sha256": "b01fcf2bcf0ccc46837c6c819673e769a4b32841ae78b54466ab6cdd354da592",
+                "method": "actualPipelineStatesAndRedactedOrderedSteps",
+                "line": 65
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
+                "sha256": "c1409dc09f153cc28d51b6ed9de519a24b915c4336610da7b81caf6930a24fba",
+                "method": "uploadWritesAnExecutionThatAgreesWithHistoryAndDialog",
+                "line": 342
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+                "sha256": "0f53d3623a656cd830e358075862adbd9756da68b738b2397796d833fed81759",
+                "method": "copyAndMoveWriteExecutionsAndNotifyFromTerminalState",
+                "line": 101
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+                "sha256": "0f53d3623a656cd830e358075862adbd9756da68b738b2397796d833fed81759",
+                "method": "stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial",
+                "line": 281
+              },
+              {
+                "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+                "sha256": "0f53d3623a656cd830e358075862adbd9756da68b738b2397796d833fed81759",
+                "method": "storageFailuresNeverSilentlyCompleteFileWork",
+                "line": 172
+              }
+            ]
+          },
+          "previous_note": "Results and private restart journals retain a known-field-only workflow snapshot and existing truthful outcomes. Unknown extensions are excluded from reports. Full notifications/log/privacy/terminal-state convergence remains Required. Nested output extensions are excluded from reports while known private folder/pattern fields stay available to explicit review. Versioned CLI JSON contains admission/delivery, stable errors and valid opaque IDs only; it does not publish private names/actions/folders/patterns or claim terminal output success. Complete result convergence and execution/result lookup remain Required. The native command window reports actual desktop binding descriptions/empty results and fixed setup failures as plain accessible text; registration does not claim capture success. Full terminal-state convergence, origin/result linkage and human privacy/accessibility qualification remain Required. Explicit discovery reveals saved workflow IDs/names and fixed definition diagnostics while excluding private output fields, action choices and unknown extensions/capture labels. It creates no execution ID or terminal-success claim and queries no runtime permissions. Complete execution/result linkage, privacy and shared convergence remain Required. Explicit headless lookup reports only IDs, trusted origin, times, ordered action/state pairs, fixed diagnostics and pipeline link. Known private settings stay in owner-only execution storage; canonical history/report includes execution reference. Unfinished/failed-persistence observations remain unconfirmed, completed outputs are kept. Full convergence, retention and human privacy/security review remain Required. Native workflow discovery and GUI execution now share the implemented action list including upload, URL clipboard, pin and print. Execution snapshot parsing validates the bounded versioned definition without requiring its actions to remain executable in the current build. Native admission still rejects unknown actions before capture or persistence. Regression tests cover all four output definitions, permission denial before side effects, pin/print port dispatch, unknown-action admission refusal and byte-preserving execution-record reopen. Upload/credential approval and full catalogue, entry-point, platform and human qualification remain Required. Native Workflow execution history now lists bounded, redacted observations through one registry command shared by window/tray/capture menu. Explicit default-Cancel confirmation removes only the selected unchanged metadata record using the existing private descriptor store; files, pipeline results, credentials and clipboard are untouched. Storage runs through OwnedWork, capture defers refresh and prevents pending removal, and owner teardown abandons late reads. Corrupt/newer/stale records are preserved. Automated native tests cover actual removal/cancellation/conflict, unconfirmed status, worker ownership, failed/throwing ports and freeing the 1024-record admission limit. Full retention policy, history/resource scope, configured limits, supported-target and human qualification remain Required. Resume verification (2026-11-03): Capture pipeline log, terminal activity, history and desktop notification now derive state plus opaque output references from one public observation; paths, OCR/clipboard payloads and remote error bodies are excluded from those observations. PipelineJournalTest::publicTerminalObservationRejectsTamperingAndUpgradesLegacyReads passes and rebuilds observations from validated journal facts. PortalScreenshotTest::partialFailureAllFourTerminalSurfaces exercises one real save plus clipboard exception and asserts all four surfaces report partial with the same save.file reference and no private/secret content; private D-Bus creation is denied here, so that exact test remains unverified. CapturePipelineTest::actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads passes directly. Rationale: partial failure must never use a completion notification. Full recording/other-family surface convergence, privacy/security and target/human qualification remain Required. Audit 2026-11-03: capture log, progress, history and notification carry the same terminal state and opaque output references and partial failure never claims completion (PortalScreenshotTest::partialFailureAllFourTerminalSurfaces, PipelineJournalTest::publicTerminalObservationRejectsTamperingAndUpgradesLegacyReads, CapturePipelineTest; all pass). Gap: recording and other workflow families do not yet publish through the same four-surface observation, so the requirement is proven for capture pipelines only. Audit 2026-11-04: clauses: same terminal state and opaque output references across log/history/notification/progress with private-content redaction \u2014 RecordingWorkflowTest::recordingAllFourTerminalSurfacesShareStateAndOpaqueOutputs passes for stop, abort, partial-encoder-failure and denied. Production RecordingObservation is shared by RecordingController and tests; it emits the same redacted observation text to qInfo, progress and notification after Session persists history. Reopened history matches state/references; private path injection is rejected. Notifications for every nonsuccess use needs-review and never completed. nativeControllerValidationUsesRecorderAndStorageRefusalPreventsStart proves actual controller forwarding. Recording workflow CTest: 100% tests passed out of 1. Capture remains covered by PortalScreenshotTest::partialFailureAllFourTerminalSurfaces (private-bus startup unavailable in this sandbox) and PipelineJournalTest::publicTerminalObservationRejectsTamperingAndUpgradesLegacyReads. Optional typed opaque recording outputs extend private v2 records; old records without outputs remain readable. No path or retry authority is reconstructed."
+        }
+      },
+      "capability_audit": {
+        "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "checked_at": "2026-11-04T14:04:38.855452+00:00",
+        "specification": "product-contract/capabilities/WORKFLOW-CATALOG-001/SPEC.md",
+        "specification_sha256": "fb344e427f34b808ab66a81b1c95779c2ae6175057d2746389e1e2488e6f8331",
+        "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+        "production_surfaces": [
+          "platforms/linux/linux-qt/app/CaptureController.cpp",
+          "platforms/linux/linux-qt/app/FileUploadController.cpp",
+          "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+          "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp"
+        ],
+        "automated_test_surfaces": {
+          "platforms/linux/linux-qt/tests/ClipboardWorkflowTest.cpp": [
+            "explicitPublicClassificationSurvivesPublication"
+          ],
+          "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp": [
+            "legacyMigrationIsPresentedAndClosePreservesOriginalBytes"
+          ],
+          "platforms/linux/linux-qt/tests/RecordingTest.cpp": [
+            "targetedControlsAreIdempotentAndKeepThePublishedOutput"
+          ],
+          "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp": [
+            "applicationControlsRespectModalWorkAndHeadlessAuthority"
+          ],
+          "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp": [
+            "actualPipelineStatesAndRedactedOrderedSteps"
+          ]
+        },
+        "remaining_scope": "WFCAT-001; WFCAT-002; WFCAT-003; WFCAT-004; WFCAT-005; WFCAT-006; WFCAT-007; WFCAT-009; WFCAT-010; WFCAT-011; WFCAT-014; WFCAT-015; WFCAT-017; WFCAT-018",
+        "reviewed_requirement_count": 18,
+        "finding": "Current source review: {'not-started': 1, 'partial': 12, 'implemented': 4, 'blocked': 1}. Per-row reasons and exact hashed anchors record scope and limitations.",
+        "review_anchor": {
+          "production": {
+            "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
+            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+          },
+          "test": {
+            "path": "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+            "sha256": "b01fcf2bcf0ccc46837c6c819673e769a4b32841ae78b54466ab6cdd354da592",
+            "method": "actualPipelineStatesAndRedactedOrderedSteps",
+            "line": 65
+          },
+          "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
+        }
+      }
+    }
+  ],
+  "integration_review": {
+    "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+    "full_audit_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+    "counts": {
+      "not-started": 1,
+      "partial": 12,
+      "implemented": 4,
+      "blocked": 1
+    },
+    "promoted_requirement_ids": [],
+    "method": "Review each intervening trace change and production/test seams. Preserve frozen audit anchors and all upstream incremental records. Upload storage fencing remains partial after source recheck."
   }
 }

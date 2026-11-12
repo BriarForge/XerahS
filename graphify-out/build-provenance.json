@@ -34,14 +34,14 @@
     "ast_preserved": true
   },
   "semantic_refresh": {
-    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+    "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
     "files": [
       "README.md"
     ],
     "coverage_lines": {
       "README.md": 85
     },
-    "all_unaffected_node_ids_preserved": true,
+    "all_prior_node_ids_preserved": true,
     "retained_hyperedges": 0,
     "external_model_labeling_used": false
   }

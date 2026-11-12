@@ -83,7 +83,9 @@
     "platforms/linux/linux-qt/app/EditorCanvasWorker.cpp",
     "platforms/linux/linux-qt/app/PreferenceDialog.h",
     "platforms/linux/linux-qt/app/AppearanceDialog.cpp",
-    "platforms/linux/linux-qt/app/ToolbarDialog.cpp"
+    "platforms/linux/linux-qt/app/ToolbarDialog.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
+    "platforms/linux/linux-qt/src/storage/PrivateJsonFile.cpp"
   ],
   "requirements": {
     "ES-001": {
@@ -102,7 +104,7 @@
         "classification": "implemented",
         "spec_line": 32,
         "coverage": "Bounded raster loading returns typed failures and creates no usable session for invalid/unsupported/corrupt input; original bytes are preserved.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -110,7 +112,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -118,7 +120,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -126,7 +128,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -184,7 +186,7 @@
         "classification": "implemented",
         "spec_line": 35,
         "coverage": "Raster normalization applies orientation once and retains source alpha/profile/dimensions through embedded PNG metadata.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -192,7 +194,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -200,7 +202,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -208,7 +210,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -258,7 +260,7 @@
           "style-without-selection-changes-tool-only"
         ],
         "coverage": "Frozen rectangle creation normalizes positive bounds, rejects collapsed geometry and snapshots the creation style.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -266,7 +268,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -274,7 +276,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -282,7 +284,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -342,7 +344,7 @@
         "classification": "implemented",
         "spec_line": 41,
         "coverage": "Native pointer/keyboard rectangle operations and ordering expose selection while empty click clears; protected objects are fenced.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -350,7 +352,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -358,7 +360,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -366,21 +368,21 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
-            "sha256": "f9d96d5b9366d97529a99e95bbb138a620c8ca9b69c55630cb857024a2d84fe4",
+            "sha256": "ba16fea0fe319a739c7a541cc51214e0c1b20218ffc6f7a59eb469f0abfed641",
             "method": "keyboardTransformsUseImagePixelsAndKeepRepeatHistory",
-            "line": 1111
+            "line": 1135
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
-            "sha256": "f9d96d5b9366d97529a99e95bbb138a620c8ca9b69c55630cb857024a2d84fe4",
+            "sha256": "ba16fea0fe319a739c7a541cc51214e0c1b20218ffc6f7a59eb469f0abfed641",
             "method": "resizeHandlesPreviewAndCommitOnceAtEveryRotationAndZoom",
-            "line": 1680
+            "line": 1704
           },
           {
             "path": "platforms/linux/linux-qt/tests/AnnotationToolMatrixTest.cpp",
@@ -457,7 +459,7 @@
           "undo-redo-move"
         ],
         "coverage": "Gesture previews remain uncommitted until one completed mutation; all listed operations have exact history/dirty tests.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -465,7 +467,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -473,7 +475,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -481,7 +483,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -493,9 +495,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
-            "sha256": "f9d96d5b9366d97529a99e95bbb138a620c8ca9b69c55630cb857024a2d84fe4",
+            "sha256": "ba16fea0fe319a739c7a541cc51214e0c1b20218ffc6f7a59eb469f0abfed641",
             "method": "groupMovePreviewAndCommitUseFrozenSourcePixels",
-            "line": 1378
+            "line": 1402
           }
         ]
       },
@@ -571,7 +573,7 @@
           "delete-and-undo-restores-selection"
         ],
         "coverage": "Session history stores complete document/selection snapshots; undo/redo and redo-branch truncation are exercised through native mutations.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -579,7 +581,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -587,7 +589,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -595,7 +597,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -667,7 +669,7 @@
           "delete-and-undo-restores-selection"
         ],
         "coverage": "Value-owned immutable history retains embedded assets across deletion, transformation and subsequent undo/redo.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -675,7 +677,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -683,7 +685,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -691,7 +693,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -769,7 +771,7 @@
         "classification": "implemented",
         "spec_line": 54,
         "coverage": "Gesture cancellation restores committed state; native dirty-close Save/Discard/Cancel preserves the editor on failed/cancelled save.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -777,7 +779,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -785,7 +787,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -793,27 +795,27 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
-            "sha256": "f9d96d5b9366d97529a99e95bbb138a620c8ca9b69c55630cb857024a2d84fe4",
+            "sha256": "ba16fea0fe319a739c7a541cc51214e0c1b20218ffc6f7a59eb469f0abfed641",
             "method": "cancelledPanAndDrawRestoreCommittedState",
-            "line": 1878
+            "line": 1902
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
-            "sha256": "445290f0d1559fcaba406f337e93b10ff5e54515e786d865662f96f07d7cf6d2",
+            "sha256": "0ee10f3ab7c21c7562890aa05076369049b9f866d6d3f5522baaabcb594521d2",
             "method": "dirtyExitMatrix",
-            "line": 107
+            "line": 188
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
-            "sha256": "445290f0d1559fcaba406f337e93b10ff5e54515e786d865662f96f07d7cf6d2",
+            "sha256": "0ee10f3ab7c21c7562890aa05076369049b9f866d6d3f5522baaabcb594521d2",
             "method": "cancelledSavePickerKeepsUntitledEditorOpen",
-            "line": 173
+            "line": 254
           }
         ]
       },
@@ -824,7 +826,7 @@
       "vectors": [
         "render-stroke-coverage"
       ],
-      "note": "Immutable export and exact rectangle composition exist, but all-format/background/color-profile and cross-platform identical pixel qualification remain unproven. Codex queue evidence (2026-11-05): Audit 2026-11-05: Clauses: immutable source plus visible annotations, ordering, actual raster formats and source profile retention have native evidence: EditorSaveTest::encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy and workerSnapshotSurvivesConcurrentCallerChanges, EditorSourceTest::rasterDecodePreservesAlphaProfileAndOriginalBytes, EditorSessionTest::quarterTurnSwapsExtents, diamondHasExactPolygonCoverage and rotatedFillAndStrokeApplyOpacityOnce. PNG/JPEG/WebP encoder paths are exercised. Complete requested colour-profile conversion and identical decoded output across the supported platform implementations are not proven by these Linux-only fixtures; broad native QPainter shape rendering also lacks approved shared cross-platform goldens. Remains partial for these clause gaps, not physical qualification or the deferred format metadata decision.",
+      "note": "Immutable export and exact rectangle composition exist, but all-format/background/color-profile and cross-platform identical pixel qualification remain unproven.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
@@ -848,7 +850,7 @@
           "render-stroke-coverage"
         ],
         "coverage": "Immutable export and exact rectangle composition exist, but all-format/background/color-profile and cross-platform identical pixel qualification remain unproven.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -856,7 +858,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -864,7 +866,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -872,15 +874,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "fd7e628d78faf61d1d2ec45fcb6343515947110b82f68361e7e954010411383a",
             "method": "workerSnapshotSurvivesConcurrentCallerChanges",
-            "line": 132
+            "line": 161
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
@@ -907,7 +909,7 @@
           "render-opacity-applied-once"
         ],
         "coverage": "Authoritative rectangle renderer computes clipped centered stroke/fill coverage and applies opacity once.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -915,7 +917,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -923,7 +925,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -931,7 +933,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -989,7 +991,7 @@
         "classification": "implemented",
         "spec_line": 65,
         "coverage": "Same-directory atomic raster/companion publication acknowledges the frozen saved state only after the required pair succeeds.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -997,7 +999,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1005,7 +1007,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1013,15 +1015,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "fd7e628d78faf61d1d2ec45fcb6343515947110b82f68361e7e954010411383a",
             "method": "realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash",
-            "line": 144
+            "line": 173
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
@@ -1061,7 +1063,7 @@
         "classification": "implemented",
         "spec_line": 68,
         "coverage": "Split persistence returns truthful artifact outcomes, retains document/dirty state and permits companion-only repair without re-encoding.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1069,7 +1071,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1077,7 +1079,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1085,15 +1087,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "fd7e628d78faf61d1d2ec45fcb6343515947110b82f68361e7e954010411383a",
             "method": "incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng",
-            "line": 195
+            "line": 224
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
@@ -1128,7 +1130,7 @@
         "classification": "implemented",
         "spec_line": 71,
         "coverage": "XANN writer emits gzip UTF-8 v1 source/metadata/assets and shared-schema validation is automated.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1136,7 +1138,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1144,7 +1146,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1152,7 +1154,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -1206,7 +1208,7 @@
         ],
         "remaining_human_decision": "How should empty-document save reconcile a legacy fallback companion without resurrecting old annotations (ES-014/ES-030)? Existing refusal preserves both files.",
         "coverage": "Known compatible default-sidecar removal is tested, but empty save with legacy fallback remains explicitly refused pending product-approved non-resurrection/removal policy.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1214,7 +1216,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1222,7 +1224,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1230,15 +1232,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "fd7e628d78faf61d1d2ec45fcb6343515947110b82f68361e7e954010411383a",
             "method": "explicitEmptySaveRemovesOnlyTheKnownCompatibleDefaultSidecar",
-            "line": 206
+            "line": 235
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
@@ -1281,7 +1283,7 @@
           "unknown-fields-and-types-round-trip"
         ],
         "coverage": "Newer major versions fail without writes; safe additive fields and unsupported objects retain inert raw data across round-trip.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1289,7 +1291,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1297,7 +1299,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1305,7 +1307,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -1342,7 +1344,7 @@
         "classification": "implemented",
         "spec_line": 82,
         "coverage": "Source hash mismatch requires explicit raster/embedded-source choice without losing validated annotations or snapshots.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1350,7 +1352,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1358,7 +1360,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1366,7 +1368,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -1411,7 +1413,7 @@
           "oversized-canvas-rejected-before-allocation"
         ],
         "coverage": "Image headers/base64/gzip bounds, duplicate IDs, finite geometry and resource admission reject before unsafe decode or session publication.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1419,7 +1421,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1427,7 +1429,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1435,7 +1437,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -1464,25 +1466,21 @@
     "ES-018": {
       "status": "implemented",
       "vectors": [],
-      "note": "Optional (MAY) editor recovery is implemented as a separate private recovery document per editor under $XDG_STATE_HOME/com.xerahs.app/editor-recovery (EditorRecoveryStore, PrivateJsonFile envelope, atomic 0600 write, canonical annotation document, source path or unsaved-capture marker, UTC timestamp, owner pid). A dirty editor writes it after a short debounce on every state change; it is removed on explicit save, clean close/Discard, and when the session is replaced. It is never the save target or its sidecar (byte-identity asserted). On application start a native notice discloses recovery age and source with Restore / Discard / Decide later (default keeps the file); Restore opens a dirty editor with no path, so the explicit save can only change through a new explicit Save. Count is bounded (8), size bounded (192 MiB), corrupt or invalid files are renamed to *.corrupt (max 4) with value-free diagnostics. Limits: the write delay is a fixed 3 s with a test seam, not a user preference; a record owned by a still-running other process is skipped, so a recycled pid could defer an offer until that process exits; capture-pipeline recovery remains a separate feature. Human/accessibility qualification of the notice remains Required.",
+      "note": "Separate private recovery documents preserve explicit raster/sidecar bytes, record source/UTC time and disclose age/source in Restore/Discard/Decide-later restart UI. Store and native lifecycle tests cover the ES-018 behavior. However, new recovery I/O is synchronous in GUI timer/restart paths and prune() deletes oldest records without protecting newer-version/live-owner files; these are concrete foundation follow-ups, not authority to invent retention policy.",
       "disposition": "Required",
       "audit": {
         "classification": "implemented",
         "spec_line": 89,
-        "coverage": "Optional (MAY) editor recovery is implemented as a separate private recovery document per editor under $XDG_STATE_HOME/com.xerahs.app/editor-recovery (EditorRecoveryStore, PrivateJsonFile envelope, atomic 0600 write, canonical annotation document, source path or unsaved-capture marker, UTC timestamp, owner pid). A dirty editor writes it after a short debounce on every state change; it is removed on explicit save, clean close/Discard, and when the session is replaced. It is never the save target or its sidecar (byte-identity asserted). On application start a native notice discloses recovery age and source with Restore / Discard / Decide later (default keeps the file); Restore opens a dirty editor with no path, so the explicit save can only change through a new explicit Save. Count is bounded (8), size bounded (192 MiB), corrupt or invalid files are renamed to *.corrupt (max 4) with value-free diagnostics. Limits: the write delay is a fixed 3 s with a test seam, not a user preference; a record owned by a still-running other process is skipped, so a recycled pid could defer an offer until that process exits; capture-pipeline recovery remains a separate feature. Human/accessibility qualification of the notice remains Required.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Separate private recovery documents preserve explicit raster/sidecar bytes, record source/UTC time and disclose age/source in Restore/Discard/Decide-later restart UI. Store and native lifecycle tests cover the ES-018 behavior. However, new recovery I/O is synchronous in GUI timer/restart paths and prune() deletes oldest records without protecting newer-version/live-owner files; these are concrete foundation follow-ups, not authority to invent retention policy.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
             "sha256": "6efa09181587a96703c9fe8e615e2dd40a1950b1d0a1f133259a2001ae38e1c7"
           },
           {
-            "path": "platforms/linux/linux-qt/src/image-editor/EditorRecovery.h",
-            "sha256": "5062d5e55f08858b0975ec81555b3cbcdd13429029a819ff02a394a10767066d"
-          },
-          {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "fbff7501c24ee1a5e02119d2846f0e511fe062c4474b69f161d7d6584aa3a405"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           },
           {
             "path": "platforms/linux/linux-qt/src/storage/PrivateJsonFile.cpp",
@@ -1510,13 +1508,17 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-            "sha256": "1d40c4e1e72d9d7d48a9dc3397a38704aa7bf3b4d5925136864acae50a6eabb5",
+            "sha256": "a80114f818cfc917f7d0b981947a15207bf0754045b1a16be297150f48f00901",
             "method": "recoveryDocumentLifecycleAndRestartNotice",
-            "line": 283
+            "line": 289
           }
         ]
       },
-      "previous_note": "Recovery documents."
+      "previous_note": "Recovery documents.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+      ]
     },
     "ES-019": {
       "status": "partial",
@@ -1582,7 +1584,7 @@
         "classification": "partial",
         "spec_line": 92,
         "coverage": "Keyboard/native accessibility, zoom-independent handles and grayscale cues exist; complete editor-control high-contrast/screen-reader and supported-target qualification is not established.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1590,7 +1592,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1598,7 +1600,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1606,7 +1608,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -1618,9 +1620,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
-            "sha256": "f9d96d5b9366d97529a99e95bbb138a620c8ca9b69c55630cb857024a2d84fe4",
+            "sha256": "ba16fea0fe319a739c7a541cc51214e0c1b20218ffc6f7a59eb469f0abfed641",
             "method": "resizeHandlesPreviewAndCommitOnceAtEveryRotationAndZoom",
-            "line": 1680
+            "line": 1704
           },
           {
             "path": "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
@@ -1652,7 +1654,7 @@
         "classification": "blocked",
         "spec_line": 95,
         "coverage": "Explicit output authority and private temporary storage exist; approved configured editor temp/recovery retention and secure-delete limits are still an unanswered policy gate.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1660,7 +1662,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1668,7 +1670,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1676,21 +1678,21 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "fd7e628d78faf61d1d2ec45fcb6343515947110b82f68361e7e954010411383a",
             "method": "managedTemporaryRetentionKeepsRecentForeignAndLinkedFiles",
-            "line": 31
+            "line": 60
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "fd7e628d78faf61d1d2ec45fcb6343515947110b82f68361e7e954010411383a",
             "method": "managedPreparationTemporaryIsPrivateAndRemovedAtTaskEnd",
-            "line": 53
+            "line": 82
           }
         ]
       },
@@ -1700,13 +1702,13 @@
     "ES-021": {
       "status": "implemented",
       "vectors": [],
-      "note": "EditorExitTest::fourKRectangleOpensToInteractiveWithin500ms times a 3840x2160 source with one rectangle to a real keyboard mutation within 500 ms. EditorExitTest::fourKRectangleManipulationPreviewsHold60Hz drives real move, resize and creation pointer gestures through the real EditorCanvas on that source, timing each pointer update plus the synchronous viewport repaint over 120 updates per gesture and asserting p95 <= 16.7 ms (best of three attempts for CI load; about 2 ms measured). Export progress and cancellation are covered by EditorWindowTest::saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions and EditorSaveTest::cancellationAtEncodingBoundaryDoesNotStartAnEncoder. The preview test runs on the offscreen platform, not physical display hardware.",
+      "note": "Native tests exercise real 3840x2160 document open to keyboard mutation within500ms and real move/resize/create preview updates with synchronous viewport repaint over120updates pergesture, asserting p95<=16.7ms best-of3 on offscreen Qt. Owned save preparation exposes progress/cancel. This is native candidate performance evidence; physical presentation/supported-hardware qualification is separate and is not inferred.",
       "disposition": "Required",
       "audit": {
         "classification": "implemented",
         "spec_line": 98,
-        "coverage": "EditorExitTest::fourKRectangleOpensToInteractiveWithin500ms times a 3840x2160 source with one rectangle to a real keyboard mutation within 500 ms. EditorExitTest::fourKRectangleManipulationPreviewsHold60Hz drives real move, resize and creation pointer gestures through the real EditorCanvas on that source, timing each pointer update plus the synchronous viewport repaint over 120 updates per gesture and asserting p95 <= 16.7 ms (best of three attempts for CI load; about 2 ms measured). Export progress and cancellation are covered by EditorWindowTest::saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions and EditorSaveTest::cancellationAtEncodingBoundaryDoesNotStartAnEncoder. The preview test runs on the offscreen platform, not physical display hardware.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Native tests exercise real 3840x2160 document open to keyboard mutation within500ms and real move/resize/create preview updates with synchronous viewport repaint over120updates pergesture, asserting p95<=16.7ms best-of3 on offscreen Qt. Owned save preparation exposes progress/cancel. This is native candidate performance evidence; physical presentation/supported-hardware qualification is separate and is not inferred.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1714,7 +1716,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1722,7 +1724,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1730,33 +1732,27 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
-            "sha256": "3fd2c52c35323520d2b46c4aaac0a39ed11785824491d49fece8789c5ed40f5b",
+            "sha256": "0ee10f3ab7c21c7562890aa05076369049b9f866d6d3f5522baaabcb594521d2",
             "method": "fourKRectangleOpensToInteractiveWithin500ms",
-            "line": 63
+            "line": 64
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
-            "sha256": "3fd2c52c35323520d2b46c4aaac0a39ed11785824491d49fece8789c5ed40f5b",
+            "sha256": "0ee10f3ab7c21c7562890aa05076369049b9f866d6d3f5522baaabcb594521d2",
             "method": "fourKRectangleManipulationPreviewsHold60Hz",
-            "line": 107
+            "line": 113
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-            "sha256": "76041b5018b8a1953ff65673a0953fe8f3c01d16ad37950a42bcbe4ec29f48dd",
+            "sha256": "a80114f818cfc917f7d0b981947a15207bf0754045b1a16be297150f48f00901",
             "method": "saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions",
-            "line": 1312
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
-            "method": "cancellationAtEncodingBoundaryDoesNotStartAnEncoder",
-            "line": 65
+            "line": 1371
           }
         ]
       },
@@ -1776,7 +1772,7 @@
         "classification": "partial",
         "spec_line": 101,
         "coverage": "Structural/history vectors and analytical native rectangle tests exist; approved shared golden-image and supported-platform qualification remain required.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1784,7 +1780,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1792,7 +1788,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1800,7 +1796,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -1839,7 +1835,7 @@
           "reverse-drag-rectangle"
         ],
         "coverage": "Canonical uppercase non-premultiplied sRGB ARGB writing, case-insensitive reading and qualification style defaults have direct tests.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1847,7 +1843,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1855,7 +1851,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1863,7 +1859,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -1914,7 +1910,7 @@
           "reverse-drag-rectangle"
         ],
         "coverage": "Bounds normalize start/end; new rectangles are topmost/sole selected, and rotation uses bounds-center geometry.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1922,7 +1918,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1930,7 +1926,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1938,7 +1934,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -1976,7 +1972,7 @@
           "render-fill-with-opacity"
         ],
         "coverage": "Renderer implements analytical quarter-turn rectangle regions and polygon coverage for other rotations with independent pixel assertions.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1984,7 +1980,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -1992,7 +1988,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -2000,7 +1996,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -2076,7 +2072,7 @@
           "style-without-selection-changes-tool-only"
         ],
         "coverage": "Selection/default-only changes leave history untouched; selected style applies as one operation and updates future defaults.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -2084,7 +2080,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -2092,7 +2088,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -2100,7 +2096,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -2179,7 +2175,7 @@
           "truncated-checkpoint-stays-dirty"
         ],
         "coverage": "Explicit state checkpoint tracks exact saved history, undo/redo return-to-clean, and split-save invalidation.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -2187,7 +2183,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -2195,7 +2191,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -2203,7 +2199,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -2245,7 +2241,7 @@
           "oversized-canvas-rejected-before-allocation"
         ],
         "coverage": "Dimension/pixel/decoded-gzip limits and finite style/coordinate admission are enforced before pixel allocation.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -2253,7 +2249,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -2261,7 +2257,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -2269,7 +2265,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -2296,13 +2292,13 @@
       "previous_note": "Canvas and embedded-image limits are checked from JSON and PNG headers; readXann stops inflating at the JSON byte limit (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. The annotation-transfer checkpoint brought toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required."
     },
     "ES-029": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "newer-version-read-only-failure",
         "duplicate-annotation-ids-rejected",
         "oversized-canvas-rejected-before-allocation"
       ],
-      "note": "Document diagnostics follow the ES-029 order version-unsupported, too-large, then (path-traversal/unsafe-content, which have no contract rank and keep outranking document-invalid), then invalid, even when an oversized canvas is combined with unsafe extensions, traversal in imagePath/embeddedImages/extensions, or an unsafe annotation record (XannCompatibilityTest::oversizedCanvasOutranksUnsafeContentAndTraversal, no pixel allocation). Open product question: the contract does not rank document-unsafe-content/document-path-traversal against document-invalid; current behaviour keeps them above invalid.",
+      "note": "The upstream oversized-document regression now accumulates unsafe/traversal findings and correctly reports version-unsupported before too-large before invalid. However parseDocument/readXann still emit document-unsafe-content, document-path-traversal, document-duplicate-key, document-invalid-encoding, document-too-deep and document-too-many-elements beyond the ES-029 diagnostic list. Current XannCompatibilityTest explicitly expects these extra codes; complete list/compatibility boundary disposition remains unresolved. Do not redo the fixed too-large precedence regression.",
       "evidence": [
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS.md",
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS-EVIDENCE.json",
@@ -2315,39 +2311,23 @@
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 143,
         "published_vectors": [
           "newer-version-read-only-failure",
           "duplicate-annotation-ids-rejected",
           "oversized-canvas-rejected-before-allocation"
         ],
-        "coverage": "Document diagnostics follow the ES-029 order version-unsupported, too-large, then (path-traversal/unsafe-content, which have no contract rank and keep outranking document-invalid), then invalid, even when an oversized canvas is combined with unsafe extensions, traversal in imagePath/embeddedImages/extensions, or an unsafe annotation record (XannCompatibilityTest::oversizedCanvasOutranksUnsafeContentAndTraversal, no pixel allocation). Open product question: the contract does not rank document-unsafe-content/document-path-traversal against document-invalid; current behaviour keeps them above invalid.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "The upstream oversized-document regression now accumulates unsafe/traversal findings and correctly reports version-unsupported before too-large before invalid. However parseDocument/readXann still emit document-unsafe-content, document-path-traversal, document-duplicate-key, document-invalid-encoding, document-too-deep and document-too-many-elements beyond the ES-029 diagnostic list. Current XannCompatibilityTest explicitly expects these extra codes; complete list/compatibility boundary disposition remains unresolved. Do not redo the fixed too-large precedence regression.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
-            "sha256": "7caf6652a97933500c3c2b668bcaceecaf52bc2c86e20494983c9f00227bbbe3"
-          },
-          {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "1423bb9d5dd0718b88b29925fbac463435b180b74d7484da3cfa964efd9da982"
-          },
-          {
-            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
-            "sha256": "9d1c482b02100067d113c1c8aec20ccf10e5d29620ffae8b5323a2c090ee0e0a"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
-            "sha256": "7df7843b5085789dc78112cd03d83f79c37fc92a8cd7a38d3fe33e18cf437c2b"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           }
         ],
         "test_anchors": [
@@ -2365,15 +2345,21 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
-            "method": "pathTraversalAndCyclicReferencesReject",
-            "line": 106
+            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
+            "method": "oversizedCanvasOutranksUnsafeContentAndTraversal",
+            "line": 159
           },
           {
             "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-            "sha256": "90b72f3d696e25d7e60d1ddb13c6b84f4f57a8f9b6237f69e5aec128daa32b60",
-            "method": "oversizedCanvasOutranksUnsafeContentAndTraversal",
-            "line": 113
+            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
+            "method": "unsafeUnknownsRejectWithoutEcho",
+            "line": 116
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
+            "method": "adversarialJsonIsRejected",
+            "line": 133
           }
         ]
       },
@@ -2411,7 +2397,7 @@
         ],
         "remaining_human_decision": "Supply the required baseline runtime observation for sidecar fallback naming before activation.",
         "coverage": "Default and fallback path handling exists, but required baseline runtime observation and legacy fallback empty-save policy remain unapproved.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -2419,7 +2405,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -2427,7 +2413,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
+            "sha256": "2bd93fcb709bbcc1d34a99c40eb8ddf051dbf695eb24cacc71eabc282ce56c39"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -2435,7 +2421,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "e46c7ca79338a1e7077a0669ae047c50cdcc58ff601e28150d17f22397391425"
           }
         ],
         "test_anchors": [
@@ -2451,20 +2437,28 @@
       "blocked_reason": "Default and fallback path handling exists, but required baseline runtime observation and legacy fallback empty-save policy remain unapproved."
     }
   },
-  "audit_scope": "All normative Linux-applicable clauses reviewed against current production and automated test bodies; candidate implementation is separate from physical, cross-platform and human acceptance.",
+  "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
-    "checked_at": "2026-11-04T14:04:38.855452+00:00",
+    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+    "checked_at": "2026-11-11T15:27:15.305729+00:00",
     "specification": "product-contract/capabilities/EDITOR-SESSION-001/SPEC.md",
     "specification_sha256": "26806f47cc7d36e9983776ca1903cfefb82b4247b055fa280489879bb03ab451",
-    "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "reviewed_requirement_count": 30,
+    "counts": {
+      "blocked": 3,
+      "implemented": 23,
+      "partial": 4
+    },
     "production_surfaces": [
       "platforms/linux/linux-qt/app/EditorSave.cpp",
       "platforms/linux/linux-qt/app/EditorSource.cpp",
       "platforms/linux/linux-qt/app/EditorWindow.cpp",
       "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
       "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
-      "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp"
+      "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
+      "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+      "platforms/linux/linux-qt/src/storage/PrivateJsonFile.cpp"
     ],
     "automated_test_surfaces": {
       "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp": [
@@ -2487,10 +2481,16 @@
       "platforms/linux/linux-qt/tests/EditorExitTest.cpp": [
         "cancelledSavePickerKeepsUntitledEditorOpen",
         "dirtyExitMatrix",
+        "fourKRectangleManipulationPreviewsHold60Hz",
         "fourKRectangleOpensToInteractiveWithin500ms"
       ],
       "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp": [
         "colorsPreserveAlphaNormalizeAndExcludeComputedAliases"
+      ],
+      "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp": [
+        "ageAndSourceDisclosure",
+        "corruptRecoveryIsSetAsideNotFatal",
+        "neverTouchesTheUsersSaveTargetOrSidecar"
       ],
       "platforms/linux/linux-qt/tests/EditorSaveTest.cpp": [
         "explicitEmptySaveRemovesOnlyTheKnownCompatibleDefaultSidecar",
@@ -2535,29 +2535,41 @@
         "savedXannIsGzipUtf8JsonThatValidatesAgainstTheSharedSchema",
         "truncatedPngReportsSourceCorruptWithoutCreatingASession"
       ],
+      "platforms/linux/linux-qt/tests/EditorWindowTest.cpp": [
+        "recoveryDocumentLifecycleAndRestartNotice",
+        "saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions"
+      ],
       "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp": [
         "textModalAndBusyInputTakePrecedenceOverAdditionalAndProtectedCommands"
       ],
       "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp": [
-        "pathTraversalAndCyclicReferencesReject"
+        "adversarialJsonIsRejected",
+        "oversizedCanvasOutranksUnsafeContentAndTraversal",
+        "unsafeUnknownsRejectWithoutEcho"
       ]
     },
-    "remaining_scope": "ES-009; ES-014; ES-018; ES-019; ES-020; ES-021; ES-022; ES-029; ES-030",
-    "reviewed_requirement_count": 30,
-    "finding": "Current source review: {'implemented': 21, 'partial': 5, 'blocked': 3, 'not-started': 1}. Per-row reasons and exact hashed anchors record scope and limitations.",
-    "review_anchor": {
-      "production": {
-        "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
-        "sha256": "7df7843b5085789dc78112cd03d83f79c37fc92a8cd7a38d3fe33e18cf437c2b"
+    "findings": [
+      {
+        "kind": "actionable",
+        "priority": 1,
+        "summary": "Protect recovery files belonging to newer versions/live owners from blind count pruning before extending recovery. Scratch current EditorRecovery.cpp repro seeds private version2file oldest, writes8version1records, and observes deletion.",
+        "source": "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp:87",
+        "repro": "/tmp/audit37-recovery-prune.cpp",
+        "observed": "future recovery preserved: false; exit1"
       },
-      "test": {
-        "path": "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
-        "sha256": "1c168da104070d675fdaf426f99c11e393382b8dbbb64c5f7813cd1251b12ed0",
-        "method": "rasterHeadersAreLimitedBeforePixelDecode",
-        "line": 217
+      {
+        "kind": "actionable",
+        "priority": 2,
+        "summary": "Move recovery serialize/write/list/remove through OwnedWork; writeRecoveryNow is called directly from a GUI timer, while offerRecovery synchronously scans and uses nested QMessageBox exec. Preserve already-working separate recovery/disclosure outcome.",
+        "source": "platforms/linux/linux-qt/app/EditorWindow.cpp:1689"
       },
-      "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
-    }
+      {
+        "kind": "question",
+        "summary": "How should ES-029 closed diagnostics reconcile with compatibility rejection codes? Too-large precedence is fixed; current code/tests retain extra security/lexical codes. Do not silently change security diagnostics in audit."
+      }
+    ],
+    "remaining_scope": "ES-009, ES-014, ES-019, ES-020, ES-022, ES-029, ES-030",
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
   },
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
@@ -2797,5 +2809,114 @@
       },
       "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
     }
-  }
+  },
+  "audit_history": [
+    {
+      "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+      "checked_at": "2026-11-04T14:04:38.855452+00:00",
+      "specification": "product-contract/capabilities/EDITOR-SESSION-001/SPEC.md",
+      "specification_sha256": "26806f47cc7d36e9983776ca1903cfefb82b4247b055fa280489879bb03ab451",
+      "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/EditorSave.cpp",
+        "platforms/linux/linux-qt/app/EditorSource.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp": [
+          "malformedShapeContentIsRejected"
+        ],
+        "platforms/linux/linux-qt/tests/AnnotationToolMatrixTest.cpp": [
+          "everyListedMutationIsOneHistoryOperationWithExactDirtyState",
+          "lineArrowFreehandAndAssetsSelectMoveResizeRotateAndProtect",
+          "selectionAndHandleCuesSurviveGrayscale"
+        ],
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp": [
+          "inDocumentAssetDuplicationRetainsPixelsAndHistory"
+        ],
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp": [
+          "cancelledPanAndDrawRestoreCommittedState",
+          "groupMovePreviewAndCommitUseFrozenSourcePixels",
+          "keyboardTransformsUseImagePixelsAndKeepRepeatHistory",
+          "resizeHandlesPreviewAndCommitOnceAtEveryRotationAndZoom"
+        ],
+        "platforms/linux/linux-qt/tests/EditorExitTest.cpp": [
+          "cancelledSavePickerKeepsUntitledEditorOpen",
+          "dirtyExitMatrix",
+          "fourKRectangleOpensToInteractiveWithin500ms"
+        ],
+        "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp": [
+          "colorsPreserveAlphaNormalizeAndExcludeComputedAliases"
+        ],
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp": [
+          "explicitEmptySaveRemovesOnlyTheKnownCompatibleDefaultSidecar",
+          "incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng",
+          "managedPreparationTemporaryIsPrivateAndRemovedAtTaskEnd",
+          "managedTemporaryRetentionKeepsRecentForeignAndLinkedFiles",
+          "realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash",
+          "workerSnapshotSurvivesConcurrentCallerChanges"
+        ],
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp": [
+          "colorNoopsAndDefaultsOnlyPreserveCheckpointAndRedo",
+          "decompressionLimitIsEnforced",
+          "diamondHasExactPolygonCoverage",
+          "documentFailurePriorityHoldsThroughTheGzipReader",
+          "documentFailurePriorityIsVersionThenTooLargeThenInvalid",
+          "embeddedImagesAreCheckedBeforeDecode",
+          "emptySidecarSaveRefusesToExposeBaselineCompanion",
+          "everyEditRestoresTheActualPreCommandSelection",
+          "exportRejectsInvalidGeometryAndClipsFarAwayObjects",
+          "frozenCreationNormalizesBoundsAndPreservesDefaultsAndHistory",
+          "guardedColorEditsCommitOneGroupAndUpdateFutureDefaults",
+          "guardedDeleteKeepsRemainingPayloadAssetsAndExactHistory",
+          "guardedSelectionDoesNotMutateHistoryOrReplaceInterveningState",
+          "lowercaseColoursAreAccepted",
+          "mismatchedSourceRequiresAnExplicitBindingChoice",
+          "quarterTurnSwapsExtents",
+          "redoRestoresSelection",
+          "rejectedCreationPreservesRedoCheckpointAndSelection",
+          "rotatedFillAndStrokeApplyOpacityOnce",
+          "rotatedStrokeSubtractsInnerPolygon",
+          "sidecarFailureKeepsSessionDirty",
+          "snapshotSaveAcknowledgesItsHistoryStateAndSplitSaveInvalidatesCleanState",
+          "xannRoundTrips"
+        ],
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp": [
+          "changedRasterRequiresChoiceAndKeepsValidatedSnapshots",
+          "invalidOrNewerSidecarsNeverCreateABareRasterSession",
+          "orientationIsAppliedExactlyOnceToPixelsAndEmbeddedSource",
+          "rasterDecodePreservesAlphaProfileAndOriginalBytes",
+          "rasterHeadersAreLimitedBeforePixelDecode",
+          "rejectsNonImages",
+          "savedXannIsGzipUtf8JsonThatValidatesAgainstTheSharedSchema",
+          "truncatedPngReportsSourceCorruptWithoutCreatingASession"
+        ],
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp": [
+          "textModalAndBusyInputTakePrecedenceOverAdditionalAndProtectedCommands"
+        ],
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp": [
+          "pathTraversalAndCyclicReferencesReject"
+        ]
+      },
+      "remaining_scope": "ES-009; ES-014; ES-018; ES-019; ES-020; ES-021; ES-022; ES-029; ES-030",
+      "reviewed_requirement_count": 30,
+      "finding": "Current source review: {'implemented': 21, 'partial': 5, 'blocked': 3, 'not-started': 1}. Per-row reasons and exact hashed anchors record scope and limitations.",
+      "review_anchor": {
+        "production": {
+          "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
+          "sha256": "7df7843b5085789dc78112cd03d83f79c37fc92a8cd7a38d3fe33e18cf437c2b"
+        },
+        "test": {
+          "path": "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+          "sha256": "1c168da104070d675fdaf426f99c11e393382b8dbbb64c5f7813cd1251b12ed0",
+          "method": "rasterHeadersAreLimitedBeforePixelDecode",
+          "line": 217
+        },
+        "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
+      }
+    }
+  ]
 }

@@ -29,7 +29,7 @@
     "slice": "Portal-to-quick-task capture verification reconciled with concurrent native selector"
   },
   "semantic_refresh": {
-    "source_revision": "f9da50b3f9c399ebd7bb5d104ea4bc96531ffa7a",
+    "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
     "files": [
       "linux-qt/CONTRACT-AUDIT.md",
       "linux-qt/IMPLEMENTATION.md",
@@ -38,9 +38,9 @@
     "coverage_lines": {
       "linux-qt/CONTRACT-AUDIT.md": 1129,
       "linux-qt/IMPLEMENTATION.md": 314,
-      "linux-qt/PRODUCTION-BACKLOG.md": 57
+      "linux-qt/PRODUCTION-BACKLOG.md": 54
     },
-    "all_unaffected_node_ids_preserved": true,
+    "all_prior_node_ids_preserved": true,
     "retained_hyperedges": 1,
     "external_model_labeling_used": false
   },
