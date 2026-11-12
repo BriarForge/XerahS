@@ -397,8 +397,8 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   stroke->setObjectName(QStringLiteral("strokeColour")); fill->setObjectName(QStringLiteral("fillColour"));
   width->setObjectName(QStringLiteral("increaseStroke")); thin->setObjectName(QStringLiteral("decreaseStroke"));
 
-  connect(saveAction, &QAction::triggered, this, [this] { save(false); });
-  connect(saveAs, &QAction::triggered, this, [this] { save(true); });
+  connect(saveAction, &QAction::triggered, this, [this] { if (!m_closePending) save(false); });
+  connect(saveAs, &QAction::triggered, this, [this] { if (!m_closePending) save(true); });
   connect(m_undo, &QAction::triggered, this, [this] { restoreHistory(false); });
   connect(m_redo, &QAction::triggered, this, [this] { restoreHistory(true); });
   connect(m_rotate, &QAction::triggered, this, [this] { rotateSelected(); });
@@ -1292,31 +1292,35 @@ bool EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state, cons
 bool EditorWindow::save(bool chooseFile) {
   if (m_outputPending || m_canvas->interactionActive()) return false;
   const QPointer<EditorWindow> guard(this);
-  QString target = m_path; auto encoding = m_saveEncoding;
-  const auto currentFormat = rasterFormatFromSuffix(QFileInfo(target).suffix());
-  if (chooseFile || m_path.isEmpty() || !currentFormat || *currentFormat != encoding.format) {
-    QPointer<EditorSaveDialog> picker(new EditorSaveDialog(m_path.isEmpty() ? QStringLiteral("Untitled.png") : m_path, this));
-    const auto accepted = picker->exec();
-    target = picker && accepted == QDialog::Accepted ? picker->selectedFiles().value(0) : QString{};
-    if (picker) encoding = picker->encodingOptions();
-    delete picker.data();
-    if (!guard || target.isEmpty()) return false;
-    if (QFileInfo(target).suffix().isEmpty()) target += "." + rasterFormatSuffix(encoding.format);
-  }
-  if (!validRasterSaveOptions(encoding) || rasterFormatFromSuffix(QFileInfo(target).suffix()) != std::optional<RasterFormat>(encoding.format)) return false;
-  return performSave(target, {}, encoding);
+  return withOutputBusy([this, guard, chooseFile] {
+    QString target = m_path; auto encoding = m_saveEncoding;
+    const auto currentFormat = rasterFormatFromSuffix(QFileInfo(target).suffix());
+    if (chooseFile || m_path.isEmpty() || !currentFormat || *currentFormat != encoding.format) {
+      QPointer<EditorSaveDialog> picker(new EditorSaveDialog(m_path.isEmpty() ? QStringLiteral("Untitled.png") : m_path, this));
+      const auto accepted = picker->exec();
+      target = picker && accepted == QDialog::Accepted ? picker->selectedFiles().value(0) : QString{};
+      if (picker) encoding = picker->encodingOptions();
+      delete picker.data();
+      if (!guard || target.isEmpty()) return false;
+      if (QFileInfo(target).suffix().isEmpty()) target += "." + rasterFormatSuffix(encoding.format);
+    }
+    if (!validRasterSaveOptions(encoding) || rasterFormatFromSuffix(QFileInfo(target).suffix()) != std::optional<RasterFormat>(encoding.format)) return false;
+    return performSave(target, {}, encoding);
+  });
 }
 bool EditorWindow::retrySave() {
   if (m_outputPending || !m_partialSave || m_partialSaveState != m_session->stateId() || m_canvas->interactionActive()) return false;
   const QPointer<EditorWindow> guard(this); const auto expected = m_partialSave; const auto state = m_partialSaveState;
-  QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Retry annotation save?"),
-      EditorWindow::tr("Retry the editable annotations for %1? The already saved %2 will be kept without rewriting it.").arg(QFileInfo(expected->path).fileName(), rasterFormatName(expected->encoding.format)),
-      QMessageBox::Retry | QMessageBox::Cancel, this));
-  box->setTextFormat(Qt::PlainText);
-  box->setObjectName("retryEditorSidecarDialog"); box->setDefaultButton(QMessageBox::Cancel); box->setEscapeButton(QMessageBox::Cancel);
-  const auto choice = box->exec(); delete box.data();
-  if (!guard || choice != QMessageBox::Retry || m_outputPending || m_partialSave != expected || m_partialSaveState != state || state != m_session->stateId()) return false;
-  return performSave(expected->path, expected);
+  return withOutputBusy([this, guard, expected, state] {
+    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Retry annotation save?"),
+        EditorWindow::tr("Retry the editable annotations for %1? The already saved %2 will be kept without rewriting it.").arg(QFileInfo(expected->path).fileName(), rasterFormatName(expected->encoding.format)),
+        QMessageBox::Retry | QMessageBox::Cancel, this));
+    box->setTextFormat(Qt::PlainText);
+    box->setObjectName("retryEditorSidecarDialog"); box->setDefaultButton(QMessageBox::Cancel); box->setEscapeButton(QMessageBox::Cancel);
+    const auto choice = box->exec(); delete box.data();
+    if (!guard || choice != QMessageBox::Retry || m_partialSave != expected || m_partialSaveState != state || state != m_session->stateId()) return false;
+    return performSave(expected->path, expected);
+  });
 }
 bool EditorWindow::configurePreferences(const std::function<bool()> &operation) {
   if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return false;
@@ -1350,40 +1354,48 @@ bool EditorWindow::withOutputBusy(const std::function<bool()> &operation) {
   menuBar()->setEnabled(false); if (!guard) return false;
   return operation();
 }
+bool EditorWindow::reportSaveFinished(bool rasterSaved, bool sidecarSaved, bool cancelled) {
+  const QPointer<EditorWindow> guard(this);
+  try { emit saveFinished(rasterSaved, sidecarSaved, cancelled); }
+  catch (...) {
+    if (guard) {
+      m_saveMessage += EditorWindow::tr(" (save result notification failed; check output before retrying)");
+      m_saveMessageState = m_session->stateId();
+    }
+  }
+  return bool(guard);
+}
 bool EditorWindow::performSave(const QString &target, const EditorSaveReceiptPtr &repair, const RasterSaveOptions &requestedEncoding) {
   const auto encoding = repair ? repair->encoding : requestedEncoding;
   const auto format = rasterFormatName(encoding.format);
   const QPointer<EditorWindow> guard(this);
   const auto state = m_session->stateId(); const auto document = m_session->document(); const auto source = m_image; const auto hooks = m_saveHooks;
-  return withOutputBusy([this, guard, state, document, source, hooks, target, repair, encoding, format] {
-    const SaveOutcome outcome = runEditorSave(target, source, document, this, hooks, repair, encoding);
-    if (!guard) return false;
-    if (outcome.cancelled && !outcome.rasterSaved) {
-      emit saveFinished(false, false, true); return false;
-    }
-    // ES-012: clean only when both artifacts persisted; say which one failed.
-    const QStringList failed = m_session->recordSnapshotSave(state, outcome.rasterSaved, outcome.sidecarSaved);
-    if (outcome.rasterSaved && !outcome.sidecarSaved && outcome.receipt) { m_partialSave = outcome.receipt; m_partialSaveState = state; }
-    if (!failed.isEmpty()) {
-      refresh(); emit saveFinished(outcome.rasterSaved, outcome.sidecarSaved, outcome.cancelled); if (!guard) return false;
-      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, EditorWindow::tr("Save incomplete"),
-          outcome.rasterSaved ? EditorWindow::tr("%1 saved; editable annotation persistence failed. The document remains unsaved. Retry annotation save keeps the %1.").arg(format)
-                              : EditorWindow::tr("%1 was not saved. The previous destination and editable document have been kept.").arg(format), QMessageBox::Ok, this));
-      box->setTextFormat(Qt::PlainText);
-      box->setInformativeText(EditorWindow::tr("Destination: %1\nFormat: %2\n%3").arg(target, format, failed.join(", "))); box->exec(); delete box.data();
-      return false;
-    }
-    m_partialSave.reset(); m_partialSaveState.reset();
-    m_saveMessage = outcome.sidecarPath ? EditorWindow::tr("Saved %1 and editable annotations").arg(format) : EditorWindow::tr("Saved %1; no annotation companion needed").arg(format);
-    if (outcome.sidecarPath) m_saveMessage += EditorWindow::tr("; %1 version %2; non-portable omissions: %3").arg(outcome.annotationExport.target).arg(outcome.annotationExport.version).arg(outcome.annotationExport.omissions.size());
-    if (outcome.cancelled) m_saveMessage += EditorWindow::tr(" (completed despite cancellation)");
-    m_saveMessageState = state;
-    m_path = target; m_saveEncoding = encoding;
-    recordRecentImage(absoluteImagePath(target));
-    if (!guard) return false;
-    emit saveFinished(true, true, outcome.cancelled);
-    return bool(guard);
-  });
+  const SaveOutcome outcome = runEditorSave(target, source, document, this, hooks, repair, encoding);
+  if (!guard) return false;
+  if (outcome.cancelled && !outcome.rasterSaved) {
+    reportSaveFinished(false, false, true); return false;
+  }
+  // ES-012: clean only when both artifacts persisted; say which one failed.
+  const QStringList failed = m_session->recordSnapshotSave(state, outcome.rasterSaved, outcome.sidecarSaved);
+  if (outcome.rasterSaved && !outcome.sidecarSaved && outcome.receipt) { m_partialSave = outcome.receipt; m_partialSaveState = state; }
+  if (!failed.isEmpty()) {
+    refresh(); if (!guard || !reportSaveFinished(outcome.rasterSaved, outcome.sidecarSaved, outcome.cancelled)) return false;
+    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, EditorWindow::tr("Save incomplete"),
+        outcome.rasterSaved ? EditorWindow::tr("%1 saved; editable annotation persistence failed. The document remains unsaved. Retry annotation save keeps the %1.").arg(format)
+                            : EditorWindow::tr("%1 was not saved. The previous destination and editable document have been kept.").arg(format), QMessageBox::Ok, this));
+    box->setTextFormat(Qt::PlainText);
+    box->setInformativeText(EditorWindow::tr("Destination: %1\nFormat: %2\n%3").arg(target, format, failed.join(", "))); box->exec(); delete box.data();
+    return false;
+  }
+  m_partialSave.reset(); m_partialSaveState.reset();
+  m_saveMessage = outcome.sidecarPath ? EditorWindow::tr("Saved %1 and editable annotations").arg(format) : EditorWindow::tr("Saved %1; no annotation companion needed").arg(format);
+  if (outcome.sidecarPath) m_saveMessage += EditorWindow::tr("; %1 version %2; non-portable omissions: %3").arg(outcome.annotationExport.target).arg(outcome.annotationExport.version).arg(outcome.annotationExport.omissions.size());
+  if (outcome.cancelled) m_saveMessage += EditorWindow::tr(" (completed despite cancellation)");
+  m_saveMessageState = state;
+  m_path = target; m_saveEncoding = encoding;
+  recordRecentImage(absoluteImagePath(target));
+  if (!guard) return false;
+  return reportSaveFinished(true, true, outcome.cancelled);
 }
 
 void EditorWindow::setCopyPorts(EditorCopyPorts ports) { m_copyPorts = std::move(ports); refresh(); }
@@ -1649,11 +1661,14 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
   }
   if (m_session->dirty()) {
     // ES-008: Save, Discard, Cancel.
-    QMessageBox box(QMessageBox::Question, EditorWindow::tr("Unsaved changes"),
+    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Unsaved changes"),
                     EditorWindow::tr("Save changes to %1?").arg(m_path.isEmpty() ? EditorWindow::tr("Untitled image") : QFileInfo(m_path).fileName()),
-                    QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
-    box.setDefaultButton(QMessageBox::Save);
-    const auto choice = box.exec(); box.setParent(nullptr);
+                    QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this));
+    box->setDefaultButton(QMessageBox::Save);
+    const auto choice = box->exec();
+    if (box) box->setParent(nullptr);
+    delete box.data();
+    if (!guard) { event->ignore(); return; }
     switch (choice) {
       case QMessageBox::Save: if (!save(false) || !guard || m_session->dirty()) { event->ignore(); return; } break;
       case QMessageBox::Discard: break;

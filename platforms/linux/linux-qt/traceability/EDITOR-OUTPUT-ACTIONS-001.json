@@ -26,7 +26,13 @@
     "platforms/linux/linux-qt/app/PortalWallpaper.h",
     "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
     "platforms/linux/linux-qt/app/EditorShutdown.cpp",
-    "platforms/linux/linux-qt/app/CapturePipeline.cpp"
+    "platforms/linux/linux-qt/app/CapturePipeline.cpp",
+    "platforms/linux/linux-qt/app/EditorCopy.h",
+    "platforms/linux/linux-qt/app/EditorSave.h",
+    "platforms/linux/linux-qt/app/EditorSaveDialog.h",
+    "platforms/linux/linux-qt/app/EditorPrint.h",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.h",
+    "platforms/linux/linux-qt/app/EditorWindow.h"
   ],
   "requirements": {
     "EO-001": {
@@ -58,7 +64,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -80,9 +86,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
             "method": "workerSnapshotSurvivesConcurrentCallerChanges",
-            "line": 132
+            "line": 161
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -116,7 +122,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -181,7 +187,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -203,15 +209,15 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
             "method": "realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash",
-            "line": 144
+            "line": 173
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
-            "sha256": "445290f0d1559fcaba406f337e93b10ff5e54515e786d865662f96f07d7cf6d2",
+            "sha256": "0a043ad43edb302a2684a979087e7dd2c8453fb39ad205b3c71326d6b32f1c9e",
             "method": "cancelledSavePickerKeepsUntitledEditorOpen",
-            "line": 173
+            "line": 306
           }
         ]
       },
@@ -248,7 +254,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -270,15 +276,15 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
             "method": "encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy",
-            "line": 75
+            "line": 104
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
             "method": "qualityChangesActualEncodingAndFailuresKeepPreviousPairs",
-            "line": 103
+            "line": 132
           }
         ]
       },
@@ -312,7 +318,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -334,15 +340,15 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
             "method": "encodeExceptionAndRacingReplacementPreserveThePreviousDestination",
-            "line": 152
+            "line": 181
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
             "method": "resultsReportDestinationFormatAndRecoverabilityAndNeverCarryPrivatePayloads",
-            "line": 160
+            "line": 207
           }
         ]
       },
@@ -380,7 +386,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -402,9 +408,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
             "method": "incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng",
-            "line": 195
+            "line": 242
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -442,7 +448,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -462,21 +468,21 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorUpload.cpp",
-            "sha256": "4ee9e93b5ddacfffccd794a83abdf91ecb790d8a6e40244f8ff62b8ed84c89b9"
+            "sha256": "d2c3cdab144219e807bc2770089fef4a305de42b1b1f582b9dcd6348f42be937"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorUploadTest.cpp",
-            "sha256": "3162cbea859de499072bd714beff2bb1839d15369a5503d6786793d9b189d398",
+            "sha256": "4ca263ac6c334873bd92df60d38495544c1d25c4afdcfdbca8e9b3ac3797e239",
             "method": "nativeUpload",
-            "line": 71
+            "line": 79
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorUploadTest.cpp",
-            "sha256": "3162cbea859de499072bd714beff2bb1839d15369a5503d6786793d9b189d398",
+            "sha256": "4ca263ac6c334873bd92df60d38495544c1d25c4afdcfdbca8e9b3ac3797e239",
             "method": "missingDestinationExplainsConfigurationWithoutSubmitting",
-            "line": 123
+            "line": 131
           }
         ]
       },
@@ -503,7 +509,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -564,7 +570,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -588,7 +594,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/PinWindow.cpp",
-            "sha256": "0fd7c1e7b036e33872e0558b2e21c68d479f314a5c75481e22de06e2bc63db71"
+            "sha256": "f5cb971966f2403d1cfe19e20f0f031c09bb1d6df6af9a36e401ed451fe1b794"
           }
         ],
         "test_anchors": [
@@ -624,7 +630,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -654,15 +660,15 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp",
-            "sha256": "57377432150279d10d5646ce6a8ad43afffc42940b842bcef037453b6ec02d36",
+            "sha256": "7350d85600b3109481bab565e435e6c9ea9032fd394e4dd737e0bc4d2532a4b2",
             "method": "confirmedWallpaperPassesRetainedFileAndLeavesDocumentUnchanged",
             "line": 108
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp",
-            "sha256": "57377432150279d10d5646ce6a8ad43afffc42940b842bcef037453b6ec02d36",
+            "sha256": "7350d85600b3109481bab565e435e6c9ea9032fd394e4dd737e0bc4d2532a4b2",
             "method": "nativeDialogShowsChoiceAndPathAndAppliesLockscreen",
-            "line": 137
+            "line": 140
           }
         ]
       },
@@ -697,7 +703,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -756,7 +762,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -815,7 +821,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -837,25 +843,25 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
-            "sha256": "445290f0d1559fcaba406f337e93b10ff5e54515e786d865662f96f07d7cf6d2",
+            "sha256": "0a043ad43edb302a2684a979087e7dd2c8453fb39ad205b3c71326d6b32f1c9e",
             "method": "dirtyExitMatrix",
-            "line": 107
+            "line": 240
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
-            "sha256": "445290f0d1559fcaba406f337e93b10ff5e54515e786d865662f96f07d7cf6d2",
+            "sha256": "0a043ad43edb302a2684a979087e7dd2c8453fb39ad205b3c71326d6b32f1c9e",
             "method": "sessionManagerRetainsDirtyDocumentWithoutInteraction",
-            "line": 77
+            "line": 159
           }
         ]
       },
       "previous_note": "Audit 2026-11-04: Clauses: Save/Discard/Cancel and failed/cancelled Save retain the editor; callback acknowledgement requires persisted artifacts and a clean checkpoint. EditorExitTest::dirtyExitMatrix covers native Save success, encoder failure, empty-success and wrong-content-success, Discard and Cancel; cancelledSavePickerKeepsUntitledEditorOpen covers the picker. EditorSaveTest::lossyHostEncoderMustWriteTheRasterContent covers JPEG/WebP false acknowledgement. sessionManagerRetainsDirtyDocumentWithoutInteraction tests the production session-manager seam, no-interaction retention, interactive Cancel and Discard. Decision: commitDataRequest follows Save/Discard/Cancel where interaction is allowed; otherwise shutdown is cancelled and the document remains dirty without silent saving. aboutToQuit performs no implicit save; Qt does not allow veto there. A real desktop session manager cannot be instantiated under the offscreen test plugin; its allowsInteraction/release/cancel bridge is source-reviewed, with the policy exercised through the same production seam."
     },
     "EO-014": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Owned per-output ports document snapshot/thread/lifetime and explicit missing services; full all-host cancellation/error/reentrancy contract matrix remains incomplete.",
+      "note": "All eight EO-014 host contracts (Copy, Save, Save As, Print, Pin, Upload, task completion and Close) declare ownership, thread, cancellation, lifetime, error and reentrancy semantics in port headers and EDITOR-HOST-CALLBACKS.md. Required missing providers disable/explain their action; native Save/Save As/Close are installed hosts, not missing injected callbacks. Actual regression fixes remove a dirty-close owner-destruction double free, prevent nested Save As choosers by guarding chooser-through-publication as one output transaction, and contain throwing Save completion observers without erasing acknowledged artifacts or authorizing retry. Save hooks now correctly declare separate raster/sidecar exception boundaries, verified by real partial publication and receipt-only repair. The complete native suite (174 targets) and affected Qt6.4.2 Save/Close cases pass. EO-016 retains its separate all-platform/failure qualification obligation; no release acceptance is claimed.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -868,24 +874,48 @@
         "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
         "platforms/linux/linux-qt/tests/EditorUploadTest.cpp",
         "platforms/linux/linux-qt/tests/EditorTaskTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorExitTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
+        "platforms/linux/linux-qt/app/EditorCopy.h",
+        "platforms/linux/linux-qt/app/EditorSave.h",
+        "platforms/linux/linux-qt/app/EditorSaveDialog.h",
+        "platforms/linux/linux-qt/app/EditorPrint.h",
+        "platforms/linux/linux-qt/app/EditorPin.h",
+        "platforms/linux/linux-qt/app/EditorUpload.h",
+        "platforms/linux/linux-qt/app/CaptureAnnotationDialog.h",
+        "platforms/linux/linux-qt/app/EditorWindow.h",
+        "platforms/linux/linux-qt/app/EditorPin.cpp",
+        "platforms/linux/linux-qt/app/EditorUpload.cpp",
+        "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
+        "platforms/linux/linux-qt/app/EDITOR-HOST-CALLBACKS.md"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 48,
-        "coverage": "Owned per-output ports document snapshot/thread/lifetime and explicit missing services; full all-host cancellation/error/reentrancy contract matrix remains incomplete.",
+        "coverage": "All eight EO-014 host contracts (Copy, Save, Save As, Print, Pin, Upload, task completion and Close) declare ownership, thread, cancellation, lifetime, error and reentrancy semantics in port headers and EDITOR-HOST-CALLBACKS.md. Required missing providers disable/explain their action; native Save/Save As/Close are installed hosts, not missing injected callbacks. Actual regression fixes remove a dirty-close owner-destruction double free, prevent nested Save As choosers by guarding chooser-through-publication as one output transaction, and contain throwing Save completion observers without erasing acknowledged artifacts or authorizing retry. Save hooks now correctly declare separate raster/sidecar exception boundaries, verified by real partial publication and receipt-only repair. The complete native suite (174 targets) and affected Qt6.4.2 Save/Close cases pass. EO-016 retains its separate all-platform/failure qualification obligation; no release acceptance is claimed.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
           "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
-          "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
+          "platforms/linux/linux-qt/tests/EditorUploadTest.cpp",
+          "platforms/linux/linux-qt/app/EditorCopy.h",
+          "platforms/linux/linux-qt/app/EditorSave.h",
+          "platforms/linux/linux-qt/app/EditorSaveDialog.h",
+          "platforms/linux/linux-qt/app/EditorPrint.h",
+          "platforms/linux/linux-qt/app/EditorPin.h",
+          "platforms/linux/linux-qt/app/EditorUpload.h",
+          "platforms/linux/linux-qt/app/CaptureAnnotationDialog.h",
+          "platforms/linux/linux-qt/app/EditorWindow.h",
+          "platforms/linux/linux-qt/app/EditorPin.cpp",
+          "platforms/linux/linux-qt/app/EditorUpload.cpp",
+          "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
+          "platforms/linux/linux-qt/app/EDITOR-HOST-CALLBACKS.md"
         ],
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "2723b57a5f502f5b66082b19417bd8ee5bd1d611",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -902,6 +932,42 @@
           {
             "path": "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
             "sha256": "c4fb74375689b9863b9a0d3c2e6324a96a6e3292fe6c559ceb2131c61984fadf"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorCopy.h",
+            "sha256": "96b43712d1ac6adb2b1813134e92187505a1d46c1d3a3723fdd0ec2fe57f6c4c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorSave.h",
+            "sha256": "404a7a46e744a5f96d2f5a22c715ef85252492c377639952d56856f87f5ed46c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorSaveDialog.h",
+            "sha256": "83dd58a2c2261df1daa95f13aabd3540237fd589a3a4ade759ceecf7caeffc43"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorPrint.h",
+            "sha256": "f6bd82282b0f95ae88437beeb440eeb52016efb0bf3e510dc5d77da9aa8eee60"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorPin.h",
+            "sha256": "4d08b9516f4636870e5cd3d401a03a6d751592e4f0210546a3a48b3f86b6e2af"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorUpload.h",
+            "sha256": "be12bbf3e21dc1d787a9c2d204588abab9b836c6d4dc642da184f5669fde96c9"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/CaptureAnnotationDialog.h",
+            "sha256": "523cc8430ccc36734552e4080cdf44bdf7d7337e634f32c979a768b8c334afe1"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorWindow.h",
+            "sha256": "aeddceee8d5457c66d0924cc282f9110cdc1ab08348c315b1a7604419db81a65"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EDITOR-HOST-CALLBACKS.md",
+            "sha256": "d88f6ae6007d442ca48ad18e0554895806e9bcc311a6cd58c865138a8006df24"
           }
         ],
         "test_anchors": [
@@ -922,6 +988,30 @@
             "sha256": "f9cac3d7db2acdf12fa46a39eb55f81c6324dbd28f372db8dd39d5bd3de8de19",
             "method": "missingTaskHostExplainsContinueAndCancelWithoutOutputs",
             "line": 28
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
+            "method": "destroyingEditorDuringCloseConfirmationDoesNotSaveOrCrash",
+            "line": 187,
+            "sha256": "0a043ad43edb302a2684a979087e7dd2c8453fb39ad205b3c71326d6b32f1c9e"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
+            "method": "saveAsHostReentryCannotOpenAnotherChooser",
+            "line": 204,
+            "sha256": "0a043ad43edb302a2684a979087e7dd2c8453fb39ad205b3c71326d6b32f1c9e"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
+            "method": "throwingSaveCompletionObserverDoesNotEscapeOrRepeatAcknowledgedOutput",
+            "line": 224,
+            "sha256": "0a043ad43edb302a2684a979087e7dd2c8453fb39ad205b3c71326d6b32f1c9e"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+            "method": "hostExceptionPreservesTheArtifactPublicationBoundary",
+            "line": 192,
+            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827"
           }
         ]
       },
@@ -964,7 +1054,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1033,7 +1123,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "964b3aac7cd3f350701f2fd00f19a5ff40827b888e999a07022daee9636bf5e5"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -1055,15 +1145,15 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
             "method": "qualityChangesActualEncodingAndFailuresKeepPreviousPairs",
-            "line": 103
+            "line": 132
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp",
-            "sha256": "57377432150279d10d5646ce6a8ad43afffc42940b842bcef037453b6ec02d36",
+            "sha256": "7350d85600b3109481bab565e435e6c9ea9032fd394e4dd737e0bc4d2532a4b2",
             "method": "deniedAndUnsupportedServicesHaveStableCodes",
-            "line": 188
+            "line": 198
           }
         ]
       },
@@ -1072,8 +1162,8 @@
   },
   "audit_scope": "All normative Linux-applicable clauses reviewed against current production and automated test bodies; candidate implementation is separate from physical, cross-platform and human acceptance.",
   "audit": {
-    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
-    "checked_at": "2026-11-04T14:04:38.855452+00:00",
+    "source_revision": "2723b57a5f502f5b66082b19417bd8ee5bd1d611",
+    "checked_at": "2026-11-12T00:35:57.362096+00:00",
     "specification": "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md",
     "specification_sha256": "5c966c9f044cd1135c70e7d69e345b1cfb4ffffabd26f58e6ec9e7eb582c824f",
     "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
@@ -1143,9 +1233,9 @@
         "textModalAndBusyInputTakePrecedenceOverAdditionalAndProtectedCommands"
       ]
     },
-    "remaining_scope": "EO-001; EO-004; EO-006; EO-009; EO-010; EO-014; EO-015; EO-016",
+    "remaining_scope": "EO-001; EO-004; EO-006; EO-009; EO-010; EO-015; EO-016",
     "reviewed_requirement_count": 16,
-    "finding": "Current source review: {'partial': 8, 'implemented': 8}. Per-row reasons and exact hashed anchors record scope and limitations.",
+    "finding": "Current Linux output implementation: 9 implemented, 7 partial. EO-014's native callback contracts and missing-provider behavior are proven; EO-016's distinct cross-platform/failure matrix remains partial.",
     "review_anchor": {
       "production": {
         "path": "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
@@ -1153,9 +1243,9 @@
       },
       "test": {
         "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-        "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+        "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
         "method": "workerSnapshotSurvivesConcurrentCallerChanges",
-        "line": 132
+        "line": 161
       },
       "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
     }

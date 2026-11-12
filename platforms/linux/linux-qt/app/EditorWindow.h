@@ -61,6 +61,10 @@ public:
   void setComparisonHooks(ComparisonHooks hooks) { m_comparisonHooks = std::move(hooks); }
   void setHistoryHooks(EditorHistoryHooks hooks) { m_historyHooks = std::move(hooks); }
   void setCropHooks(CanvasCropHooks hooks) { m_cropHooks = std::move(hooks); }
+  // GUI-thread provider configuration. In-flight outputs keep frozen copies;
+  // replacing a provider affects later attempts. Captures must own any data
+  // needed after editor destruction; phase-specific contracts live in each
+  // port header and EDITOR-HOST-CALLBACKS.md.
   void setSaveHooks(EditorSaveHooks hooks) { m_saveHooks = std::move(hooks); }
   void setCopyPorts(EditorCopyPorts ports);
   void setPrintPorts(EditorPrintPorts ports);
@@ -80,6 +84,10 @@ public:
 signals:
   // GUI-thread acknowledgement after checkpoint/partial receipt recording;
   // emitted while Save is busy. Reentrant Save is ignored; owner deletion is safe.
+  // Emitted on the GUI thread, at most once for an output attempt. Cancelling
+  // the chooser starts no output and emits nothing. Observers own copied bools;
+  // exceptions cannot undo publication or authorize retry. Owner deletion is
+  // allowed; the editor then returns without further access.
   void saveFinished(bool rasterSaved, bool sidecarSaved, bool cancelled);
   // GUI acknowledgement while outputs are busy; unknown delivery is explicit.
   void copyFinished(const QString &state, const QString &diagnostic, bool cancellationArrivedDuring);
@@ -108,6 +116,8 @@ private:
                     QImage source, const QImage &display, const QString &sourceLabel = {});
   bool save(bool chooseFile);
   bool retrySave();
+  bool reportSaveFinished(bool rasterSaved, bool sidecarSaved, bool cancelled);
+  // Caller owns the complete chooser/publication transaction via withOutputBusy.
   bool performSave(const QString &target, const EditorSaveReceiptPtr &repair = {}, const xerahs::editor::RasterSaveOptions &encoding = {});
   bool withOutputBusy(const std::function<bool()> &operation);
   bool configurePreferences(const std::function<bool()> &operation);

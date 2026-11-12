@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 using namespace xerahs::app;
@@ -179,6 +180,57 @@ private slots:
   void init() {
     initializeNativeEditorPreferences();
     QVERIFY(applyConveniencePreferences({{"ShowExitConfirmation", false}}, nativeEditorPreferenceRevision()).saved);
+  }
+  void destroyingEditorDuringCloseConfirmationDoesNotSaveOrCrash_data() {
+    QTest::addColumn<bool>("dirty"); QTest::newRow("dirty") << true; QTest::newRow("clean") << false;
+  }
+  void destroyingEditorDuringCloseConfirmationDoesNotSaveOrCrash() {
+    QFETCH(bool, dirty); QTemporaryDir dir; const auto path = dir.filePath("source.png"); QVERIFY(pixels().save(path));
+    const auto original = bytes(path);
+    QPointer<EditorWindow> window = dirty ? EditorWindow::fromCapturedImage(pixels()) : EditorWindow::open(path);
+    QVERIFY(window); window->show();
+    QVERIFY(applyConveniencePreferences({{"ShowExitConfirmation", !dirty}}, nativeEditorPreferenceRevision()).saved);
+    QSignalSpy saved(window, &EditorWindow::saveFinished); QPointer<QMessageBox> confirmation;
+    bool destroyed = false; QTimer driver;
+    connect(&driver, &QTimer::timeout, this, [&] {
+      confirmation = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!confirmation) return;
+      driver.stop(); QCOMPARE(confirmation->windowTitle(), dirty ? QString("Unsaved changes") : QString("Close editor"));
+      delete window.data(); destroyed = true;
+    });
+    driver.start(2); window->close(); driver.stop();
+    QVERIFY(destroyed); QVERIFY(window.isNull()); QVERIFY(confirmation.isNull()); QCOMPARE(saved.size(), 0);
+    QCOMPARE(bytes(path), original); QVERIFY(!QFile::exists(path + ".xann"));
+  }
+  void saveAsHostReentryCannotOpenAnotherChooser() {
+    QPointer<EditorWindow> window = EditorWindow::fromCapturedImage(pixels()); QVERIFY(window); window->show();
+    auto *saveAs = window->findChild<QAction *>("saveAsImage"); QVERIFY(saveAs);
+    auto *canvas = window->findChild<EditorCanvas *>(); const auto before = serializeDocument(canvas->annotationDocument());
+    QSignalSpy saved(window, &EditorWindow::saveFinished);
+    bool entered = false, nestedOpened = false; QTimer driver, nested;
+    nested.setSingleShot(true);
+    connect(&nested, &QTimer::timeout, this, [&] {
+      int visible = 0; for (auto *widget : QApplication::topLevelWidgets()) if (qobject_cast<QFileDialog *>(widget) && widget->isVisible()) ++visible;
+      nestedOpened = visible > 1;
+      if (auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget())) picker->reject();
+    });
+    connect(&driver, &QTimer::timeout, this, [&] {
+      auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget()); if (!picker || entered) return;
+      entered = true; nested.start(1); saveAs->trigger(); nested.stop(); picker->reject();
+    });
+    driver.start(2); saveAs->trigger(); driver.stop();
+    QVERIFY(entered); QVERIFY(!nestedOpened); QCOMPARE(saved.size(), 0);
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QVERIFY(window->isVisible()); delete window.data();
+  }
+  void throwingSaveCompletionObserverDoesNotEscapeOrRepeatAcknowledgedOutput() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(pixels().save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    QSignalSpy saved(window.get(), &EditorWindow::saveFinished);
+    connect(window.get(), &EditorWindow::saveFinished, this, [] { throw std::runtime_error("PRIVATE host payload"); });
+    bool escaped = false;
+    try { window->findChild<QAction *>("saveImage")->trigger(); } catch (...) { escaped = true; }
+    QVERIFY(!escaped); QCOMPARE(saved.size(), 1); QVERIFY(saved.first()[0].toBool() && saved.first()[1].toBool());
+    QCOMPARE(QImage(path), pixels()); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    auto *retry = window->findChild<QAction *>("retryEditorSidecar"); QVERIFY(retry); QVERIFY(!retry->isEnabled());
   }
   void dirtyExitMatrix_data() {
     QTest::addColumn<QString>("mode");

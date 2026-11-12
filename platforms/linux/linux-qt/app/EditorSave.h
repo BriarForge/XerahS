@@ -35,12 +35,19 @@ enum class EditorSaveArtifact { Raster, Sidecar };
 enum class EditorSavePhase { Rendering, Encoding, PublishingRaster, SavingAnnotations, Complete };
 struct EditorSaveHooks {
   // Synchronous worker callbacks; arguments are borrowed for this call only.
-  // Returning false/throwing fails before publication; never use GUI APIs here.
+  // An empty encode uses the native encoder; false/throwing prevents raster
+  // publication. beforePublish is optional and runs before each artifact:
+  // throwing before the sidecar preserves the already-published raster and
+  // returns a partial receipt. Never use GUI APIs or retain the borrowed device.
   // Captured state must outlive the worker, including after parent destruction
   // releases runEditorSave. Copying a callable does not extend reference captures.
   std::function<bool(const QImage &, QIODevice *)> encode;
   std::function<void(EditorSaveArtifact, const QString &)> beforePublish;
 };
+// Synchronous calling-thread observers (worker-only through runEditorSave).
+// Captures outlive abandoned work. Cancellation stops at publication boundaries;
+// observer exceptions retain every already-acknowledged artifact. GUI output
+// reentry stays busy; independent jobs must not share borrowed devices/state.
 struct EditorSaveControl {
   std::function<bool()> cancelled;
   std::function<void(EditorSavePhase, int)> progress;

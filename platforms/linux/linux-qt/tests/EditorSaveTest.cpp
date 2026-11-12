@@ -186,6 +186,24 @@ private slots:
     const auto raced = saveEdit(path, source.image, *source.document, {}, hooks); QVERIFY(!raced.rasterSaved); QCOMPARE(bytes(path), QByteArray("FOREIGN"));
     QVERIFY(!QFile::exists(path + ".xann")); QVERIFY(QDir(dir.path()).entryList({".xerahs-editor-*"}, QDir::Files | QDir::Hidden).isEmpty());
   }
+  void hostExceptionPreservesTheArtifactPublicationBoundary_data() {
+    QTest::addColumn<bool>("sidecar"); QTest::newRow("before-raster") << false; QTest::newRow("before-sidecar") << true;
+  }
+  void hostExceptionPreservesTheArtifactPublicationBoundary() {
+    QFETCH(bool, sidecar); QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(pixels().save(path)); const auto original = bytes(path);
+    const auto source = edited(); EditorSaveHooks hooks;
+    hooks.beforePublish = [sidecar](EditorSaveArtifact artifact, const QString &) {
+      if (artifact == (sidecar ? EditorSaveArtifact::Sidecar : EditorSaveArtifact::Raster)) throw std::runtime_error("PRIVATE host payload");
+    };
+    const auto result = saveEdit(path, source.image, *source.document, {}, hooks);
+    QCOMPARE(result.rasterSaved, sidecar); QVERIFY(!result.sidecarSaved);
+    if (sidecar) {
+      QVERIFY(result.receipt); QVERIFY(result.rasterError.isEmpty()); QCOMPARE(result.sidecarError, QString("sidecar-save-failed"));
+      const auto published = bytes(path); QVERIFY(published != original); QVERIFY(!QImage(path).isNull());
+      const auto repaired = retryEditorSidecar(result.receipt); QVERIFY(repaired.rasterSaved && repaired.sidecarSaved && repaired.rasterReused); QCOMPARE(bytes(path), published);
+    } else { QCOMPARE(bytes(path), original); QCOMPARE(result.rasterError, QString("raster-save-failed")); QVERIFY(!result.receipt); }
+    QVERIFY(!result.rasterError.contains("PRIVATE")); QVERIFY(!result.sidecarError.contains("PRIVATE"));
+  }
   void resultsReportDestinationFormatAndRecoverabilityAndNeverCarryPrivatePayloads() {
     QTemporaryDir dir; const auto path = dir.filePath("image.webp"); const auto source = edited(); QVERIFY(pixels().save(path, "WEBP")); const auto original = bytes(path);
     const RasterSaveOptions options{RasterFormat::WebP, 80, {}}; const QString secret = "PRIVATE exception payload";
