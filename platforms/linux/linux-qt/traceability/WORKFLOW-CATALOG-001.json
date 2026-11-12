@@ -392,12 +392,15 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move now runs on an owned cancellable worker with progress and durable processed checkpoint, but cooperative cancellation is not established for all workflows. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/history/notification path. Broader retry/restart and action-family qualification remain incomplete.",
+      "note": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move now runs on an owned cancellable worker with progress and durable processed checkpoint, but cooperative cancellation is not established for all workflows. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/history/notification path. Broader retry/restart and action-family qualification remain incomplete. File-upload cancellation now drops only the queue present at Cancel; a later explicit upload runs once rather than disappearing behind the stop flag. Destroying a dialog owner disconnects its progress-cancel signal without fabricating cancellation, and destroying the controller leaves the execution outcome unconfirmed without another request or success history. A later parentless upload still honors its own Cancel button. Known receipt retention and non-repetition remain covered by native tests.",
       "evidence": [
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+        "platforms/linux/linux-qt/app/FileUploadController.cpp",
+        "platforms/linux/linux-qt/app/FileUploadController.h",
+        "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
       ],
       "audit": {
         "classification": "partial",

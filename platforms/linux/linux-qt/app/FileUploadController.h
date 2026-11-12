@@ -8,6 +8,7 @@
 
 #include <QJsonObject>
 #include <QObject>
+#include <QPointer>
 #include <QStringList>
 
 #include <functional>
@@ -41,8 +42,9 @@ struct FileUploadPorts {
 class FileUploadController final : public QObject {
   Q_OBJECT
 public:
-  // dialogParent owns the progress and result windows. Leave parent null when
-  // the controller is not heap-allocated with the window.
+  // dialogParent owns the progress and result windows while it lives. Destroying
+  // it hides those windows and is not a cancellation and not a new result.
+  // Leave parent null when the controller is not heap-allocated with the window.
   explicit FileUploadController(FileUploadPorts ports, QWidget *dialogParent = nullptr, QObject *parent = nullptr);
 
   // Paths upload one after another. Further calls wait behind the current file.
@@ -77,7 +79,7 @@ private:
   void onFinished(const uploads::UploadOutcome &outcome);
 
   FileUploadPorts m_ports;
-  QWidget *m_dialogParent = nullptr;
+  QPointer<QWidget> m_dialogParent;
   qint64 m_cap = 0;
   struct QueuedFile { QString path, origin; QJsonObject rule; };
   QList<QueuedFile> m_queue;
@@ -99,7 +101,7 @@ private:
   bool m_stop = false;
   QNetworkAccessManager *m_network = nullptr;
   uploads::UploadExecutor *m_executor = nullptr;
-  QProgressDialog *m_progress = nullptr;
+  QPointer<QProgressDialog> m_progress;
 };
 
 }  // namespace xerahs::app

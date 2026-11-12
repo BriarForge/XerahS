@@ -39,6 +39,12 @@ FileUploadController::FileUploadController(FileUploadPorts ports, QWidget *dialo
     : QObject(parent), m_ports(std::move(ports)), m_dialogParent(dialogParent),
       m_cap(m_ports.maxInputBytes.value_or(uploads::UploadRequestOptions{}.maxInputBytes)),
       m_network(new QNetworkAccessManager(this)), m_executor(new uploads::UploadExecutor(m_network, this)) {
+  if (dialogParent) {
+    connect(dialogParent, &QObject::destroyed, this, [this] {
+      if (m_progress)
+        QObject::disconnect(m_progress.data(), &QProgressDialog::canceled, this, &FileUploadController::cancel);
+    });
+  }
   connect(m_executor, &uploads::UploadExecutor::progress, this, &FileUploadController::onProgress);
   connect(m_executor, &uploads::UploadExecutor::finished, this, &FileUploadController::onFinished);
 }
@@ -73,13 +79,16 @@ void FileUploadController::cancel() {
 
 void FileUploadController::startNext() {
   if (m_preparing || m_transferring) return;
-  if (m_stop || m_queue.isEmpty()) {
+  // cancel() already dropped the queue it owned. A file that arrived after that
+  // is a new explicit upload, not a retry of the cancelled transfer.
+  if (m_queue.isEmpty()) {
     m_stop = false;
     m_busy = false;
     closeProgress();
     emit finished();
     return;
   }
+  m_stop = false;
   const auto queued = m_queue.takeFirst();
   const auto path = queued.path;
   m_currentPath = path;

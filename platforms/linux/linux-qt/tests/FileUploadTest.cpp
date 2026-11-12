@@ -23,6 +23,7 @@
 #include <QMimeDatabase>
 #include <QProgressDialog>
 #include <QPushButton>
+#include <QProgressDialog>
 #include <QRegularExpression>
 #include <QSignalSpy>
 #include <QTcpServer>
@@ -644,6 +645,176 @@ private slots:
     QApplication::sendEvent(&window, &remoteDrop);
     QVERIFY(!remoteDrop.isAccepted());
     QCOMPARE(dropped.count(), 1);
+  }
+
+  void explicitUploadAfterCancelRunsOnceAndDoesNotRepeatTheCancelledTransfer() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    HttpFixture http; http.holdFirst = true; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    const auto destination = http.destination();
+    DestinationCatalog catalog(dir.filePath(QStringLiteral("destinations.json"))); QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>();
+    QVERIFY(credentials->store(destination.id, QStringLiteral("token"), QStringLiteral("fixture-secret")).ok());
+    const auto first = writeFile(dir, QStringLiteral("one.txt"), QByteArray("alpha-file"));
+    const auto dropped = writeFile(dir, QStringLiteral("two.txt"), QByteArray("beta-file"));
+    const auto third = writeFile(dir, QStringLiteral("three.txt"), QByteArray("gamma-file"));
+    QVERIFY(!first.isEmpty() && !dropped.isEmpty() && !third.isEmpty());
+    QWidget parent; parent.show();
+    FileUploadController controller(portsFor(dir.filePath(QStringLiteral("destinations.json")), credentials), &parent);
+    QSignalSpy idle(&controller, &FileUploadController::finished);
+    QSignalSpy completed(&controller, &FileUploadController::fileCompleted);
+    controller.upload({first, dropped});
+    QTRY_COMPARE_WITH_TIMEOUT(http.received, 1, 7000);
+    controller.cancel();
+    controller.upload({third});
+    QTRY_COMPARE_WITH_TIMEOUT(idle.count(), 1, 7000);
+    QCOMPARE(http.received, 2);
+    QCOMPARE(http.bodies.size(), 2);
+    QVERIFY(http.bodies.at(0).contains("alpha-file"));
+    QVERIFY(http.bodies.at(1).contains("gamma-file"));
+    QVERIFY(!http.bodies.at(0).contains("beta-file"));
+    QVERIFY(!http.bodies.at(1).contains("beta-file"));
+    QVERIFY(!http.bodies.at(1).contains("alpha-file"));
+    QStringList messages, urls;
+    for (auto *dialog : dialogs()) {
+      if (auto *message = dialog->findChild<QLabel *>(QStringLiteral("uploadMessage"))) messages.append(message->text());
+      if (auto *url = dialog->findChild<QLineEdit *>(QStringLiteral("uploadUrl"))) urls.append(url->text());
+    }
+    QCOMPARE(messages, QStringList{QStringLiteral("cancelled")});
+    QCOMPARE(urls, QStringList{QStringLiteral("https://example.test/image")});
+    QCOMPARE(completed.count(), 2);
+    QCOMPARE(completed.at(0).at(0).toString(), first);
+    QCOMPARE(completed.at(0).at(1).toBool(), false);
+    QCOMPARE(completed.at(1).at(0).toString(), third);
+    QCOMPARE(completed.at(1).at(1).toBool(), true);
+    const auto history = NativePipelineJournal(dir.filePath(QStringLiteral("history"))).list();
+    QCOMPARE(history.entries.size(), std::size_t(2));
+    int successes = 0;
+    for (const auto &entry : history.entries) {
+      QVERIFY(entry.parsed.record);
+      const auto upload = entry.parsed.record->report.value(QStringLiteral("extensions")).toObject()
+          .value(QStringLiteral("com.xerahs.app")).toObject().value(QStringLiteral("upload_result")).toObject();
+      const auto path = entry.parsed.record->report.value(QStringLiteral("extensions")).toObject()
+          .value(QStringLiteral("com.xerahs.app")).toObject().value(QStringLiteral("file_upload")).toObject()
+          .value(QStringLiteral("path")).toString();
+      if (path == first) {
+        QVERIFY(upload.value(QStringLiteral("url")).toString().isEmpty());
+        QVERIFY(upload.value(QStringLiteral("error_message")).toString().contains(QStringLiteral("publication is unconfirmed")));
+      } else if (path == third) {
+        QCOMPARE(upload.value(QStringLiteral("url")).toString(), QStringLiteral("https://example.test/image"));
+        ++successes;
+      } else {
+        QFAIL("cancelled queue entry was uploaded");
+      }
+    }
+    QCOMPARE(successes, 1);
+    QTest::qWait(200);
+    QCOMPARE(http.received, 2);
+    QCOMPARE(idle.count(), 1);
+  }
+
+  void dialogOwnerDestructionRetainsTheKnownResultWithoutAnotherAttempt() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    HttpFixture http; http.holdFirst = true; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    const auto destination = http.destination();
+    DestinationCatalog catalog(dir.filePath(QStringLiteral("destinations.json"))); QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>();
+    QVERIFY(credentials->store(destination.id, QStringLiteral("token"), QStringLiteral("fixture-secret")).ok());
+    const auto path = writeFile(dir, QStringLiteral("kept.txt"), QByteArray("kept-bytes"));
+    QVERIFY(!path.isEmpty());
+    QObject lifetime;
+    auto *owner = new QWidget; owner->show();
+    FileUploadController controller(portsFor(dir.filePath(QStringLiteral("destinations.json")), credentials), owner, &lifetime);
+    QSignalSpy idle(&controller, &FileUploadController::finished);
+    QSignalSpy completed(&controller, &FileUploadController::fileCompleted);
+    controller.upload({path});
+    QTRY_COMPARE_WITH_TIMEOUT(http.received, 1, 7000);
+    delete owner;
+    QApplication::processEvents();
+    http.release();
+    QTRY_COMPARE_WITH_TIMEOUT(idle.count(), 1, 7000);
+    QCOMPARE(http.received, 1);
+    QCOMPARE(completed.count(), 1);
+    QCOMPARE(completed.first().at(1).toBool(), true);
+    QCOMPARE(dialogs().size(), 1);
+    QCOMPARE(dialogs().first()->findChild<QLineEdit *>(QStringLiteral("uploadUrl"))->text(), QStringLiteral("https://example.test/image"));
+    QVERIFY(!dialogs().first()->findChild<QLabel *>(QStringLiteral("uploadMessage")));
+    const auto history = NativePipelineJournal(dir.filePath(QStringLiteral("history"))).list();
+    QCOMPARE(history.entries.size(), std::size_t(1));
+    const auto upload = history.entries.front().parsed.record->report.value(QStringLiteral("extensions")).toObject()
+        .value(QStringLiteral("com.xerahs.app")).toObject().value(QStringLiteral("upload_result")).toObject();
+    QCOMPARE(upload.value(QStringLiteral("url")).toString(), QStringLiteral("https://example.test/image"));
+    QTest::qWait(200);
+    QCOMPARE(http.received, 1);
+    QCOMPARE(dialogs().size(), 1);
+    // The retained receipt is parentless once its owner is gone. Close it here
+    // so a later case does not treat that receipt as its own result.
+    for (auto *dialog : dialogs()) dialog->close();
+    QApplication::processEvents();
+  }
+
+  void uploadAfterDialogOwnerLossStillHonorsItsCancelButton() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    HttpFixture http; http.holdFirst = true; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    const auto destination = http.destination();
+    DestinationCatalog catalog(dir.filePath(QStringLiteral("destinations.json"))); QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>();
+    QVERIFY(credentials->store(destination.id, QStringLiteral("token"), QStringLiteral("fixture-secret")).ok());
+    const auto path = writeFile(dir, QStringLiteral("cancel-after-owner.txt"), QByteArray("bytes"));
+    auto *owner = new QWidget;
+    FileUploadController controller(portsFor(dir.filePath(QStringLiteral("destinations.json")), credentials), owner);
+    delete owner;
+    QSignalSpy idle(&controller, &FileUploadController::finished);
+    QSignalSpy completed(&controller, &FileUploadController::fileCompleted);
+    controller.upload({path});
+    QTRY_COMPARE_WITH_TIMEOUT(http.received, 1, 7000);
+    QProgressDialog *progress = nullptr;
+    for (auto *widget : QApplication::topLevelWidgets())
+      if (widget->objectName() == QStringLiteral("fileUploadProgress") && widget->isVisible()) progress = qobject_cast<QProgressDialog *>(widget);
+    QVERIFY(progress);
+    auto *cancel = progress->findChild<QPushButton *>(QStringLiteral("cancelFileUpload")); QVERIFY(cancel);
+    cancel->click();
+    QTRY_COMPARE_WITH_TIMEOUT(idle.count(), 1, 1500);
+    QCOMPARE(completed.count(), 1); QCOMPARE(completed.first().at(1).toBool(), false);
+    QCOMPARE(http.received, 1);
+    for (auto *dialog : dialogs()) dialog->close();
+  }
+
+  void destroyingTheControllerDuringTransferDoesNotRecordSuccessOrSendAgain() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    HttpFixture http; http.holdFirst = true; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    const auto destination = http.destination();
+    DestinationCatalog catalog(dir.filePath(QStringLiteral("destinations.json"))); QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>();
+    QVERIFY(credentials->store(destination.id, QStringLiteral("token"), QStringLiteral("fixture-secret")).ok());
+    const auto path = writeFile(dir, QStringLiteral("in-flight.txt"), QByteArray("in-flight"));
+    QVERIFY(!path.isEmpty());
+    NativeWorkflowExecutions store(dir.filePath(QStringLiteral("executions")));
+    auto ports = portsFor(dir.filePath(QStringLiteral("destinations.json")), credentials);
+    ports.executions = store.writer();
+    auto *owner = new QWidget; owner->show();
+    auto *controller = new FileUploadController(ports, owner, owner);
+    controller->upload({path});
+    QTRY_COMPARE_WITH_TIMEOUT(http.received, 1, 7000);
+    const auto before = dialogs();
+    delete owner;
+    QApplication::processEvents();
+    QTest::qWait(250);
+    QCOMPARE(http.received, 1);
+    for (auto *dialog : dialogs()) QVERIFY(before.contains(dialog));
+    const auto listing = store.list();
+    QCOMPARE(listing.entries.size(), std::size_t(1));
+    QCOMPARE(listing.entries.front().result.value(QStringLiteral("state")).toString(), QStringLiteral("outcome-unconfirmed"));
+    QVERIFY(listing.entries.front().result.value(QStringLiteral("outputs")).toArray().isEmpty());
+    const auto record = xerahs::workflows::parseWorkflowExecution(listing.entries.front().snapshot, listing.entries.front().id);
+    QVERIFY(record);
+    QCOMPARE(record->state, QStringLiteral("capturing"));
+    QVERIFY(record->outputs.isEmpty());
+    QVERIFY(!record->finishedAt.isValid());
+    const auto history = NativePipelineJournal(dir.filePath(QStringLiteral("history"))).list();
+    QCOMPARE(history.entries.size(), std::size_t(0));
+    QTest::qWait(200);
+    QCOMPARE(http.received, 1);
+    for (auto *dialog : dialogs()) QVERIFY(before.contains(dialog));
   }
 
   void uploadFileActionIsSharedWithTheWindow() {
