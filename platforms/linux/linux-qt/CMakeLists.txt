@@ -247,6 +247,7 @@ target_compile_options(xerahs_workflow_shortcuts PRIVATE -Wall -Wextra -Wpedanti
 # The application's shell wiring lives in an object library so tests can build the real command registry.
 add_library(xerahs_app OBJECT
   app/ApplicationIcon.cpp app/ApplicationIcon.h
+  app/CommandPalette.cpp app/CommandPalette.h
   app/DiagnosticsDialog.cpp app/DiagnosticsDialog.h
   app/features/DiagnosticsFeature.cpp app/features/DiagnosticsFeature.h
   app/CaptureWorkflows.cpp

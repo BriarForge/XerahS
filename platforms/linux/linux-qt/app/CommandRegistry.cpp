@@ -53,7 +53,7 @@ bool CommandRegistry::adopt(const CommandSpec &spec, QAction *action) {
 
 QAction *CommandRegistry::action(const QString &id) const {
   const auto it = m_entries.constFind(id);
-  return it == m_entries.cend() ? nullptr : it->action;
+  return it == m_entries.cend() ? nullptr : it->action.data();
 }
 
 const CommandSpec *CommandRegistry::spec(const QString &id) const {
@@ -64,7 +64,7 @@ const CommandSpec *CommandRegistry::spec(const QString &id) const {
 QList<CommandRegistry::Entry> CommandRegistry::ordered(CommandSurface surface) const {
   QList<Entry> list;
   for (auto it = m_entries.cbegin(); it != m_entries.cend(); ++it)
-    if (it->spec.surfaces.testFlag(surface)) list.append(it.value());
+    if (it->action && it->spec.surfaces.testFlag(surface)) list.append(it.value());
   std::stable_sort(list.begin(), list.end(), [](const Entry &a, const Entry &b) {
     const auto left = static_cast<int>(a.spec.group);
     const auto right = static_cast<int>(b.spec.group);

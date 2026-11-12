@@ -88,6 +88,16 @@ private slots:
     QVERIFY(!registry.actions(CommandSurface::Window).first()->isEnabled());
   }
 
+  void destroyedAdoptedActionsAreNoLongerExposed() {
+    CommandRegistry registry;
+    auto *action = new QAction;
+    QVERIFY(registry.adopt(spec(QStringLiteral("temporary"), CommandGroup::Tools, CommandSurface::Tray), action));
+    delete action;
+    QVERIFY(!registry.action(QStringLiteral("temporary")));
+    QVERIFY(registry.ids(CommandSurface::Tray).isEmpty());
+    QVERIFY(registry.actions(CommandSurface::Tray).isEmpty());
+    QMenu menu; registry.populate(&menu, CommandSurface::Tray); QVERIFY(menu.actions().isEmpty());
+  }
   void populateSeparatesOnlyNonEmptyGroups() {
     CommandRegistry registry;
     registry.add(spec(QStringLiteral("capture-region"), CommandGroup::Capture, CommandSurface::Tray));

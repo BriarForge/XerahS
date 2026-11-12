@@ -2,6 +2,8 @@
 // feature installers (installShellFeatures), then every command is checked for
 // a handler or an explicit unavailable explanation. Offscreen, temp profile.
 #include "ShellFixture.h"
+#include "CommandPalette.h"
+#include <QLineEdit>
 #include "ApplicationControl.h"
 #include "RecordingActions.h"
 #include "features/ScheduleFeature.h"
@@ -35,6 +37,47 @@ class ShellCommandsTest final : public QObject {
   QTemporaryDir root;
 private slots:
   void initTestCase() { QVERIFY(root.isValid()); }
+  void commandPaletteEntrySharesTheWindowShortcutAndDispatchesAfterClosing() {
+    Shell shell(root.path()); shell.attach();
+    auto *action = shell.commands.action(QStringLiteral("command-palette")); QVERIFY(action);
+    auto *button = shell.window().findChild<QToolButton *>(QStringLiteral("command-palette"));
+    QVERIFY(button); QCOMPARE(button->defaultAction(), action);
+    QVERIFY(shell.menu.actions().contains(action));
+    QCOMPARE(action->shortcut(), QKeySequence(QStringLiteral("Ctrl+Shift+P")));
+    QCOMPARE(action->shortcutContext(), Qt::WindowShortcut);
+    shell.window().show(); shell.window().activateWindow(); QTest::qWait(20);
+    QTest::keyClick(&shell.window(), Qt::Key_P, Qt::ControlModifier | Qt::ShiftModifier);
+    auto *palette = shell.window().findChild<CommandPalette *>();
+    QTRY_VERIFY(palette && palette->isVisible());
+    auto *search = palette->findChild<QLineEdit *>(QStringLiteral("commandPaletteSearch")); QVERIFY(search);
+    QSignalSpy notices(&shell.capture, &CaptureController::notify);
+    search->setText(QStringLiteral("capture-last-region"));
+    QTest::keyClick(search, Qt::Key_Return);
+    QTRY_COMPARE(notices.size(), 1);
+    QVERIFY(!palette->isVisible()); QVERIFY(QApplication::activeModalWidget() != palette);
+    QVERIFY(notices[0][1].toString().contains(QStringLiteral("last-region-invalid")));
+    button->click(); QTRY_VERIFY(palette->isVisible());
+    palette->reject(); QCOMPARE(notices.size(), 1);
+  }
+  void completionObserverMayDestroyPalette_data() {
+    QTest::addColumn<bool>("accept");
+    QTest::newRow("reject") << false;
+    QTest::newRow("accept") << true;
+  }
+  void completionObserverMayDestroyPalette() {
+    QFETCH(bool, accept);
+    CommandRegistry registry;
+    auto *action = registry.add({QStringLiteral("temporary"), QStringLiteral("Temporary")});
+    QSignalSpy triggered(action, &QAction::triggered);
+    QPointer<CommandPalette> palette = new CommandPalette(registry);
+    auto destroy = [palette] { delete palette.data(); };
+    if (accept) connect(palette, &QDialog::accepted, palette, destroy);
+    else connect(palette, &QDialog::rejected, palette, destroy);
+    palette->show();
+    if (accept) palette->accept(); else palette->reject();
+    QVERIFY(palette.isNull());
+    QCoreApplication::processEvents(); QCOMPARE(triggered.size(), 0);
+  }
   void everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation() {
     Shell shell(root.path()); shell.attach();
     const auto surfaces = {CommandSurface::Tray, CommandSurface::Window, CommandSurface::FileMenu, CommandSurface::CaptureMenu, CommandSurface::ToolsMenu, CommandSurface::PreferencesMenu};

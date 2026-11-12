@@ -22,6 +22,7 @@
 #include <QList>
 #include <QMap>
 #include <QObject>
+#include <QPointer>
 #include <QString>
 #include <QStringList>
 
@@ -70,7 +71,7 @@ public:
   void populate(QMenu *menu, CommandSurface surface) const;
 
 private:
-  struct Entry { CommandSpec spec; QAction *action = nullptr; int sequence = 0; };
+  struct Entry { CommandSpec spec; QPointer<QAction> action; int sequence = 0; };
   QList<Entry> ordered(CommandSurface surface) const;
   QMap<QString, Entry> m_entries;
   int m_sequence = 0;

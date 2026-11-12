@@ -104,6 +104,7 @@ void ApplicationWindow::build(CommandRegistry &commands) {
   if (auto *cancel = commands.action(QStringLiteral("cancel-capture"))) {
     cancel->setShortcut(QKeySequence(Qt::Key_Escape)); cancel->setShortcutContext(Qt::WindowShortcut); addAction(cancel);
   }
+  if (auto *palette = commands.action(QStringLiteral("command-palette"))) addAction(palette);
   new NativeWindowPlacement(*this);
   new NativeAccessibility(*this, tr("XerahS commands, current operation status and cancellation. Use menus or Tab to navigate commands."), false);
   resize(640, 360);

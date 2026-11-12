@@ -383,7 +383,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Registry unifies tray/window/hotkey actions and availability; complete notification/command-palette and full keyboard surface inventory is not established.",
+      "note": "Registry unifies tray/window/hotkey actions and availability. Native command palette now searches every registered surface, updates action state live, and invokes the shared QAction only after releasing modality; Ctrl+Shift+P, tray, File menu and main-window button open the same palette. Disabled/hidden/deleted actions and destroyed owners cannot dispatch. Real-shell keyboard and stale-region refusal paths pass. Native desktop notifications remain informational with no actions; complete notification-operation surface qualification remains open.",
       "evidence": [
         "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
         "platforms/linux/linux-qt/app/main.cpp",
@@ -421,7 +421,12 @@
         "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/app/CommandPalette.cpp",
+        "platforms/linux/linux-qt/app/COMMAND-PALETTE.md",
+        "platforms/linux/linux-qt/app/CommandRegistry.cpp",
+        "platforms/linux/linux-qt/app/features/ApplicationFeature.cpp",
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp"
       ],
       "audit": {
         "classification": "partial",
