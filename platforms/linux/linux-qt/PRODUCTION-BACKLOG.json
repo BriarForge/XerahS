@@ -715,6 +715,19 @@
         "platforms/linux/linux-qt/app/FileUploadController.cpp",
         "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
       ]
+    },
+    {
+      "date": "2026-11-13",
+      "requirements": [
+        "CORE-004",
+        "CORE-025"
+      ],
+      "outcome": "Recursive watch discovery now runs on one owned worker; repeated scan requests coalesce. Held-enumeration evidence proves GUI event delivery, cancellation, changed rule/capture-folder rejection, safe owner destruction and rediscovery of retained sources. Existing readiness, exclusions, duplicate checkpoints and copy/move/upload result tests wait for completed observations without weakening their assertions. The earlier synchronous-discovery finding is resolved for enumeration; watcher registration, final candidate identity checks, checkpoint I/O and unknown-publication restart policy remain separate.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
+      ]
     }
   ],
   "audit_method": "All 16 manifest capabilities / 345 IDs reviewed against current production and meaningful named automated test bodies. 325 desktop rows classified; 20 mobile-only requirements explicitly outside Linux scope.",

@@ -320,6 +320,16 @@ such files until explicit recovery/removal. Recovery paths never authorize
 automatic cleanup or retry; pending/retained records cannot be forgotten.
 `CaptureDeleteTest` covers real filesystem/HTTP, restart and native history flows.
 
+**Watch-folder discovery:** Recursive directory enumeration, filtering and file
+fingerprints run on an owned worker. Repeated timer and filesystem notifications
+coalesce into a follow-up scan. Stop stays reachable during discovery; an older
+scan cannot start an action after Stop, rule replacement, capture-folder changes
+or service destruction. Restart rediscovers retained source files. The current
+filesystem call may finish before cooperative cancellation is observed. Watcher
+registration, final file identity checks and checkpoint writes still use the
+GUI thread. `WatchFolderServiceTest` holds real discovery on its worker while
+verifying GUI events, cancellation, restart and actual copied file contents.
+
 **Stopping a watch-folder Move:** If Stop arrives after the destination copy has
 committed, XerahS preserves that copy and the original source. History records
 the completed copy and cancelled source removal as a partial result; the

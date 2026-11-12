@@ -20,6 +20,9 @@ public:
   ~WatchFolderService() override;
   // Test seam: called on the worker thread before each copied chunk.
   void setFileOperationHook(std::function<void(const QString &)> hook);
+  // Test seam: called on the worker before each directory enumeration.
+  void setDiscoveryHook(std::function<void()> hook);
+  bool discovering() const { return m_discovery.running(); }
   // WFCAT-002: execution records for copy/move; empty uses the shared directory.
   // Test seam: called on the worker thread after the copy committed, before the source is removed.
   void setBeforeRemoveHook(std::function<void(const QString &)> hook);
@@ -54,7 +57,11 @@ private:
   QJsonObject m_terminalObservation;
   QString m_terminalState;  // shared terminal projection of the pending operation
   OwnedWork m_work;
+  OwnedWork m_discovery;
+  quint64 m_discoveryGeneration = 0;
+  bool m_rescanRequested = false;
   std::function<void(const QString &)> m_fileHook, m_removeHook;
+  std::function<void()> m_discoveryHook;
   bool m_running = false;
   bool m_blocked = false;
 };

@@ -44,6 +44,7 @@ public:
   using Clock = std::function<qint64()>;
   explicit StabilityTracker(Clock clock = {});
   bool ready(const QString &path);
+  bool ready(const QString &path, const QString &observedFingerprint);
   void retain(const QSet<QString> &paths);
 private:
   struct Observation { QString key; qint64 since; };

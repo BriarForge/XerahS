@@ -165,7 +165,10 @@ StabilityTracker::StabilityTracker(Clock clock) : m_clock(std::move(clock)) {
   if (!m_clock) { QElapsedTimer timer; timer.start(); m_clock = [timer] { return timer.elapsed(); }; }
 }
 bool StabilityTracker::ready(const QString &path) {
-  const auto key = fingerprint(path); const auto now = m_clock();
+  return ready(path, fingerprint(path));
+}
+bool StabilityTracker::ready(const QString &path, const QString &key) {
+  const auto now = m_clock();
   if (key.isEmpty()) { m_observed.remove(path); return false; }
   auto it = m_observed.find(path);
   if (it == m_observed.end() || it->key != key) { m_observed.insert(path, {key, now}); return false; }

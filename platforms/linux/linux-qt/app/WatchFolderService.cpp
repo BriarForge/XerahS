@@ -34,15 +34,19 @@ void WatchFolderService::start() {
 }
 void WatchFolderService::stop() {
   m_running = false; m_timer.stop(); m_work.cancel();
+  ++m_discoveryGeneration; m_discovery.cancel(); m_rescanRequested = false;
   if (!m_watcher.directories().isEmpty()) m_watcher.removePaths(m_watcher.directories());
   m_uploads.cancel();
 }
 QString WatchFolderService::setRules(const QVector<watch::Rule> &rules) {
   const auto error = m_store.saveRules(rules, m_captures());
-  if (error.isEmpty()) { m_reported.clear(); rescan(); }
+  if (error.isEmpty()) {
+    ++m_discoveryGeneration; m_discovery.cancel();
+    m_reported.clear(); rescan();
+  }
   return error;
 }
-WatchFolderService::~WatchFolderService() { m_work.cancel(); }
+WatchFolderService::~WatchFolderService() { m_work.cancel(); m_discovery.cancel(); }
 void WatchFolderService::setBeforeRemoveHook(std::function<void(const QString &)> hook) { m_removeHook = std::move(hook); }
 void WatchFolderService::setExecutionWriter(workflows::WorkflowExecution::Writer writer) { m_executionWriter = std::move(writer); }
 namespace {
@@ -53,6 +57,7 @@ QJsonObject ruleSnapshot(const watch::Rule &rule) {
 }
 }
 void WatchFolderService::setFileOperationHook(std::function<void(const QString &)> hook) { m_fileHook = std::move(hook); }
+void WatchFolderService::setDiscoveryHook(std::function<void()> hook) { m_discoveryHook = std::move(hook); }
 // Copy/move runs on an owned worker; the GUI thread only snapshots inputs and receives the verdict.
 void WatchFolderService::startFileWork(const QString &sourcePath, const QString &key, const watch::Rule &rule) {
   const bool move = rule.action == watch::Action::Move;
@@ -157,55 +162,100 @@ void WatchFolderService::complete(const QString &path, bool success, const QStri
 }
 void WatchFolderService::rescan() {
   if (!m_running || m_blocked) return;
-  QSet<QString> directories, files;
-  struct Candidate { QString path; watch::Rule rule; };
-  QVector<Candidate> candidates;
-  const auto captures = QDir::cleanPath(QFileInfo(m_captures()).absoluteFilePath());
-  const auto canonicalCaptures = QFileInfo(captures).canonicalFilePath();
-  const auto excluded = [&](const QString &path) {
-    for (const auto &root : {captures, canonicalCaptures})
-      if (!root.isEmpty() && (path == root || path.startsWith(root + '/'))) return true;
-    return false;
+  if (m_discovery.running()) { m_rescanRequested = true; return; }
+  m_rescanRequested = false;
+  struct Candidate { QString path, key; watch::Rule rule; };
+  struct Discovery {
+    QSet<QString> directories, files;
+    QVector<Candidate> candidates;
+    QVector<QPair<QString, QString>> reports;
+    bool cancelled = false;
   };
-  const auto report = [&](const QString &key, const QString &error) {
-    if (!m_reported.contains(key)) { m_reported.insert(key); emit notify(error, false); }
-  };
-  for (const auto &rule : m_store.rules()) {
-    if (!rule.enabled) continue;
-    QString root;
-    const auto error = watch::authorizeRoot(rule.path, captures, &root);
-    if (!error.isEmpty() || root != rule.path) { report(rule.path, error.isEmpty() ? "watch-root-changed" : error); continue; }
-    QStringList pending{root};
-    while (!pending.isEmpty()) {
-      const auto directory = pending.takeLast();
-      if (directories.contains(directory) || excluded(directory)) continue;
-      const QFileInfo info(directory);
-      if (info.isSymLink() || info.ownerId() != QFileInfo(root).ownerId() || !info.isReadable() || !info.isExecutable()) { report(directory, "watch-directory-denied"); continue; }
-      directories.insert(directory);
-      for (const auto &entry : QDir(directory).entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot, QDir::Name)) {
-        if (entry.isSymLink() || entry.isHidden() || excluded(entry.absoluteFilePath())) continue;
-        if (entry.isDir()) { if (rule.recursive) pending.append(entry.absoluteFilePath()); continue; }
-        if (entry.ownerId() != info.ownerId() || !watch::matches(rule, entry.absoluteFilePath())) continue;
-        const auto path = entry.absoluteFilePath(); files.insert(path);
-        if (m_stability.ready(path)) candidates.append({path, rule});
+  const auto generation = m_discoveryGeneration;
+  const auto rules = m_store.rules();
+  const auto capturesFolder = m_captures();
+  const auto hook = m_discoveryHook;
+  m_discovery = OwnedWork::run<Discovery>(this,
+      [rules, capturesFolder, hook](const OwnedWork::Context &ctx) {
+    Discovery result;
+    const auto captures = QDir::cleanPath(QFileInfo(capturesFolder).absoluteFilePath());
+    const auto canonicalCaptures = QFileInfo(captures).canonicalFilePath();
+    const auto excluded = [&](const QString &path) {
+      for (const auto &root : {captures, canonicalCaptures})
+        if (!root.isEmpty() && (path == root || path.startsWith(root + '/'))) return true;
+      return false;
+    };
+    for (const auto &rule : rules) {
+      if (ctx.cancelled()) { result.cancelled = true; return result; }
+      if (!rule.enabled) continue;
+      QString root;
+      const auto error = watch::authorizeRoot(rule.path, captures, &root);
+      if (!error.isEmpty() || root != rule.path) {
+        result.reports.append({rule.path, error.isEmpty() ? QStringLiteral("watch-root-changed") : error});
+        continue;
+      }
+      QStringList pending{root};
+      while (!pending.isEmpty()) {
+        if (ctx.cancelled()) { result.cancelled = true; return result; }
+        const auto directory = pending.takeLast();
+        if (result.directories.contains(directory) || excluded(directory)) continue;
+        const QFileInfo info(directory);
+        if (info.isSymLink() || info.ownerId() != QFileInfo(root).ownerId() || !info.isReadable() || !info.isExecutable()) {
+          result.reports.append({directory, QStringLiteral("watch-directory-denied")});
+          continue;
+        }
+        result.directories.insert(directory);
+        if (hook) hook();
+        if (ctx.cancelled()) { result.cancelled = true; return result; }
+        for (const auto &entry : QDir(directory).entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot, QDir::Name)) {
+          if (ctx.cancelled()) { result.cancelled = true; return result; }
+          if (entry.isSymLink() || entry.isHidden() || excluded(entry.absoluteFilePath())) continue;
+          if (entry.isDir()) { if (rule.recursive) pending.append(entry.absoluteFilePath()); continue; }
+          if (entry.ownerId() != info.ownerId() || !watch::matches(rule, entry.absoluteFilePath())) continue;
+          const auto path = entry.absoluteFilePath(); result.files.insert(path);
+          result.candidates.append({path, watch::fingerprint(path), rule});
+        }
       }
     }
-  }
-  m_stability.retain(files);
-  const auto watched = m_watcher.directories();
-  QStringList remove, add;
-  for (const auto &path : watched) if (!directories.contains(path)) remove.append(path);
-  for (const auto &path : directories) if (!watched.contains(path)) add.append(path);
-  if (!remove.isEmpty()) m_watcher.removePaths(remove);
-  if (!add.isEmpty()) for (const auto &path : m_watcher.addPaths(add)) report(path + ":watcher", "watch-notification-unavailable; periodic scanning remains active");
-  if (!m_pendingPath.isEmpty()) return;
-  for (const auto &candidate : candidates) {
-    const auto key = watch::fingerprint(candidate.path);
-    if (key.isEmpty() || m_store.processed(key) || m_attempted.contains(key)) continue;
-    m_pendingPath = candidate.path; m_pendingKey = key; m_attempted.insert(key);
-    if (candidate.rule.action == watch::Action::Upload) { m_uploads.uploadFromWatchFolder(candidate.path, ruleSnapshot(candidate.rule)); return; }
-    startFileWork(candidate.path, key, candidate.rule);
-    return;
-  }
+    return result;
+  }, [this, generation, capturesFolder](Discovery result) {
+    if (!m_running || m_blocked) return;
+    if (generation != m_discoveryGeneration || capturesFolder != m_captures()) { rescan(); return; }
+    if (result.cancelled) return;
+    const QPointer<WatchFolderService> guard(this);
+    const auto report = [&](const QString &key, const QString &error) {
+      if (!m_reported.contains(key)) { m_reported.insert(key); emit notify(error, false); }
+    };
+    for (const auto &item : result.reports) {
+      report(item.first, item.second);
+      if (!guard || !m_running || generation != m_discoveryGeneration) return;
+    }
+    QVector<Candidate> ready;
+    for (const auto &candidate : result.candidates)
+      if (m_stability.ready(candidate.path, candidate.key)) ready.append(candidate);
+    m_stability.retain(result.files);
+    const auto watched = m_watcher.directories();
+    const QSet<QString> watchedSet(watched.begin(), watched.end());
+    QStringList remove, add;
+    for (const auto &path : watched) if (!result.directories.contains(path)) remove.append(path);
+    for (const auto &path : result.directories) if (!watchedSet.contains(path)) add.append(path);
+    if (!remove.isEmpty()) m_watcher.removePaths(remove);
+    if (!add.isEmpty()) for (const auto &path : m_watcher.addPaths(add)) {
+      report(path + ":watcher", "watch-notification-unavailable; periodic scanning remains active");
+      if (!guard || !m_running || generation != m_discoveryGeneration) return;
+    }
+    if (m_pendingPath.isEmpty()) for (const auto &candidate : ready) {
+      const auto &key = candidate.key;
+      if (key.isEmpty() || m_store.processed(key) || m_attempted.contains(key)) continue;
+      // The worker's observation cannot authorize a file replaced before dispatch.
+      if (watch::fingerprint(candidate.path) != key) continue;
+      m_pendingPath = candidate.path; m_pendingKey = key; m_attempted.insert(key);
+      if (candidate.rule.action == watch::Action::Upload)
+        m_uploads.uploadFromWatchFolder(candidate.path, ruleSnapshot(candidate.rule));
+      else startFileWork(candidate.path, key, candidate.rule);
+      break;
+    }
+    if (guard && m_rescanRequested) rescan();
+  });
 }
 }

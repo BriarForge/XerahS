@@ -215,7 +215,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "OwnedWork capture/editor/upload/recording and watch copy/move preserve outputs with progress/cancellation tests. Universal blocking-operation ownership is incomplete: WatchFolderService::rescan still walks/stats whole authorized trees synchronously, delaying GUI Stop; additional recovery/storage paths remain to audit independently.",
+      "note": "OwnedWork capture/editor/upload/recording and watch copy/move preserve outputs with progress/cancellation tests. Recursive watch discovery now runs on one owned worker: timer/watcher requests coalesce, Stop cancels between filesystem calls, and stale rule/capture-folder or destroyed-owner results cannot start file work. A held-enumeration regression proves GUI timer delivery and retained sources; the earlier version failed its GUI-thread assertion. Directory watcher registration, the final per-file identity check, rule/checkpoint persistence and additional recovery/storage paths remain synchronous or independently unqualified. The audit below records the earlier synchronous discovery revision.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
@@ -254,7 +254,9 @@
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
         "platforms/linux/linux-qt/app/FileUploadController.cpp",
         "platforms/linux/linux-qt/app/FileUploadController.h",
-        "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
+        "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/src/watch/WatchFolders.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -1355,11 +1357,12 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Canonical authorized roots, readiness filtering, per-file duplicate checkpoints and owned cancellable copy/move/upload exist. However rescan recursively enumerates and stats the authorized tree on the GUI thread before checking pending work; no bounded/cancellable discovery path qualifies clean Stop for large or slow trees.",
+      "note": "Canonical authorized roots, readiness filtering, per-file duplicate checkpoints and owned cancellable copy/move/upload exist. Recursive enumeration, filtering and fingerprint collection now run on one owned worker with immutable rules/capture-folder inputs. Readiness state, the injected clock, watcher changes and dispatch stay on the GUI thread; a final file identity check rejects a changed candidate. Tests cover coalescing, responsive GUI timers, Stop/restart without lost source files, changed rules/capture folder, destroyed owner, nested exclusions and existing copy/move/upload checkpoints/failures. Cross-restart policy for unacknowledged remote publication and full filesystem/native qualification remain open; the audit below describes the earlier GUI discovery gap.",
       "evidence": [
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-        "platforms/linux/linux-qt/app/WatchFolderService.cpp"
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/src/watch/WatchFolders.cpp"
       ],
       "audit": {
         "classification": "partial",
