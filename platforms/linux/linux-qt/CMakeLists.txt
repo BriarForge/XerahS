@@ -788,7 +788,7 @@ set_target_properties(annotation-shapes-test PROPERTIES AUTOMOC ON)
 target_include_directories(annotation-shapes-test PRIVATE app)
 target_link_libraries(annotation-shapes-test PRIVATE xerahs_editor_canvas Qt6::Widgets Qt6::Test)
 add_test(NAME annotation-shapes COMMAND annotation-shapes-test)
-set_tests_properties(annotation-shapes PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
+set_tests_properties(annotation-shapes PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=")
 set_tests_properties(editor-canvas PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
 add_executable(effect-region-test tests/EffectRegionTest.cpp)
 set_target_properties(effect-region-test PROPERTIES AUTOMOC ON)
@@ -1626,7 +1626,7 @@ add_executable(image-insert-test tests/ImageInsertTest.cpp)
 set_target_properties(image-insert-test PROPERTIES AUTOMOC ON)
 target_link_libraries(image-insert-test PRIVATE xerahs_editor_canvas Qt6::Test)
 add_test(NAME image-insert COMMAND image-insert-test)
-set_tests_properties(image-insert PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+set_tests_properties(image-insert PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
 add_executable(capture-delete-fixture tests/CaptureDeleteFixture.cpp
   app/CapturePipeline.cpp app/CapturePipeline.h app/CaptureActions.cpp app/CaptureActions.h

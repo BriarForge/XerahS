@@ -18,7 +18,8 @@
     "platforms/linux/linux-qt/app/features/ShellFeatures.cpp",
     "platforms/linux/linux-qt/app/DestinationConnectionTest.cpp",
     "platforms/linux/linux-qt/src/uploads/UploadRequest.cpp",
-    "platforms/linux/linux-qt/app/NativeAccessibility.h"
+    "platforms/linux/linux-qt/app/NativeAccessibility.h",
+    "platforms/linux/linux-qt/app/WatchFolderService.cpp"
   ],
   "requirements": {
     "IFCAT-001": {
@@ -40,7 +41,7 @@
         "classification": "not-started",
         "spec_line": 9,
         "coverage": "Full interface-ledger approved operation/request/authority/accessibility/disposition definitions are incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -48,7 +49,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -56,15 +57,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
+            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 36
+            "line": 38
           }
         ]
       },
@@ -89,7 +90,7 @@
         "classification": "partial",
         "spec_line": 13,
         "coverage": "Existing GUI/tray/hotkey/CLI operations share domain paths; MCP/provider breadth and complete cross-entry side-effect equivalence remain incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -97,7 +98,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -105,15 +106,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
+            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 36
+            "line": 38
           }
         ]
       },
@@ -138,7 +139,7 @@
         "classification": "partial",
         "spec_line": 16,
         "coverage": "InterfaceStatesTest exercises actual native loading/validation/failure/result cues for many tools; universal GUI-state inventory including every permission/partial outcome is not complete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -146,7 +147,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -154,15 +155,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/InterfaceStatesTest.cpp",
-            "sha256": "be4536baaea53d748a1083a7437384c3fee50d6b982559ba0d5887ebadcce28c",
+            "sha256": "10db0506058e3852279d3fbdc07f5952d2775ba78b66a535eccfde031c9e2346",
             "method": "shellWindowStatesAreVisibleTextWithAnAccessibleCue",
-            "line": 181
+            "line": 791
           }
         ]
       },
@@ -187,7 +188,7 @@
         "classification": "partial",
         "spec_line": 19,
         "coverage": "Native widget accessibility audit checks names/tab chains/contrast/motion/layout; physical screen-reader/native conventions and complete surface coverage remain unaccepted.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp"
         ],
@@ -201,7 +202,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -209,7 +210,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
@@ -227,7 +228,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Existing asynchronous/native modal dialogs have safe Cancel defaults/focus restoration and consequence text; complete every-modal/permission/destructive surface matrix remains incomplete.",
+      "note": "Broad native modal fixtures verify safe defaults, purpose/consequences, active focus confinement, Escape and focus restoration. Universal permission/destructive-dialog and physical screen-reader/native target coverage remains incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -243,8 +244,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 23,
-        "coverage": "Existing asynchronous/native modal dialogs have safe Cancel defaults/focus restoration and consequence text; complete every-modal/permission/destructive surface matrix remains incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Broad native modal fixtures verify safe defaults, purpose/consequences, active focus confinement, Escape and focus restoration. Universal permission/destructive-dialog and physical screen-reader/native target coverage remains incomplete.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -252,7 +253,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -260,15 +261,21 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
-            "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 36
+            "path": "platforms/linux/linux-qt/tests/ModalDialogsTest.cpp",
+            "sha256": "9b3da2e9215c2aab98ff8a4ec73cb38cbb4104b528431c12226af57f9b1f9f2b",
+            "method": "everyChoiceConfirmationDefaultsToASafeButtonAndHasAPurposefulTitle",
+            "line": 122
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ModalDialogsTest.cpp",
+            "sha256": "9b3da2e9215c2aab98ff8a4ec73cb38cbb4104b528431c12226af57f9b1f9f2b",
+            "method": "modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus",
+            "line": 176
           }
         ]
       },
@@ -278,7 +285,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native worker progress/cancellation and retained results are tested for capture/editor/media/upload and watch-folder copy/move (owned worker, cancel on stop, partial output removed); every other long-running surface remains outside complete coverage.",
+      "note": "Capture/editor/hash/media/upload and copy/move workers expose progress and cancellation with retained results; hash result survives transient close. Universal long-running surfaces remain partial because watcher recursive discovery and some storage/recovery entry work are synchronous.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -296,8 +303,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 27,
-        "coverage": "Native worker progress/cancellation and retained results are tested for capture/editor/media/upload and watch-folder copy/move (owned worker, cancel on stop, partial output removed); every other long-running surface remains outside complete coverage.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Capture/editor/hash/media/upload and copy/move workers expose progress and cancellation with retained results; hash result survives transient close. Universal long-running surfaces remain partial because watcher recursive discovery and some storage/recovery entry work are synchronous.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -305,7 +312,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -313,29 +320,35 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
+            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
-            "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 36
+            "path": "platforms/linux/linux-qt/tests/OperationResultsTest.cpp",
+            "sha256": "cc821e9691eb29f96265d3b4a8489346679af7099c6c7334b6c33d2c6b0351fd",
+            "method": "unknownSizeWorkShowsIndeterminateProgressAndCancelsCooperatively",
+            "line": 57
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/OperationResultsTest.cpp",
+            "sha256": "cc821e9691eb29f96265d3b4a8489346679af7099c6c7334b6c33d2c6b0351fd",
+            "method": "aFinishedResultSurvivesClosingTheToolWindowAndReopeningIt",
+            "line": 71
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "a03777aa45f43e0f19970a45a9865233bbe0b8ee81f423d23139a047ae2572cf",
-            "method": "stopCancelsCopyWithoutPartialOutput",
-            "line": 556
+            "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+            "method": "slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed",
+            "line": 593
           }
         ]
       },
-      "previous_note": "OwnedWork and domain cancellation/progress have native lifetime tests. Real-shell tests now show unknown-size tool work reports indeterminate progress and cancels cooperatively with a visible terminal state; hiding the shell window mid-operation does not cancel it and the latest progress and terminal result are there when it is shown again; and a finished tool result survives closing and reopening its window. That test found and fixed a defect: closing the hash checker after it finished replaced the terminal status with 'Cancelling…' and disabled its progress. Remaining: only the shell window and the hash tool are covered; other operation families (editor save/print/upload, recording, conversion, OCR, capture pipeline) and a durable record for tool-window results beyond the open window are not converged. Audit 2026-11-03: OperationResultsTest::unknownSizeWorkShowsIndeterminateProgressAndCancelsCooperatively, aFinishedResultSurvivesClosingTheToolWindowAndReopeningIt (failed before the HashCheckerDialog::cancel guard), hidingTheShellWindowDoesNotCancelAndKeepsTheLatestResult; ApplicationWindowTest::preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults covers determinate progress. Row stays partial: other operation families are not driven."
+      "previous_note": "OwnedWork and domain cancellation/progress have native lifetime tests. Real-shell tests now show unknown-size tool work reports indeterminate progress and cancels cooperatively with a visible terminal state; hiding the shell window mid-operation does not cancel it and the latest progress and terminal result are there when it is shown again; and a finished tool result survives closing and reopening its window. That test found and fixed a defect: closing the hash checker after it finished replaced the terminal status with 'Cancelling\u2026' and disabled its progress. Remaining: only the shell window and the hash tool are covered; other operation families (editor save/print/upload, recording, conversion, OCR, capture pipeline) and a durable record for tool-window results beyond the open window are not converged. Audit 2026-11-03: OperationResultsTest::unknownSizeWorkShowsIndeterminateProgressAndCancelsCooperatively, aFinishedResultSurvivesClosingTheToolWindowAndReopeningIt (failed before the HashCheckerDialog::cancel guard), hidingTheShellWindowDoesNotCancelAndKeepsTheLatestResult; ApplicationWindowTest::preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults covers determinate progress. Row stays partial: other operation families are not driven."
     },
     "IFCAT-007": {
       "status": "partial",
@@ -356,7 +369,7 @@
         "classification": "partial",
         "spec_line": 30,
         "coverage": "NativeSurfaceAccessibilityTest and translations test expanded/scaled/RTL tool layouts; full topology/font-substitution/scaling/localization matrix across all supported targets is not established.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -364,7 +377,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -372,7 +385,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
@@ -408,7 +421,7 @@
         "classification": "implemented",
         "spec_line": 34,
         "coverage": "CLI-CONTRACT and real-process fixtures verify stable command grammar/environment precedence, help, stream ownership, machine output, exit statuses and SIGINT/SIGTERM cleanup.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -416,7 +429,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -424,7 +437,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
@@ -456,7 +469,7 @@
         "classification": "implemented",
         "spec_line": 37,
         "coverage": "Actual-process --non-interactive commands refuse presentation/consent-dependent operations before forwarding or effects and return explicit presentation-required failures.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -464,7 +477,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -472,13 +485,13 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
-            "sha256": "cf143c460a6c7e9e7887c54570b37a19b3d025e972e95fad59dde2f7e661ff22",
+            "sha256": "d7aae0372167480dffebf0fdc15430d397bac8f1ef83b24306c13423a6b91d70",
             "method": "nonInteractiveNeverForwardsToARunningOwnerOrPerformsTheOperation",
             "line": 391
           }
@@ -505,7 +518,7 @@
         "classification": "implemented",
         "spec_line": 40,
         "coverage": "Actual-process CLI redaction tests cover all modes including noisy diagnostic environment, private IDs/paths/corrupt settings; verbosity cannot expose raw private input.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -513,7 +526,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -521,7 +534,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
@@ -544,7 +557,7 @@
         "classification": "blocked",
         "spec_line": 43,
         "coverage": "Human-approved MCP schema/authority/side-effect/progress/cancellation policy is pending; no native MCP implementation qualifies this row.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -552,7 +565,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -560,15 +573,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
+            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 36
+            "line": 38
           }
         ]
       },
@@ -587,7 +600,7 @@
         "classification": "blocked",
         "spec_line": 47,
         "coverage": "MCP/agent human-consent and least-authority security posture require product-owner approval; no agent-origin execution is authorized by imported text.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -595,7 +608,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -603,15 +616,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
+            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 36
+            "line": 38
           }
         ]
       },
@@ -630,7 +643,7 @@
         "classification": "blocked",
         "spec_line": 52,
         "coverage": "Human-approved MCP granted-scope, metadata-only discovery and returned-data lifetime policy are pending.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -638,7 +651,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -646,15 +659,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
+            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 36
+            "line": 38
           }
         ]
       },
@@ -683,7 +696,7 @@
         "classification": "partial",
         "spec_line": 56,
         "coverage": "Static custom uploader fields/secret refs and native editor validation exist; complete versioned provider field/help/conditional/auth action schema inventory is incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -691,7 +704,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -699,15 +712,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
+            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 36
+            "line": 38
           }
         ]
       },
@@ -734,7 +747,7 @@
         "classification": "partial",
         "spec_line": 60,
         "coverage": "Native explicit cancellable HEAD connection tests perform no implicit view-time request; complete provider authentication action family and physical credential review remain incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/DestinationConnectionTestTest.cpp"
         ],
@@ -748,7 +761,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -756,15 +769,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
+            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 36
+            "line": 38
           }
         ]
       },
@@ -792,7 +805,7 @@
         "classification": "partial",
         "spec_line": 63,
         "coverage": "Shared fixed code/message/retry table and correlation receipts cover existing shell/pipeline paths; universal mapping across every native tool/provider surface remains incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -800,7 +813,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -808,7 +821,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
@@ -843,7 +856,7 @@
         "classification": "partial",
         "spec_line": 66,
         "coverage": "Registered commands have handlers or explicit unavailable explanations and native unsupported workflow definitions are refused; accepted equivalent/degraded dispositions across all integrations remain open.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -851,7 +864,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -859,15 +872,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
+            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 36
+            "line": 38
           }
         ]
       },
@@ -893,7 +906,7 @@
         "classification": "blocked",
         "spec_line": 70,
         "coverage": "Full cross-entry/schema/authority/physical screen-reader/localization/provider/all-platform activation matrix and acceptance remain pending.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -901,7 +914,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "c3f91813bdfc64251a784ecf41136751c9ea8d7a062f7add938f15524cc607e9"
+            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -909,15 +922,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-            "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+            "sha256": "e4e9ed5fb5918f1465add54e59cecc5d4d0c05076ce35f80718d2bac818c9b76"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
+            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 36
+            "line": 38
           }
         ]
       },
@@ -925,16 +938,24 @@
       "blocked_reason": "Full cross-entry/schema/authority/physical screen-reader/localization/provider/all-platform activation matrix and acceptance remain pending."
     }
   },
-  "audit_scope": "All normative Linux-applicable clauses reviewed against current production and automated test bodies; candidate implementation is separate from physical, cross-platform and human acceptance.",
+  "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
-    "checked_at": "2026-11-04T14:04:38.855452+00:00",
+    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+    "checked_at": "2026-11-11T15:27:15.305729+00:00",
     "specification": "product-contract/capabilities/INTERFACE-CATALOG-001/SPEC.md",
     "specification_sha256": "f9a2c5eecfa17e78f79abf8b0565e6e68a7008c0fefb64b47194660d2d4538fb",
-    "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "reviewed_requirement_count": 18,
+    "counts": {
+      "blocked": 4,
+      "implemented": 3,
+      "not-started": 1,
+      "partial": 10
+    },
     "production_surfaces": [
       "platforms/linux/linux-qt/app/CommandRegistry.cpp",
       "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
+      "platforms/linux/linux-qt/app/WatchFolderService.cpp",
       "platforms/linux/linux-qt/app/main.cpp",
       "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp"
     ],
@@ -949,32 +970,30 @@
       "platforms/linux/linux-qt/tests/InterfaceStatesTest.cpp": [
         "shellWindowStatesAreVisibleTextWithAnAccessibleCue"
       ],
+      "platforms/linux/linux-qt/tests/ModalDialogsTest.cpp": [
+        "everyChoiceConfirmationDefaultsToASafeButtonAndHasAPurposefulTitle",
+        "modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus"
+      ],
       "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp": [
         "nonInteractiveNeverForwardsToARunningOwnerOrPerformsTheOperation"
       ],
       "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp": [
         "nativeSurfaces"
       ],
+      "platforms/linux/linux-qt/tests/OperationResultsTest.cpp": [
+        "aFinishedResultSurvivesClosingTheToolWindowAndReopeningIt",
+        "unknownSizeWorkShowsIndeterminateProgressAndCancelsCooperatively"
+      ],
       "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp": [
         "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation"
+      ],
+      "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp": [
+        "slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed"
       ]
     },
-    "remaining_scope": "IFCAT-001; IFCAT-002; IFCAT-003; IFCAT-004; IFCAT-005; IFCAT-006; IFCAT-007; IFCAT-011; IFCAT-012; IFCAT-013; IFCAT-014; IFCAT-015; IFCAT-016; IFCAT-017; IFCAT-018",
-    "reviewed_requirement_count": 18,
-    "finding": "Current source review: {'not-started': 1, 'partial': 10, 'implemented': 3, 'blocked': 4}. Per-row reasons and exact hashed anchors record scope and limitations.",
-    "review_anchor": {
-      "production": {
-        "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
-        "sha256": "c97ced4cf3726f79fa7fb61b15d1a71a9f53776415ab3384177890834629ce82"
-      },
-      "test": {
-        "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-        "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
-        "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-        "line": 36
-      },
-      "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
-    }
+    "findings": [],
+    "remaining_scope": "IFCAT-001, IFCAT-002, IFCAT-003, IFCAT-004, IFCAT-005, IFCAT-006, IFCAT-007, IFCAT-011, IFCAT-012, IFCAT-013, IFCAT-014, IFCAT-015, IFCAT-016, IFCAT-017, IFCAT-018",
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
   },
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
@@ -1063,5 +1082,57 @@
       },
       "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
     }
-  }
+  },
+  "audit_history": [
+    {
+      "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+      "checked_at": "2026-11-04T14:04:38.855452+00:00",
+      "specification": "product-contract/capabilities/INTERFACE-CATALOG-001/SPEC.md",
+      "specification_sha256": "f9a2c5eecfa17e78f79abf8b0565e6e68a7008c0fefb64b47194660d2d4538fb",
+      "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/CommandRegistry.cpp",
+        "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
+        "platforms/linux/linux-qt/app/main.cpp",
+        "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/CliContractTest.cpp": [
+          "primaryExitsWithDocumentedStatusOnSigintAndSigterm",
+          "redactionHoldsInEveryCliModeEvenWithDiagnosticSettings"
+        ],
+        "platforms/linux/linux-qt/tests/ErrorPresentationTest.cpp": [
+          "everyStableCodeHasFixedTextExitStatusAndRetryRule"
+        ],
+        "platforms/linux/linux-qt/tests/InterfaceStatesTest.cpp": [
+          "shellWindowStatesAreVisibleTextWithAnAccessibleCue"
+        ],
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp": [
+          "nonInteractiveNeverForwardsToARunningOwnerOrPerformsTheOperation"
+        ],
+        "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp": [
+          "nativeSurfaces"
+        ],
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp": [
+          "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation"
+        ]
+      },
+      "remaining_scope": "IFCAT-001; IFCAT-002; IFCAT-003; IFCAT-004; IFCAT-005; IFCAT-006; IFCAT-007; IFCAT-011; IFCAT-012; IFCAT-013; IFCAT-014; IFCAT-015; IFCAT-016; IFCAT-017; IFCAT-018",
+      "reviewed_requirement_count": 18,
+      "finding": "Current source review: {'not-started': 1, 'partial': 10, 'implemented': 3, 'blocked': 4}. Per-row reasons and exact hashed anchors record scope and limitations.",
+      "review_anchor": {
+        "production": {
+          "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
+          "sha256": "c97ced4cf3726f79fa7fb61b15d1a71a9f53776415ab3384177890834629ce82"
+        },
+        "test": {
+          "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+          "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
+          "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
+          "line": 36
+        },
+        "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
+      }
+    }
+  ]
 }

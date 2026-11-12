@@ -1,10 +1,10 @@
 # Linux implementation plan
 
-Current source/test audit: 2026-11-04 at `5b5b70d4fac6f09ebdf096b8044e5403004d7e11`. Follow [PRODUCTION-BACKLOG.md](PRODUCTION-BACKLOG.md); per-row evidence is in [traceability/](traceability/). The 325 desktop rows classify 162 tested candidate implementations, 118 partial, 10 not started, 34 blocked and 1 mobile-scope-only row; all 20 mobile-only rows remain outside Linux scope. Partial or blocked breadth is not completion or accepted release disposition.
+Full source/test audit: 2026-11-11 at `d25064efea688636af7f6b7c7b043db2a4d0ed09`; integration reviewed 2026-11-12 at `4dffe3cbe074129f50a6eaf483d76b885261d459`. Current counts include four newer filename/host completions beyond the frozen 169-candidate audit. Follow [PRODUCTION-BACKLOG.md](PRODUCTION-BACKLOG.md) and [traceability/](traceability/). The 325 desktop rows classify 173 tested candidate implementations, 111 partial, 6 not started, 34 blocked and 1 mobile-scope-only row; all 20 mobile requirements remain outside Linux scope. Candidate implementation is distinct from accepted target or release disposition.
 
-Build in dependency order. Fix ES-029 error precedence on the existing document import path, then move watch-folder copy/move into owned worker execution and connect file-upload/watch-folder results to the common workflow lifecycle. Preserve already-working capture/save/copy/upload, selection/consent/delete, recording/scheduling, editor insertion/output, annotation and utility paths. Do not add furniture before its working frame/services, and do not recreate features from stale backlog text.
+Finish the lowest incomplete foundation: preserve unsupported newer/live recovery records, move recovery I/O and restart prompts through OwnedWork, fence upload publication on execution-storage failure, then make watch-folder discovery cancellable. Preserve already-landed recovery disclosure, worker file effects, shared upload/watch results and reviewed legacy history import. The size-priority regression is fixed; remaining ES-029 diagnostic mapping is narrower work.
 
-Native readers, settings, effects and workflow code have meaningful tests; complete ledger/format/target coverage and explicit product decisions remain in the measured backlog. The scheduler still retains model/dependency/threshold/security/release gates even where upstream code or dependency records exist. This is implementation sequencing, not activation approval.
+Model, dependency, threshold, ledger/semantic/retention and security/release questions remain explicit. No source default, reference mapping, native test or dependency note becomes a new contract decision through this audit.
 
 ## Historical implementation notes
 

@@ -35,11 +35,11 @@
         "classification": "implemented",
         "spec_line": 15,
         "coverage": "Shared action factory and canvas expose all 20 stable tools, with exact contract matrix and editor menu tests.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -51,7 +51,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -88,11 +88,11 @@
         "classification": "implemented",
         "spec_line": 19,
         "coverage": "Actual tool controls expose checked state, options and instructions; per-tool native tests verify stay-active behavior.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -104,7 +104,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -135,11 +135,11 @@
         "classification": "implemented",
         "spec_line": 22,
         "coverage": "Guarded selection mutations protect hidden/locked objects; native matrix covers paths/assets move, resize and rotation.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -151,7 +151,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -188,11 +188,11 @@
         "classification": "implemented",
         "spec_line": 25,
         "coverage": "Per-tool native tests cover reverse normalization, explicit outside-canvas policy, zero-area rules and atomic creation.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -204,7 +204,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -241,11 +241,11 @@
         "classification": "implemented",
         "spec_line": 28,
         "coverage": "Typed rectangle/ellipse decorations persist and render border, corner and shadow fields with style, geometry and ordering.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -257,7 +257,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -294,11 +294,11 @@
         "classification": "implemented",
         "spec_line": 31,
         "coverage": "Ordered endpoints and curve anchors are typed; line/arrow styles render and survive native edits, transforms and persistence.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -310,7 +310,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -346,11 +346,11 @@
         "classification": "implemented",
         "spec_line": 34,
         "coverage": "Documented simplification keeps path order/corners and bounded tolerance; tests compare zoom/export stroke pixels.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -362,7 +362,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -386,7 +386,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native text/balloon formatting including glyph-outline and balloon-border candidates is tested; exact regular Text border geometry still lacks recorded product decision.",
+      "note": "Native Text/SpeechBalloon creation/edit offers commit/cancel, multiline/font/size/bold/italic/alignment/text/fill/balloon-border/tail with frozen style/history tests. Regular Text uses glyph-outline candidate code, but the exact Text-border geometry/thickness question is still unapproved in shared loop state; no reference mapping is accepted as product authority.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -397,12 +397,12 @@
       "audit": {
         "classification": "partial",
         "spec_line": 37,
-        "coverage": "Native text/balloon formatting including glyph-outline and balloon-border candidates is tested; exact regular Text border geometry still lacks recorded product decision.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Native Text/SpeechBalloon creation/edit offers commit/cancel, multiline/font/size/bold/italic/alignment/text/fill/balloon-border/tail with frozen style/history tests. Regular Text uses glyph-outline candidate code, but the exact Text-border geometry/thickness question is still unapproved in shared loop state; no reference mapping is accepted as product authority.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -414,21 +414,21 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
-            "sha256": "f9d96d5b9366d97529a99e95bbb138a620c8ca9b69c55630cb857024a2d84fe4",
+            "sha256": "ba16fea0fe319a739c7a541cc51214e0c1b20218ffc6f7a59eb469f0abfed641",
             "method": "textCreationCommitsFormattedSnapshotOnce",
-            "line": 218
+            "line": 242
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
-            "sha256": "f9d96d5b9366d97529a99e95bbb138a620c8ca9b69c55630cb857024a2d84fe4",
+            "sha256": "ba16fea0fe319a739c7a541cc51214e0c1b20218ffc6f7a59eb469f0abfed641",
             "method": "textBorderRendersAnOutlineBehindTheLettersAndStaysInertElsewhere",
-            "line": 754
+            "line": 778
           }
         ]
       },
@@ -452,11 +452,11 @@
         "classification": "blocked",
         "spec_line": 40,
         "coverage": "Reference-derived alphabetic/Roman and reset code exists, but the loop's exact mapping/start/reset questions remain unresolved; tests do not approve product semantics.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -468,7 +468,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -505,11 +505,11 @@
         "classification": "implemented",
         "spec_line": 43,
         "coverage": "Image/Emoji/Cursor pixels and metadata are embedded, bounded before decode, alpha/aspect preserved, and source-independent on reload.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -521,7 +521,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -564,11 +564,11 @@
         "classification": "implemented",
         "spec_line": 46,
         "coverage": "Region effect geometry/ellipse/blur fields are typed and rendered from immutable source; source-only blur and moved Pixelate scenarios are tested.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -580,7 +580,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -617,11 +617,11 @@
         "classification": "implemented",
         "spec_line": 50,
         "coverage": "SmartEraser uses a documented surrounding-ring mean with edge clipping and immutable-source/history tests.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -633,7 +633,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -670,11 +670,11 @@
         "classification": "implemented",
         "spec_line": 53,
         "coverage": "Crop/CutOut share retained-region and deterministic integer-span transforms for pixels/annotations, with native dirty/history tests.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -686,7 +686,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -723,11 +723,11 @@
         "classification": "implemented",
         "spec_line": 56,
         "coverage": "All-tool defaults snapshot at creation and selected-style mutations use session history; later defaults leave existing objects untouched.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -739,7 +739,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -775,11 +775,11 @@
         "classification": "implemented",
         "spec_line": 59,
         "coverage": "Four ordering commands preserve selected-group relative order and payload through exact undo/redo; no-op/protected admission is tested.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -791,7 +791,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -827,11 +827,11 @@
         "classification": "implemented",
         "spec_line": 62,
         "coverage": "Versioned asset-bearing clipboard envelopes preserve all drawable types/pixels, remap IDs/keys and validate before insertion.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -843,7 +843,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -886,11 +886,11 @@
         "classification": "implemented",
         "spec_line": 65,
         "coverage": "All listed annotation and canvas mutations enter one history step with exact dirty/checkpoint transitions.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -902,7 +902,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -920,7 +920,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native named tool controls, Escape, grayscale selection/handles/focus are tested; every option's accessibility and full redaction/high-contrast target qualification remain incomplete.",
+      "note": "Every tool has a named accessible native action and Escape-cancellable livegesture; recent grayscale tests strengthen selection/handle/focus contrast across palette and zoom. Complete every-option keyboard/reader/high-contrast and redaction cue evidence remains incomplete. Existing matrix tests establish substantial native coverage without accepting all-control qualification.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -932,12 +932,12 @@
       "audit": {
         "classification": "partial",
         "spec_line": 68,
-        "coverage": "Native named tool controls, Escape, grayscale selection/handles/focus are tested; every option's accessibility and full redaction/high-contrast target qualification remain incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Every tool has a named accessible native action and Escape-cancellable livegesture; recent grayscale tests strengthen selection/handle/focus contrast across palette and zoom. Complete every-option keyboard/reader/high-contrast and redaction cue evidence remains incomplete. Existing matrix tests establish substantial native coverage without accepting all-control qualification.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -949,7 +949,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -991,11 +991,11 @@
         "classification": "implemented",
         "spec_line": 71,
         "coverage": "All represented shape fields/assets round-trip with stable IDs/order; unsupported annotation raw data remains inert and serializable.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1007,7 +1007,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -1044,11 +1044,11 @@
         "classification": "partial",
         "spec_line": 74,
         "coverage": "Native scenarios, resource/admission and no-network tests exist; no published shared vectors or complete cross-platform/target qualification establishes the entire package.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-            "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+            "sha256": "40eb19e59be6f183b4e8e2bf7c7e9bf573aa9c42f3a2cc575e0bd13fa892d79d"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
@@ -1060,7 +1060,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           }
         ],
         "test_anchors": [
@@ -1084,16 +1084,31 @@
           }
         ]
       },
-      "previous_note": "Finite/resource/history/rendering fixtures exist. This package has no published vectors; full malformed-input, native visual and supported-platform conformance remain. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial. Audit 2026-11-03: The package publishes no vectors; each of its five SCENARIOS.feature scenarios is covered. 'Every contracted tool is reachable': AnnotationToolMatrixTest::contractToolsAreTheCanvasToolsAndNoneIsExtra and ::editorWindowMenuListsEveryContractedToolOnce. 'A reverse arrow drag preserves direction': AnnotationShapesTest::scenarioReverseArrowDragKeepsTheHeadAtTheDragEnd (drag 500,400 to 100,150 through the canvas; head at 100,150 in the document and in exported pixels; one undo). 'Cancelling text input makes no mutation': ::scenarioCancellingTextInputCreatesNothingAndKeepsHistory (Cancel and Escape). 'Effect annotation samples immutable source': ::scenarioOverlappingPixelateMovesWithoutAccumulatingItsOwnPixels (an overlapping move preview and the commit equal a fresh render from the source, export is idempotent, undo restores the original export) with EditorCanvasTest::groupMovePreviewAndCommitUseFrozenSourcePixels. 'Pasted annotation receives a new identity': the EA-016 tests. Other clauses: finite coordinates and resource limits (AnnotationShapesTest::invalidCreationContentPreservesSession and ::malformedShapeContentIsRejected, AnnotationTransferTest::invalidClipboardPayloadsAndLimitsFailBeforeAnyInsertion and ::untrustedAssetPayloadsAreRejectedBeforeAnyInsertion, EditorSessionTest::embeddedImagesAreCheckedBeforeDecode); typed failures without partial mutation (the same tests plus the guarded-edit tests of EditorSessionTest); no telemetry or upload: AnnotationShapesTest::annotationWorkNeverLoadsTheNetworkStack runs create, duplicate, copy, paste, save and render in process and asserts no network library is mapped (a linkage guard; uploads belong to other capabilities)."
+      "previous_note": "Finite/resource/history/rendering fixtures exist. This package has no published vectors; full malformed-input, native visual and supported-platform conformance remain. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial. Audit 2026-11-03: The package publishes no vectors; each of its five SCENARIOS.feature scenarios is covered. 'Every contracted tool is reachable': AnnotationToolMatrixTest::contractToolsAreTheCanvasToolsAndNoneIsExtra and ::editorWindowMenuListsEveryContractedToolOnce. 'A reverse arrow drag preserves direction': AnnotationShapesTest::scenarioReverseArrowDragKeepsTheHeadAtTheDragEnd (drag 500,400 to 100,150 through the canvas; head at 100,150 in the document and in exported pixels; one undo). 'Cancelling text input makes no mutation': ::scenarioCancellingTextInputCreatesNothingAndKeepsHistory (Cancel and Escape). 'Effect annotation samples immutable source': ::scenarioOverlappingPixelateMovesWithoutAccumulatingItsOwnPixels (an overlapping move preview and the commit equal a fresh render from the source, export is idempotent, undo restores the original export) with EditorCanvasTest::groupMovePreviewAndCommitUseFrozenSourcePixels. 'Pasted annotation receives a new identity': the EA-016 tests. Other clauses: finite coordinates and resource limits (AnnotationShapesTest::invalidCreationContentPreservesSession and ::malformedShapeContentIsRejected, AnnotationTransferTest::invalidClipboardPayloadsAndLimitsFailBeforeAnyInsertion and ::untrustedAssetPayloadsAreRejectedBeforeAnyInsertion, EditorSessionTest::embeddedImagesAreCheckedBeforeDecode); typed failures without partial mutation (the same tests plus the guarded-edit tests of EditorSessionTest); no telemetry or upload: AnnotationShapesTest::annotationWorkNeverLoadsTheNetworkStack runs create, duplicate, copy, paste, save and render in process and asserts no network library is mapped (a linkage guard; uploads belong to other capabilities).",
+      "verification_environment": {
+        "ctest_target": "annotation-shapes",
+        "environment": [
+          "QT_QPA_PLATFORM=offscreen",
+          "QT_QPA_PLATFORMTHEME="
+        ],
+        "reason": "Offscreen fixtures select the default Qt platform theme explicitly. The inherited qtengine plugin loads Qt6Network transitively and alters QFileDialog delivery, so its unrelated desktop state must not enter the isolated annotation/file-picker fixtures. Assertions and timeouts remain unchanged; physical desktop theme qualification remains separate.",
+        "regression_evidence": "Both targets failed in the full gate and isolated retry with inherited qtengine; the unchanged binaries passed with an empty theme, and the configured targets passed with qtengine deliberately inherited after the fixture environment fix."
+      }
     }
   },
-  "audit_scope": "All normative Linux-applicable clauses reviewed against current production and automated test bodies; candidate implementation is separate from physical, cross-platform and human acceptance.",
+  "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
-    "checked_at": "2026-11-04T14:04:38.855452+00:00",
+    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+    "checked_at": "2026-11-11T15:27:15.305729+00:00",
     "specification": "product-contract/capabilities/EDITOR-ANNOTATIONS-001/SPEC.md",
     "specification_sha256": "72234dc75845d4833361883626acd220516a84e05c98bf8c37078e2d48de5e0b",
-    "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "reviewed_requirement_count": 20,
+    "counts": {
+      "blocked": 1,
+      "implemented": 16,
+      "partial": 3
+    },
     "production_surfaces": [
       "platforms/linux/linux-qt/app/EditorCanvas.cpp",
       "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
@@ -1158,22 +1173,9 @@
         "shadowRendersOffsetPixelsIdenticallyOnCanvasPaintAndExport"
       ]
     },
-    "remaining_scope": "EA-008; EA-009; EA-018; EA-020",
-    "reviewed_requirement_count": 20,
-    "finding": "Current source review: {'implemented': 16, 'partial': 3, 'blocked': 1}. Per-row reasons and exact hashed anchors record scope and limitations.",
-    "review_anchor": {
-      "production": {
-        "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
-        "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
-      },
-      "test": {
-        "path": "platforms/linux/linux-qt/tests/AnnotationToolMatrixTest.cpp",
-        "sha256": "0bb84228f709f2127d98277a8c58f2558d58a983c2c6f4123ade5de39d4178dc",
-        "method": "contractToolsAreTheCanvasToolsAndNoneIsExtra",
-        "line": 160
-      },
-      "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
-    }
+    "findings": [],
+    "remaining_scope": "EA-008, EA-009, EA-018, EA-020",
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
   },
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
@@ -1485,5 +1487,94 @@
       },
       "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
     }
-  }
+  },
+  "audit_history": [
+    {
+      "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+      "checked_at": "2026-11-04T14:04:38.855452+00:00",
+      "specification": "product-contract/capabilities/EDITOR-ANNOTATIONS-001/SPEC.md",
+      "specification_sha256": "72234dc75845d4833361883626acd220516a84e05c98bf8c37078e2d48de5e0b",
+      "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ShapePainter.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp": [
+          "allSeventeenShapeTypesRoundTripEveryFieldThroughXann",
+          "annotationWorkNeverLoadsTheNetworkStack",
+          "blurSamplesTheSourceRatherThanEarlierAnnotations",
+          "emojiAndCursorAssetsKeepAspectRatioAtEverySize",
+          "emojiAndCursorMetadataRoundTripValidateAndStayWithTheirType",
+          "everyShapeTypeRoundTripsThroughXann",
+          "freehandSimplificationNeverExceedsToleranceOnCurves",
+          "freehandStrokeIsIdenticalAtEveryZoomAndExportScale",
+          "malformedShapeContentIsRejected",
+          "oversizedOrUnsafeEmojiAndCursorAssetsAreRejectedBeforeDecode",
+          "scenarioOverlappingPixelateMovesWithoutAccumulatingItsOwnPixels",
+          "scenarioReverseArrowDragKeepsTheHeadAtTheDragEnd",
+          "stepStartAndResetAffectOnlyFutureAllocation",
+          "stepStylesMapValuesLikeTheReference"
+        ],
+        "platforms/linux/linux-qt/tests/AnnotationToolMatrixTest.cpp": [
+          "canvasFocusCueSurvivesGrayscale",
+          "contractToolsAreTheCanvasToolsAndNoneIsExtra",
+          "creationAllowsOutOfCanvasAndNormalizesReverseDrags",
+          "cropAndCutOutAreOneNativeHistoryOperationWithDirtyState",
+          "cutOutMovesPixelsAndAnnotationsByTheDocumentedRule",
+          "editorWindowMenuListsEveryContractedToolOnce",
+          "everyListedMutationIsOneHistoryOperationWithExactDirtyState",
+          "everyToolHasAnAccessibleControlAndEscapeCancelsItsLiveGesture",
+          "everyToolShowsStateOptionsInstructionsAndKeepsItselfActive",
+          "everyToolsNewObjectSnapshotsSavedDefaultsAndLaterChangesNeverTouchExistingObjects",
+          "lineArrowFreehandAndAssetsSelectMoveResizeRotateAndProtect",
+          "malformedGesturesAreRejectedForEveryShapeType",
+          "selectionAndHandleCuesSurviveGrayscale",
+          "smartEraserFillsWithTheMeanOfANonUniformRing",
+          "smartEraserResultIsPreservedByHistoryAndNeverEditsTheSource",
+          "zeroAreaAndClickGesturesFollowEachToolsRule"
+        ],
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp": [
+          "assetBearingCopyPasteCarriesPixelsToAnotherDocumentWithNewIdentitiesAndKeys",
+          "directSelectionCommandsCannotMutateHiddenLockedOrOpaqueProtectedObjects",
+          "everyDrawableTypeSurvivesCopyAndPasteWithItsFieldsAndAssets",
+          "untrustedAssetPayloadsAreRejectedBeforeAnyInsertion"
+        ],
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp": [
+          "textBorderRendersAnOutlineBehindTheLettersAndStaysInertElsewhere",
+          "textCreationCommitsFormattedSnapshotOnce"
+        ],
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp": [
+          "guardedColorEditsCommitOneGroupAndUpdateFutureDefaults",
+          "guardedOrderingPreservesGroupPayloadAndHistory",
+          "orderingNoopAndRefusalKeepCheckpointAndRedo"
+        ],
+        "platforms/linux/linux-qt/tests/LineArrowStyleTest.cpp": [
+          "nativeEditIsOneUndoStepAndReloadPreservesFields"
+        ],
+        "platforms/linux/linux-qt/tests/ShapeStyleTest.cpp": [
+          "orderVisibilityAndGeometrySurviveAlongsideDecoration",
+          "shadowRendersOffsetPixelsIdenticallyOnCanvasPaintAndExport"
+        ]
+      },
+      "remaining_scope": "EA-008; EA-009; EA-018; EA-020",
+      "reviewed_requirement_count": 20,
+      "finding": "Current source review: {'implemented': 16, 'partial': 3, 'blocked': 1}. Per-row reasons and exact hashed anchors record scope and limitations.",
+      "review_anchor": {
+        "production": {
+          "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+          "sha256": "93f3c0c0c4de1dcef2005b9b563b72741774dd7153883c7b085e7d8cb501bc76"
+        },
+        "test": {
+          "path": "platforms/linux/linux-qt/tests/AnnotationToolMatrixTest.cpp",
+          "sha256": "0bb84228f709f2127d98277a8c58f2558d58a983c2c6f4123ade5de39d4178dc",
+          "method": "contractToolsAreTheCanvasToolsAndNoneIsExtra",
+          "line": 160
+        },
+        "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
+      }
+    }
+  ]
 }

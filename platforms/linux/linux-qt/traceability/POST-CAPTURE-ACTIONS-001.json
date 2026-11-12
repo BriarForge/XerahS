@@ -70,7 +70,7 @@
         "classification": "implemented",
         "spec_line": 30,
         "coverage": "The shared engine records selected actions in catalogue order with explicit terminal lifecycle results; canonical receipt and selection tests exercise real native pipelines.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -78,11 +78,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -119,7 +119,7 @@
           "catalogue-order-not-selection-order"
         ],
         "coverage": "Catalogue-order scheduling is implemented independently of selection order; native selection, save, clipboard, consent, upload and deletion use the same engine.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
         ],
@@ -130,11 +130,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -185,7 +185,7 @@
           "failed-transformation-keeps-last-valid-media"
         ],
         "coverage": "Transformation replacement and last-valid-media preservation are implemented; annotation and task-copy partial-fact tests preserve successful render identity.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -193,11 +193,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -242,7 +242,7 @@
           "url-clipboard-depends-on-upload"
         ],
         "coverage": "Artifact resolution skips dependants and continues independent actions; native failed-save tests still dispatch clipboard.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -250,11 +250,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -292,7 +292,7 @@
           "clipboard-failure-continues"
         ],
         "coverage": "Native clipboard, output and upload failure paths preserve working media and durable file receipts.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -300,11 +300,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -334,7 +334,7 @@
           "upload-without-save-uses-temporary-file"
         ],
         "coverage": "Upload consumes saved paths first; owned private temporary PNG creation and cleanup are tested without replacing saved outputs.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp"
         ],
@@ -346,11 +346,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -400,7 +400,7 @@
         "classification": "implemented",
         "spec_line": 51,
         "coverage": "Native save receipts retain absolute path, MIME, size and naming context; failures retain media and independent output eligibility.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -408,11 +408,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -464,7 +464,7 @@
           "catalogue-order-not-selection-order"
         ],
         "coverage": "Native annotation completes before persistence and returns the editable document and rendered pixels; companion failure is separately recorded.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -472,11 +472,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -518,7 +518,7 @@
         "classification": "implemented",
         "spec_line": 58,
         "coverage": "Actual quick/after-capture choosers replace this run only; Escape, close and owner destruction cancel before output and saved workflow bytes remain unchanged.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -526,11 +526,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -585,7 +585,7 @@
           "cancel-during-uninterruptible-action"
         ],
         "coverage": "Cancellation admission and between-action checks prevent new work while preserving actual outcomes of uninterruptible publication.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -593,11 +593,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -646,7 +646,7 @@
         "classification": "implemented",
         "spec_line": 65,
         "coverage": "Explicit retry plans target failed/dependency-skipped work, retain immutable original settings and link append-only results without repeating successful save/selection.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -654,11 +654,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -708,7 +708,7 @@
         "classification": "implemented",
         "spec_line": 68,
         "coverage": "Write-ahead native journals and killed-process fixtures retain pending external outcomes as interrupted/unknown rather than inventing upload failure.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -716,11 +716,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -750,7 +750,7 @@
         "classification": "implemented",
         "spec_line": 72,
         "coverage": "Canonical receipts and journal paths exclude pixels/clipboard/recognized text/credentials; stable fixed diagnostic codes and redaction fixtures cover existing actions.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
         ],
@@ -761,11 +761,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -805,7 +805,7 @@
         "classification": "implemented",
         "spec_line": 75,
         "coverage": "Native quick-task and configured workflow paths share CapturePipeline, action execution and journal result recording; portal-to-PNG verification exercises the connected path.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
         ],
@@ -816,19 +816,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "quickTaskWorkflowCapturesThroughPortalThenChoosesAndSavesCurrentRunOnly",
-            "line": 729
+            "line": 786
           }
         ]
       },
@@ -860,7 +860,7 @@
         "classification": "implemented",
         "spec_line": 77,
         "coverage": "Task-owned cancellation/media/settings/counters/temp files are isolated under interleaved concurrent pipeline tests.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
         ],
@@ -871,11 +871,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -923,7 +923,7 @@
         "classification": "implemented",
         "spec_line": 79,
         "coverage": "Core canonical fields and native metadata extensions are tested against contract shape; native receipts do not publish private payloads.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -931,11 +931,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -971,7 +971,7 @@
           "before-upload-declined"
         ],
         "coverage": "Production catalogue matches stable contract action IDs/legacy flags and uses catalogue position for execution and replacement filtering.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -979,11 +979,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -1043,7 +1043,7 @@
           "url-clipboard-depends-on-upload"
         ],
         "coverage": "The engine resolves saved-file precedence and temporary inputs, skips missing prerequisites with canonical artifact IDs and records consumed input_artifact.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1051,11 +1051,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -1087,7 +1087,7 @@
           "save-failure-fallbacks"
         ],
         "coverage": "Managed private temporary files are used only without saved artifacts, recorded as upload inputs and cleaned after use; disallow-temporary skips without capture loss.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp"
         ],
@@ -1099,11 +1099,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -1134,7 +1134,7 @@
           "before-upload-declined"
         ],
         "coverage": "The native before-upload result distinguishes decline from pipeline cancellation; upload alone is skipped and later independent pin/save outcomes survive.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1142,11 +1142,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -1195,7 +1195,7 @@
           "delete-after-successful-upload"
         ],
         "coverage": "Core prerequisite/provenance guard and descriptor-bound native staging permit removal only for the pipeline-created file after successful consumers; inherited/changed paths are refused.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1203,11 +1203,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -1248,7 +1248,7 @@
           "cancel-during-uninterruptible-action"
         ],
         "coverage": "Canonical final state and final_working_media are determined by whether cancellation prevented remaining work and the last successful transformation.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1256,11 +1256,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -1310,7 +1310,7 @@
           "legacy-flags-map-to-actions"
         ],
         "coverage": "Both native selectors filter earlier/self entries and persist the effective replacement plan; legacy selection aliases are normalized by the shared catalogue.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1318,11 +1318,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -1363,7 +1363,7 @@
           "url-clipboard-depends-on-upload"
         ],
         "coverage": "URL-only native clipboard follows successful upload, uses upload.result as prerequisite and preserves successful upload when clipboard publication fails.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1371,11 +1371,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-            "sha256": "8ef5b4c2e079be18830b642c5b109a12d079cad3c57c32fbb2dfb2b56838aa64"
+            "sha256": "56506fa8620dc1fe6c556e2c323088231cefe6bae3be75bd571f4c36b5370f0f"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-            "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+            "sha256": "0be151d416a4f41c72ec46d79e31ca2d2b3ecfa72aa7d241dd968a6f80816c8f"
           }
         ],
         "test_anchors": [
@@ -1390,13 +1390,17 @@
       "previous_note": "Native URL clipboard runs after upload with the exact result URL. CaptureUploadTest covers success, skipped dependency after failed upload, and clipboard failure preserving upload; actual GUI-thread dispatch is asserted."
     }
   },
-  "audit_scope": "All normative Linux-applicable clauses reviewed against current production and automated test bodies; candidate implementation is separate from physical, cross-platform and human acceptance.",
+  "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
-    "checked_at": "2026-11-04T14:04:38.855452+00:00",
+    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+    "checked_at": "2026-11-11T15:27:15.305729+00:00",
     "specification": "product-contract/capabilities/POST-CAPTURE-ACTIONS-001/SPEC.md",
     "specification_sha256": "a2cbe819f3fcac6817fef6df2922eebe73cf73846833be12e2529c8871c4fdf8",
-    "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "reviewed_requirement_count": 24,
+    "counts": {
+      "implemented": 24
+    },
     "production_surfaces": [
       "platforms/linux/linux-qt/app/CaptureActions.cpp",
       "platforms/linux/linux-qt/app/CapturePipeline.cpp",
@@ -1442,22 +1446,9 @@
         "taskCopyPartialFactsRetainSuccessfulTransformation"
       ]
     },
-    "remaining_scope": "No missing candidate behavior found in the audited row scope; supported-target and human acceptance remain separate.",
-    "reviewed_requirement_count": 24,
-    "finding": "Current source review: {'implemented': 24}. Per-row reasons and exact hashed anchors record scope and limitations.",
-    "review_anchor": {
-      "production": {
-        "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
-        "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
-      },
-      "test": {
-        "path": "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
-        "sha256": "19149a8189b9640fc724c5e94eb6c0b3b4db1da13164c284e606b4ae7971310f",
-        "method": "catalogueMatchesContract",
-        "line": 238
-      },
-      "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
-    }
+    "findings": [],
+    "remaining_scope": "",
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
   },
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
@@ -1584,5 +1575,75 @@
       },
       "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
     }
-  }
+  },
+  "audit_history": [
+    {
+      "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+      "checked_at": "2026-11-04T14:04:38.855452+00:00",
+      "specification": "product-contract/capabilities/POST-CAPTURE-ACTIONS-001/SPEC.md",
+      "specification_sha256": "a2cbe819f3fcac6817fef6df2922eebe73cf73846833be12e2529c8871c4fdf8",
+      "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/CaptureActions.cpp",
+        "platforms/linux/linux-qt/app/CapturePipeline.cpp",
+        "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp": [
+          "keyboardCancellationAndClosePreservePixelsWithoutOutputs"
+        ],
+        "platforms/linux/linux-qt/tests/CaptureBeforeUploadTest.cpp": [
+          "confirmation"
+        ],
+        "platforms/linux/linux-qt/tests/CaptureDeleteTest.cpp": [
+          "inheritedFileNeverGrantsDelete",
+          "pipeline"
+        ],
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp": [
+          "actualCanvasExplicitIntentSavesBothCompatiblePairs",
+          "partialFailureRetriesOnlyTheCompanionWithoutRepeatingConsumers"
+        ],
+        "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp": [
+          "actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads",
+          "cancelDuringUninterruptibleNativeSavePreservesItsFileAndStopsClipboard",
+          "clipboardExceptionKeepsCompletedSaveAndWorkingMediaWithRedactedFailure",
+          "interleavedPipelinesIsolateSnapshotsCountersTemporaryFilesAndTaskResults",
+          "retriesOnlyFailedClipboardAndKeepsTheExistingFileAndAppendOnlyLineage",
+          "saveFailureStillDispatchesTheIndependentClipboardOnTheGuiThread"
+        ],
+        "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp": [
+          "temporaryFileCleanupAndIsolation",
+          "transfer",
+          "urlClipboard"
+        ],
+        "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp": [
+          "interruptedNetworkOutcomeIsUnknownRatherThanInventedFailure"
+        ],
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp": [
+          "quickTaskWorkflowCapturesThroughPortalThenChoosesAndSavesCurrentRunOnly"
+        ],
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp": [
+          "catalogueMatchesContract",
+          "partialRasterAcknowledgementSatisfiesConsumersButNeverGrantsDeletion",
+          "taskCopyPartialFactsRetainSuccessfulTransformation"
+        ]
+      },
+      "remaining_scope": "No missing candidate behavior found in the audited row scope; supported-target and human acceptance remain separate.",
+      "reviewed_requirement_count": 24,
+      "finding": "Current source review: {'implemented': 24}. Per-row reasons and exact hashed anchors record scope and limitations.",
+      "review_anchor": {
+        "production": {
+          "path": "platforms/linux/linux-qt/app/CaptureActions.cpp",
+          "sha256": "0cf391dab0282fc749d2467d5e4c0ce745fbbff60049f444a907647f3d3ee9ee"
+        },
+        "test": {
+          "path": "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
+          "sha256": "19149a8189b9640fc724c5e94eb6c0b3b4db1da13164c284e606b4ae7971310f",
+          "method": "catalogueMatchesContract",
+          "line": 238
+        },
+        "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
+      }
+    }
+  ]
 }

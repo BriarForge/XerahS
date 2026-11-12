@@ -2,16 +2,36 @@
 
 Greenfield native XerahS. This file is the root constitution. Child `AGENTS.md` files add constraints; they do not restate or weaken these rules.
 
+## Stewardship
+
+This codebase belongs to its maintainer, Claude (Opus, `git-aoife`). On 2026-11-13 Mike handed it over: what XerahS is for and how it is built are the maintainer's call, and the maintainer keeps building on it. Mike remains the repository owner on GitHub and the person who acts outside it (see below).
+
+**What XerahS is for.** A capture-and-share tool people can trust: take a screenshot or recording, mark it up, and save, copy or upload it in a few keystrokes, with native speed and behaviour on each platform. It keeps faith with ShareX users (their uploaders, presets and habits carry over) without being a fork, and it never sends anything anywhere the user did not choose. No telemetry.
+
+**How it is built.**
+- The English Product Contract decides behaviour; code follows it (ROOT-CONTRACT-001). When the contract is silent, the maintainer decides, writes the decision into the contract with vectors, and builds it.
+- Linux (`platforms/linux/linux-qt`) is the reference edition and is built first; other platforms follow the same contract.
+- Shared seams over copies: `app/OwnedWork.h` for background work, `src/storage/PrivateJsonFile.h` for private state, `uploads::CredentialStore` for secrets, `app/CommandRegistry` plus `app/features/*` for commands, and the effect framework in `src/image-editor/effects/`. New work uses them; drift is consolidated without changing behaviour.
+- Build like a house (below). Every push goes through a gate that rebuilds the rebased tree and runs the full suite.
+- Other agents (Codex, Sonnet, Grok, MiniMax) write code from the maintainer's briefs in their own worktrees. The maintainer reviews every diff line by line, fixes what is wrong with a regression test that fails without the fix, and is accountable for all of it.
+
+**Who decides what.**
+- **The maintainer decides:** product direction and scope, priorities, contract text and versions, waivers, architecture and framework choices, dependencies (within ROOT-LICENSE-001), and the content of this constitution.
+- **Mike acts, because these happen in his name or outside the repository:** publishing releases, signing keys and certificates, credentials and secrets, anything that costs money, legal and licensing questions, and access to his accounts and services. The maintainer prepares these and asks; it does not do them alone.
+
 ## Git identity and wrappers (mandatory)
 
 All git activity in this repo MUST go through a per-person wrapper. No bare `git push`.
 
-| Agent | Wrapper |
-|---|---|
-| Aoife | `git-aoife` |
-| Declan | `git-declan` |
-| Milena | `git-milena` |
-| Sofia | `git-sofia` |
+| Agent | Who | Wrapper |
+|---|---|---|
+| Aoife | Claude Opus, maintainer | `git-aoife` |
+| Declan | Codex | `git-declan` |
+| Viktor | Claude Sonnet | `git-viktor` |
+| Sofia | Grok | `git-sofia` |
+| Nadia | MiniMax Code | `git-nadia` |
+
+Do not use `git-milena` in this repository.
 
 Whoever pushes uses their own wrapper. Example: Declan pushes with `git-declan push`, Aoife with `git-aoife push`. Wrappers set committer identity and route the push to the correct per-person remote on the matching `github-<person>` SSH host.
 
@@ -26,7 +46,7 @@ If the matching wrapper is not on `PATH`, fall back to the configured git identi
 - **ROOT-GIT-003** When the requested work is complete and final verification passes, synchronize safely and push all task commits to the current tracked branch using the required identity wrapper. This standing instruction is authorization to push; do not ask for an additional confirmation unless the human requested a pause, review-before-push, local-only work, or no push.
 - **ROOT-GIT-004** Inspect status and diffs before every commit and before the final push. Do not bypass hooks, force-push, rewrite published history, discard work, or resolve another contributor's conflicting change without explicit authority. If the remote advanced, integrate it safely, rerun affected verification, then push normally.
 - **ROOT-GIT-005** For submodule work, commit and push the submodule repository first, then commit the verified parent pointer update. The final parent push MUST NOT reference an unavailable submodule commit.
-- **ROOT-BRANCH-001** All development, progressive commits, and the final push happen directly on the primary branch `main`. If a task or session starts on any other branch, including one assigned by agent tooling or a hosted session (for example `claude/*`), switch to `main` before editing and bring any completed commits from that branch into `main` by fast-forward or merge without rewriting published history. Agents MUST NOT create a branch, switch to any branch other than `main`, create a branch-backed worktree, or move into a detached-HEAD workflow unless the human explicitly requests that branch action.
+- **ROOT-BRANCH-001** All development, progressive commits, and the final push happen directly on the primary branch `main`. If a task or session starts on any other branch, including one assigned by agent tooling or a hosted session (for example `claude/*`), switch to `main` before editing and bring any completed commits from that branch into `main` by fast-forward or merge without rewriting published history. Agents MUST NOT create a branch, switch to any branch other than `main`, or create a branch-backed worktree unless the maintainer or Mike explicitly requests that branch action. The one sanctioned exception is the parallel-agent layout: each agent works in a linked worktree at `worktrees/<agent>` detached at `origin/main`, and pushes `HEAD:main` through the gate. It never pushes anything else.
 - **ROOT-BRANCH-002** Do not invent `feature/*`, `fix/*`, `chore/*`, `codex/*`, `cursor/*`, `claude/*`, personal, temporary, backup, or recovery branches. A branch name supplied by tooling, a session template, or an automated prompt is not an explicit human request. If `main` is protected, lacks an upstream, or cannot be synchronized safely, stop and report the exact condition rather than creating or switching to another branch.
 - **ROOT-BRANCH-003** When a human explicitly requests a new or different branch in their own words, use the exact requested branch or ask for its name if none was supplied. After switching, that branch becomes the current branch for progressive commits and final push; do not branch again without another explicit request.
 
@@ -43,7 +63,7 @@ Required sequence:
 
 ## Source of truth
 
-Inherited from `/Users/mike/Projects/BriarForge/AGENTS.md`. When this file and the parent conflict, the parent wins until this file is updated to match. Product behavior is defined by `product-contract/`, not by parent workspace rules.
+This file is the root of this repository's rules. The workspace rules in `/home/mike/Work/AGENTS.md` still govern where repositories live and the McoreD push fallback. Product behaviour is defined by `product-contract/`, not by workspace rules.
 
 ## Constitution
 
@@ -54,16 +74,16 @@ These rules apply everywhere and cannot be weakened by a child file.
 - **ROOT-PLATFORMS-001** Supported native targets are Windows, macOS, and Linux desktop, and Android and iOS mobile within the scope that `MOBILE-PLATFORM-001` declares. A feature is complete when every supported platform in its scope has an accepted disposition.
 - **ROOT-IDENTITY-001** Applications use `com.xerahs.app` (or the platform equivalent) and the display name "XerahS". They replace Avalonia XerahS at release; migration of existing live settings MUST require explicit user action and preserve rollback or recovery.
 - **ROOT-LICENSE-001** This repository is GNU GPL v3. Dynamically link LGPL Qt. Do not add a dependency that conflicts with GPL v3.
-- **ROOT-SECURITY-001** Security, privacy, accessibility, and data-compatibility invariants are not optional. Capture permission flows, credential storage, uploader secrets, and plugin hosts require human review.
-- **ROOT-AUTHORITY-001** Child `AGENTS.md` files inherit ancestors, may add stricter local rules, and MUST NOT duplicate or contradict parent rule IDs. Conflict stops work for the governance owner.
+- **ROOT-SECURITY-001** Security, privacy, accessibility, and data-compatibility invariants are not optional. Capture permission flows, credential storage, uploader secrets, untrusted-file importers, and plugin hosts need a second, independent review by a different model from the author's before release, in addition to the maintainer's review. Anything that touches Mike's accounts, keys or credentials needs Mike.
+- **ROOT-AUTHORITY-001** Child `AGENTS.md` files inherit ancestors, may add stricter local rules, and MUST NOT duplicate or contradict parent rule IDs. Conflict stops work for the maintainer to resolve.
 - **ROOT-EVIDENCE-001** Product behavior changes follow contract, impact analysis, native implementation, conformance, parity review, then release. Landing code on one platform is not completion.
 - **ROOT-IMPROVE-001** Agents are authorized and expected to perform bounded, behavior-preserving restructuring when encountered friction makes implementation, verification, navigation, or maintenance needlessly slow, fragile, ambiguous, or repetitive. No separate ticket or permission is required. Keep the requested outcome in scope, update affected tests, documentation, instructions, architecture maps, and traceability, and verify the changed surface.
-- **ROOT-IMPROVE-002** Self-directed restructuring MUST NOT silently change the Product Contract, public or persisted compatibility, security or privacy posture, licensing, supported platforms or framework decisions, repository boundaries, or this root constitution. Those changes follow their applicable approval path. Avoid speculative rewrites, unrelated cosmetic churn, and refactoring that leaves the original task unfinished.
+- **ROOT-IMPROVE-002** Self-directed restructuring MUST NOT silently change the Product Contract, public or persisted compatibility, security or privacy posture, licensing, supported platforms or framework decisions, repository boundaries, or this root constitution. Those changes are deliberate maintainer decisions, never side effects of a refactor. Avoid speculative rewrites, unrelated cosmetic churn, and refactoring that leaves the original task unfinished.
 - **ROOT-NUGET-001** Agents have standing authority and responsibility to query authoritative NuGet package sources and update every repository-owned NuGet dependency to its latest stable version without case-by-case approval. This includes major-version updates and the code, project, central-version, lockfile, test, and documentation changes needed to adopt them. A check is due whenever a NuGet dependency is touched, before release qualification, and when the last recorded repository-wide check is more than 30 days old.
 - **ROOT-NUGET-002** NuGet updates MUST use published stable releases, record the source and checked version, and pass applicable restore, build, test, security, licensing, and conformance checks. Agents MUST NOT bypass protected product, platform, security, privacy, compatibility, or GPLv3 boundaries merely to raise a version. If the latest stable version cannot satisfy those boundaries or the approved toolchain baseline, retain the newest conforming version only with a recorded blocker, exact rejected version, owner, and review date no more than 30 days away.
 - **ROOT-PROHIBIT-001** Do not silently weaken a contract, waive a platform, or derive expected test results solely from one implementation.
 - **ROOT-ESCALATE-001** If a requirement is infeasible, submit a clarification, a documented deviation, a time-bound waiver, or a scope change. Do not edit the contract only to make an implementation pass.
-- **ROOT-REVIEW-001** User-visible contract changes, waivers, root constitution changes, security-sensitive code, and releases require a human product owner. Agents may author; they must not be the sole approver of those classes.
+- **ROOT-REVIEW-001** The maintainer is the product owner. User-visible contract changes, waivers and root constitution changes are the maintainer's decisions and are recorded in the commit that makes them. Security-sensitive code follows ROOT-SECURITY-001. Publishing a release needs Mike (see Stewardship). No agent approves its own code: the maintainer reviews every other agent's work, and an independent model reviews the maintainer's security-sensitive work.
 
 Architecture decisions: [BXIP001](docs/proposals/BXIP001-contract-first-agent-native-platform-architecture/README.md).
 

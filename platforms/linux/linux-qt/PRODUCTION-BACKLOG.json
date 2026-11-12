@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "date": "2026-11-04",
-  "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+  "date": "2026-11-11",
+  "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
   "contract_version": "0.3.1",
   "scope": "All 16 manifest capabilities reviewed for Linux applicability; 325 desktop requirements classified and 20 mobile-only requirements explicitly outside Linux scope. Counts measure candidate behavior, not completion percentage or release acceptance.",
   "classification_rules": {
@@ -16,18 +16,17 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 34,
-    "implemented": 162,
+    "implemented": 173,
     "not-applicable": 1,
-    "not-started": 10,
-    "partial": 118
+    "not-started": 6,
+    "partial": 111
   },
   "capabilities": [
     {
       "capability": "FILENAME-GENERATION-001",
       "requirements": 27,
       "counts": {
-        "implemented": 24,
-        "partial": 3
+        "implemented": 27
       },
       "trace": "traceability/FILENAME-GENERATION-001.json"
     },
@@ -44,8 +43,8 @@
       "requirements": 27,
       "counts": {
         "blocked": 1,
-        "implemented": 18,
-        "not-started": 3,
+        "implemented": 19,
+        "not-started": 2,
         "partial": 5
       },
       "trace": "traceability/REGION-CAPTURE-001.json"
@@ -55,9 +54,8 @@
       "requirements": 30,
       "counts": {
         "blocked": 3,
-        "implemented": 21,
-        "not-started": 1,
-        "partial": 5
+        "implemented": 23,
+        "partial": 4
       },
       "trace": "traceability/EDITOR-SESSION-001.json"
     },
@@ -95,8 +93,8 @@
       "capability": "EDITOR-OUTPUT-ACTIONS-001",
       "requirements": 16,
       "counts": {
-        "implemented": 8,
-        "partial": 8
+        "implemented": 9,
+        "partial": 7
       },
       "trace": "traceability/EDITOR-OUTPUT-ACTIONS-001.json"
     },
@@ -157,10 +155,10 @@
       "requirements": 37,
       "counts": {
         "blocked": 7,
-        "implemented": 6,
+        "implemented": 8,
         "not-applicable": 1,
         "not-started": 2,
-        "partial": 21
+        "partial": 19
       },
       "trace": "traceability/CORE-PLATFORM-001.json"
     },
@@ -169,7 +167,7 @@
       "requirements": 18,
       "counts": {
         "blocked": 4,
-        "not-started": 2,
+        "implemented": 2,
         "partial": 12
       },
       "trace": "traceability/COMPATIBILITY-CATALOG-001.json"
@@ -206,624 +204,59 @@
   ],
   "classification_changes": [
     {
-      "capability": "FILENAME-GENERATION-001",
-      "requirement": "FN-009",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Granted/denied/missing/non-text/empty file behavior has direct tests, but randomFileLine silently restricts files above 256 nonempty lines to their first 256 entries."
-    },
-    {
-      "capability": "FILENAME-GENERATION-001",
-      "requirement": "FN-021",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Rejection sampling and UUID bit layout are implemented, but the one-byte random-file selector silently truncates files with more than 256 candidate lines; the contract supplies no accepted wider sampling rule."
-    },
-    {
-      "capability": "FILENAME-GENERATION-001",
-      "requirement": "FN-026",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Typed error code/token/scalar-offset behavior is covered for supported contexts; %rf still omits eligible lines after the first 256, contrary to selecting among all nonempty lines."
-    },
-    {
-      "capability": "REGION-CAPTURE-001",
-      "requirement": "RC-004",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Core per-monitor mapping/vector arithmetic exists, but ScreenTopology packs rows/columns by logical origins; no accepted authority proves that packed physical arrangement equals compositor screenshot layout."
-    },
-    {
-      "capability": "REGION-CAPTURE-001",
-      "requirement": "RC-012",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Confirmed output dimensions and Core composite order are tested, but native packed-topology mapping is not proven for arbitrary staggered/mixed-scale compositor layouts."
-    },
-    {
-      "capability": "REGION-CAPTURE-001",
-      "requirement": "RC-022",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Core IEEE754 floor-epsilon mapping is tested, but production QScreen-derived physical origins are packed rather than obtained from approved compositor physical bounds."
-    },
-    {
-      "capability": "REGION-CAPTURE-001",
-      "requirement": "RC-027",
-      "previous": "implemented",
-      "current": "blocked",
-      "reason": "Product decision required: approve authoritative pre-acquisition physical topology source. Native code now validates against packed QScreen bounds, but that does not settle the recorded mapping-authority question."
-    },
-    {
-      "capability": "EDITOR-SESSION-001",
-      "requirement": "ES-014",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Known compatible default-sidecar removal is tested, but empty save with legacy fallback remains explicitly refused pending product-approved non-resurrection/removal policy."
-    },
-    {
-      "capability": "EDITOR-SESSION-001",
-      "requirement": "ES-019",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Keyboard/native accessibility, zoom-independent handles and grayscale cues exist; complete editor-control high-contrast/screen-reader and supported-target qualification is not established."
-    },
-    {
-      "capability": "EDITOR-SESSION-001",
-      "requirement": "ES-020",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Explicit output authority and private temporary storage exist; approved configured editor temp/recovery retention and secure-delete limits are still an unanswered policy gate."
-    },
-    {
-      "capability": "EDITOR-SESSION-001",
-      "requirement": "ES-021",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Actual 4K interactive-open latency is tested against 500ms, but no 60Hz manipulation-preview performance qualification was found."
-    },
-    {
-      "capability": "EDITOR-SESSION-001",
-      "requirement": "ES-022",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Structural/history vectors and analytical native rectangle tests exist; approved shared golden-image and supported-platform qualification remain required."
-    },
-    {
       "capability": "EDITOR-SESSION-001",
       "requirement": "ES-029",
       "previous": "implemented",
       "current": "partial",
-      "reason": "Reproduced through current production conformance adapter: oversized canvas alone returns document-too-large, but adding unsafe extensions or traversal returns document-unsafe-content/document-path-traversal before accumulated size failure; required ES-029 priority is incomplete."
-    },
-    {
-      "capability": "EDITOR-SESSION-001",
-      "requirement": "ES-030",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Default and fallback path handling exists, but required baseline runtime observation and legacy fallback empty-save policy remain unapproved."
-    },
-    {
-      "capability": "EDITOR-ANNOTATIONS-001",
-      "requirement": "EA-008",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Native text/balloon formatting including glyph-outline and balloon-border candidates is tested; exact regular Text border geometry still lacks recorded product decision."
-    },
-    {
-      "capability": "EDITOR-ANNOTATIONS-001",
-      "requirement": "EA-009",
-      "previous": "implemented",
-      "current": "blocked",
-      "reason": "Reference-derived alphabetic/Roman and reset code exists, but the loop's exact mapping/start/reset questions remain unresolved; tests do not approve product semantics."
-    },
-    {
-      "capability": "EDITOR-ANNOTATIONS-001",
-      "requirement": "EA-018",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Native named tool controls, Escape, grayscale selection/handles/focus are tested; every option's accessibility and full redaction/high-contrast target qualification remain incomplete."
-    },
-    {
-      "capability": "EDITOR-ANNOTATIONS-001",
-      "requirement": "EA-020",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Native scenarios, resource/admission and no-network tests exist; no published shared vectors or complete cross-platform/target qualification establishes the entire package."
-    },
-    {
-      "capability": "EDITOR-EFFECTS-001",
-      "requirement": "EE-002",
-      "previous": "partial",
-      "current": "implemented",
-      "reason": "Stable unique census IDs drive category/search/recent/favorite discovery; browser and persisted unknown-ID/list tests exercise those native paths."
-    },
-    {
-      "capability": "EDITOR-EFFECTS-001",
-      "requirement": "EE-006",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Size-changing browser effects route through ResizeCanvas protection/history, with a synthetic size-effect test; correct geometry for every actual scale/crop/rotation effect and every annotation family is not proved."
-    },
-    {
-      "capability": "EDITOR-EFFECTS-001",
-      "requirement": "EE-008",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Persisted effect operation seeds and seed-only execution have local repeatability tests. Identical decoded pixels across all supported platforms, fonts/renderers and profiles have no shared accepted fixtures."
-    },
-    {
-      "capability": "EDITOR-EFFECTS-001",
-      "requirement": "EE-010",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "OwnedWork, cancellation, progress, dimension/resource checks and allocation failures are tested for existing effects; exhaustive expensive-effect resource/progress behavior across the selected census remains incomplete."
-    },
-    {
-      "capability": "EDITOR-EFFECTS-001",
-      "requirement": "EE-015",
-      "previous": "implemented",
-      "current": "blocked",
-      "reason": "Native SXIE/XSIE preservation, static mapping and unsupported-step isolation exist, but the scheduler explicitly requires human security review of SXIE import before qualification."
-    },
-    {
-      "capability": "EDITOR-EFFECTS-001",
-      "requirement": "EE-018",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "CPU/native font fallback and unavailable browser diagnostics exist. An approved disposition for missing effects/assets/hardware and complete fallback target matrix are absent."
-    },
-    {
-      "capability": "EDITOR-CANVAS-001",
-      "requirement": "EC-013",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "No complete background composition surface/model exists; deterministic smart-padding/background and retention policy remain explicit unanswered product decisions."
-    },
-    {
-      "capability": "EDITOR-OUTPUT-ACTIONS-001",
-      "requirement": "EO-014",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Owned per-output ports document snapshot/thread/lifetime and explicit missing services; full all-host cancellation/error/reentrancy contract matrix remains incomplete."
-    },
-    {
-      "capability": "EDITOR-SETTINGS-001",
-      "requirement": "ESET-001",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Per-field setting implementations exceed the accepted ledger semantics; complete stable names/defaults/migration/privacy/platform/downstream ledger approval is still required."
-    },
-    {
-      "capability": "EDITOR-SETTINGS-001",
-      "requirement": "ESET-004",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Native theme/accent/high-contrast resolution and readable controls exist; all-platform contrast/reduced-motion/screen-reader qualification remains incomplete."
-    },
-    {
-      "capability": "EDITOR-SETTINGS-001",
-      "requirement": "ESET-008",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Native text font family/size/style/alignment and fallback preservation have tests; Step-style mappings remain a product decision in the loop."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-002",
-      "previous": "partial",
-      "current": "implemented",
-      "reason": "The native colour picker uses PortalScreenshot consent, a coordinate/magnified snapshot sampler, explicit clipboard controls and Escape/parent-close pixel disposal; source and native test verify the connected seam."
+      "reason": "The upstream oversized-document regression now accumulates unsafe/traversal findings and correctly reports version-unsupported before too-large before invalid. However parseDocument/readXann still emit document-unsafe-content, document-path-traversal, document-duplicate-key, document-invalid-encoding, document-too-deep and document-too-many-elements beyond the ES-029 diagnostic list. Current XannCompatibilityTest explicitly expects these extra codes; complete list/compatibility boundary disposition remains unresolved. Do not redo the fixed too-large precedence regression."
     },
     {
       "capability": "EDITOR-UTILITIES-001",
       "requirement": "EU-004",
       "previous": "implemented",
       "current": "blocked",
-      "reason": "Native screen/region/file QR recognition and tests now exist, but the loop explicitly retains zxing-cpp dependency approval as a Mike gate; code presence does not supersede this instruction."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-009",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "An approved local model, provenance/integrity/licence, tensor/device policy and explicit setup behavior are required by the loop; no authorized background-removal implementation may be built."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-010",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "Background-removal model/download/directory authority requires Mike approval; no approved model supply or network/setup policy exists."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-011",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "Background-removal inference/alpha/device behavior depends on an approved model and device policy; retained source alone cannot satisfy this requirement."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-013",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Available GStreamer factories gate codecs and structured pipelines avoid shell invocation; native atomic conversion tests cover one installed usable codec, not the complete hardware/fallback matrix."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-014",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Input/container/codec and no-overwrite/partial cleanup behavior is implemented and tested locally. Complete codec/container success/failure/resource output matrix across supported targets remains incomplete."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-015",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Available utilities keep local inputs and explicit clipboard/upload boundaries; recognition/model dependency gates and full retention/diagnostic/privacy qualification for every catalogue utility remain open."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-019",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Konami animation remains inventoried; preserve/correct/omit needs the human accessibility/performance/security/discoverability/maintenance decision required by EU-019."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-001",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Exhaustive settings-ledger field semantics/defaults/privacy/migration/downstream/platform dispositions still need product-owner acceptance; a native field table is discovery/candidate coverage only."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-004",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Private atomic replacement, conflict protection, locale-independent bytes and one previous snapshot are tested. The complete approved retention/crash-power-loss qualification remains open."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-005",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Current native field families have explicit type/range repair and a value matrix, but complete settings-ledger fields and approved per-field repair/default rules remain unaccepted."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-006",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Declared current fields use portable strings/IDs and avoid native handles, with representation tests. All device/monitor/timezone/font/provider fields and shared-platform compatibility adapters are incomplete."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-007",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "SecretServiceCredentialStore and secret extraction are present and tested; scheduler explicitly requires human credential-store security review before approval."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-008",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "Legacy plaintext secret migration and verified removal need an explicitly approved secure-store migration/consent flow; no complete native legacy migration is implemented."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-009",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Current native scope/precedence metadata and UI/CLI tests exist; identical supported MCP/automation/provider/device precedence across all user-visible preferences is not implemented or tested."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-011",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Stable built-in/workflow keyboard bindings, collision checks and native controls exist. Complete reserved gesture/platform collision behavior and all gesture settings are not proved."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-012",
-      "previous": "partial",
-      "current": "implemented",
-      "reason": "Settings are data only and unsafe authority-looking imports fail closed; native fixtures confirm imported/saved values cannot grant consent, permission, credential or destructive-confirmation authority."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-013",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Transient dialog placement and editor dimension-only snapshots are tested without native handles. Physical mixed-display removal/scaling/work-area restoration across every retained window remains unqualified."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-017",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "Update/plugin/external executable settings await product-owner signature/provenance/sandbox/consent authority; a compatible imported field cannot activate these policies."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-020",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Accepted exhaustive ledger dispositions and all three platform adapter evidence are product/qualification gates; generated native field tests do not satisfy complete activation coverage."
-    },
-    {
-      "capability": "WORKFLOW-CATALOG-001",
-      "requirement": "WFCAT-001",
-      "previous": "partial",
-      "current": "not-started",
-      "reason": "Exhaustive action-ledger approved schemas/authority/dispositions for every family are not complete."
+      "reason": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate."
     },
     {
       "capability": "WORKFLOW-CATALOG-001",
       "requirement": "WFCAT-002",
       "previous": "implemented",
       "current": "partial",
-      "reason": "Capture/recording use shared durable execution IDs/snapshots/step results; FileUploadHistoryRecord/watch-folder operations lack that full effective-settings snapshot and ordered terminal step contract."
+      "reason": "Supported capture, recording and upload/watch operations now use WorkflowExecution with stable IDs, start/origin/settings, ordered results and terminal projection. FileUploadController still continues to network transfer when execution admit/start or read-file-step persistence fails; one traceable durable execution is therefore not guaranteed at that boundary."
     },
     {
       "capability": "WORKFLOW-CATALOG-001",
       "requirement": "WFCAT-004",
       "previous": "implemented",
       "current": "partial",
-      "reason": "Core pipeline failure taxonomy and native capture/recording propagation are tested; separate file-upload/watch records expose failureCode without the full common status/ordered-step taxonomy."
+      "reason": "Shared file-operation failure taxonomy distinguishes validation, permission, unavailable, transient/permanent, partial and cancelled states. Watch storage failures stop new effects and retain completed output honestly. File upload still crosses admission/start/step storage failure before transfer, so durable workflow reporting at all side-effect boundaries remains incomplete."
     },
     {
-      "capability": "WORKFLOW-CATALOG-001",
-      "requirement": "WFCAT-017",
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-025",
       "previous": "implemented",
       "current": "partial",
-      "reason": "Capture and recording share all terminal surfaces and opaque output references; separate file-upload/watch operation reporting/history does not establish common terminal correlation/results for every workflow family."
-    },
-    {
-      "capability": "WORKFLOW-CATALOG-001",
-      "requirement": "WFCAT-018",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Activation requires full action-family matrix and accepted tests on all supported platform adapters, including human permission/security/accessibility gates; native Linux tests alone are insufficient."
-    },
-    {
-      "capability": "INTERFACE-CATALOG-001",
-      "requirement": "IFCAT-001",
-      "previous": "partial",
-      "current": "not-started",
-      "reason": "Full interface-ledger approved operation/request/authority/accessibility/disposition definitions are incomplete."
-    },
-    {
-      "capability": "INTERFACE-CATALOG-001",
-      "requirement": "IFCAT-011",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "Human-approved MCP schema/authority/side-effect/progress/cancellation policy is pending; no native MCP implementation qualifies this row."
-    },
-    {
-      "capability": "INTERFACE-CATALOG-001",
-      "requirement": "IFCAT-012",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "MCP/agent human-consent and least-authority security posture require product-owner approval; no agent-origin execution is authorized by imported text."
-    },
-    {
-      "capability": "INTERFACE-CATALOG-001",
-      "requirement": "IFCAT-013",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "Human-approved MCP granted-scope, metadata-only discovery and returned-data lifetime policy are pending."
-    },
-    {
-      "capability": "INTERFACE-CATALOG-001",
-      "requirement": "IFCAT-018",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Full cross-entry/schema/authority/physical screen-reader/localization/provider/all-platform activation matrix and acceptance remain pending."
-    },
-    {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-011",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "Human product owner must approve signed release provenance/update channel/install/rollback policy; no approved update implementation exists."
-    },
-    {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-013",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only."
-    },
-    {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-015",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist."
-    },
-    {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-022",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "Approved isolated plugin host/signing/permissions/secret mediation security posture is a human decision; trusted-process plugin execution must not be added."
-    },
-    {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-028",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Human release/signing/build-provenance, cross-platform packaging and migration/rollback qualification remain pending."
-    },
-    {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-030",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Human security/privacy/accessibility/licensing/compatibility/parity activation acceptance on all supported platforms is pending."
-    },
-    {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-036",
-      "previous": "partial",
-      "current": "blocked",
-      "reason": "Human accepted Linux dispositions and identical vector results on every supported edition target distribution remain pending."
+      "reason": "Canonical authorized roots, readiness filtering, per-file duplicate checkpoints and owned cancellable copy/move/upload exist. However rescan recursively enumerates and stats the authorized tree on the GUI thread before checking pending work; no bounded/cancellable discovery path qualifies clean Stop for large or slow trees."
     },
     {
       "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-004",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-005",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Compatible opaque fields round-trip and unsafe named fields are refused/quarantined inertly. The conservative name classifier is not a general secret/authority detector and its human security qualification remains open."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-006",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Native XANN/XSIE and profile saves report targets/versions/non-portable omissions and use atomic stores. Portable export of the complete compatibility catalogue, all native handles and secret classifications remains incomplete; no SXCU export UI exists."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-008",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "Complete explicit auditable legacy-secret migration, approved secure storage, verification and redacted removal is missing and depends on human credential/security approval."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-012",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "Isolated plugin package host, provenance/signature manifest authority and installation consent are pending product-owner security policy."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-013",
+      "requirement": "COMPCAT-010",
       "previous": "partial",
-      "current": "blocked",
-      "reason": "Native XANN and preset inert preservation exists, but full legacy document/effect parity plus the scheduler-mandated human SXIE import security review remain pending."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-014",
-      "previous": "not-started",
-      "current": "blocked",
-      "reason": "MCP operation schema/policy and automation authority are not approved; no imported text may grant human consent or tool execution authority."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-015",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-016",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "Native canonical-rules document and local locale/newline/NFC fixtures exist. Windows/macOS cross-platform and legacy runtime fixtures required by the clause are missing; timezone-less timestamps still depend on local interpretation."
+      "current": "implemented",
+      "reason": "SQLite reader holds a read-only transaction and bounded backup snapshot, validates integrity and ordinary-table schema, disables extensions/views/triggers, bounds bytes/rows/time and emits typed transaction failures; WAL/concurrent writer and malicious schema tests exercise this native behavior."
     }
   ],
   "review_limitations": [
-    "Linux-only source/test audit, not accepted platform dispositions, release approval or a completion percentage.",
-    "All implementation hashes and method locations are verified; existence alone did not establish requirement classification.",
-    "Dependency approval records may exist upstream, but the scheduler explicitly retains QR/OCR, model, threshold and human security/release gates.",
-    "No runtime behavior, contract clause, vector expectation, dependency, test assertion or approval policy changed in this audit."
+    "Candidate Linux behavior only; physical target and cross-platform qualification and human acceptance remain separate.",
+    "Scheduler model/dependency/threshold/security/release gates remain explicit even where upstream code or approval documentation exists.",
+    "Source-extracted defects without a current runtime repro are identified as source findings, not demonstrated failures.",
+    "No native behavior, contract, expected test results, dependency or approval changed in this audit."
   ],
   "waiting_on_mike": [
     {
-      "capability": "EDITOR-EFFECTS-001",
-      "requirement": "EE-015",
-      "question": "Native SXIE/XSIE preservation, static mapping and unsupported-step isolation exist, but the scheduler explicitly requires human security review of SXIE import before qualification."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-004",
-      "question": "Native screen/region/file QR recognition and tests now exist, but the loop explicitly retains zxing-cpp dependency approval as a Mike gate; code presence does not supersede this instruction."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-009",
-      "question": "An approved local model, provenance/integrity/licence, tensor/device policy and explicit setup behavior are required by the loop; no authorized background-removal implementation may be built."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-010",
-      "question": "Background-removal model/download/directory authority requires Mike approval; no approved model supply or network/setup policy exists."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-011",
-      "question": "Background-removal inference/alpha/device behavior depends on an approved model and device policy; retained source alone cannot satisfy this requirement."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-019",
-      "question": "Konami animation remains inventoried; preserve/correct/omit needs the human accessibility/performance/security/discoverability/maintenance decision required by EU-019."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-001",
-      "question": "Exhaustive settings-ledger field semantics/defaults/privacy/migration/downstream/platform dispositions still need product-owner acceptance; a native field table is discovery/candidate coverage only."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-007",
-      "question": "SecretServiceCredentialStore and secret extraction are present and tested; scheduler explicitly requires human credential-store security review before approval."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-008",
-      "question": "Legacy plaintext secret migration and verified removal need an explicitly approved secure-store migration/consent flow; no complete native legacy migration is implemented."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-017",
-      "question": "Update/plugin/external executable settings await product-owner signature/provenance/sandbox/consent authority; a compatible imported field cannot activate these policies."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-020",
-      "question": "Accepted exhaustive ledger dispositions and all three platform adapter evidence are product/qualification gates; generated native field tests do not satisfy complete activation coverage."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-008",
-      "question": "Complete explicit auditable legacy-secret migration, approved secure storage, verification and redacted removal is missing and depends on human credential/security approval."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-012",
-      "question": "Isolated plugin package host, provenance/signature manifest authority and installation consent are pending product-owner security policy."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-013",
-      "question": "Native XANN and preset inert preservation exists, but full legacy document/effect parity plus the scheduler-mandated human SXIE import security review remain pending."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "requirement": "COMPCAT-014",
-      "question": "MCP operation schema/policy and automation authority are not approved; no imported text may grant human consent or tool execution authority."
-    },
-    {
-      "capability": "EDITOR-ANNOTATIONS-001",
-      "requirement": "EA-009",
-      "question": "Reference-derived alphabetic/Roman and reset code exists, but the loop's exact mapping/start/reset questions remain unresolved; tests do not approve product semantics."
+      "capability": "REGION-CAPTURE-001",
+      "requirement": "RC-027",
+      "question": "Product decision required: approve authoritative pre-acquisition physical topology source. Native code now validates against packed QScreen bounds, but that does not settle the recorded mapping-authority question."
     },
     {
       "capability": "EDITOR-SESSION-001",
@@ -841,6 +274,16 @@
       "question": "Default and fallback path handling exists, but required baseline runtime observation and legacy fallback empty-save policy remain unapproved."
     },
     {
+      "capability": "EDITOR-ANNOTATIONS-001",
+      "requirement": "EA-009",
+      "question": "Reference-derived alphabetic/Roman and reset code exists, but the loop's exact mapping/start/reset questions remain unresolved; tests do not approve product semantics."
+    },
+    {
+      "capability": "EDITOR-EFFECTS-001",
+      "requirement": "EE-015",
+      "question": "Static mapping, safe inert unknown-ID/parameter round-trip and unsupported-step isolation are implemented and tested, but human security review of .sxie import remains an explicit scheduler gate. Native fixtures do not waive that gate."
+    },
+    {
       "capability": "EDITOR-CANVAS-001",
       "requirement": "EC-013",
       "question": "No complete background composition surface/model exists; deterministic smart-padding/background and retention policy remain explicit unanswered product decisions."
@@ -848,47 +291,57 @@
     {
       "capability": "EDITOR-SETTINGS-001",
       "requirement": "ESET-001",
-      "question": "Per-field setting implementations exceed the accepted ledger semantics; complete stable names/defaults/migration/privacy/platform/downstream ledger approval is still required."
+      "question": "Full accepted per-field contract names/defaults/migration/privacy/dispositions/downstream effects remain absent; reference defaults are not product approval."
     },
     {
-      "capability": "REGION-CAPTURE-001",
-      "requirement": "RC-027",
-      "question": "Product decision required: approve authoritative pre-acquisition physical topology source. Native code now validates against packed QScreen bounds, but that does not settle the recorded mapping-authority question."
+      "capability": "EDITOR-UTILITIES-001",
+      "requirement": "EU-004",
+      "question": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate."
     },
     {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-011",
-      "question": "Human product owner must approve signed release provenance/update channel/install/rollback policy; no approved update implementation exists."
+      "capability": "EDITOR-UTILITIES-001",
+      "requirement": "EU-009",
+      "question": "No approved local model/provenance/tensor/device/setup policy authorizes background removal."
     },
     {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-013",
-      "question": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only."
+      "capability": "EDITOR-UTILITIES-001",
+      "requirement": "EU-010",
+      "question": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists."
     },
     {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-015",
-      "question": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist."
+      "capability": "EDITOR-UTILITIES-001",
+      "requirement": "EU-011",
+      "question": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract."
     },
     {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-022",
-      "question": "Approved isolated plugin host/signing/permissions/secret mediation security posture is a human decision; trusted-process plugin execution must not be added."
+      "capability": "EDITOR-UTILITIES-001",
+      "requirement": "EU-019",
+      "question": "Konami shader preserve/correct/omit remains an explicit product-owner accessibility/performance/security/discoverability/maintenance decision."
     },
     {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-028",
-      "question": "Human release/signing/build-provenance, cross-platform packaging and migration/rollback qualification remain pending."
+      "capability": "SETTINGS-CATALOG-001",
+      "requirement": "SETCAT-001",
+      "question": "Complete settings-ledger semantic/default/migration/privacy/downstream/platform acceptance is still absent; native field declarations cannot approve it."
     },
     {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-030",
-      "question": "Human security/privacy/accessibility/licensing/compatibility/parity activation acceptance on all supported platforms is pending."
+      "capability": "SETTINGS-CATALOG-001",
+      "requirement": "SETCAT-007",
+      "question": "Native credential-store code exists; scheduler-mandated human Secret Service security review remains pending."
     },
     {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-036",
-      "question": "Human accepted Linux dispositions and identical vector results on every supported edition target distribution remain pending."
+      "capability": "SETTINGS-CATALOG-001",
+      "requirement": "SETCAT-008",
+      "question": "An explicit verified legacy plaintext-secret migration/removal flow and secure-store approval are still required; ordinary settings import does not migrate secrets."
+    },
+    {
+      "capability": "SETTINGS-CATALOG-001",
+      "requirement": "SETCAT-017",
+      "question": "Update/plugin/executable trust, provenance, sandbox and activation policy remain human authority gates; imported configuration cannot approve execution."
+    },
+    {
+      "capability": "SETTINGS-CATALOG-001",
+      "requirement": "SETCAT-020",
+      "question": "Full approved settings-ledger dispositions, all value families/upgrades/downgrades and all three adapters are not accepted; native boundary coverage does not activate this package."
     },
     {
       "capability": "WORKFLOW-CATALOG-001",
@@ -916,15 +369,65 @@
       "question": "Full cross-entry/schema/authority/physical screen-reader/localization/provider/all-platform activation matrix and acceptance remain pending."
     },
     {
-      "capability": "FILENAME-GENERATION-001",
-      "requirement": "FN-009/021/026",
-      "question": "What approved sampling rule applies when %rf has more than256 nonempty lines under the ordered-byte/rejection-sampling contract? Current code silently limits candidates to the first256; do not accept that truncation as normative."
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-011",
+      "question": "Human product owner must approve signed release provenance/update channel/install/rollback policy; no approved update implementation exists."
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-013",
+      "question": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only."
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-015",
+      "question": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist."
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-022",
+      "question": "Approved isolated plugin host/signing/permissions/secret mediation security posture is a human decision; trusted-process plugin execution must not be added."
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-028",
+      "question": "Unsigned native archive/deb/rpm install and AUR candidate tooling exists. Signing, release provenance, replacement migration/update/rollback and supported target acceptance remain explicitly human-blocked by the scheduler."
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-030",
+      "question": "Human security/privacy/accessibility/licensing/compatibility/parity activation acceptance on all supported platforms is pending."
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-036",
+      "question": "Human accepted Linux dispositions and identical vector results on every supported edition target distribution remain pending."
+    },
+    {
+      "capability": "COMPATIBILITY-CATALOG-001",
+      "requirement": "COMPCAT-008",
+      "question": "Complete legacy-secret consent, verification, native secure migration and recoverable plaintext removal await approved human credential/security policy."
+    },
+    {
+      "capability": "COMPATIBILITY-CATALOG-001",
+      "requirement": "COMPCAT-012",
+      "question": "Plugin-host package provenance, manifest authority, isolation and explicit installation policy are not approved or implemented."
+    },
+    {
+      "capability": "COMPATIBILITY-CATALOG-001",
+      "requirement": "COMPCAT-013",
+      "question": "Editable XANN/preset unknown preservation exists, but complete legacy geometry/effect/font/asset compatibility and scheduler-mandated human SXIE import security review remain pending."
+    },
+    {
+      "capability": "COMPATIBILITY-CATALOG-001",
+      "requirement": "COMPCAT-014",
+      "question": "MCP operation/schema and current-consent authority are not approved; imported automation text cannot grant execution authority."
     }
   ],
   "verification_blockers": [
-    "Full local suite:162/163 first run; EditorExitTest::fourKRectangleOpensToInteractiveWithin500ms measured799ms under parallel load and passed isolated rerun. Gate result recorded in loop state after push. No test weakened.",
-    "Shared vectors remain absent for nine desktop packages; local goldens are not independently accepted cross-platform fixtures.",
-    "Physical desktop, distro/edition, accessibility/security/privacy/licensing/parity and release acceptance remain human/target gates."
+    "Full local native build/test and final push-gate results are recorded in shared loop state after successful push.",
+    "Shared normative vectors remain absent for nine desktop packages; native tests do not supply independent cross-platform expected values.",
+    "Native physical security/privacy/accessibility/licensing/parity and release acceptance remain outstanding."
   ],
   "incremental_updates": [
     {
@@ -1203,8 +706,8 @@
       ]
     }
   ],
-  "audit_method": "All 16 manifest capabilities /345 requirements read and reviewed against current source and meaningful automated test bodies; 325 desktop rows classified and20 mobile-only rows excluded. Graph and prior trace text used only for navigation. Implemented requires named production-path automated evidence; partial, blocked and not-started are not completion.",
-  "reviewed_at": "2026-11-04T14:04:38.855452+00:00",
+  "audit_method": "All 16 manifest capabilities / 345 IDs reviewed against current production and meaningful named automated test bodies. 325 desktop rows classified; 20 mobile-only requirements explicitly outside Linux scope.",
+  "reviewed_at": "2026-11-11T15:27:15.305729+00:00",
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
     "date": "2026-10-28",
@@ -1221,5 +724,871 @@
       "not-started": 22,
       "not-applicable": 1
     }
-  }
+  },
+  "audit_history": [
+    {
+      "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+      "date": "2026-11-04",
+      "counts": {
+        "blocked": 34,
+        "implemented": 162,
+        "not-applicable": 1,
+        "not-started": 10,
+        "partial": 118
+      },
+      "classification_changes": [
+        {
+          "capability": "FILENAME-GENERATION-001",
+          "requirement": "FN-009",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Granted/denied/missing/non-text/empty file behavior has direct tests, but randomFileLine silently restricts files above 256 nonempty lines to their first 256 entries."
+        },
+        {
+          "capability": "FILENAME-GENERATION-001",
+          "requirement": "FN-021",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Rejection sampling and UUID bit layout are implemented, but the one-byte random-file selector silently truncates files with more than 256 candidate lines; the contract supplies no accepted wider sampling rule."
+        },
+        {
+          "capability": "FILENAME-GENERATION-001",
+          "requirement": "FN-026",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Typed error code/token/scalar-offset behavior is covered for supported contexts; %rf still omits eligible lines after the first 256, contrary to selecting among all nonempty lines."
+        },
+        {
+          "capability": "REGION-CAPTURE-001",
+          "requirement": "RC-004",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Core per-monitor mapping/vector arithmetic exists, but ScreenTopology packs rows/columns by logical origins; no accepted authority proves that packed physical arrangement equals compositor screenshot layout."
+        },
+        {
+          "capability": "REGION-CAPTURE-001",
+          "requirement": "RC-012",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Confirmed output dimensions and Core composite order are tested, but native packed-topology mapping is not proven for arbitrary staggered/mixed-scale compositor layouts."
+        },
+        {
+          "capability": "REGION-CAPTURE-001",
+          "requirement": "RC-022",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Core IEEE754 floor-epsilon mapping is tested, but production QScreen-derived physical origins are packed rather than obtained from approved compositor physical bounds."
+        },
+        {
+          "capability": "REGION-CAPTURE-001",
+          "requirement": "RC-027",
+          "previous": "implemented",
+          "current": "blocked",
+          "reason": "Product decision required: approve authoritative pre-acquisition physical topology source. Native code now validates against packed QScreen bounds, but that does not settle the recorded mapping-authority question."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-014",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Known compatible default-sidecar removal is tested, but empty save with legacy fallback remains explicitly refused pending product-approved non-resurrection/removal policy."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-019",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Keyboard/native accessibility, zoom-independent handles and grayscale cues exist; complete editor-control high-contrast/screen-reader and supported-target qualification is not established."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-020",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Explicit output authority and private temporary storage exist; approved configured editor temp/recovery retention and secure-delete limits are still an unanswered policy gate."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-021",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Actual 4K interactive-open latency is tested against 500ms, but no 60Hz manipulation-preview performance qualification was found."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-022",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Structural/history vectors and analytical native rectangle tests exist; approved shared golden-image and supported-platform qualification remain required."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-029",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Reproduced through current production conformance adapter: oversized canvas alone returns document-too-large, but adding unsafe extensions or traversal returns document-unsafe-content/document-path-traversal before accumulated size failure; required ES-029 priority is incomplete."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-030",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Default and fallback path handling exists, but required baseline runtime observation and legacy fallback empty-save policy remain unapproved."
+        },
+        {
+          "capability": "EDITOR-ANNOTATIONS-001",
+          "requirement": "EA-008",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Native text/balloon formatting including glyph-outline and balloon-border candidates is tested; exact regular Text border geometry still lacks recorded product decision."
+        },
+        {
+          "capability": "EDITOR-ANNOTATIONS-001",
+          "requirement": "EA-009",
+          "previous": "implemented",
+          "current": "blocked",
+          "reason": "Reference-derived alphabetic/Roman and reset code exists, but the loop's exact mapping/start/reset questions remain unresolved; tests do not approve product semantics."
+        },
+        {
+          "capability": "EDITOR-ANNOTATIONS-001",
+          "requirement": "EA-018",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Native named tool controls, Escape, grayscale selection/handles/focus are tested; every option's accessibility and full redaction/high-contrast target qualification remain incomplete."
+        },
+        {
+          "capability": "EDITOR-ANNOTATIONS-001",
+          "requirement": "EA-020",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Native scenarios, resource/admission and no-network tests exist; no published shared vectors or complete cross-platform/target qualification establishes the entire package."
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "requirement": "EE-002",
+          "previous": "partial",
+          "current": "implemented",
+          "reason": "Stable unique census IDs drive category/search/recent/favorite discovery; browser and persisted unknown-ID/list tests exercise those native paths."
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "requirement": "EE-006",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Size-changing browser effects route through ResizeCanvas protection/history, with a synthetic size-effect test; correct geometry for every actual scale/crop/rotation effect and every annotation family is not proved."
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "requirement": "EE-008",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Persisted effect operation seeds and seed-only execution have local repeatability tests. Identical decoded pixels across all supported platforms, fonts/renderers and profiles have no shared accepted fixtures."
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "requirement": "EE-010",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "OwnedWork, cancellation, progress, dimension/resource checks and allocation failures are tested for existing effects; exhaustive expensive-effect resource/progress behavior across the selected census remains incomplete."
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "requirement": "EE-015",
+          "previous": "implemented",
+          "current": "blocked",
+          "reason": "Native SXIE/XSIE preservation, static mapping and unsupported-step isolation exist, but the scheduler explicitly requires human security review of SXIE import before qualification."
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "requirement": "EE-018",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "CPU/native font fallback and unavailable browser diagnostics exist. An approved disposition for missing effects/assets/hardware and complete fallback target matrix are absent."
+        },
+        {
+          "capability": "EDITOR-CANVAS-001",
+          "requirement": "EC-013",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "No complete background composition surface/model exists; deterministic smart-padding/background and retention policy remain explicit unanswered product decisions."
+        },
+        {
+          "capability": "EDITOR-OUTPUT-ACTIONS-001",
+          "requirement": "EO-014",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Owned per-output ports document snapshot/thread/lifetime and explicit missing services; full all-host cancellation/error/reentrancy contract matrix remains incomplete."
+        },
+        {
+          "capability": "EDITOR-SETTINGS-001",
+          "requirement": "ESET-001",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Per-field setting implementations exceed the accepted ledger semantics; complete stable names/defaults/migration/privacy/platform/downstream ledger approval is still required."
+        },
+        {
+          "capability": "EDITOR-SETTINGS-001",
+          "requirement": "ESET-004",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Native theme/accent/high-contrast resolution and readable controls exist; all-platform contrast/reduced-motion/screen-reader qualification remains incomplete."
+        },
+        {
+          "capability": "EDITOR-SETTINGS-001",
+          "requirement": "ESET-008",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Native text font family/size/style/alignment and fallback preservation have tests; Step-style mappings remain a product decision in the loop."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-002",
+          "previous": "partial",
+          "current": "implemented",
+          "reason": "The native colour picker uses PortalScreenshot consent, a coordinate/magnified snapshot sampler, explicit clipboard controls and Escape/parent-close pixel disposal; source and native test verify the connected seam."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-004",
+          "previous": "implemented",
+          "current": "blocked",
+          "reason": "Native screen/region/file QR recognition and tests now exist, but the loop explicitly retains zxing-cpp dependency approval as a Mike gate; code presence does not supersede this instruction."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-009",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "An approved local model, provenance/integrity/licence, tensor/device policy and explicit setup behavior are required by the loop; no authorized background-removal implementation may be built."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-010",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "Background-removal model/download/directory authority requires Mike approval; no approved model supply or network/setup policy exists."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-011",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "Background-removal inference/alpha/device behavior depends on an approved model and device policy; retained source alone cannot satisfy this requirement."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-013",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Available GStreamer factories gate codecs and structured pipelines avoid shell invocation; native atomic conversion tests cover one installed usable codec, not the complete hardware/fallback matrix."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-014",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Input/container/codec and no-overwrite/partial cleanup behavior is implemented and tested locally. Complete codec/container success/failure/resource output matrix across supported targets remains incomplete."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-015",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Available utilities keep local inputs and explicit clipboard/upload boundaries; recognition/model dependency gates and full retention/diagnostic/privacy qualification for every catalogue utility remain open."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-019",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Konami animation remains inventoried; preserve/correct/omit needs the human accessibility/performance/security/discoverability/maintenance decision required by EU-019."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-001",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Exhaustive settings-ledger field semantics/defaults/privacy/migration/downstream/platform dispositions still need product-owner acceptance; a native field table is discovery/candidate coverage only."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-004",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Private atomic replacement, conflict protection, locale-independent bytes and one previous snapshot are tested. The complete approved retention/crash-power-loss qualification remains open."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-005",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Current native field families have explicit type/range repair and a value matrix, but complete settings-ledger fields and approved per-field repair/default rules remain unaccepted."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-006",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Declared current fields use portable strings/IDs and avoid native handles, with representation tests. All device/monitor/timezone/font/provider fields and shared-platform compatibility adapters are incomplete."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-007",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "SecretServiceCredentialStore and secret extraction are present and tested; scheduler explicitly requires human credential-store security review before approval."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-008",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "Legacy plaintext secret migration and verified removal need an explicitly approved secure-store migration/consent flow; no complete native legacy migration is implemented."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-009",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Current native scope/precedence metadata and UI/CLI tests exist; identical supported MCP/automation/provider/device precedence across all user-visible preferences is not implemented or tested."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-011",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Stable built-in/workflow keyboard bindings, collision checks and native controls exist. Complete reserved gesture/platform collision behavior and all gesture settings are not proved."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-012",
+          "previous": "partial",
+          "current": "implemented",
+          "reason": "Settings are data only and unsafe authority-looking imports fail closed; native fixtures confirm imported/saved values cannot grant consent, permission, credential or destructive-confirmation authority."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-013",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Transient dialog placement and editor dimension-only snapshots are tested without native handles. Physical mixed-display removal/scaling/work-area restoration across every retained window remains unqualified."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-017",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "Update/plugin/external executable settings await product-owner signature/provenance/sandbox/consent authority; a compatible imported field cannot activate these policies."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-020",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Accepted exhaustive ledger dispositions and all three platform adapter evidence are product/qualification gates; generated native field tests do not satisfy complete activation coverage."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirement": "WFCAT-001",
+          "previous": "partial",
+          "current": "not-started",
+          "reason": "Exhaustive action-ledger approved schemas/authority/dispositions for every family are not complete."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirement": "WFCAT-002",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Capture/recording use shared durable execution IDs/snapshots/step results; FileUploadHistoryRecord/watch-folder operations lack that full effective-settings snapshot and ordered terminal step contract."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirement": "WFCAT-004",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Core pipeline failure taxonomy and native capture/recording propagation are tested; separate file-upload/watch records expose failureCode without the full common status/ordered-step taxonomy."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirement": "WFCAT-017",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Capture and recording share all terminal surfaces and opaque output references; separate file-upload/watch operation reporting/history does not establish common terminal correlation/results for every workflow family."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirement": "WFCAT-018",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Activation requires full action-family matrix and accepted tests on all supported platform adapters, including human permission/security/accessibility gates; native Linux tests alone are insufficient."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-001",
+          "previous": "partial",
+          "current": "not-started",
+          "reason": "Full interface-ledger approved operation/request/authority/accessibility/disposition definitions are incomplete."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-011",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "Human-approved MCP schema/authority/side-effect/progress/cancellation policy is pending; no native MCP implementation qualifies this row."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-012",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "MCP/agent human-consent and least-authority security posture require product-owner approval; no agent-origin execution is authorized by imported text."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-013",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "Human-approved MCP granted-scope, metadata-only discovery and returned-data lifetime policy are pending."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-018",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Full cross-entry/schema/authority/physical screen-reader/localization/provider/all-platform activation matrix and acceptance remain pending."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-011",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "Human product owner must approve signed release provenance/update channel/install/rollback policy; no approved update implementation exists."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-013",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-015",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-022",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "Approved isolated plugin host/signing/permissions/secret mediation security posture is a human decision; trusted-process plugin execution must not be added."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-028",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Human release/signing/build-provenance, cross-platform packaging and migration/rollback qualification remain pending."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-030",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Human security/privacy/accessibility/licensing/compatibility/parity activation acceptance on all supported platforms is pending."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-036",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Human accepted Linux dispositions and identical vector results on every supported edition target distribution remain pending."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-004",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-005",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Compatible opaque fields round-trip and unsafe named fields are refused/quarantined inertly. The conservative name classifier is not a general secret/authority detector and its human security qualification remains open."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-006",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Native XANN/XSIE and profile saves report targets/versions/non-portable omissions and use atomic stores. Portable export of the complete compatibility catalogue, all native handles and secret classifications remains incomplete; no SXCU export UI exists."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-008",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "Complete explicit auditable legacy-secret migration, approved secure storage, verification and redacted removal is missing and depends on human credential/security approval."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-012",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "Isolated plugin package host, provenance/signature manifest authority and installation consent are pending product-owner security policy."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-013",
+          "previous": "partial",
+          "current": "blocked",
+          "reason": "Native XANN and preset inert preservation exists, but full legacy document/effect parity plus the scheduler-mandated human SXIE import security review remain pending."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-014",
+          "previous": "not-started",
+          "current": "blocked",
+          "reason": "MCP operation schema/policy and automation authority are not approved; no imported text may grant human consent or tool execution authority."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-015",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-016",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Native canonical-rules document and local locale/newline/NFC fixtures exist. Windows/macOS cross-platform and legacy runtime fixtures required by the clause are missing; timezone-less timestamps still depend on local interpretation."
+        }
+      ],
+      "capabilities": [
+        {
+          "capability": "FILENAME-GENERATION-001",
+          "requirements": 27,
+          "counts": {
+            "implemented": 24,
+            "partial": 3
+          },
+          "trace": "traceability/FILENAME-GENERATION-001.json"
+        },
+        {
+          "capability": "POST-CAPTURE-ACTIONS-001",
+          "requirements": 24,
+          "counts": {
+            "implemented": 24
+          },
+          "trace": "traceability/POST-CAPTURE-ACTIONS-001.json"
+        },
+        {
+          "capability": "REGION-CAPTURE-001",
+          "requirements": 27,
+          "counts": {
+            "blocked": 1,
+            "implemented": 18,
+            "not-started": 3,
+            "partial": 5
+          },
+          "trace": "traceability/REGION-CAPTURE-001.json"
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirements": 30,
+          "counts": {
+            "blocked": 3,
+            "implemented": 21,
+            "not-started": 1,
+            "partial": 5
+          },
+          "trace": "traceability/EDITOR-SESSION-001.json"
+        },
+        {
+          "capability": "EDITOR-ANNOTATIONS-001",
+          "requirements": 20,
+          "counts": {
+            "blocked": 1,
+            "implemented": 16,
+            "partial": 3
+          },
+          "trace": "traceability/EDITOR-ANNOTATIONS-001.json"
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 1,
+            "implemented": 7,
+            "partial": 10
+          },
+          "trace": "traceability/EDITOR-EFFECTS-001.json"
+        },
+        {
+          "capability": "EDITOR-CANVAS-001",
+          "requirements": 17,
+          "counts": {
+            "blocked": 1,
+            "implemented": 14,
+            "partial": 2
+          },
+          "trace": "traceability/EDITOR-CANVAS-001.json"
+        },
+        {
+          "capability": "EDITOR-OUTPUT-ACTIONS-001",
+          "requirements": 16,
+          "counts": {
+            "implemented": 8,
+            "partial": 8
+          },
+          "trace": "traceability/EDITOR-OUTPUT-ACTIONS-001.json"
+        },
+        {
+          "capability": "EDITOR-SETTINGS-001",
+          "requirements": 16,
+          "counts": {
+            "blocked": 1,
+            "implemented": 8,
+            "partial": 7
+          },
+          "trace": "traceability/EDITOR-SETTINGS-001.json"
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirements": 19,
+          "counts": {
+            "blocked": 5,
+            "implemented": 7,
+            "partial": 7
+          },
+          "trace": "traceability/EDITOR-UTILITIES-001.json"
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirements": 20,
+          "counts": {
+            "blocked": 5,
+            "implemented": 2,
+            "partial": 13
+          },
+          "trace": "traceability/SETTINGS-CATALOG-001.json"
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 1,
+            "implemented": 4,
+            "not-started": 1,
+            "partial": 12
+          },
+          "trace": "traceability/WORKFLOW-CATALOG-001.json"
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 4,
+            "implemented": 3,
+            "not-started": 1,
+            "partial": 10
+          },
+          "trace": "traceability/INTERFACE-CATALOG-001.json"
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirements": 37,
+          "counts": {
+            "blocked": 7,
+            "implemented": 6,
+            "not-applicable": 1,
+            "not-started": 2,
+            "partial": 21
+          },
+          "trace": "traceability/CORE-PLATFORM-001.json"
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 4,
+            "not-started": 2,
+            "partial": 12
+          },
+          "trace": "traceability/COMPATIBILITY-CATALOG-001.json"
+        }
+      ],
+      "findings": null
+    }
+  ],
+  "findings": [
+    {
+      "capability": "FILENAME-GENERATION-001",
+      "finding": "Reviewed all filename requirements against current FilenameGenerator.cpp, native CaptureSave and its counter tests, and conformance adapter/vector path. No classification changes: 24 implemented candidates, 3 partial for the unresolved greater-than-256-line random-file sampling rule. Counter reservation persists before native publication; interrupted publication and collision fixtures exercise non-reuse."
+    },
+    {
+      "capability": "REGION-CAPTURE-001",
+      "finding": {
+        "kind": "blocked-product-decision",
+        "requirement": "RC-003/004/012/022/027",
+        "detail": "ScreenTopology still packs columns/rows from logical origins. Core geometry tests do not authorize compositor physical mapping or settle pre-acquisition topology authority."
+      }
+    },
+    {
+      "capability": "EDITOR-SESSION-001",
+      "finding": {
+        "kind": "actionable",
+        "priority": 1,
+        "summary": "Protect recovery files belonging to newer versions/live owners from blind count pruning before extending recovery. Scratch current EditorRecovery.cpp repro seeds private version2file oldest, writes8version1records, and observes deletion.",
+        "source": "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp:87",
+        "repro": "/tmp/audit37-recovery-prune.cpp",
+        "observed": "future recovery preserved: false; exit1"
+      }
+    },
+    {
+      "capability": "EDITOR-SESSION-001",
+      "finding": {
+        "kind": "actionable",
+        "priority": 2,
+        "summary": "Move recovery serialize/write/list/remove through OwnedWork; writeRecoveryNow is called directly from a GUI timer, while offerRecovery synchronously scans and uses nested QMessageBox exec. Preserve already-working separate recovery/disclosure outcome.",
+        "source": "platforms/linux/linux-qt/app/EditorWindow.cpp:1689"
+      }
+    },
+    {
+      "capability": "EDITOR-SESSION-001",
+      "finding": {
+        "kind": "question",
+        "summary": "How should ES-029 closed diagnostics reconcile with compatibility rejection codes? Too-large precedence is fixed; current code/tests retain extra security/lexical codes. Do not silently change security diagnostics in audit."
+      }
+    },
+    {
+      "capability": "EDITOR-EFFECTS-001",
+      "finding": {
+        "kind": "partial",
+        "summary": "CPU precision repair is concrete independent native evidence for eight default effects, not acceptance of all232selected algorithms/963parameter boundaries. Keep missing model and human SXIE review gates."
+      }
+    },
+    {
+      "capability": "EDITOR-OUTPUT-ACTIONS-001",
+      "finding": {
+        "kind": "partial",
+        "summary": "Actual encoder /dev/full ENOSPC proof exists; do not describe all disk-full failures as only mocked, and do not claim publication ENOSPC or full EO016 completion."
+      }
+    },
+    {
+      "capability": "EDITOR-SETTINGS-001",
+      "finding": "Full Step-style/default approval remains unresolved despite native source implementing reference-derived mappings."
+    },
+    {
+      "capability": "EDITOR-SETTINGS-001",
+      "finding": "Numeric native fields are validated; their source maxima do not approve the entire ledger."
+    },
+    {
+      "capability": "EDITOR-UTILITIES-001",
+      "finding": "EU-004 remains scheduler-blocked even though upstream dependency documentation and code/test evidence now say approved; this is an instruction/approval reconciliation question for Mike."
+    },
+    {
+      "capability": "EDITOR-UTILITIES-001",
+      "finding": "Local QR save and icon output include synchronous native GUI file work; a small follow-up can route blocking output through existing OwnedWork without inventing utility breadth."
+    },
+    {
+      "capability": "EDITOR-UTILITIES-001",
+      "finding": "Converter test optional runtime codec skips are not full hardware qualification."
+    },
+    {
+      "capability": "SETTINGS-CATALOG-001",
+      "finding": "Reserved hotkey defaults now have named explicit refusal/replacement tests; gesture families beyond keyboard remain partial."
+    },
+    {
+      "capability": "SETTINGS-CATALOG-001",
+      "finding": "Settings stores and import/transfer tests are substantial; missing complete accepted field semantics must not be filled from source initializers."
+    },
+    {
+      "capability": "WORKFLOW-CATALOG-001",
+      "finding": {
+        "kind": "source-extracted-gap",
+        "requirement": "WFCAT-002",
+        "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
+        "lines": "142-160",
+        "detail": "Failed admit/start or read-file step persistence only changes a flag; UploadExecutor starts unconditionally. Not runtime-confirmed by this audit. Next regression should inject execution writer failures before HTTP transfer."
+      }
+    },
+    {
+      "capability": "WORKFLOW-CATALOG-001",
+      "finding": {
+        "kind": "implemented-progress",
+        "requirement": "WFCAT-002",
+        "detail": "Do not redo shared upload/watch execution fields: current successful/failure fixtures inspect records/history/dialog and notification. Remaining storage fence is narrower."
+      }
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "finding": {
+        "kind": "source-extracted-gap",
+        "requirement": "CORE-004/025",
+        "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "lines": "161-210",
+        "detail": "Rescan recursively walks/stat-enumerates before pending-path check on the GUI callback. Owned copy/move fixes did not move discovery. No live latency measurement asserted."
+      }
+    },
+    {
+      "capability": "COMPATIBILITY-CATALOG-001",
+      "finding": "Do not rebuild history JSON/XML/SQLite import: all are implemented as explicitly reviewed immutable snapshots in a separate private archive with restart/undo/recovery."
+    },
+    {
+      "capability": "COMPATIBILITY-CATALOG-001",
+      "finding": "COMPCAT-010 now has direct meaningful evidence for every SQLite-specific clause. COMPCAT-002/018 retain missing runtime/golden/cross-platform activation qualification."
+    },
+    {
+      "capability": "COMPATIBILITY-CATALOG-001",
+      "finding": "Distinct snapshots preserve repeated records intentionally because unversioned JSON/XML lack task IDs; exact snapshot retry is idempotent. A broader stable-task merge/migration policy still needs specification."
+    }
+  ],
+  "raw_trace_counts": {
+    "implemented": 173,
+    "not-applicable": 1,
+    "not-started": 20,
+    "partial": 131
+  },
+  "full_audit_counts": {
+    "blocked": 34,
+    "implemented": 169,
+    "not-applicable": 1,
+    "not-started": 6,
+    "partial": 115
+  },
+  "integration_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+  "incremental_classification_updates": [
+    {
+      "requirement": "EO-014",
+      "previous": "partial",
+      "current": "implemented",
+      "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+    },
+    {
+      "requirement": "FN-009",
+      "previous": "partial",
+      "current": "implemented",
+      "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+    },
+    {
+      "requirement": "FN-021",
+      "previous": "partial",
+      "current": "implemented",
+      "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+    },
+    {
+      "requirement": "FN-026",
+      "previous": "partial",
+      "current": "implemented",
+      "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+    }
+  ],
+  "integration_note": "Ten upstream commits integrated after the full audit: approved wide random-file sampling resolves FN-009/021/026; explicit editor host contracts close EO-014. Other source/test updates and evidence remain preserved. The frozen full audit is still pinned to d25064e."
 }

@@ -43,7 +43,7 @@
         "classification": "implemented",
         "spec_line": 29,
         "coverage": "Portal permission/acquisition precedes overlays; denial/failure never exposes a selectable source.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -59,7 +59,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -69,9 +69,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "actualControllerDenialShowsNoOverlayAndNoPostCaptureActions",
-            "line": 1040
+            "line": 1097
           }
         ]
       },
@@ -95,7 +95,7 @@
           "permission-denied-shows-no-overlay"
         ],
         "coverage": "Native screenshot portal consent and permission-denied guidance are distinct from cancellation and do not reprompt.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -111,7 +111,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -121,9 +121,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "denialOffersPermissionGuidanceOnceAndNeverRepromptsOrLeavesOutput",
-            "line": 543
+            "line": 600
           }
         ]
       },
@@ -147,7 +147,7 @@
           "topology-change-cancels"
         ],
         "coverage": "Session freezes IDs, per-screen DPR/rotation and topology changes, but native color primaries/transfer/HDR are explicitly unavailable and packed Qt positions are not an authoritative physical desktop topology.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -163,7 +163,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -173,9 +173,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
-            "line": 373
+            "line": 430
           }
         ]
       },
@@ -207,7 +207,7 @@
           "negative-origin-scaled"
         ],
         "coverage": "Core per-monitor mapping/vector arithmetic exists, but ScreenTopology packs rows/columns by logical origins; no accepted authority proves that packed physical arrangement equals compositor screenshot layout.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -223,7 +223,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -233,9 +233,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage",
-            "line": 1318
+            "line": 1383
           }
         ]
       },
@@ -256,7 +256,7 @@
         "classification": "implemented",
         "spec_line": 43,
         "coverage": "Frozen desktop overlays are created after acquisition and source pixels exclude overlay surfaces; cancellation and one-snapshot fixtures cover publication.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -272,7 +272,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -282,9 +282,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "frozenConfirmationNeverReopensThePortalFile",
-            "line": 1091
+            "line": 1148
           }
         ]
       },
@@ -311,7 +311,7 @@
           "zero-area-not-confirmable"
         ],
         "coverage": "Shared RegionSession normalizes reverse drags and positive-area admission; state vectors and native drag fixtures exercise confirmation.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -327,7 +327,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -337,9 +337,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage",
-            "line": 1318
+            "line": 1383
           }
         ]
       },
@@ -365,7 +365,7 @@
           "explicit-confirm-with-enter"
         ],
         "coverage": "Native frozen quick-confirm preference controls release versus selected/Enter behavior; keyboard adjustment fixture verifies resulting pixels.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -381,7 +381,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -391,9 +391,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
-            "line": 373
+            "line": 430
           }
         ]
       },
@@ -414,7 +414,7 @@
         "classification": "implemented",
         "spec_line": 52,
         "coverage": "Escape/explicit cancellation retires portal and workers, leaves no output and prevents last-region/update/action publication.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -430,7 +430,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -440,9 +440,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "actualFrozenOverlayEscapeLeavesFilesAndClipboardUntouched",
-            "line": 1104
+            "line": 1161
           }
         ]
       },
@@ -479,7 +479,7 @@
           "explicit-confirm-with-enter"
         ],
         "coverage": "Enter and click-only snapping obey positive geometry and settings; native option fixture and shared state vectors cover admission.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -495,7 +495,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -505,9 +505,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
-            "line": 373
+            "line": 430
           }
         ]
       },
@@ -528,7 +528,7 @@
           "keyboard-move-stops-at-edge"
         ],
         "coverage": "All four native handles and keyboard movement/resize preserve clamp and grab offset; optional presets are not mandatory.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -544,7 +544,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -554,9 +554,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "nativeCornerHandlesResizeWithoutPrematureCaptureAndKeepGrabOffset",
-            "line": 328
+            "line": 385
           }
         ]
       },
@@ -594,7 +594,7 @@
         "classification": "implemented",
         "spec_line": 61,
         "coverage": "Native Hyprland discovery maps snap targets and free drag overrides snapping; alternate desktop discovery remains availability-qualified.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -610,7 +610,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -620,9 +620,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
-            "line": 373
+            "line": 430
           }
         ]
       },
@@ -644,7 +644,7 @@
           "uncovered-area-is-transparent"
         ],
         "coverage": "Confirmed output dimensions and Core composite order are tested, but native packed-topology mapping is not proven for arbitrary staggered/mixed-scale compositor layouts.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -660,7 +660,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -670,9 +670,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage",
-            "line": 1318
+            "line": 1383
           }
         ]
       },
@@ -693,7 +693,7 @@
         "classification": "not-started",
         "spec_line": 67,
         "coverage": "Native cursor inclusion/hotspot composition setting is absent from screenshot pipeline; recorder cursor handling does not implement region screenshot cursor semantics.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -709,7 +709,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -746,7 +746,7 @@
         "classification": "implemented",
         "spec_line": 71,
         "coverage": "One acquired snapshot remains immutable throughout native frozen selection and no confirmation-time file reread occurs.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -762,7 +762,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -772,9 +772,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "frozenConfirmationNeverReopensThePortalFile",
-            "line": 1091
+            "line": 1148
           }
         ]
       },
@@ -795,7 +795,7 @@
         "classification": "not-started",
         "spec_line": 74,
         "coverage": "Native topology declares primaries/transfer/HDR unavailable; no documented tested HDR/wide-gamut conversion exists.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -811,7 +811,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -836,7 +836,7 @@
           "terminal-events-ignored"
         ],
         "coverage": "Shared terminal-state idempotence and native cancellation/late-owner fixtures prevent duplicate result/publication.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -852,7 +852,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -862,9 +862,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "aLateCancelledWorkerCannotFinishANewerPendingCapture",
-            "line": 1142
+            "line": 1207
           }
         ]
       },
@@ -891,7 +891,7 @@
           "last-region-invalid-after-topology-change"
         ],
         "coverage": "Private atomic geometry-only last-region writer runs after successful pixels and before actions; failed write/cancel preserves capture truth.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -907,7 +907,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -917,9 +917,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "lastRegionWriterRunsOnlyAfterSuccessfulPixelsAndBeforeActions",
-            "line": 259
+            "line": 316
           }
         ]
       },
@@ -937,7 +937,7 @@
       "vectors": [
         "capture-failure-keeps-last-region"
       ],
-      "note": "Stable permission/portal/mapping errors and late-handle cleanup are tested; complete configured pixel/diagnostic retention policy remains unapproved. Codex queue evidence (2026-11-05): Audit 2026-11-05: RegionCaptureNativeTest::topologyMismatchFailsWithoutOverlayMetadataOrOutputs, topologyFailuresRemainStableInDurableWorkflowResults and topologyChangeCancelsWithoutPublishing prove stable capture-topology-mismatch/last-region-invalid/display-topology-changed, durable workflow failure, no overlay/output and no stale last-region write for bitmap/scale/bounds/identity/rotation changes. PortalScreenshotTest::actualControllerDenialShowsNoOverlayAndNoPostCaptureActions proves capture-permission-denied, no overlay or output and unchanged clipboard over a real private D-Bus portal. cancellationDuringActualCompositionNeverPublishesPixelsOrRunsActions proves frozen source bytes preserved and no late result after before/partial/final-row cancellation. Those fixtures now pass; earlier sandbox-blocked note is obsolete. Remains partial: configured capture retention/privacy policy and portal-owned file lifecycle remain unresolved; conservative controller cleanup does not approve that policy.",
+      "note": "Stable permission/portal/mapping errors and late-handle cleanup are tested; complete configured pixel/diagnostic retention policy remains unapproved.",
       "disposition": "Required",
       "audit": {
         "classification": "partial",
@@ -946,7 +946,7 @@
           "capture-failure-keeps-last-region"
         ],
         "coverage": "Stable permission/portal/mapping errors and late-handle cleanup are tested; complete configured pixel/diagnostic retention policy remains unapproved.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -962,7 +962,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -972,9 +972,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "methodErrorsAreStableAndValueFree",
-            "line": 931
+            "line": 988
           }
         ]
       },
@@ -995,7 +995,7 @@
         "classification": "implemented",
         "spec_line": 87,
         "coverage": "Native keyboard controls, focus/announcements and contrasting multi-stroke selection cues have programmatic tests; physical assistive-technology acceptance remains an activation gate.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -1011,7 +1011,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -1021,9 +1021,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "nativeCornerHandlesResizeWithoutPrematureCaptureAndKeepGrabOffset",
-            "line": 328
+            "line": 385
           }
         ]
       },
@@ -1038,13 +1038,13 @@
     "RC-020": {
       "status": "implemented",
       "vectors": [],
-      "note": "RegionCaptureNativeTest::pointerFeedbackAndConfirmationMeetTheRc020Budgets injects a frozen 1920x1080 snapshot (no portal) and drives the real RegionOverlay: 120 real pointer moves, each a visible selection change, are timed through the overlay's synchronous repaint and asserted at p95 <= 50 ms and also within one 60 Hz frame (about 2 ms measured); confirming a 1920x1080 selection with Enter through the real controller, composition worker and pipeline to the saved 1920x1080 image is asserted <= 250 ms (about 120-170 ms measured). Best of three attempts absorbs CI load. Measured on the offscreen platform, so physical-display refresh remains a hardware observation. Codex queue evidence (2026-11-05): Audit 2026-11-05: PortalScreenshotTest::cancellationDuringActualCompositionNeverPublishesPixelsOrRunsActions drives actual native overlay input and composeSnapshot with gates before work, at partial rows and final row. It now explicitly proves the composer runs off the QApplication thread, all emitted progress is on the GUI thread, a GUI heartbeat executes while blocked, Escape returns within the existing 500ms harness budget before worker release, and no output/clipboard/publication occurs. destructionReleasesTheUiWithoutWaitingForACompositionWorker proves owner teardown returns before worker release; aLateCancelledWorkerCannotFinishANewerPendingCapture proves stale completion isolation. This is native worker/ownership evidence, not latency qualification. Remains partial: measured display-refresh pointer feedback, 50ms p95 selection response and 250ms 1920x1080 confirmation-to-result on the supported physical matrix are unproven.",
+      "note": "Native fixture drives 120 visible selection changes and real 1920x1080 confirmation-to-saved-pixel path without portal chooser, checking p95 feedback and confirmation budgets. This is a tested candidate benchmark path, not physical target/compositor qualification.",
       "disposition": "Required",
       "audit": {
         "classification": "implemented",
         "spec_line": 90,
-        "coverage": "RegionCaptureNativeTest::pointerFeedbackAndConfirmationMeetTheRc020Budgets injects a frozen 1920x1080 snapshot (no portal) and drives the real RegionOverlay: 120 real pointer moves, each a visible selection change, are timed through the overlay's synchronous repaint and asserted at p95 <= 50 ms and also within one 60 Hz frame (about 2 ms measured); confirming a 1920x1080 selection with Enter through the real controller, composition worker and pipeline to the saved 1920x1080 image is asserted <= 250 ms (about 120-170 ms measured). Best of three attempts absorbs CI load. Measured on the offscreen platform, so physical-display refresh remains a hardware observation.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Native fixture drives 120 visible selection changes and real 1920x1080 confirmation-to-saved-pixel path without portal chooser, checking p95 feedback and confirmation budgets. This is a tested candidate benchmark path, not physical target/compositor qualification.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -1060,7 +1060,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -1091,7 +1091,7 @@
         "classification": "implemented",
         "spec_line": 94,
         "coverage": "Shared mapping/state vector package and production RegionSession/RegionGeometry conformance adapter are present; physical native mapping is tracked separately under RC-004/012.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -1107,7 +1107,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -1163,7 +1163,7 @@
           "negative-origin-scaled"
         ],
         "coverage": "Core IEEE754 floor-epsilon mapping is tested, but production QScreen-derived physical origins are packed rather than obtained from approved compositor physical bounds.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -1179,7 +1179,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -1189,9 +1189,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage",
-            "line": 1318
+            "line": 1383
           }
         ]
       },
@@ -1220,7 +1220,7 @@
           "uncovered-area-is-transparent"
         ],
         "coverage": "Core clamp/transparent-gap composition and native corner-resize tests exercise declared bounds; native topology authority remains a separate gap.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -1236,7 +1236,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -1246,9 +1246,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "nativeCornerHandlesResizeWithoutPrematureCaptureAndKeepGrabOffset",
-            "line": 328
+            "line": 385
           }
         ]
       },
@@ -1277,7 +1277,7 @@
           "keyboard-resize-keeps-one-pixel"
         ],
         "coverage": "Core one/ten physical-pixel keyboard steps, minimum bounds and native announcements are implemented and tested.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -1293,7 +1293,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -1303,9 +1303,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
-            "line": 373
+            "line": 430
           }
         ]
       },
@@ -1337,7 +1337,7 @@
           "capture-failure-keeps-last-region"
         ],
         "coverage": "Shared RegionSession event machine and portal/controller denial/capture/cancel/late-event tests implement terminal state semantics.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -1353,7 +1353,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -1363,9 +1363,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "actualControllerDenialShowsNoOverlayAndNoPostCaptureActions",
-            "line": 1040
+            "line": 1097
           }
         ]
       },
@@ -1402,7 +1402,7 @@
           "click-selects-snapped-window"
         ],
         "coverage": "Disabled click snapping leaves idle; enabled discovery uses clamped target then quick-confirm preference; state vectors/native frozen options test it.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -1418,7 +1418,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -1428,9 +1428,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
-            "line": 373
+            "line": 430
           }
         ]
       },
@@ -1451,7 +1451,7 @@
           "last-region-invalid-after-topology-change"
         ],
         "coverage": "Product decision required: approve authoritative pre-acquisition physical topology source. Native code now validates against packed QScreen bounds, but that does not settle the recorded mapping-authority question.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
@@ -1467,7 +1467,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
           },
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -1477,9 +1477,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
             "method": "lastRegionWriterRunsOnlyAfterSuccessfulPixelsAndBeforeActions",
-            "line": 259
+            "line": 316
           }
         ]
       },
@@ -1506,13 +1506,20 @@
     "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
     "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp"
   ],
-  "audit_scope": "All normative Linux-applicable clauses reviewed against current production and automated test bodies; candidate implementation is separate from physical, cross-platform and human acceptance.",
+  "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
-    "checked_at": "2026-11-04T14:04:38.855452+00:00",
+    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+    "checked_at": "2026-11-11T15:27:15.305729+00:00",
     "specification": "product-contract/capabilities/REGION-CAPTURE-001/SPEC.md",
     "specification_sha256": "44c0bedd89ebf555ef6035794a05fcfef921eaccc1fca00d48e941d921629867",
-    "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "reviewed_requirement_count": 27,
+    "counts": {
+      "blocked": 1,
+      "implemented": 19,
+      "not-started": 2,
+      "partial": 5
+    },
     "production_surfaces": [
       "platforms/linux/linux-qt/app/CaptureController.cpp",
       "platforms/linux/linux-qt/app/ScreenTopology.cpp",
@@ -1534,27 +1541,23 @@
         "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
         "successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage"
       ],
+      "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp": [
+        "pointerFeedbackAndConfirmationMeetTheRc020Budgets"
+      ],
       "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp": [
         "compositePlacesPixelsByPhysicalPosition",
         "keyboardAdjustsSelectedOnly"
       ]
     },
-    "remaining_scope": "RC-003; RC-004; RC-012; RC-013; RC-015; RC-018; RC-020; RC-022; RC-027",
-    "reviewed_requirement_count": 27,
-    "finding": "Current source review: {'implemented': 18, 'partial': 5, 'not-started': 3, 'blocked': 1}. Per-row reasons and exact hashed anchors record scope and limitations.",
-    "review_anchor": {
-      "production": {
-        "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-        "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
-      },
-      "test": {
-        "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
-        "method": "actualControllerDenialShowsNoOverlayAndNoPostCaptureActions",
-        "line": 1040
-      },
-      "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
-    }
+    "findings": [
+      {
+        "kind": "blocked-product-decision",
+        "requirement": "RC-003/004/012/022/027",
+        "detail": "ScreenTopology still packs columns/rows from logical origins. Core geometry tests do not authorize compositor physical mapping or settle pre-acquisition topology authority."
+      }
+    ],
+    "remaining_scope": "RC-003, RC-004, RC-012, RC-013, RC-015, RC-018, RC-022, RC-027",
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
   },
   "previous_audit": {
     "source_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb",
@@ -1718,5 +1721,56 @@
       },
       "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
     }
-  }
+  },
+  "audit_history": [
+    {
+      "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+      "checked_at": "2026-11-04T14:04:38.855452+00:00",
+      "specification": "product-contract/capabilities/REGION-CAPTURE-001/SPEC.md",
+      "specification_sha256": "44c0bedd89ebf555ef6035794a05fcfef921eaccc1fca00d48e941d921629867",
+      "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/app/ScreenTopology.cpp",
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+        "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
+        "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
+        "platforms/linux/linux-qt/src/capture/ScreenTopology.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp": [
+          "aLateCancelledWorkerCannotFinishANewerPendingCapture",
+          "actualControllerDenialShowsNoOverlayAndNoPostCaptureActions",
+          "actualFrozenOverlayEscapeLeavesFilesAndClipboardUntouched",
+          "denialOffersPermissionGuidanceOnceAndNeverRepromptsOrLeavesOutput",
+          "frozenConfirmationNeverReopensThePortalFile",
+          "lastRegionWriterRunsOnlyAfterSuccessfulPixelsAndBeforeActions",
+          "methodErrorsAreStableAndValueFree",
+          "nativeCornerHandlesResizeWithoutPrematureCaptureAndKeepGrabOffset",
+          "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
+          "successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage"
+        ],
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp": [
+          "compositePlacesPixelsByPhysicalPosition",
+          "keyboardAdjustsSelectedOnly"
+        ]
+      },
+      "remaining_scope": "RC-003; RC-004; RC-012; RC-013; RC-015; RC-018; RC-020; RC-022; RC-027",
+      "reviewed_requirement_count": 27,
+      "finding": "Current source review: {'implemented': 18, 'partial': 5, 'not-started': 3, 'blocked': 1}. Per-row reasons and exact hashed anchors record scope and limitations.",
+      "review_anchor": {
+        "production": {
+          "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
+          "sha256": "5206ae20693612d06201da1fdc61cd446c122abb9b8228778c51155a65edcb0e"
+        },
+        "test": {
+          "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+          "sha256": "890ca5322644dc9959f2a43b1a446ba4734e37628049e7a25055ee895cf56986",
+          "method": "actualControllerDenialShowsNoOverlayAndNoPostCaptureActions",
+          "line": 1040
+        },
+        "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
+      }
+    }
+  ]
 }

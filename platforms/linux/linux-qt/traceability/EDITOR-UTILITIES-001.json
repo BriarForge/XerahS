@@ -71,7 +71,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Most utility dialogs are reachable through shared commands, but background removal has no approved model/disposition and complete catalogue reachability remains incomplete.",
+      "note": "Most catalog utilities are command-reachable with missing-host failures; approved model-backed background removal/dispositions and complete catalog reachability remain absent.",
       "evidence": [
         "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
         "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -86,8 +86,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 9,
-        "coverage": "Most utility dialogs are reachable through shared commands, but background removal has no approved model/disposition and complete catalogue reachability remains incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Most catalog utilities are command-reachable with missing-host failures; approved model-backed background removal/dispositions and complete catalog reachability remain absent.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
           "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
@@ -97,32 +97,14 @@
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
             "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
-            "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
-            "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
+            "sha256": "32a71272bbce85213e6122fd864d2f347d3c4b5efc7c1bdeec3e7e57c0c4be55",
+            "method": "unavailableOrThrowingCaptureHostKeepsColourAndCanRetry",
+            "line": 44
           }
         ]
       },
@@ -132,7 +114,7 @@
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "The native colour picker uses PortalScreenshot consent, a coordinate/magnified snapshot sampler, explicit clipboard controls and Escape/parent-close pixel disposal; source and native test verify the connected seam. Codex queue evidence (2026-11-05): Audit 2026-11-05: ColorPickerDialogTest::screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly, screenshotEscapeAndParentCloseKeepPreviousColourAndDisposePixels and screenshotPointerSamplingUsesSnapshotPixelsUnderScaledPreview prove frozen screenshot magnification, exact screenshot coordinates, keyboard/pointer sampling, canonical values, explicit copy and cancellation with previous colour retained. PortalScreenshotTest::screenshotColorPickerUsesPermissionPortalAndExplicitSampling and screenshotColorPickerCancelsPendingPermissionWithoutSampling pass against a private real D-Bus fixture; earlier sandbox-blocked note is obsolete. ColorPickerDialogTest::unavailableOrThrowingCaptureHostKeepsColourAndCanRetry and captureHostCanCloseOrDestroyItsOwner prove missing/throwing service creation is visible, value-free, retryable and lifetime guarded. Remains partial for required human capture-permission review; no desktop-scale coordinate mapping is invented.",
+      "note": "Native portal consent feeds frozen screenshot sampling with magnification, canonical coordinates/colors, keyboard cancel and explicit copy; failure/owner-teardown paths preserve prior values.",
       "evidence": [
         "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
         "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
@@ -148,8 +130,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 12,
-        "coverage": "The native colour picker uses PortalScreenshot consent, a coordinate/magnified snapshot sampler, explicit clipboard controls and Escape/parent-close pixel disposal; source and native test verify the connected seam.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Native portal consent feeds frozen screenshot sampling with magnification, canonical coordinates/colors, keyboard cancel and explicit copy; failure/owner-teardown paths preserve prior values.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
           "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
@@ -159,34 +141,26 @@
         "validation_run": "2026-11-04 resume: Debug configure/build passed; QT_QPA_PLATFORMTHEME= focused CTest run: 100% tests passed out of 15. Progress check, contract lint and diff whitespace checks passed. Full-suite transport evidence is constrained by sandbox socket/D-Bus restrictions; staging is blocked by the read-only shared Git index. Full-suite rerun with inherited GTK theme disabled: 70% tests passed, 46 tests failed out of 152 (106 passed); failures require private D-Bus/local sockets. Editor-window tests rerun alone: editor-window-model passed; editor-window-1/2/3 blocked at private D-Bus startup.",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
-          },
-          {
             "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
+            "sha256": "89993dc018f369a3dac80fe7af7e7a35e278448badf81514da21240bfbb312ab"
           },
           {
-            "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
-            "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
+            "path": "platforms/linux/linux-qt/app/ScreenColorSampler.cpp",
+            "sha256": "6762e06613c6803efef91fa8ed8589b332ca423259bc85b6c24b2d788df7bd74"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
+            "sha256": "32a71272bbce85213e6122fd864d2f347d3c4b5efc7c1bdeec3e7e57c0c4be55",
             "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
+            "line": 83
           },
           {
-            "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
-            "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
+            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
+            "sha256": "32a71272bbce85213e6122fd864d2f347d3c4b5efc7c1bdeec3e7e57c0c4be55",
+            "method": "screenshotEscapeAndParentCloseKeepPreviousColourAndDisposePixels",
+            "line": 105
           }
         ]
       },
@@ -196,7 +170,7 @@
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Native QR generation validates content/size and provides deterministic preview, atomic save, explicit image copy and host upload port with typed failures; dedicated tests exercise each path.",
+      "note": "QR generation rejects empty/oversized input and invalid output sizes, deterministically previews and explicitly copies/atomically saves/uploads through host controls with typed failures.",
       "evidence": [
         "platforms/linux/linux-qt/src/tools/QrEncoder.cpp",
         "platforms/linux/linux-qt/app/QrRender.cpp",
@@ -207,8 +181,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 15,
-        "coverage": "Native QR generation validates content/size and provides deterministic preview, atomic save, explicit image copy and host upload port with typed failures; dedicated tests exercise each path.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "QR generation rejects empty/oversized input and invalid output sizes, deterministically previews and explicitly copies/atomically saves/uploads through host controls with typed failures.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
@@ -240,9 +214,9 @@
     },
     "EU-004": {
       "disposition": "Required",
-      "status": "implemented",
+      "status": "partial",
       "vectors": [],
-      "note": "Native Screen, Region and Image File QR scanning is implemented in the Linux reference edition. Mike approved zxing-cpp 3.1.1 on 2026-11-02 (DEPENDENCIES.md); the older dependency-approval blocker was stale. The installed decoder returns distinct zero, single Unicode and multiple/repeated values without changing source pixels. File selection uses the native consent picker and bounded raster loader; native region selection crops the retained portal image. The default desktop portal path is driven over a private D-Bus fixture with the real decoder for Screen/Region, NotAllowed permission denial and cancellation/Close; results do not save/upload sampled pixels or alter clipboard without explicit Copy. Input dimensions are bounded. Missing-library builds explicitly report unavailable and do not request capture. Full supported-target, privacy/security and release qualification remain separate obligations.",
+      "note": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate.",
       "evidence": [
         "platforms/linux/linux-qt/app/QrRecognition.cpp",
         "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
@@ -254,10 +228,10 @@
         "platforms/linux/linux-qt/DEPENDENCIES.md"
       ],
       "audit": {
-        "classification": "implemented",
+        "classification": "blocked",
         "spec_line": 18,
-        "coverage": "Native Screen, Region and Image File QR scanning is implemented in the Linux reference edition. Mike approved zxing-cpp 3.1.1 on 2026-11-02 (DEPENDENCIES.md); the older dependency-approval blocker was stale. The installed decoder returns distinct zero, single Unicode and multiple/repeated values without changing source pixels. File selection uses the native consent picker and bounded raster loader; native region selection crops the retained portal image. The default desktop portal path is driven over a private D-Bus fixture with the real decoder for Screen/Region, NotAllowed permission denial and cancellation/Close; results do not save/upload sampled pixels or alter clipboard without explicit Copy. Input dimensions are bounded. Missing-library builds explicitly report unavailable and do not request capture. Full supported-target, privacy/security and release qualification remain separate obligations.",
-        "reviewed_at_revision": "db1a3dfb46f1de6b5fd7ae8a82b8127f0d542c66",
+        "coverage": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
           "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
@@ -266,70 +240,20 @@
         "incremental_base_revision": "ccde2b1",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/QrRecognition.cpp",
-            "sha256": "8858b7a9be26e457198a09695731cf60ecfe4607d3ead5b33742cb884b91b028"
-          },
-          {
             "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
             "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
           },
           {
-            "path": "platforms/linux/linux-qt/app/PortalScreenshot.cpp",
-            "sha256": "29063baa6973959b21a8a73ace84e2cb8d8275936256fe599897c3da0da84847"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
+            "path": "platforms/linux/linux-qt/app/QrRecognition.cpp",
+            "sha256": "8858b7a9be26e457198a09695731cf60ecfe4607d3ead5b33742cb884b91b028"
           }
         ],
         "test_anchors": [
-          {
-            "path": "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
-            "sha256": "8822a1f98c7e7155aa0899d759c62789d7c32fdf41a0857fd10ae71e159e5125",
-            "method": "invalidAndCancelled",
-            "line": 16
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
-            "sha256": "8822a1f98c7e7155aa0899d759c62789d7c32fdf41a0857fd10ae71e159e5125",
-            "method": "realSingleUnicodeAndZero",
-            "line": 23
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
-            "sha256": "8822a1f98c7e7155aa0899d759c62789d7c32fdf41a0857fd10ae71e159e5125",
-            "method": "multipleAndInvisiblePixels",
-            "line": 36
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
-            "sha256": "47c23ec87ddeb622b12e32da1b2090db65e03313940806bf4d1101b89b2add23",
-            "method": "fileAndExplicitCopyLeaveSourceAlone",
-            "line": 27
-          },
           {
             "path": "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
             "sha256": "47c23ec87ddeb622b12e32da1b2090db65e03313940806bf4d1101b89b2add23",
             "method": "nativeRegionChooserScansOnlyTheChosenRectangle",
             "line": 63
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
-            "sha256": "47c23ec87ddeb622b12e32da1b2090db65e03313940806bf4d1101b89b2add23",
-            "method": "failureAndNoResultsAreDifferent",
-            "line": 88
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
-            "sha256": "47c23ec87ddeb622b12e32da1b2090db65e03313940806bf4d1101b89b2add23",
-            "method": "closeAbandonsWorkerAndLateCapture",
-            "line": 97
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
-            "method": "qrUtilityUsesNativePermissionPortalWithoutSavingOrCopying",
-            "line": 185
           }
         ]
       },
@@ -342,13 +266,14 @@
         "scope": "Installed zxing-cpp 3.1.1 and Tesseract 5.5.3 for local processing, explicit unavailable messages when missing",
         "evidence": "platforms/linux/linux-qt/DEPENDENCIES.md",
         "supersedes": "Older loop/audit question requesting the same dependency approval; no new approval inferred."
-      }
+      },
+      "blocked_reason": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate."
     },
     "EU-005": {
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Six algorithms including CRC32 stream bounded chunks, default SHA256, expose progress/cancel and compare all digest digits without early mismatch return; independent abc/empty/large-file and native comparison tests exist.",
+      "note": "All six hash algorithms stream bounded chunks, expose progress/cancel, default SHA-256 and compare every digest digit without first-mismatch return.",
       "evidence": [
         "platforms/linux/linux-qt/src/tools/FileHash.cpp",
         "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
@@ -358,8 +283,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 21,
-        "coverage": "Six algorithms including CRC32 stream bounded chunks, default SHA256, expose progress/cancel and compare all digest digits without early mismatch return; independent abc/empty/large-file and native comparison tests exist.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "All six hash algorithms stream bounded chunks, expose progress/cancel, default SHA-256 and compare every digest digit without first-mismatch return.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/tools/FileHash.cpp",
@@ -397,7 +322,7 @@
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Hash UI names the algorithm/input and labels weak algorithms unsuitable for security verification; native tests inspect these labels and results.",
+      "note": "Native hash results identify file/algorithm and visibly label MD5/SHA-1 unsuitable for security verification.",
       "evidence": [
         "platforms/linux/linux-qt/src/tools/FileHash.cpp",
         "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
@@ -407,12 +332,16 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 25,
-        "coverage": "Hash UI names the algorithm/input and labels weak algorithms unsuitable for security verification; native tests inspect these labels and results.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Native hash results identify file/algorithm and visibly label MD5/SHA-1 unsuitable for security verification.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
             "sha256": "6073857faba872bee1673f57bf777f47e47c41c39f428866884fefe837e2b815"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/tools/FileHash.cpp",
+            "sha256": "7822496bf376fa5101d8abe900ec381c0460285595db09a626437f419732ac0a"
           }
         ],
         "test_anchors": [
@@ -430,7 +359,7 @@
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Native icon conversion validates image and selected entries, offers all six sizes and palette/true-colour modes, atomically writes ICO and independent structural/Qt-reader tests verify it.",
+      "note": "Icon utility validates image/sizes, offers six sizes and palette8/truecolor32 modes, preserves applicable alpha and writes reader-accepted ICO only with selected entries.",
       "evidence": [
         "platforms/linux/linux-qt/app/IconWriter.cpp",
         "platforms/linux/linux-qt/app/IconConverterDialog.cpp",
@@ -440,8 +369,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 28,
-        "coverage": "Native icon conversion validates image and selected entries, offers all six sizes and palette/true-colour modes, atomically writes ICO and independent structural/Qt-reader tests verify it.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Icon utility validates image/sizes, offers six sizes and palette8/truecolor32 modes, preserves applicable alpha and writes reader-accepted ICO only with selected entries.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/IconWriter.cpp",
@@ -479,7 +408,7 @@
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Comparison loads/owns two validated independent inputs, reports dimensions/format failures, exposes an accessible keyboard/drag divider and preserves both sources; pixel and native late-owner fixtures exercise it.",
+      "note": "Comparison owns independent validated inputs, reports incompatibility and offers accessible keyboard/pointer divider without output mutation; independent pixel assertions exercise composition.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/ImageComparison.cpp",
         "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
@@ -490,30 +419,30 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 32,
-        "coverage": "Comparison loads/owns two validated independent inputs, reports dimensions/format failures, exposes an accessible keyboard/drag divider and preserves both sources; pixel and native late-owner fixtures exercise it.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Comparison owns independent validated inputs, reports incompatibility and offers accessible keyboard/pointer divider without output mutation; independent pixel assertions exercise composition.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
-          {
-            "path": "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
-            "sha256": "f94a1e72b9ed1cad54469404f3b2c70cbe5a89b3c48eb593bfd3cd991b3d7faa"
-          },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/ImageComparison.cpp",
             "sha256": "cbfeded1d6f0b9db881c1ec3eef5c02f21006e8144b1d03e5af4308775dd4812"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
+            "sha256": "f94a1e72b9ed1cad54469404f3b2c70cbe5a89b3c48eb593bfd3cd991b3d7faa"
           }
         ],
         "test_anchors": [
-          {
-            "path": "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
-            "sha256": "6c9a1f22b186722568865e77120aac944f9fb1d6b7088aabbfd3a9517fa28489",
-            "method": "nativeControlsAreAccessibleAndKeyboardAndDragShareTheDivider",
-            "line": 97
-          },
           {
             "path": "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp",
             "sha256": "bea8f33556c59567f8a54a99fa7b0829cd7c976e95deee79c16dd7a674866313",
             "method": "dividerEndpointsPreserveAlphaAndShowExactlyOneSource",
             "line": 33
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
+            "sha256": "6c9a1f22b186722568865e77120aac944f9fb1d6b7088aabbfd3a9517fa28489",
+            "method": "nativeControlsAreAccessibleAndKeyboardAndDragShareTheDivider",
+            "line": 97
           }
         ]
       },
@@ -523,7 +452,7 @@
       "disposition": "Required",
       "status": "not-started",
       "vectors": [],
-      "note": "An approved local model, provenance/integrity/licence, tensor/device policy and explicit setup behavior are required by the loop; no authorized background-removal implementation may be built.",
+      "note": "No approved local model/provenance/tensor/device/setup policy authorizes background removal.",
       "evidence": [
         "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
@@ -536,49 +465,24 @@
         "classification": "blocked",
         "spec_line": 35,
         "blocker": "Approve the local background-removal model, provenance and device policy.",
-        "coverage": "An approved local model, provenance/integrity/licence, tensor/device policy and explicit setup behavior are required by the loop; no authorized background-removal implementation may be built.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "No approved local model/provenance/tensor/device/setup policy authorizes background removal.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
             "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
-            "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
           }
         ],
-        "test_anchors": [
-          {
-            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
-            "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
-          }
-        ]
+        "test_anchors": []
       },
       "previous_note": "Background removal is not implemented. There is no native background-removal window, no local model selection, no Auto, CPU or GPU device policy, no model provenance or tensor-shape validation, and no model, device, setup or inference status. The utility-catalog entry is still inventoried, but no approved platform disposition or local model has been chosen, so the requirement awaits a product decision on an approved local model. Background removal remains Required.",
-      "blocked_reason": "An approved local model, provenance/integrity/licence, tensor/device policy and explicit setup behavior are required by the loop; no authorized background-removal implementation may be built."
+      "blocked_reason": "No approved local model/provenance/tensor/device/setup policy authorizes background removal."
     },
     "EU-010": {
       "disposition": "Required",
       "status": "not-started",
       "vectors": [],
-      "note": "Background-removal model/download/directory authority requires Mike approval; no approved model supply or network/setup policy exists.",
+      "note": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists.",
       "evidence": [
         "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
@@ -591,49 +495,24 @@
         "classification": "blocked",
         "spec_line": 38,
         "blocker": "Approve the model licence/integrity/download policy before setup is implemented.",
-        "coverage": "Background-removal model/download/directory authority requires Mike approval; no approved model supply or network/setup policy exists.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
             "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
-            "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
           }
         ],
-        "test_anchors": [
-          {
-            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
-            "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
-          }
-        ]
+        "test_anchors": []
       },
       "previous_note": "Background removal is not implemented, so there is no model directory access, optional download, license, integrity, size or network behaviour to disclose, and no silent download or execution of a model from an untrusted location occurs because no model is loaded at all. The disclosure and trust requirement remains Required.",
-      "blocked_reason": "Background-removal model/download/directory authority requires Mike approval; no approved model supply or network/setup policy exists."
+      "blocked_reason": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists."
     },
     "EU-011": {
       "disposition": "Required",
       "status": "not-started",
       "vectors": [],
-      "note": "Background-removal inference/alpha/device behavior depends on an approved model and device policy; retained source alone cannot satisfy this requirement.",
+      "note": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract.",
       "evidence": [
         "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
@@ -646,49 +525,24 @@
         "classification": "blocked",
         "spec_line": 41,
         "blocker": "Approve the local background-removal model before inference/output work.",
-        "coverage": "Background-removal inference/alpha/device behavior depends on an approved model and device policy; retained source alone cannot satisfy this requirement.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
             "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
-            "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
           }
         ],
-        "test_anchors": [
-          {
-            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
-            "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
-          }
-        ]
+        "test_anchors": []
       },
       "previous_note": "Background removal is not implemented, so there is no background-removal preview or save, no source-dimension or colour preservation to verify, no defined alpha output, no cancellation, and no distinction between model, device, memory, inference and output failures. Background removal remains Required.",
-      "blocked_reason": "Background-removal inference/alpha/device behavior depends on an approved model and device policy; retained source alone cannot satisfy this requirement."
+      "blocked_reason": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract."
     },
     "EU-012": {
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Native converter exposes the contracted 15 codec choices and bitrate/output/folder/progress/cancel controls; catalogue and every-applicable-codec request tests verify these fields.",
+      "note": "Native converter exposes the exact fifteen contract codec IDs and applicable bitrate/output/folder/progress/cancel controls; requests reach every applicable codec.",
       "evidence": [
         "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
         "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
@@ -702,16 +556,16 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 44,
-        "coverage": "Native converter exposes the contracted 15 codec choices and bitrate/output/folder/progress/cancel controls; catalogue and every-applicable-codec request tests verify these fields.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Native converter exposes the exact fifteen contract codec IDs and applicable bitrate/output/folder/progress/cancel controls; requests reach every applicable codec.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
-          {
-            "path": "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
-            "sha256": "59ca472a127c60f030d37d2c4c0deb101aabad7b953770059fd1621a3c7ff738"
-          },
           {
             "path": "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
             "sha256": "8a06f211192327fc61fc92a87c8a47414a156039aa4dbaca47d68764df5a8082"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
+            "sha256": "59ca472a127c60f030d37d2c4c0deb101aabad7b953770059fd1621a3c7ff738"
           }
         ],
         "test_anchors": [
@@ -735,7 +589,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Available GStreamer factories gate codecs and structured pipelines avoid shell invocation; native atomic conversion tests cover one installed usable codec, not the complete hardware/fallback matrix.",
+      "note": "Structured GStreamer plans avoid shell interpolation and gate unavailable factories with hardware guidance; native atomic conversion covers installed codecs, not the complete hardware/driver failure matrix.",
       "evidence": [
         "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
         "platforms/linux/linux-qt/app/VideoConverter.cpp",
@@ -748,38 +602,30 @@
       "audit": {
         "classification": "partial",
         "spec_line": 47,
-        "coverage": "Available GStreamer factories gate codecs and structured pipelines avoid shell invocation; native atomic conversion tests cover one installed usable codec, not the complete hardware/fallback matrix.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Structured GStreamer plans avoid shell interpolation and gate unavailable factories with hardware guidance; native atomic conversion covers installed codecs, not the complete hardware/driver failure matrix.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
+            "path": "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+            "sha256": "8a06f211192327fc61fc92a87c8a47414a156039aa4dbaca47d68764df5a8082"
           },
           {
             "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
             "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
-          },
-          {
             "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
             "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
+            "method": "unavailableAndHardware",
+            "line": 104
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp",
+            "sha256": "55114262afd83c53c8a1e950c67a1178d45859691b03366c22aaeae11d689f3f",
+            "method": "convertsAndPublishesAtomically",
+            "line": 51
           }
         ]
       },
@@ -789,7 +635,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Input/container/codec and no-overwrite/partial cleanup behavior is implemented and tested locally. Complete codec/container success/failure/resource output matrix across supported targets remains incomplete.",
+      "note": "Native plan validates input/container/codec/output conflicts and actual converter publishes atomically/removes cancelled partials; full codec/input/resource/output fault matrix remains incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
         "platforms/linux/linux-qt/app/VideoConverter.cpp",
@@ -800,38 +646,36 @@
       "audit": {
         "classification": "partial",
         "spec_line": 50,
-        "coverage": "Input/container/codec and no-overwrite/partial cleanup behavior is implemented and tested locally. Complete codec/container success/failure/resource output matrix across supported targets remains incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Native plan validates input/container/codec/output conflicts and actual converter publishes atomically/removes cancelled partials; full codec/input/resource/output fault matrix remains incomplete.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
+            "path": "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+            "sha256": "8a06f211192327fc61fc92a87c8a47414a156039aa4dbaca47d68764df5a8082"
           },
           {
             "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
             "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
-          },
-          {
             "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
             "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
+            "method": "everyInvalidPairRejected",
+            "line": 37
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp",
+            "sha256": "55114262afd83c53c8a1e950c67a1178d45859691b03366c22aaeae11d689f3f",
+            "method": "cancelRemovesPartial",
+            "line": 59
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp",
+            "sha256": "55114262afd83c53c8a1e950c67a1178d45859691b03366c22aaeae11d689f3f",
+            "method": "refusesExistingOutput",
+            "line": 67
           }
         ]
       },
@@ -841,7 +685,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Available utilities keep local inputs and explicit clipboard/upload boundaries; recognition/model dependency gates and full retention/diagnostic/privacy qualification for every catalogue utility remain open.",
+      "note": "Current utility operations keep input local and explicit output boundaries, but complete catalog retention/diagnostic/privacy contracts including blocked services remain unqualified.",
       "evidence": [
         "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
         "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
@@ -857,8 +701,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 54,
-        "coverage": "Available utilities keep local inputs and explicit clipboard/upload boundaries; recognition/model dependency gates and full retention/diagnostic/privacy qualification for every catalogue utility remain open.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Current utility operations keep input local and explicit output boundaries, but complete catalog retention/diagnostic/privacy contracts including blocked services remain unqualified.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
           "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
@@ -866,34 +710,30 @@
         ],
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
+            "path": "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
+            "sha256": "e568b100b9f2f16c2e90942b7311ddc06e30820f50df8d31335ed2e0967ec7dc"
           },
           {
             "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
+            "sha256": "89993dc018f369a3dac80fe7af7e7a35e278448badf81514da21240bfbb312ab"
           },
           {
             "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
             "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
+            "path": "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp",
+            "sha256": "ea4416fd532660b8067cee34e8696ceff9192acd3b085d47f88886d84e5a90a0",
+            "method": "uploadFilesAreRemovedWithDialog",
+            "line": 111
           },
           {
-            "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
-            "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
+            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
+            "sha256": "32a71272bbce85213e6122fd864d2f347d3c4b5efc7c1bdeec3e7e57c0c4be55",
+            "method": "screenshotEscapeAndParentCloseKeepPreviousColourAndDisposePixels",
+            "line": 105
           }
         ]
       },
@@ -903,7 +743,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Native accessible controls, busy/error text, keyboard traversal and owner cancellation tests exist; complete screen-reader/high-contrast/permission behavior for all utility windows/targets remains incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: NativeSurfaceAccessibilityTest::nativeSurfaces covers current utility controls with named native accessibility, full idle focus traversal, high-contrast palette, larger text and disabled motion; busyAndErrorTextUpdatesAccessibleDescriptions proves state descriptions. ColorPickerDialogTest::unavailableOrThrowingCaptureHostKeepsColourAndCanRetry proves actionable native accessible failure state without modal trap. ImageComparisonDialogTest::nativeControlsAreAccessibleAndKeyboardAndDragShareTheDivider and blockedWorkerTeardownIsImmediate prove keyboard controls and accessible progress. Remains partial: every secondary busy/error/permission surface, physical assistive-technology/visible-focus and all supported-platform qualification are not accepted by this representative Linux seam. ColorPickerDialogTest::destroyingFocusedModifiedHexInputDisconnectsLateFocusOut covers the confirmed QLineEdit focus-out callback during QWidget base destruction; the derived destructor now disconnects that signal before teardown.",
+      "note": "Native named/accessibility controls and busy/error/keyboard/close behaviors are tested; full physical reader/focus/high-contrast/permission surfaces across all utilities/platforms remain incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
         "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
@@ -922,8 +762,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 58,
-        "coverage": "Native accessible controls, busy/error text, keyboard traversal and owner cancellation tests exist; complete screen-reader/high-contrast/permission behavior for all utility windows/targets remains incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Native named/accessibility controls and busy/error/keyboard/close behaviors are tested; full physical reader/focus/high-contrast/permission surfaces across all utilities/platforms remain incomplete.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp"
         ],
@@ -932,34 +772,30 @@
         "validation_run": "2026-11-04 resume: Debug configure/build passed; QT_QPA_PLATFORMTHEME= focused CTest run: 100% tests passed out of 15. Progress check, contract lint and diff whitespace checks passed. Full-suite transport evidence is constrained by sandbox socket/D-Bus restrictions; staging is blocked by the read-only shared Git index. Full-suite rerun with inherited GTK theme disabled: 70% tests passed, 46 tests failed out of 152 (106 passed); failures require private D-Bus/local sockets. Editor-window tests rerun alone: editor-window-model passed; editor-window-1/2/3 blocked at private D-Bus startup.",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
+            "path": "platforms/linux/linux-qt/app/NativeAccessibility.h",
+            "sha256": "58c2c4a35925e10326be99c0fabc39a814097e13c957e3d0b0b95d6dad99a122"
           },
           {
             "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
+            "sha256": "89993dc018f369a3dac80fe7af7e7a35e278448badf81514da21240bfbb312ab"
           },
           {
-            "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
-            "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
+            "path": "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
+            "sha256": "59ca472a127c60f030d37d2c4c0deb101aabad7b953770059fd1621a3c7ff738"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
+            "path": "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp",
+            "sha256": "e148d14fa02f00d78d9d4673cff863f6ac4b7697e484864f09fbf6a6abc9d125",
+            "method": "failureShowsStableCodeAndAccessibleNames",
+            "line": 125
           },
           {
-            "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
-            "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
+            "path": "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
+            "sha256": "6c9a1f22b186722568865e77120aac944f9fb1d6b7088aabbfd3a9517fa28489",
+            "method": "nativeControlsAreAccessibleAndKeyboardAndDragShareTheDivider",
+            "line": 97
           }
         ]
       },
@@ -969,7 +805,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Available workers use owned cancellation and deterministic teardown with late-result tests; full catalogue including blocked model/recognition services and resource/device lifecycle qualification is incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: ColorPickerDialogTest::screenshotEscapeAndParentCloseKeepPreviousColourAndDisposePixels and captureHostCanCloseOrDestroyItsOwner prove sampling ownership and service-creation lifetime safety. PortalScreenshotTest::screenshotColorPickerCancelsPendingPermissionWithoutSampling closes a real private portal request. HashCheckerDialogTest::cancelAnswersAnInFlightReadWithoutADigest, closingWhileHashingStopsTheRead and destroyingWhileHashingIsSafe exercise an in-flight read without a GUI join or partial digest. ImageRecognitionDialogTest::closeAbandonsWorkerAndLateCapture and ImageComparisonDialogTest::blockedWorkerTeardownIsImmediate prove abandoned worker/late callback safety; VideoConverterDialogTest::cancelAndCloseWhileBusy and VideoConverterIntegrationTest::cancelRemovesPartial cover conversion cancellation and output cleanup where codec fixtures are available. Remains partial: full catalogue sessions/resources including reserved background-model ownership and all target qualification remain open. ColorPickerDialogTest::destroyingFocusedModifiedHexInputDisconnectsLateFocusOut covers the confirmed QLineEdit focus-out callback during QWidget base destruction; the derived destructor now disconnects that signal before teardown.",
+      "note": "Current hash/comparison/capture/conversion workers cancel and fence late owners with deterministic cleanup; full model/catalog/device/session lifecycle remains incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
         "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
@@ -984,13 +820,14 @@
         "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
         "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp"
+        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
+        "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 61,
-        "coverage": "Available workers use owned cancellation and deterministic teardown with late-result tests; full catalogue including blocked model/recognition services and resource/device lifecycle qualification is incomplete.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Current hash/comparison/capture/conversion workers cancel and fence late owners with deterministic cleanup; full model/catalog/device/session lifecycle remains incomplete.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
           "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
@@ -998,34 +835,30 @@
         ],
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
+            "path": "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
+            "sha256": "6073857faba872bee1673f57bf777f47e47c41c39f428866884fefe837e2b815"
           },
           {
-            "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
+            "path": "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
+            "sha256": "f94a1e72b9ed1cad54469404f3b2c70cbe5a89b3c48eb593bfd3cd991b3d7faa"
           },
           {
             "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
             "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
+            "path": "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp",
+            "sha256": "cc01f2a1160fe00dcbf2448435272a19124951bd9fcfc224f7faef9f034e4ba5",
+            "method": "closingWhileHashingStopsTheRead",
+            "line": 289
           },
           {
-            "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
-            "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
+            "path": "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp",
+            "sha256": "e148d14fa02f00d78d9d4673cff863f6ac4b7697e484864f09fbf6a6abc9d125",
+            "method": "cancelAndCloseWhileBusy",
+            "line": 115
           }
         ]
       },
@@ -1035,7 +868,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Core/native utility tests cover substantial commands/algorithms/codecs/input failures; every catalogue item, hardware combination and supported platform adapter has not been qualified. Codex queue evidence (2026-11-05): Audit 2026-11-05: Current native utility failure bodies were read and rerun: colour sampling permission/cancel and missing/throwing host recovery; hash in-flight read cancellation; IconConverterDialogTest::aCancelledSaveWritesNothing; ImageRecognitionDialogTest::failureAndNoResultsAreDifferent and closeAbandonsWorkerAndLateCapture; ImageComparisonDialogTest::comparisonOwnsItsRenderedSnapshotAndRedactsFailure; VideoConverterDialogTest::failureShowsStableCodeAndAccessibleNames and cancelAndCloseWhileBusy. Portal fixtures are no longer sandbox-blocked. Remains partial: reserved background removal, complete item/codec/input-mode boundary/output fault matrix and shared cross-platform conformance corpus are incomplete; optional runtime codec skips are not passes. ColorPickerDialogTest::destroyingFocusedModifiedHexInputDisconnectsLateFocusOut covers the confirmed QLineEdit focus-out callback during QWidget base destruction; the derived destructor now disconnects that signal before teardown.",
+      "note": "Substantial native/core algorithm/catalog/codec/input/cancel/failure tests exist; complete every-item/hardware/permission/resource/output matrix and shared adapters remain incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp",
         "platforms/linux/linux-qt/tests/FileHashTest.cpp",
@@ -1043,43 +876,36 @@
         "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp",
-        "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 64,
-        "coverage": "Core/native utility tests cover substantial commands/algorithms/codecs/input failures; every catalogue item, hardware combination and supported platform adapter has not been qualified.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Substantial native/core algorithm/catalog/codec/input/cancel/failure tests exist; complete every-item/hardware/permission/resource/output matrix and shared adapters remain incomplete.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
+            "path": "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+            "sha256": "8a06f211192327fc61fc92a87c8a47414a156039aa4dbaca47d68764df5a8082"
           },
           {
-            "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
-            "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
+            "path": "platforms/linux/linux-qt/src/tools/FileHash.cpp",
+            "sha256": "7822496bf376fa5101d8abe900ec381c0460285595db09a626437f419732ac0a"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
-          },
-          {
             "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
             "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
+            "method": "everyInvalidPairRejected",
+            "line": 37
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp",
+            "sha256": "e148d14fa02f00d78d9d4673cff863f6ac4b7697e484864f09fbf6a6abc9d125",
+            "method": "failureShowsStableCodeAndAccessibleNames",
+            "line": 125
           }
         ]
       },
@@ -1089,7 +915,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Konami animation remains inventoried; preserve/correct/omit needs the human accessibility/performance/security/discoverability/maintenance decision required by EU-019.",
+      "note": "Konami shader preserve/correct/omit remains an explicit product-owner accessibility/performance/security/discoverability/maintenance decision.",
       "evidence": [
         "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
@@ -1102,52 +928,33 @@
         "classification": "blocked",
         "spec_line": 67,
         "blocker": "Decide preserve, correct or omit for the inventoried Konami shader after the mandated review.",
-        "coverage": "Konami animation remains inventoried; preserve/correct/omit needs the human accessibility/performance/security/discoverability/maintenance decision required by EU-019.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Konami shader preserve/correct/omit remains an explicit product-owner accessibility/performance/security/discoverability/maintenance decision.",
+        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
             "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
-            "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-            "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
           }
         ],
-        "test_anchors": [
-          {
-            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
-            "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
-          }
-        ]
+        "test_anchors": []
       },
       "previous_note": "The Konami-code shader animation remains inventoried in the contract utility catalog with disposition product-owner-decision-required, and no native Konami shader, overlay or easter egg exists in the linux-qt tree, so it has not become required product behaviour before the owner decision. The preserve, correct or omit decision itself has not been recorded after accessibility, performance, security, discoverability and maintenance review. The owner decision remains Required.",
-      "blocked_reason": "Konami animation remains inventoried; preserve/correct/omit needs the human accessibility/performance/security/discoverability/maintenance decision required by EU-019."
+      "blocked_reason": "Konami shader preserve/correct/omit remains an explicit product-owner accessibility/performance/security/discoverability/maintenance decision."
     }
   },
-  "audit_scope": "All normative Linux-applicable clauses reviewed against current production and automated test bodies; candidate implementation is separate from physical, cross-platform and human acceptance.",
+  "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
-    "checked_at": "2026-11-04T14:04:38.855452+00:00",
+    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+    "checked_at": "2026-11-11T15:27:15.305729+00:00",
     "specification": "product-contract/capabilities/EDITOR-UTILITIES-001/SPEC.md",
     "specification_sha256": "ff0422d32898e8d68ad72be95509eafa334084d1570446bd276b72cd712bcaab",
-    "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "reviewed_requirement_count": 19,
+    "counts": {
+      "blocked": 5,
+      "implemented": 7,
+      "partial": 7
+    },
     "production_surfaces": [
       "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
       "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
@@ -1155,7 +962,10 @@
       "platforms/linux/linux-qt/app/IconWriter.cpp",
       "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
       "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
+      "platforms/linux/linux-qt/app/NativeAccessibility.h",
       "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
+      "platforms/linux/linux-qt/app/QrRecognition.cpp",
+      "platforms/linux/linux-qt/app/ScreenColorSampler.cpp",
       "platforms/linux/linux-qt/app/VideoConverter.cpp",
       "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
       "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
@@ -1165,7 +975,9 @@
     ],
     "automated_test_surfaces": {
       "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp": [
-        "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly"
+        "screenshotEscapeAndParentCloseKeepPreviousColourAndDisposePixels",
+        "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
+        "unavailableOrThrowingCaptureHostKeepsColourAndCanRetry"
       ],
       "platforms/linux/linux-qt/tests/FileHashTest.cpp": [
         "knownDigestsOfAbc",
@@ -1173,6 +985,7 @@
       ],
       "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp": [
         "cancelAnswersAnInFlightReadWithoutADigest",
+        "closingWhileHashingStopsTheRead",
         "weakAlgorithmsAreLabelledUnsuitableForSecurity"
       ],
       "platforms/linux/linux-qt/tests/IconConverterDialogTest.cpp": [
@@ -1188,34 +1001,38 @@
       "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp": [
         "dividerEndpointsPreserveAlphaAndShowExactlyOneSource"
       ],
+      "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp": [
+        "nativeRegionChooserScansOnlyTheChosenRectangle"
+      ],
       "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp": [
         "previewIsDeterministic",
         "saveWritesPngAtomically",
+        "uploadFilesAreRemovedWithDialog",
         "uploadPortReceivesExistingPng"
       ],
       "platforms/linux/linux-qt/tests/VideoConversionTest.cpp": [
-        "catalogueMatchesContract"
+        "catalogueMatchesContract",
+        "everyInvalidPairRejected",
+        "unavailableAndHardware"
       ],
       "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp": [
-        "bitrateControlReachesEveryApplicableCodecRequest"
+        "bitrateControlReachesEveryApplicableCodecRequest",
+        "cancelAndCloseWhileBusy",
+        "failureShowsStableCodeAndAccessibleNames"
+      ],
+      "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp": [
+        "cancelRemovesPartial",
+        "convertsAndPublishesAtomically",
+        "refusesExistingOutput"
       ]
     },
-    "remaining_scope": "EU-001; EU-004; EU-009; EU-010; EU-011; EU-013; EU-014; EU-015; EU-016; EU-017; EU-018; EU-019",
-    "reviewed_requirement_count": 19,
-    "finding": "Current source review: {'partial': 7, 'implemented': 7, 'blocked': 5}. Per-row reasons and exact hashed anchors record scope and limitations.",
-    "review_anchor": {
-      "production": {
-        "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-        "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
-      },
-      "test": {
-        "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-        "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-        "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-        "line": 40
-      },
-      "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
-    }
+    "findings": [
+      "EU-004 remains scheduler-blocked even though upstream dependency documentation and code/test evidence now say approved; this is an instruction/approval reconciliation question for Mike.",
+      "Local QR save and icon output include synchronous native GUI file work; a small follow-up can route blocking output through existing OwnedWork without inventing utility breadth.",
+      "Converter test optional runtime codec skips are not full hardware qualification."
+    ],
+    "remaining_scope": "EU-001, EU-004, EU-009, EU-010, EU-011, EU-013, EU-014, EU-015, EU-016, EU-017, EU-018, EU-019",
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
   },
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
@@ -1333,5 +1150,82 @@
       },
       "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
     }
-  }
+  },
+  "audit_history": [
+    {
+      "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+      "checked_at": "2026-11-04T14:04:38.855452+00:00",
+      "specification": "product-contract/capabilities/EDITOR-UTILITIES-001/SPEC.md",
+      "specification_sha256": "ff0422d32898e8d68ad72be95509eafa334084d1570446bd276b72cd712bcaab",
+      "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
+        "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
+        "platforms/linux/linux-qt/app/IconConverterDialog.cpp",
+        "platforms/linux/linux-qt/app/IconWriter.cpp",
+        "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
+        "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
+        "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
+        "platforms/linux/linux-qt/app/VideoConverter.cpp",
+        "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
+        "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ImageComparison.cpp",
+        "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+        "platforms/linux/linux-qt/src/tools/FileHash.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp": [
+          "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly"
+        ],
+        "platforms/linux/linux-qt/tests/FileHashTest.cpp": [
+          "knownDigestsOfAbc",
+          "largeFileMatchesOneShotHash"
+        ],
+        "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp": [
+          "cancelAnswersAnInFlightReadWithoutADigest",
+          "weakAlgorithmsAreLabelledUnsuitableForSecurity"
+        ],
+        "platforms/linux/linux-qt/tests/IconConverterDialogTest.cpp": [
+          "savingWritesAnIconTheReaderAccepts"
+        ],
+        "platforms/linux/linux-qt/tests/IconWriterTest.cpp": [
+          "headerAndEntriesAreWellFormed",
+          "trueColorEntriesKeepAlpha"
+        ],
+        "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp": [
+          "nativeControlsAreAccessibleAndKeyboardAndDragShareTheDivider"
+        ],
+        "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp": [
+          "dividerEndpointsPreserveAlphaAndShowExactlyOneSource"
+        ],
+        "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp": [
+          "previewIsDeterministic",
+          "saveWritesPngAtomically",
+          "uploadPortReceivesExistingPng"
+        ],
+        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp": [
+          "catalogueMatchesContract"
+        ],
+        "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp": [
+          "bitrateControlReachesEveryApplicableCodecRequest"
+        ]
+      },
+      "remaining_scope": "EU-001; EU-004; EU-009; EU-010; EU-011; EU-013; EU-014; EU-015; EU-016; EU-017; EU-018; EU-019",
+      "reviewed_requirement_count": 19,
+      "finding": "Current source review: {'partial': 7, 'implemented': 7, 'blocked': 5}. Per-row reasons and exact hashed anchors record scope and limitations.",
+      "review_anchor": {
+        "production": {
+          "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
+          "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
+        },
+        "test": {
+          "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
+          "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
+          "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
+          "line": 40
+        },
+        "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
+      }
+    }
+  ]
 }
