@@ -180,9 +180,9 @@ ConfigurationPlan ConfigurationTransfer::exportPlan() const {
     if (!doc.contains("format") && (i == 0 || i == 3)) { doc.insert("format", format(i)); entry(p, ids[i] + ".format", D::Transformed); }
     if (i == 0) {
       auto values = doc.value("values").toObject();
-      for (const auto *key : {"saveFolder", "systemAudioDevice", "microphoneDevice", "startAtLogin"}) values.remove(key);
+      for (const auto *key : {"saveFolder", "systemAudioDevice", "microphoneDevice", "startAtLogin", "regionCapture.includeCursor"}) values.remove(key);
       doc.insert("values", values); doc.remove("previous"); omit(p, "store-recovery-snapshots");
-      omit(p, "profile-local-save-folder"); omit(p, "native-audio-devices"); omit(p, "autostart-authority");
+      omit(p, "profile-local-save-folder"); omit(p, "native-audio-devices"); omit(p, "autostart-authority"); omit(p, "compositor-capture-opt-in");
     } else if (i == 1) {
       auto values = doc.value("current").toObject();
       for (const auto *key : {"RecentImageFiles", "WindowState", "WindowWidth", "WindowHeight", "IsWindowMaximized"}) values.remove(key);
@@ -207,7 +207,7 @@ ConfigurationPlan ConfigurationTransfer::exportPlan() const {
     if (!validate(doc, i, m_paths, p)) { p.code = ids[i] + ": configuration-invalid"; return p; }
     if (i == 0) {
       auto values = doc.value("values").toObject();
-      for (const auto *key : {"saveFolder", "systemAudioDevice", "microphoneDevice", "startAtLogin"}) values.remove(key);
+      for (const auto *key : {"saveFolder", "systemAudioDevice", "microphoneDevice", "startAtLogin", "regionCapture.includeCursor"}) values.remove(key);
       doc.insert("values", values);
     } else if (i == 1) {
       auto values = doc.value("current").toObject();
@@ -248,9 +248,9 @@ ConfigurationPlan ConfigurationTransfer::inspect(const QByteArray &bytes) const 
     if (i == 0 && doc.value("values").isObject()) {
       auto values = doc.value("values").toObject();
       auto local = live.status == S::Ok ? live.document.value("values").toObject() : defaultSettings(m_paths.defaultFolder);
-      for (const auto *key : {"saveFolder", "systemAudioDevice", "microphoneDevice", "startAtLogin"}) {
+      for (const auto *key : {"saveFolder", "systemAudioDevice", "microphoneDevice", "startAtLogin", "regionCapture.includeCursor"}) {
         if (!values.contains(key)) { values.insert(key, local.value(key)); entry(p, QString("application.") + key, D::Defaulted); }
-        else if (QString(key) == "startAtLogin" && values.value(key) != local.value(key)) { p.code = "application.startAtLogin: configuration-authority-not-portable"; return p; }
+        else if ((QString(key) == "startAtLogin" || QString(key) == "regionCapture.includeCursor") && values.value(key) != local.value(key)) { p.code = QString("application.") + key + ": configuration-authority-not-portable"; return p; }
       }
       doc.insert("values", values);
     }

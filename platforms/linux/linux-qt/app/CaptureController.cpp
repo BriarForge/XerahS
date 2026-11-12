@@ -59,6 +59,7 @@ CaptureController::CaptureController(QString saveDirectory, QObject *parent, Scr
 CaptureController::~CaptureController() {
   m_topologyTimer->stop();
   m_compositionTimer->stop();
+  if (m_compositorWork) m_compositorWork->cancel();
   if (m_pipeline) { disconnect(m_pipeline, nullptr, this, nullptr); m_pipeline->cancel(); }
   if (m_composition) { m_composition->cancelled.store(true); m_composition.reset(); }
   if (m_portal) {
@@ -188,6 +189,7 @@ void CaptureController::beginCapture(QStringList selected) {
     m_screenConnections.push_back(connect(screen, &QScreen::logicalDotsPerInchChanged, this, changed));
   }
   m_topologyTimer->start();
+  if (m_regionSettings.includeCursor) { beginCompositorCapture(); return; }
   m_portal = m_screenshotFactory ? m_screenshotFactory(this) : new PortalScreenshot(this);
   if (!m_portal) {
     const QPointer<CaptureController> guard(this);
@@ -210,6 +212,45 @@ void CaptureController::beginCapture(QStringList selected) {
   emit busyChanged(true);
   // Availability listeners may synchronously cancel before acquisition starts.
   if (guard && m_busy && m_portal == portal) portal->request();
+}
+
+void CaptureController::beginCompositorCapture() {
+  if (m_displays.size() != 1 || m_displays.front().outputName.isEmpty()) {
+    onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, kCompositorLayoutUnproven); return;
+  }
+  const auto display = m_displays.front();
+  const auto generation = m_generation;
+  auto capture = m_compositorCapture;
+  if (!capture) capture = &CompositorFrameCapture::capture;
+  m_compositorPending = true;
+  const QPointer<CaptureController> guard(this);
+  emit busyChanged(true);
+  if (!guard || !m_busy || !m_compositorPending || m_generation != generation) return;
+  m_compositorWork = OwnedWork::run<CompositorFrame>(this,
+      [capture = std::move(capture)](const OwnedWork::Context &context) {
+        CompositorFrameRequest request; request.includeCursor = true;
+        request.cancelled = [context] { return context.cancelled(); };
+        try { return capture(request); }
+        catch (...) { CompositorFrame failed; failed.diagnostic = kCompositorCaptureFailed; return failed; }
+      }, [this, generation, display](CompositorFrame frame) {
+        if (!m_busy || !m_compositorPending || m_generation != generation) return;
+        m_compositorPending = false; m_compositorWork.reset();
+        if (frame.status == CompositorFrame::Status::Cancelled) {
+          onSnapshot(int(PortalScreenshot::Outcome::Cancelled), {}, {}); return;
+        }
+        if (frame.status != CompositorFrame::Status::Captured) {
+          onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, frame.diagnostic); return;
+        }
+        const auto &mapping = display.mapping;
+        if (!frame.singleOutputBufferOriginProven || !frame.cursorPaintRequested || !frame.cursorPaintedIntoFrame ||
+            frame.outputName != display.outputName || frame.transform != 0 ||
+            frame.scale != mapping.scale || frame.logicalX != mapping.logical.left || frame.logicalY != mapping.logical.top ||
+            frame.bufferWidth != mapping.physical.width() || frame.bufferHeight != mapping.physical.height() ||
+            frame.image.width() != mapping.physical.width() || frame.image.height() != mapping.physical.height()) {
+          failCapture(diagnostic::captureTopologyMismatch); return;
+        }
+        onSnapshot(int(PortalScreenshot::Outcome::Captured), frame.image, {});
+      });
 }
 
 void CaptureController::onSnapshot(int outcome, const QImage &image, const QString &detail) {
@@ -293,7 +334,10 @@ void CaptureController::failCapture(const QString &code) {
 }
 
 bool CaptureController::topologyMatches() const {
-  const auto current = displayMappings(m_topologyReader ? m_topologyReader() : screenTopology());
+  const auto displays = m_topologyReader ? m_topologyReader() : screenTopology();
+  if (m_regionSettings.includeCursor && (displays.size() != 1 || m_displays.size() != 1 ||
+      displays.front().outputName != m_displays.front().outputName)) return false;
+  const auto current = displayMappings(displays);
   if (current.size() != m_topology.size()) return false;
   for (const auto &display : m_topology) {
     const auto *now = findDisplay(current, display.id);
@@ -308,6 +352,8 @@ bool CaptureController::topologyMatches() const {
 void CaptureController::topologyChanged() {
   if (!m_busy || m_pipeline || (m_session && isTerminal(m_session->state()))) return;
   if (m_composition) m_composition->cancelled.store(true);
+  if (m_compositorWork) { m_compositorWork->cancel(); m_compositorWork.reset(); }
+  m_compositorPending = false;
   if (m_session) { m_session->topologyChanged(); afterInput(); return; }
   // Pending consent: detach before cancelling to ignore its terminal callback.
   if (m_portal) {
@@ -438,6 +484,11 @@ void CaptureController::cancel() {
   if (m_pipeline) { m_pipeline->cancel(); return; }
   if (m_session && m_session->state() == SessionState::Completed) m_pendingPipelineCancellation = true;
   if (m_composition) m_composition->cancelled.store(true);
+  if (m_compositorPending) {
+    m_compositorPending = false;
+    if (m_compositorWork) { m_compositorWork->cancel(); m_compositorWork.reset(); }
+    onSnapshot(int(PortalScreenshot::Outcome::Cancelled), {}, {}); return;
+  }
   if (m_portal) { m_portal->cancel(); return; }
   if (!m_session) return;
   m_session->cancel();
@@ -750,6 +801,8 @@ void CaptureController::closeOverlays() {
 void CaptureController::finish() {
   if (!m_busy) return;
   m_compositionTimer->stop();
+  m_compositorPending = false;
+  if (m_compositorWork) { m_compositorWork->cancel(); m_compositorWork.reset(); }
   if (m_composition) { m_composition->cancelled.store(true); m_composition.reset(); }
   m_reportedProgress = -1;
   m_pipelineActivity.clear();

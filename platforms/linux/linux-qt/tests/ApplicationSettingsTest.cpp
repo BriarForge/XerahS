@@ -150,6 +150,40 @@ private slots:
     }
   }
 
+  void cursorOptInDefaultsOffAndRequiresApply() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    ApplicationSettingsStore store(path, dir.path());
+    const auto key = QStringLiteral("regionCapture.includeCursor");
+    QVERIFY(!defaultSettings(dir.path()).value(key).toBool());
+    QVERIFY(!regionSessionSettings({}).includeCursor);
+    QVERIFY(!regionSessionSettings({{key, "true"}}).includeCursor);
+    QVERIFY(regionSessionSettings({{key, true}}).includeCursor);
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    auto checkbox = [](QDialog &dialog) {
+      for (auto *box : dialog.findChildren<QCheckBox *>())
+        if (box->accessibleName() == "Include the pointer in screenshots") return box;
+      return static_cast<QCheckBox *>(nullptr);
+    };
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [] {});
+      auto *box = checkbox(dialog); QVERIFY(box); QVERIFY(!box->isChecked());
+      QVERIFY(box->toolTip().contains("direct compositor"));
+      box->setChecked(true); dialog.reject();
+      QVERIFY(!regionSessionSettings(store.current().values).includeCursor); QVERIFY(!QFile::exists(path));
+    }
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [] {});
+      auto *box = checkbox(dialog); QVERIFY(box); box->setChecked(true);
+      dialog.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->click();
+      QVERIFY(regionSessionSettings(store.current().values).includeCursor);
+      box->setChecked(false); dialog.reject();
+    }
+    ApplicationSettingsStore reopened(path, dir.path());
+    QVERIFY(regionSessionSettings(reopened.current().values).includeCursor);
+    const auto reset = resetSection(reopened.current().values, Section::Capture, dir.path());
+    QVERIFY(!regionSessionSettings(reset).includeCursor);
+  }
+
   void privateNotificationsCheckboxAppliesAndCancels() {
     QTemporaryDir dir; ApplicationSettingsStore store(dir.filePath("settings.json"), dir.path());
     xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; }); int applied = 0;
@@ -642,7 +676,7 @@ private slots:
     const QJsonValue longText(QString(4097, QChar('a'))), embeddedNul(QString("a") + QChar(0) + "b");
     const QVector<QJsonValue> wrongTypes{QJsonValue("true"), QJsonValue(0), QJsonValue(1), QJsonValue(QJsonValue::Null), QJsonValue(QJsonArray{}), QJsonValue(QJsonObject{}), QJsonValue(1.5)};
     QMap<QString, QPair<QVector<QJsonValue>, QVector<QJsonValue>>> matrix; // key -> good, bad
-    for (const char *key : {"startAtLogin", "showTrayIcon", "playCaptureSound", "showNotification", "privateNotifications", "regionCapture.quickConfirm", "regionCapture.snapping", "scrollingCapture.positionPointer"})
+    for (const char *key : {"startAtLogin", "showTrayIcon", "playCaptureSound", "showNotification", "privateNotifications", "regionCapture.quickConfirm", "regionCapture.snapping", "regionCapture.includeCursor", "scrollingCapture.positionPointer"})
       matrix[key] = {{true, false}, wrongTypes + QVector<QJsonValue>{"", nan, inf, "yes"}};
     const QMap<QString, QPair<int, int>> ranges{{"delayedCapture.seconds", {1, 60}}, {"autoCapture.intervalMs", {1000, 86400000}}, {"autoCapture.count", {1, 10000}},
       {"autoCapture.durationMinutes", {1, 1440}}, {"scrollingCapture.settleMs", {0, 5000}}, {"scrollingCapture.wheelSteps", {1, 50}}, {"scrollingCapture.headerBand", {0, 2000}},

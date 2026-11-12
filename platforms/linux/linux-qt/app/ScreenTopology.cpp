@@ -17,7 +17,7 @@ CaptureDisplays screenTopology() {
   const auto topology = xerahs::capture::snapshotScreenTopology(descriptions);
   CaptureDisplays result;
   if (topology.size() != size_t(screens.size())) return result;
-  for (qsizetype n = 0; n < screens.size(); ++n) result.push_back({screens[n], topology[size_t(n)]});
+  for (qsizetype n = 0; n < screens.size(); ++n) result.push_back({screens[n], topology[size_t(n)], screens[n]->name()});
   return result;
 }
 xerahs::capture::Topology displayMappings(const CaptureDisplays &screens) {

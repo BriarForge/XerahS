@@ -33,6 +33,7 @@ enum class Permission { Authorized, Denied, Restricted };
 struct SessionSettings {
   bool quickConfirm = true;  // SPEC "Settings and defaults"
   bool snapping = true;
+  bool includeCursor = false;
 };
 
 // RC-011: a detected window or control.

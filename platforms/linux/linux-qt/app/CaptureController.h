@@ -9,6 +9,8 @@
 #include "SnapshotComposition.h"
 #include "ScreenTopology.h"
 #include "CapturePipeline.h"
+#include "OwnedWork.h"
+#include "capture/CompositorFrame.h"
 #include "workflows/CaptureWorkflows.h"
 #include "workflows/WorkflowExecution.h"
 
@@ -44,6 +46,8 @@ public:
   // Injection uses the same immutable display/overlay mapping as native Qt.
   using TopologyReader = std::function<CaptureDisplays()>;
   void setTopologyReader(TopologyReader reader) { m_topologyReader = std::move(reader); }
+  using CompositorCapture = std::function<CompositorFrame(const CompositorFrameRequest &)>;
+  void setCompositorCapture(CompositorCapture capture) { m_compositorCapture = std::move(capture); }
   void captureLastRegion();
   using ScreenshotFactory = std::function<PortalScreenshot *(QObject *)>;
   explicit CaptureController(QString saveDirectory, QObject *parent = nullptr, ScreenshotFactory factory = {}, SnapshotComposer composer = {}, CaptureActionPorts actionPorts = {}, PipelineJournalStorage journal = {});
@@ -112,6 +116,7 @@ signals:
 
 private:
   void beginCapture(QStringList selected);
+  void beginCompositorCapture();
   void topologyChanged();
   bool topologyMatches() const;
   void failCapture(const QString &diagnostic);
@@ -146,6 +151,9 @@ private:
   std::optional<xerahs::capture::PhysicalRect> m_lastRectangle;
   QTimer *m_topologyTimer = nullptr;
   ScreenshotFactory m_screenshotFactory;
+  CompositorCapture m_compositorCapture;
+  std::optional<OwnedWork> m_compositorWork;
+  bool m_compositorPending = false;
   SnapshotComposer m_composer;
   std::shared_ptr<CaptureComposition> m_composition;
   QTimer *m_compositionTimer = nullptr;

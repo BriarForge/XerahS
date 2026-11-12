@@ -4,7 +4,7 @@
 // Store schemas retain their explicit versions; unsupported versions are refused,
 // with one explicit workflow-v1 -> v2 upgrade. Ordering/UUID/reference/enum/path/
 // colour/geometry limits come from the production readers, never Qt defaults.
-// Export omits native folders/devices/autostart, editor recents/window placement,
+// Export omits native folders/devices/autostart/compositor opt-in, editor recents/window placement,
 // credential material and opaque destination bodies/extensions. Preview lists
 // dispositions without values. Missing local fields retain the receiver's values.
 // Publication stages every changed file under the existing store locks and an

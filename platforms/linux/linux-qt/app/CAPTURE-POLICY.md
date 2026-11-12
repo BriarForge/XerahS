@@ -4,6 +4,18 @@ This is candidate Linux implementation evidence for RC-001/002/008/016/018
 and CORE-004/005. It does not approve capture-permission or privacy behavior,
 accept a platform disposition or establish complete region capture.
 
+## Owner-approved opt-in compositor path
+
+Recorded 2026-11-13: Mike explicitly selected "Approve opt-in compositor
+capture (Recommended)" after reviewing the change from Screenshot portal
+consent to compositor access under ROOT-SECURITY-001 and ROOT-REVIEW-001.
+The approval covers an explicitly opt-in path on supported Wayland desktops,
+with provable cursor/frame coordinates and refusal of unsupported or
+mismatched sources. It does not authorize silent fallback to another capture
+mechanism. Cursor inclusion defaults off; the existing portal path remains
+the default. This implementation authorization does not establish completed
+RC-013 qualification or release approval.
+
 ## Native interaction and terminal outcomes
 
 `PortalScreenshot` requests one non-interactive frozen screenshot through the

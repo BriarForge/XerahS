@@ -11,6 +11,7 @@ CORE-028 and are not produced by this repository yet.
 | Need | Why | Ubuntu / Debian | Fedora | Arch |
 |---|---|---|---|---|
 | Qt 6.4+ (Core, Gui, Widgets, DBus, Network, PrintSupport) | Application toolkit | `qt6-base-dev` (pulls the runtime) | `qt6-qtbase` | `qt6-base` |
+| Wayland client 1.20+ | Opt-in compositor screenshot transport | `libwayland-dev` | `wayland-devel` | `wayland` |
 | xdg-desktop-portal plus your desktop's backend | Screenshot and global shortcut consent | `xdg-desktop-portal-gnome` or `-kde` | `xdg-desktop-portal-gnome` or `-kde` | `xdg-desktop-portal-gnome`, `-kde` or `-hyprland` |
 | Secret Service (optional) | Uploader credentials | `gnome-keyring` or KWallet | `gnome-keyring` or KWallet | `gnome-keyring` or KWallet |
 | Tesseract 5.5.3+ with English data (optional) | Text recognition | `tesseract-ocr-eng` | `tesseract-langpack-eng` | `tesseract-data-eng` |

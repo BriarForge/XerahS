@@ -46,6 +46,7 @@ QVector<SettingField> settingFields() {
   return {{"saveFolder", Section::General, "profile", "workflow"}, {"filenamePattern", Section::General, "profile", "workflow"},
     {"startAtLogin", Section::General, "profile"}, {"showTrayIcon", Section::General, "profile"},
     {"regionCapture.quickConfirm", Section::Capture, "profile"}, {"regionCapture.snapping", Section::Capture, "profile"},
+    {"regionCapture.includeCursor", Section::Capture, "profile"},
     {"playCaptureSound", Section::Capture, "profile"}, {"showNotification", Section::Capture, "profile"}, {"privateNotifications", Section::Capture, "profile"},
     {"delayedCapture.seconds", Section::Capture, "profile"}, {"delayedCapture.source", Section::Capture, "profile"},
     {"autoCapture.source", Section::Capture, "profile"}, {"autoCapture.intervalMs", Section::Capture, "profile"},
@@ -82,6 +83,7 @@ QJsonObject defaultSettings(const QString &saveFolder) {
   for (auto it = defaults.entries.cbegin(); it != defaults.entries.cend(); ++it) bindings.insert(it.key(), it.value());
   return {{"saveFolder", saveFolder}, {"filenamePattern", workflows::CaptureOutput{}.pattern}, {"startAtLogin", false},
     {"regionCapture.quickConfirm", true}, {"regionCapture.snapping", true},
+    {"regionCapture.includeCursor", false},
     {"showTrayIcon", true}, {"playCaptureSound", false}, {"showNotification", true}, {"privateNotifications", false},
     {"delayedCapture.seconds", 3}, {"delayedCapture.source", "full-screen"}, {"autoCapture.source", "full-screen"},
     {"autoCapture.intervalMs", 5000}, {"autoCapture.boundKind", "count"}, {"autoCapture.count", 10}, {"autoCapture.durationMinutes", 60},
@@ -105,7 +107,8 @@ xerahs::capture::SessionSettings regionSessionSettings(const QJsonObject &values
   const auto enabled = [&](const QString &key) {
     const auto value = values.value(key); return value.isBool() ? value.toBool() : true;
   };
-  return {enabled("regionCapture.quickConfirm"), enabled("regionCapture.snapping")};
+  const auto cursor = values.value("regionCapture.includeCursor");
+  return {enabled("regionCapture.quickConfirm"), enabled("regionCapture.snapping"), cursor.isBool() && cursor.toBool()};
 }
 HotkeyBindings hotkeys(const QJsonObject &values) {
   HotkeyBindings result; const auto object = values.value("hotkeys").toObject();

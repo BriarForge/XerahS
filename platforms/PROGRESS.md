@@ -20,7 +20,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 ## Current position
 
 - **macOS:** 0 implemented, 0 partial, 0 not started, 324 without a recorded implementation status. [Native platform evidence](macos/README.md).
-- **Linux:** 177 implemented, 127 partial, 20 not started, 0 without a recorded implementation status. [Native platform evidence](linux/README.md).
+- **Linux:** 177 implemented, 128 partial, 19 not started, 0 without a recorded implementation status. [Native platform evidence](linux/README.md).
 - **Windows:** 0 implemented, 0 partial, 0 not started, 324 without a recorded implementation status. [Native platform evidence](windows/README.md).
 
 ## Contract coverage
@@ -29,7 +29,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 |---|---:|---:|---:|---:|---:|---|
 | [FILENAME-GENERATION-001](../product-contract/capabilities/FILENAME-GENERATION-001/SPEC.md) | 33.3% | 27 | 0 | 0 | 54 | [Linux map](linux/linux-qt/traceability/FILENAME-GENERATION-001.json) |
 | [POST-CAPTURE-ACTIONS-001](../product-contract/capabilities/POST-CAPTURE-ACTIONS-001/SPEC.md) | 33.3% | 24 | 0 | 0 | 48 | [Linux map](linux/linux-qt/traceability/POST-CAPTURE-ACTIONS-001.json) |
-| [REGION-CAPTURE-001](../product-contract/capabilities/REGION-CAPTURE-001/SPEC.md) | 23.5% | 19 | 6 | 2 | 54 | [Linux map](linux/linux-qt/traceability/REGION-CAPTURE-001.json) |
+| [REGION-CAPTURE-001](../product-contract/capabilities/REGION-CAPTURE-001/SPEC.md) | 23.5% | 19 | 7 | 1 | 54 | [Linux map](linux/linux-qt/traceability/REGION-CAPTURE-001.json) |
 | [EDITOR-SESSION-001](../product-contract/capabilities/EDITOR-SESSION-001/SPEC.md) | 26.7% | 24 | 6 | 0 | 60 | [Linux map](linux/linux-qt/traceability/EDITOR-SESSION-001.json) |
 | [EDITOR-ANNOTATIONS-001](../product-contract/capabilities/EDITOR-ANNOTATIONS-001/SPEC.md) | 26.7% | 16 | 4 | 0 | 40 | [Linux map](linux/linux-qt/traceability/EDITOR-ANNOTATIONS-001.json) |
 | [EDITOR-EFFECTS-001](../product-contract/capabilities/EDITOR-EFFECTS-001/SPEC.md) | 13.0% | 7 | 11 | 0 | 36 | [Linux map](linux/linux-qt/traceability/EDITOR-EFFECTS-001.json) |

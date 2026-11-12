@@ -685,9 +685,9 @@
       "previous_note": "Audit 2026-11-04: RegionCaptureNativeTest::mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel drives production topology builder, per-display pointer mapping, controller, worker compositor and actual PNG save for 1920x1080@1 beside 2560x1440@2. Its 520x900 rectangle is compared pixel-for-pixel with independently labelled source pixels across the boundary. SnapshotCompositionTest::nativePixelsPreservePlacementGapsColourMetadataAndOwnership and negativeDesktopOriginUsesNormalizedBitmapOffsetsWithoutResampling prove exact source placement, transparent gaps, ownership and negative source offsets. All shared composition/mapping vectors pass. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome."
     },
     "RC-013": {
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Native cursor inclusion/hotspot composition setting is absent from screenshot pipeline; recorder cursor handling does not implement region screenshot cursor semantics.",
+      "note": "Owner-approved, default-off compositor capture is wired through the native controller before any overlay. The profile setting stays local during configuration transfer. The worker prefers ext-image-copy-capture paint_cursors and falls back to wlr screencopy overlay_cursor, retains premultiplied alpha, honors advertised padded rows, and supports cancellation. Captured output identity, logical origin, integer scale, normal Wayland transform and physical extent must match the frozen single Qt output; failures do not retry through the Screenshot portal. CompositorFrameTest exercises the real client against a private protocol server, including cancellation, format and stride cases. CompositorCaptureIntegrationTest drives the real controller, physical crop and PNG save with injected owned frames: default portal routing, cursor pixels once, frozen preferences, unsupported/mismatched refusal, cancellation and owner/stale-result handling. These are candidate/mock and controller results, not live compositor qualification. Multi-output, rotated, fractional-scale, dmabuf-only and unsupported sources are refused. Software-cursor exclusion for the off path and complete supported-desktop/physical/privacy/accessibility qualification remain open. The existing audit below records the earlier pre-implementation revision.",
       "disposition": "Required",
       "audit": {
         "classification": "not-started",
@@ -718,7 +718,22 @@
         ],
         "test_anchors": []
       },
-      "previous_note": "Cursor inclusion. Audit 2026-11-04: Screenshot portal API (version 3 documentation checked) returns an image URI and provides no cursor inclusion/hotspot metadata or HDR/tone-mapping negotiation. Current client uses handle_token, interactive=false and modal=false, retaining decoded color metadata. Platform disposition still required; no cursor/HDR implementation or promotion in this slice. See app/SOURCE-TOPOLOGY-REVIEW.md."
+      "previous_note": "Cursor inclusion. Audit 2026-11-04: Screenshot portal API (version 3 documentation checked) returns an image URI and provides no cursor inclusion/hotspot metadata or HDR/tone-mapping negotiation. Current client uses handle_token, interactive=false and modal=false, retaining decoded color metadata. Platform disposition still required; no cursor/HDR implementation or promotion in this slice. See app/SOURCE-TOPOLOGY-REVIEW.md. Prior status note: Native cursor inclusion/hotspot composition setting is absent from screenshot pipeline; recorder cursor handling does not implement region screenshot cursor semantics.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+        "platforms/linux/linux-qt/app/capture/CompositorFrame.h",
+        "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+        "platforms/linux/linux-qt/app/capture/PARENT-WIRING.md",
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/app/ScreenTopology.cpp",
+        "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+        "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
+        "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
+        "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/ConfigurationTransferTest.cpp",
+        "platforms/linux/linux-qt/app/CAPTURE-POLICY.md"
+      ]
     },
     "RC-014": {
       "status": "implemented",

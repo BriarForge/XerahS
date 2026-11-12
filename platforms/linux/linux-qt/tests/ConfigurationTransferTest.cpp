@@ -22,6 +22,30 @@ QByteArray changed(settings::ConfigurationTransfer &t) {
 class ConfigurationTransferTest : public QObject {
   Q_OBJECT
 private slots:
+  void compositorCaptureOptInStaysLocalDuringTransfer() {
+    QTemporaryDir d; auto p = paths(d); settings::ConfigurationTransfer transfer(p);
+    const auto key = QStringLiteral("regionCapture.includeCursor");
+    settings::ApplicationSettingsStore local(p.application, d.path());
+    auto values = local.current().values; values.insert(key, true); QVERIFY(local.save(values).isEmpty());
+    auto exported = transfer.exportPlan(); QVERIFY2(exported.valid(), qPrintable(exported.code));
+    QVERIFY(exported.exportReport.omissions.contains("compositor-capture-opt-in"));
+    auto stores = exported.candidate["stores"].toObject(); auto app = stores["application"].toObject();
+    QVERIFY(!app["values"].toObject().contains(key));
+    QTemporaryDir receiverDir; const auto receiverPaths = paths(receiverDir); settings::ConfigurationTransfer receiver(receiverPaths);
+    auto plan = receiver.inspect(QJsonDocument(exported.candidate).toJson()); QVERIFY2(plan.valid(), qPrintable(plan.code));
+    QVERIFY(receiver.apply(plan, true).isEmpty());
+    settings::ApplicationSettingsStore received(receiverPaths.application, receiverDir.path());
+    QVERIFY(!settings::regionSessionSettings(received.current().values).includeCursor);
+    auto forged = app["values"].toObject(); forged.insert(key, true); app.insert("values", forged);
+    stores.insert("application", app); exported.candidate.insert("stores", stores);
+    plan = receiver.inspect(QJsonDocument(exported.candidate).toJson());
+    QCOMPARE(plan.code, QString("application.regionCapture.includeCursor: configuration-authority-not-portable"));
+    auto retained = transfer.inspect(QJsonDocument(transfer.exportPlan().candidate).toJson());
+    QVERIFY2(retained.valid(), qPrintable(retained.code)); QVERIFY(transfer.apply(retained, true).isEmpty());
+    settings::ApplicationSettingsStore reopened(p.application, d.path());
+    QVERIFY(settings::regionSessionSettings(reopened.current().values).includeCursor);
+  }
+
   void recoveryWithoutPendingImportCreatesNoProfileFiles() {
     QTemporaryDir dir; const auto root = dir.filePath("missing-profile");
     settings::ConfigurationTransfer transfer({root + "/app.json", root + "/editor.json", root + "/workflows.json", root + "/destinations.json", root});

@@ -109,7 +109,7 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   auto refreshBackup = [=] { const bool available = transferPaths.configured() && ReferenceMigration(transferPaths).backupAvailable(); restoreSettings->setEnabled(available); dismissBackup->setEnabled(available); };
   refreshBackup();
   auto *transferNote = new QLabel(text("Transfer saved application preferences, editor preferences, workflows and destinations. "
-      "Exports omit credentials, local folders, devices, recent paths and window placement. Import replaces these four stores after preview; history and user files are kept."), general);
+      "Exports omit credentials, local folders, devices, recent paths, window placement and the direct capture choice. Import replaces these four stores after preview; history and user files are kept."), general);
   transferNote->setWordWrap(true); form->addRow(transferNote);
   auto *capture = new QWidget(tabs); auto *captureForm = new QFormLayout(capture);
   auto *captureScroll = new QScrollArea(tabs); captureScroll->setFocusPolicy(Qt::NoFocus); captureScroll->setWidgetResizable(true); captureScroll->setFrameShape(QFrame::NoFrame);
@@ -124,6 +124,10 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   quickConfirm->setAccessibleName(text("Confirm region on pointer release")); captureForm->addRow(quickConfirm);
   auto *snapping = new QCheckBox(text("Snap clicks to detected &windows or controls"), capture);
   snapping->setAccessibleName(text("Snap clicks to detected windows or controls")); captureForm->addRow(snapping);
+  auto *includeCursor = new QCheckBox(text("Includ&e the pointer in screenshots"), capture);
+  includeCursor->setAccessibleName(text("Include the pointer in screenshots"));
+  includeCursor->setToolTip(text("Uses direct compositor capture instead of the Screenshot portal. Applies to the next capture on supported Wayland desktops; unsupported or mismatched sources are refused."));
+  captureForm->addRow(includeCursor);
   auto *regionHelp = new QLabel(text("Region options apply to the next session. Disable quick confirmation to adjust after release, then press Enter to capture. Arrow keys move by 1 physical pixel; Shift+Arrow by 10; Alt+Arrow resizes. Space starts and finishes a keyboard selection. Escape cancels. Drag freely to override snapping; discovery depends on desktop support."), capture);
   regionHelp->setWordWrap(true); captureForm->addRow(regionHelp);
   const QVector<QPair<QString, QString>> sources{{text("Full screen"), "full-screen"}, {text("Current monitor"), "monitor"}, {text("Active window"), "active-window"}};
@@ -175,6 +179,7 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     login->setChecked(draft->value("startAtLogin").toBool()); tray->setChecked(draft->value("showTrayIcon").toBool());
     quickConfirm->setChecked(draft->value("regionCapture.quickConfirm").toBool());
     snapping->setChecked(draft->value("regionCapture.snapping").toBool());
+    includeCursor->setChecked(draft->value("regionCapture.includeCursor").toBool());
     sound->setChecked(draft->value("playCaptureSound").toBool()); notification->setChecked(draft->value("showNotification").toBool());
     privateNotification->setChecked(draft->value("privateNotifications").toBool());
     delaySeconds->setValue(draft->value("delayedCapture.seconds").toInt()); select(delaySource, draft->value("delayedCapture.source"));
@@ -198,6 +203,7 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     draft->insert("startAtLogin", login->isChecked()); draft->insert("showTrayIcon", tray->isChecked());
     draft->insert("regionCapture.quickConfirm", quickConfirm->isChecked());
     draft->insert("regionCapture.snapping", snapping->isChecked());
+    draft->insert("regionCapture.includeCursor", includeCursor->isChecked());
     draft->insert("playCaptureSound", sound->isChecked()); draft->insert("showNotification", notification->isChecked());
     draft->insert("privateNotifications", privateNotification->isChecked());
     draft->insert("delayedCapture.seconds", delaySeconds->value()); draft->insert("delayedCapture.source", delaySource->currentData().toString());

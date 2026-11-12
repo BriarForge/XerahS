@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(XerahS LANGUAGES CXX)
+project(XerahS LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,6 +10,27 @@ find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets DBus Network Test Prin
 # .xann gzip container (ES-013); zlib licence is GPL-compatible.
 find_package(ZLIB REQUIRED)
 find_package(SQLite3 3.36 REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(WAYLAND_CAPTURE REQUIRED IMPORTED_TARGET wayland-client>=1.20)
+
+add_library(xerahs_compositor_capture STATIC
+  app/capture/CompositorFrame.cpp app/capture/CompositorFrame.h
+  app/capture/protocol/ext-image-capture-source-v1-protocol.c
+  app/capture/protocol/ext-image-copy-capture-v1-protocol.c
+  app/capture/protocol/wlr-screencopy-unstable-v1-protocol.c)
+target_include_directories(xerahs_compositor_capture PUBLIC app PRIVATE app/capture/protocol)
+target_link_libraries(xerahs_compositor_capture PUBLIC Qt6::Core Qt6::Gui PRIVATE PkgConfig::WAYLAND_CAPTURE)
+target_compile_options(xerahs_compositor_capture PRIVATE -Wall -Wextra -Wpedantic)
+
+pkg_check_modules(WAYLAND_SERVER QUIET IMPORTED_TARGET wayland-server>=1.20)
+if(TARGET PkgConfig::WAYLAND_SERVER)
+  add_executable(compositor-frame-test app/capture/CompositorFrameTest.cpp)
+  set_target_properties(compositor-frame-test PROPERTIES AUTOMOC ON)
+  target_include_directories(compositor-frame-test PRIVATE app/capture/protocol)
+  target_link_libraries(compositor-frame-test PRIVATE xerahs_compositor_capture PkgConfig::WAYLAND_SERVER Qt6::Test)
+  add_test(NAME compositor-frame COMMAND compositor-frame-test)
+  set_tests_properties(compositor-frame PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+endif()
 
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
@@ -360,7 +381,7 @@ add_library(xerahs_app OBJECT
 )
 set_target_properties(xerahs_app PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_app PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app)
-target_link_libraries(xerahs_app PUBLIC xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_legacy_history_source xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
+target_link_libraries(xerahs_app PUBLIC xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_legacy_history_source xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus xerahs_compositor_capture)
 target_compile_options(xerahs_app PRIVATE -Wall -Wextra -Wpedantic)
 add_executable(xerahs app/main.cpp)
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
@@ -607,7 +628,7 @@ add_executable(portal-screenshot-test tests/PortalScreenshotTest.cpp app/PortalS
                app/SnapshotComposition.cpp app/SnapshotComposition.h
                app/RegionOverlay.cpp app/RegionOverlay.h)
 set_target_properties(portal-screenshot-test PROPERTIES AUTOMOC ON)
-target_link_libraries(portal-screenshot-test PRIVATE xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
+target_link_libraries(portal-screenshot-test PRIVATE xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test xerahs_compositor_capture)
 target_include_directories(portal-screenshot-test PRIVATE app)
 add_dependencies(portal-screenshot-test xerahs)
 add_test(NAME portal-screenshot COMMAND "${XERAHS_DBUS_RUN_SESSION}"
@@ -928,7 +949,7 @@ add_executable(workflow-shortcuts-test tests/WorkflowShortcutsTest.cpp
   app/RegionOverlay.cpp app/RegionOverlay.h app/ApplicationWindow.cpp app/ApplicationWindow.h
   app/CommandRegistry.cpp app/CommandRegistry.h)
 set_target_properties(workflow-shortcuts-test PROPERTIES AUTOMOC ON)
-target_link_libraries(workflow-shortcuts-test PRIVATE xerahs_window_discovery xerahs_workflow_shortcuts xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test)
+target_link_libraries(workflow-shortcuts-test PRIVATE xerahs_window_discovery xerahs_workflow_shortcuts xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test xerahs_compositor_capture)
 add_test(NAME workflow-shortcuts COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:workflow-shortcuts-test>)
 set_tests_properties(workflow-shortcuts PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
@@ -1719,9 +1740,21 @@ add_executable(region-capture-native-test tests/RegionCaptureNativeTest.cpp
 set_target_properties(region-capture-native-test PROPERTIES AUTOMOC ON)
 target_include_directories(region-capture-native-test PRIVATE app)
 target_link_libraries(region-capture-native-test PRIVATE xerahs_window_discovery xerahs_file_output
-  xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs xerahs_image_recognition Qt6::Widgets Qt6::DBus Qt6::Test)
+  xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs xerahs_image_recognition Qt6::Widgets Qt6::DBus Qt6::Test xerahs_compositor_capture)
 add_test(NAME region-capture-native COMMAND region-capture-native-test)
 set_tests_properties(region-capture-native PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+add_executable(compositor-capture-integration-test tests/CompositorCaptureIntegrationTest.cpp
+  app/PortalScreenshot.cpp app/PortalScreenshot.h app/CaptureController.cpp app/CaptureController.h
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h
+  app/CapturePipeline.cpp app/CapturePipeline.h app/SnapshotComposition.cpp app/SnapshotComposition.h
+  app/RegionOverlay.cpp app/RegionOverlay.h)
+set_target_properties(compositor-capture-integration-test PROPERTIES AUTOMOC ON)
+target_include_directories(compositor-capture-integration-test PRIVATE app)
+target_link_libraries(compositor-capture-integration-test PRIVATE xerahs_window_discovery xerahs_file_output
+  xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs xerahs_image_recognition Qt6::Widgets Qt6::DBus Qt6::Test xerahs_compositor_capture)
+add_test(NAME compositor-capture-integration COMMAND compositor-capture-integration-test)
+set_tests_properties(compositor-capture-integration PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
 # CORE-034: linux-editions.json profile completeness and linux-qt mechanism agreement.
 add_executable(edition-profiles-test tests/EditionProfilesTest.cpp)
