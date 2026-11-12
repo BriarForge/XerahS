@@ -234,6 +234,8 @@ private slots:
     QCOMPARE(int(historyPage(items, {}, 1, &total).size()), kHistoryPageSize); QCOMPARE(total, kHistoryPageSize + 5);
     QCOMPARE(int(historyPage(items, {}, 2).size()), kHistoryPageSize + 5);
     QCOMPARE(int(historyPage(items, "FULL-screen", 1, &total).size()), 1); QCOMPARE(total, 1);
+    QCOMPARE(int(historyPage(items, "Full screen", 1, &total).size()), 1); QCOMPARE(total, 1);
+    QVERIFY(!matchesHistoryQuery(items[3], "Active window"));
     QCOMPARE(int(historyPage(items, "shot-20", 1).size()), 6);  // shot-20 and shot-200 to shot-204
     QVERIFY(matchesHistoryQuery(items[0], items[0].createdAt.toLocalTime().toString("yyyy-MM-dd")));
     QVERIFY(!matchesHistoryQuery(items[0], "nothing-like-this"));
@@ -451,6 +453,64 @@ private slots:
     QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner); window->show();
     auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
     QVERIFY(list->item(0)->text().contains(QStringLiteral("future-source")));
+  }
+  void visibleSourceLabelUrlAndFailureAreSearchableWithoutTheDeletionUrl() {
+    QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    const auto fullPath = writePng(dir.filePath("full.png"), Qt::green);
+    const auto activePath = writePng(dir.filePath("active.png"), Qt::blue);
+    const auto lastPath = writePng(dir.filePath("last.png"), Qt::red);
+    const auto fullId = newId(), activeId = newId(), lastId = newId();
+    const auto at = QDateTime::fromString("2026-10-21T10:30:00Z", Qt::ISODate);
+    auto full = record(fullId, at, {png(fullPath, fullId)}, "full-screen");
+    full.result.upload = UploadResult{"https://example.test/public-image", "https://example.test/thumb-only",
+                                      "https://example.test/delete-secret-token-9f3a", "the relay refused the transfer"};
+    QVERIFY(storage->replace(fullId, {}, serializePipelineJournal(full)).stored);
+    QVERIFY(storage->replace(activeId, {}, serializePipelineJournal(record(activeId, at.addSecs(120), {png(activePath, activeId)}, "active-window"))).stored);
+    QVERIFY(storage->replace(lastId, {}, serializePipelineJournal(record(lastId, at.addSecs(240), {png(lastPath, lastId)}, "last-region"))).stored);
+    const auto indexed = captureHistoryItems(recovered({full}));
+    QCOMPARE(indexed.size(), std::size_t(1));
+    QCOMPARE(indexed[0].resultUrl, QString("https://example.test/public-image"));
+    QCOMPARE(indexed[0].failureMessage, QString("the relay refused the transfer"));
+    QVERIFY(indexed[0].resultUrl.contains("public-image"));
+    QVERIFY(!indexed[0].resultUrl.contains("delete-secret-token-9f3a"));
+    QVERIFY(matchesHistoryQuery(indexed[0], "Full screen"));
+    QVERIFY(matchesHistoryQuery(indexed[0], "public-image"));
+    QVERIFY(matchesHistoryQuery(indexed[0], "relay refused"));
+    QVERIFY(matchesHistoryQuery(indexed[0], indexed[0].createdAt.toLocalTime().toString("yyyy-MM-dd HH:mm")));
+    QVERIFY(!matchesHistoryQuery(indexed[0], "delete-secret-token-9f3a"));
+    QVERIFY(!matchesHistoryQuery(indexed[0], "thumb-only"));
+    CaptureHistoryItem translated; translated.captureSource = "active-window"; translated.sourceLabel = "Fenêtre active";
+    QVERIFY(matchesHistoryQuery(translated, "Fenêtre active"));
+    QVERIFY(matchesHistoryQuery(translated, "Active window"));
+    QString edited;
+    QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, [&](const QString &path, QWidget *) { edited = path; }, &owner);
+    window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 3);
+    auto *fullRow = find(list, "full.png"); QVERIFY(fullRow);
+    QVERIFY(fullRow->text().contains("Full screen"));
+    QVERIFY(fullRow->text().contains("https://example.test/public-image"));
+    QVERIFY(fullRow->text().contains("the relay refused the transfer"));
+    QVERIFY(!fullRow->text().contains("delete-secret-token-9f3a"));
+    QVERIFY(!fullRow->text().contains("thumb-only"));
+    auto *lastRow = find(list, "last.png"); QVERIFY(lastRow);
+    QVERIFY(lastRow->text().contains("Last region"));
+    QVERIFY(!lastRow->text().contains("last-region"));
+    auto *activeRow = find(list, "active.png"); QVERIFY(activeRow);
+    QVERIFY(activeRow->text().contains("Active window"));
+    auto *search = window->findChild<QLineEdit *>("captureHistorySearch");
+    search->setText("Full screen"); QCOMPARE(list->count(), 1); QCOMPARE(list->item(0)->data(Qt::UserRole).toString(), fullId);
+    list->setCurrentItem(list->item(0));
+    auto *edit = window->findChild<QPushButton *>("editHistoryCapture"); QTRY_VERIFY(edit->isEnabled());
+    edit->click(); QCOMPARE(edited, fullPath);
+    const auto shownTime = list->item(0)->text().section('\n', 1, 1);
+    search->setText(shownTime); QCOMPARE(list->count(), 1); QCOMPARE(list->item(0)->data(Qt::UserRole).toString(), fullId);
+    search->setText("Active window"); QCOMPARE(list->count(), 1); QCOMPARE(list->item(0)->data(Qt::UserRole).toString(), activeId);
+    search->setText("Last region"); QCOMPARE(list->count(), 1); QCOMPARE(list->item(0)->data(Qt::UserRole).toString(), lastId);
+    search->setText("public-image"); QCOMPARE(list->count(), 1); QCOMPARE(list->item(0)->data(Qt::UserRole).toString(), fullId);
+    search->setText("relay refused"); QCOMPARE(list->count(), 1);
+    search->setText("delete-secret-token-9f3a"); QCOMPARE(list->count(), 0);
+    search->setText("thumb-only"); QCOMPARE(list->count(), 0);
+    search->clear(); QCOMPARE(list->count(), 3);
   }
   void runningCaptureDefersTheRead() {
     QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));

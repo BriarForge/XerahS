@@ -22,10 +22,12 @@ std::vector<CaptureHistoryItem> captureHistoryItems(const std::vector<xerahs::ac
     if ((origin == "file-upload" || origin == "watch-folder") && QFileInfo(path).isAbsolute()) {
       item.origin = origin;
       item.destinationName = upload.value("destination_name").toString();
-      item.failureMessage = native.value("upload_result").toObject().value("error_message").toString();
       if (!upload.value("failure_code").toString().isEmpty()) item.state = "failed";
       item.files.push_back({path});
     }
+    const auto uploadResult = native.value("upload_result").toObject();
+    item.failureMessage = uploadResult.value("error_message").toString();
+    item.resultUrl = uploadResult.value("url").toString();
     const QJsonObject workflow = native.value("capture_workflow").toObject();
     item.workflowName = workflow.value("name").toString();
     item.captureSource = workflow.value("capture").toString();
@@ -53,7 +55,17 @@ bool matchesHistoryQuery(const CaptureHistoryItem &item, const QString &query) {
   const QString needle = query.trimmed().left(kHistoryMaxQueryLength);
   if (needle.isEmpty()) return true;
   const auto has = [&](const QString &text) { return text.contains(needle, Qt::CaseInsensitive); };
-  if (has(item.taskId) || has(item.state) || has(item.outcome) || has(item.origin) || has(item.destinationName) || has(item.workflowName) || has(item.captureSource) || has(item.createdAt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd"))))
+  // Visible labels use spaces ("Full screen"); stored ids use hyphens ("full-screen").
+  const auto hasSource = [&](const QString &text) {
+    if (has(text)) return true;
+    QString folded = text, foldedNeedle = needle;
+    folded.replace(QLatin1Char('-'), QLatin1Char(' '));
+    foldedNeedle.replace(QLatin1Char('-'), QLatin1Char(' '));
+    return folded.contains(foldedNeedle, Qt::CaseInsensitive);
+  };
+  const auto when = item.createdAt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"));
+  if (has(item.taskId) || has(item.state) || has(item.outcome) || has(item.origin) || has(item.destinationName) || has(item.workflowName)
+      || hasSource(item.captureSource) || has(item.sourceLabel) || has(item.failureMessage) || has(item.resultUrl) || has(when))
     return true;
   return std::any_of(item.files.begin(), item.files.end(), [&](const CaptureHistoryFile &file) { return has(file.path); });
 }

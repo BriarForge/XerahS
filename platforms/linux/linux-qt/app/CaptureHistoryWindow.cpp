@@ -48,13 +48,15 @@ QIcon placeholder(const QString &text, const QPalette &palette) {
 }
 // History labels are deliberately local: workflows::captureSourceLabel names
 // "monitor" "Monitor under pointer" and has no "window" entry, so sharing it
-// would change labels already shown in history. Unknown ids stay visible.
+// would change labels already shown in history. "last-region" is labeled here.
+// Unknown ids stay visible.
 QString sourceName(const QString &source) {
   if (source == "full-screen") return text("Full screen");
   if (source == "monitor") return text("Monitor");
   if (source == "window") return text("Window");
   if (source == "region") return text("Region");
   if (source == "active-window") return text("Active window");
+  if (source == "last-region") return text("Last region");
   return source;
 }
 // Upload receipts live in the record report; history only reads the public
@@ -83,7 +85,7 @@ CaptureHistoryWindow::CaptureHistoryWindow(PipelineJournalStorage storage, std::
   setAttribute(Qt::WA_DeleteOnClose); resize(900, 620);
   auto *layout = new QVBoxLayout(this);
   m_search = new QLineEdit(this); m_search->setObjectName(QStringLiteral("captureHistorySearch"));
-  m_search->setPlaceholderText(text("Search by result ID, outcome, file name, folder, workflow, origin, destination or date (yyyy-MM-dd)"));
+  m_search->setPlaceholderText(text("Search by result ID, outcome, file name, folder, workflow, source, origin, destination, URL or date and time"));
   m_search->setAccessibleName(text("Search capture history")); m_search->setClearButtonEnabled(true); m_search->setMaxLength(xerahs::history::kHistoryMaxQueryLength);
   layout->addWidget(m_search);
   m_list = new QListWidget(this); m_list->setObjectName(QStringLiteral("captureHistoryItems"));
@@ -239,6 +241,7 @@ void CaptureHistoryWindow::poll() {
     records.push_back(*entry.parsed.record); m_entries.insert(entry.taskId, entry);
   }
   m_items = xerahs::history::captureHistoryItems(records);
+  for (auto &item : m_items) item.sourceLabel = sourceName(item.captureSource);
   // Files may have been moved or restored since the last read.
   m_thumbnails.clear(); m_missing.clear();
   m_recoveryNote = job->listing.quarantined > 0

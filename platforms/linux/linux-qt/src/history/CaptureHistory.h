@@ -27,7 +27,9 @@ struct CaptureHistoryItem {
   QString captureSource;  // region, full-screen, monitor or empty
   QString origin;  // empty for captures; file-upload or watch-folder for existing files
   QString destinationName;
-  QString failureMessage;
+  QString failureMessage;  // published upload_result error_message; empty when the record has none
+  QString resultUrl;       // public upload_result url only; deletion and thumbnail URLs are not copied
+  QString sourceLabel;     // visible source name supplied by the window; empty in stored records
   bool uploadOnly() const { return !origin.isEmpty(); }
   std::vector<CaptureHistoryFile> files;  // capture-created files (PNG first), or one uploaded source file
 };
@@ -36,8 +38,10 @@ struct CaptureHistoryItem {
 // retain a reference to the existing source file. No output is reconstructed.
 std::vector<CaptureHistoryItem> captureHistoryItems(const std::vector<xerahs::actions::RecoveredPipelineJournal> &records);
 
-// Case-insensitive match on stable task ID, state/outcome, file name, folder, workflow name, source, upload origin/destination and the
-// local date (yyyy-MM-dd). An empty query matches everything.
+// Case-insensitive match on stable task ID, state/outcome, file name, folder, workflow name,
+// capture source (a hyphen matches the space in the visible label), the window-supplied source
+// label, upload origin/destination, the public result URL, the published failure message, and the
+// local date and time (yyyy-MM-dd HH:mm). An empty query matches everything.
 bool matchesHistoryQuery(const CaptureHistoryItem &item, const QString &query);
 
 // Bounded paging over a filtered list (CORE-023).
