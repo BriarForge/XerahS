@@ -5,7 +5,7 @@ status: draft
 capabilities:
   - id: FILENAME-GENERATION-001
     path: capabilities/FILENAME-GENERATION-001
-    version: 0.2.0
+    version: 0.2.1
     status: approved
     requirements: [FN-001, FN-002, FN-003, FN-004, FN-005, FN-006, FN-007, FN-008, FN-009, FN-010, FN-011, FN-012, FN-013, FN-014, FN-015, FN-016, FN-017, FN-018, FN-019, FN-020, FN-021, FN-022, FN-023, FN-024, FN-025, FN-026, FN-027]
   - id: POST-CAPTURE-ACTIONS-001

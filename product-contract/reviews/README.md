@@ -33,3 +33,8 @@ Review packets MUST distinguish:
 - authored security, privacy, accessibility, compatibility, and licensing rules
   from the corresponding specialist and product-owner review; and
 - unresolved work from an approved, time-bound waiver or scope change.
+
+`APPROVAL-2026-11-12-FILENAME-WIDE-SAMPLING.json` records Mike's explicit approval
+of FILENAME-GENERATION-001 0.2.1 within contract 0.3.1: minimal-width big-endian
+rejection sampling for random-file lists above 256 entries. Existing one-byte
+results are preserved; no activation or release gate is waived.

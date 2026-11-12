@@ -46,3 +46,18 @@ Feature: Deterministic filename generation
   Scenario: Path traversal is rejected
     When pattern "shots/../x" is expanded as a path
     Then expansion fails with "path-traversal" at offset 6
+
+  Scenario: Every eligible random-file line remains reachable above 256 entries
+    Given file-read permission for a file with 257 nonempty trimmed lines
+    And the random bytes are FF FF 01 00 07
+    When pattern "%rf{words.txt}_%rn{1}" is expanded as text
+    Then the rejected two-byte draw FF FF is consumed in full
+    And the 257th line is selected by 01 00
+    And the following random digit is 7
+
+  Scenario: An incomplete wider random-file draw preserves the counter
+    Given file-read permission for a file with 257 nonempty trimmed lines
+    And only one random byte remains
+    When pattern "%i_%rf{words.txt}" is expanded
+    Then expansion fails with random-source-exhausted at "%rf"
+    And the next counter remains unchanged

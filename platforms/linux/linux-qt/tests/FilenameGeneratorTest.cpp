@@ -73,6 +73,48 @@ private slots:
     QCOMPARE(files.reads.size(), 3); QCOMPARE(files.reads.first(), QStringLiteral("words.txt"));
   }
 
+  void everyLineRemainsReachableAboveOneByte() {
+    FakeFiles files; QByteArray lines;
+    for (int i = 0; i < 257; ++i) lines += "line-" + QByteArray::number(i) + "\r\n\n";
+    files.files["words.txt"] = granted(lines);
+    for (int i = 0; i < 257; ++i) {
+      auto random = makeFixedRandomSource(QByteArray(1, char(i >> 8)) + QByteArray(1, char(i & 255)) + QByteArray(1, 7));
+      auto c = context(random.get()); c.files = &files;
+      const auto result = expand({"%rf{words.txt}_%rn{1}", ParseMode::Text, {}, {}}, c);
+      QVERIFY(result.ok()); QCOMPARE(result.value(), QString("line-%1_7").arg(i));
+    }
+  }
+  void widerDrawRejectsWholeGroupsAndReportsPartialExhaustion() {
+    FakeFiles files; QByteArray lines;
+    for (int i = 0; i < 257; ++i) lines += "line-" + QByteArray::number(i) + '\n';
+    files.files["words.txt"] = granted(lines);
+    for (const auto &bytes : {QByteArray::fromHex("ffff"), QByteArray::fromHex("00"), QByteArray::fromHex("ffff00")}) {
+      auto random = makeFixedRandomSource(bytes); auto c = context(random.get()); c.files = &files;
+      const auto result = expand({QString::fromUtf8("🙂%i_%rf{words.txt}"), ParseMode::Text, {}, {}}, c);
+      QVERIFY(!result.ok()); QCOMPARE(result.error().code, ErrorCode::RandomSourceExhausted);
+      QCOMPARE(result.error().token, std::optional<QString>("%rf")); QCOMPARE(result.error().offset, qint64(4)); QCOMPARE(result.nextCounter, qint64(41));
+    }
+    auto random = makeFixedRandomSource(QByteArray::fromHex("ffff010007")); auto c = context(random.get()); c.files = &files;
+    const auto result = expand({"%rf{words.txt}_%rn{1}", ParseMode::Text, {}, {}}, c);
+    QVERIFY(result.ok()); QCOMPARE(result.value(), QString("line-256_7"));
+  }
+  void byteWidthChangesOnlyWhenTheEligibleLineCountRequiresIt_data() {
+    QTest::addColumn<int>("count"); QTest::addColumn<QByteArray>("bytes"); QTest::addColumn<int>("selected");
+    QTest::newRow("one") << 1 << QByteArray::fromHex("ff07") << 0;
+    QTest::newRow("256") << 256 << QByteArray::fromHex("ff07") << 255;
+    QTest::newRow("257") << 257 << QByteArray::fromHex("010007") << 256;
+    QTest::newRow("65536") << 65536 << QByteArray::fromHex("ffff07") << 65535;
+    QTest::newRow("65537") << 65537 << QByteArray::fromHex("01000007") << 65536;
+  }
+  void byteWidthChangesOnlyWhenTheEligibleLineCountRequiresIt() {
+    QFETCH(int, count); QFETCH(QByteArray, bytes); QFETCH(int, selected);
+    FakeFiles files; QByteArray lines;
+    for (int i = 0; i < count; ++i) lines += "line-" + QByteArray::number(i) + '\n';
+    files.files["words.txt"] = granted(lines); auto random = makeFixedRandomSource(bytes); auto c = context(random.get()); c.files = &files;
+    const auto result = expand({"%rf{words.txt}_%rn{1}", ParseMode::Text, {}, {}}, c);
+    QVERIFY(result.ok()); QCOMPARE(result.value(), QString("line-%1_7").arg(selected));
+  }
+
   // FN-009/FN-026: a denied, missing, non-text or empty file is a typed error at the
   // token, the counter is not advanced, and no file content reaches the error.
   void randomFileFailuresAreTypedAndExposeNothing_data() {

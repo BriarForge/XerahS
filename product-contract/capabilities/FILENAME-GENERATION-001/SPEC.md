@@ -1,8 +1,8 @@
 # FILENAME-GENERATION-001 Filename generation
 
-Version: 0.2.0
+Version: 0.2.1
 
-Status: Approved by the human product owner on 2026-08-31 (0.1.0) and 2026-09-28 (0.2.0 implementation-readiness clarifications); conformance required before activation
+Status: Approved by the human product owner on 2026-08-31 (0.1.0) and 2026-09-28 (0.2.0 implementation-readiness clarifications) and 2026-11-12 (0.2.1 wider random-file sampling); conformance required before activation
 
 ## User intent
 
@@ -112,7 +112,15 @@ produces `_` in `filename` or `path` mode and an empty string otherwise.
   right across the whole pattern. Each random element MUST be drawn from the
   ordered list for its token in `random-lists.json` by rejection sampling: for a
   list of N entries, read one byte b; if b is at least 256 minus (256 modulo N),
-  discard it and read the next byte; otherwise select entry b modulo N. `%guid`
+  discard it and read the next byte; otherwise select entry b modulo N. For
+  `%rf` with more than 256 eligible lines, implementations MUST instead use the
+  smallest positive byte width k for which 256^k is at least N. Each draw MUST
+  consume exactly k consecutive bytes as one unsigned big-endian integer v.
+  Let R = 256^k and L = R - (R modulo N). A draw with v at least L MUST be
+  discarded in full; otherwise select the zero-based entry v modulo N. Rejected
+  draws and partial draws consume their bytes. Exhaustion during any draw MUST
+  report `random-source-exhausted`. Files with at most 256 eligible lines MUST
+  retain the existing one-byte rule and byte consumption. `%guid`
   and `%GUID` MUST consume 16 bytes, set byte 6 to (byte 6 AND 0x0F) OR 0x40 and
   byte 8 to (byte 8 AND 0x3F) OR 0x80 as an RFC 9562 version 4 UUID, and format
   them as 8-4-4-4-12 hexadecimal digits in lowercase or uppercase respectively.

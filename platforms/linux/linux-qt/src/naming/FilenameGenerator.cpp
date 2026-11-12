@@ -314,12 +314,19 @@ private:
   }
 
   // FN-021 rejection sampling for a list of n entries.
-  std::optional<int> pick(int n) {
-    const int limit = 256 - (256 % n);
+  std::optional<std::size_t> pick(std::size_t n) {
+    quint64 maximum = 255; int width = 1;
+    while (quint64(n - 1) > maximum) { maximum = (maximum << 8) | 255; ++width; }
+    // R - (R % n) - 1 without representing 2^64 for an eight-byte draw.
+    const auto lastAccepted = maximum - ((maximum % n + 1) % n);
     while (true) {
-      const auto byte = m_context.random ? m_context.random->next() : std::nullopt;
-      if (!byte) return std::nullopt;
-      if (*byte < limit) return *byte % n;
+      quint64 value = 0;
+      for (int i = 0; i < width; ++i) {
+        const auto byte = m_context.random ? m_context.random->next() : std::nullopt;
+        if (!byte) return std::nullopt;
+        value = (value << 8) | *byte;
+      }
+      if (value <= lastAccepted) return std::size_t(value % n);
     }
   }
 
@@ -393,13 +400,7 @@ private:
       if (!trimmed.empty()) lines.push_back(trimmed);
     }
     if (lines.empty()) return makeError(ErrorCode::FileUnavailable, segment.token, segment.offset);
-    if (lines.size() > 256) {
-      // FN-021 draws one byte per element, so no byte could ever select from more
-      // than 256 lines. Pending contract clarification under ROOT-ESCALATE-001;
-      // until then only the first 256 lines are selectable.
-      lines.resize(256);
-    }
-    const auto index = pick(static_cast<int>(lines.size()));
+    const auto index = pick(lines.size());
     if (!index) return exhausted(segment);
     return insertValue(lines[static_cast<std::size_t>(*index)], false);
   }

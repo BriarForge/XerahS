@@ -1,0 +1,32 @@
+{
+  "$schema": "../schemas/approval-record.schema.json",
+  "schema_version": 1,
+  "decision_id": "APPROVAL-2026-11-12-FILENAME-WIDE-SAMPLING",
+  "recorded_on": "2026-11-12",
+  "authority": {
+    "role": "human-product-owner",
+    "identity": "Mike, confirmed by interactive instruction"
+  },
+  "source": {
+    "kind": "interactive-instruction",
+    "statement": "Mike selected \"Approve wider sampling (Recommended)\" after reviewing the prepared minimal-width big-endian rejection sampler: preserve every one-byte result and byte consumption for at most 256 eligible lines; for 257 lines 01 00 selects line 257, FF FF is rejected, and following tokens consume subsequent bytes. The isolated candidate exhaustively checked every two-byte input. This approves the FN-021 clarification in FILENAME-GENERATION-001 0.2.1 within contract 0.3.1. Other packages and all activation/release gates are unchanged."
+  },
+  "decision": "approved",
+  "scope": {
+    "contract_version": "0.3.1",
+    "packages": [
+      "FILENAME-GENERATION-001"
+    ]
+  },
+  "effects": {
+    "normative_contract": true,
+    "implementation_authorized": true,
+    "activation_authorized": false,
+    "census_closed": false,
+    "release_authorized": false
+  },
+  "remaining_gates": [
+    "Implementation and conformance on every supported platform in scope",
+    "Existing privacy, accessibility, compatibility, parity and release qualification"
+  ]
+}

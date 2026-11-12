@@ -1,6 +1,6 @@
 {
   "capability": "FILENAME-GENERATION-001",
-  "capability_version": "0.2.0",
+  "capability_version": "0.2.1",
   "contract_version": "0.3.1",
   "platform": "linux",
   "edition": "linux-qt",
@@ -39,7 +39,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -76,7 +76,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -115,7 +115,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -152,7 +152,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -191,7 +191,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -226,7 +226,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -271,7 +271,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -323,7 +323,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -335,7 +335,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
-            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e",
             "method": "defaultCapturePatternUsesSystemRandom",
             "line": 43
           }
@@ -349,13 +349,16 @@
       ]
     },
     "FN-009": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "random-file-line",
         "random-file-permission-denied",
-        "random-file-empty"
+        "random-file-empty",
+        "random-file-wide-last-line",
+        "random-file-wide-rejection-and-following-token",
+        "random-file-wide-partial-draw"
       ],
-      "note": "Granted/denied/missing/non-text/empty file behavior has direct tests, but randomFileLine silently restricts files above 256 nonempty lines to their first 256 entries.",
+      "note": "Explicit file-read grants precede all reads; denied, missing, invalid UTF-8, NUL-containing and empty input fail with typed value-free errors. Every trimmed eligible line is selectable, including beyond 256. Native tests cover grant/refusal and 1/2/3-byte line-count boundaries; shared wide-list vectors and the complete filename conformance suite pass.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -367,19 +370,19 @@
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 60,
         "published_vectors": [
           "random-file-line",
           "random-file-permission-denied",
           "random-file-empty"
         ],
-        "coverage": "Granted/denied/missing/non-text/empty file behavior has direct tests, but randomFileLine silently restricts files above 256 nonempty lines to their first 256 entries.",
+        "coverage": "Explicit file-read grants precede all reads; denied, missing, invalid UTF-8, NUL-containing and empty input fail with typed value-free errors. Every trimmed eligible line is selectable, including beyond 256. Native tests cover grant/refusal and 1/2/3-byte line-count boundaries; shared wide-list vectors and the complete filename conformance suite pass.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -391,15 +394,33 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
-            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e",
             "method": "randomFileReadsOneTrimmedLineWhenGranted",
             "line": 66
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
-            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e",
             "method": "randomFileFailuresAreTypedAndExposeNothing",
-            "line": 89
+            "line": 131
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "method": "everyLineRemainsReachableAboveOneByte",
+            "line": 76,
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "method": "widerDrawRejectsWholeGroupsAndReportsPartialExhaustion",
+            "line": 87,
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "method": "byteWidthChangesOnlyWhenTheEligibleLineCountRequiresIt",
+            "line": 109,
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
           }
         ]
       },
@@ -424,7 +445,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -467,7 +488,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -508,7 +529,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -551,7 +572,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -588,7 +609,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -633,7 +654,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -645,9 +666,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
-            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e",
             "method": "previewNeverNeedsInjectedRandomness",
-            "line": 107
+            "line": 149
           }
         ]
       },
@@ -680,7 +701,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           },
           {
             "path": "platforms/linux/linux-qt/src/naming/CounterStore.cpp",
@@ -728,7 +749,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -769,7 +790,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -812,7 +833,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -855,7 +876,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -874,7 +895,7 @@
       ]
     },
     "FN-021": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "random-alphanumeric-with-rejection",
         "random-digits-with-rejection",
@@ -885,15 +906,18 @@
         "random-emoji",
         "guid-lower-and-upper",
         "random-source-exhausted",
-        "random-file-line"
+        "random-file-line",
+        "random-file-wide-last-line",
+        "random-file-wide-rejection-and-following-token",
+        "random-file-wide-partial-draw"
       ],
-      "note": "Rejection sampling and UUID bit layout are implemented, but the one-byte random-file selector silently truncates files with more than 256 candidate lines; the contract supplies no accepted wider sampling rule.",
+      "note": "Approved 2026-11-12 FN-021 clarification implemented: lists up to 256 preserve the original one-byte rejection mapping and consumption; larger random files draw the minimum unsigned big-endian byte width and reject complete groups above the unbiased limit. Native tests cover all 257 selectable indices, 256/257/65536/65537 boundaries, whole-group rejection, later-token consumption and partial-draw exhaustion. Existing static-list and UUID vectors remain unchanged.",
       "tests": [
         "filename-generator-test"
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 111,
         "published_vectors": [
           "random-alphanumeric-with-rejection",
@@ -907,12 +931,12 @@
           "random-source-exhausted",
           "random-file-line"
         ],
-        "coverage": "Rejection sampling and UUID bit layout are implemented, but the one-byte random-file selector silently truncates files with more than 256 candidate lines; the contract supplies no accepted wider sampling rule.",
+        "coverage": "Approved 2026-11-12 FN-021 clarification implemented: lists up to 256 preserve the original one-byte rejection mapping and consumption; larger random files draw the minimum unsigned big-endian byte width and reject complete groups above the unbiased limit. Native tests cover all 257 selectable indices, 256/257/65536/65537 boundaries, whole-group rejection, later-token consumption and partial-draw exhaustion. Existing static-list and UUID vectors remain unchanged.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -924,9 +948,27 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
-            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e",
             "method": "defaultCapturePatternUsesSystemRandom",
             "line": 43
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "method": "everyLineRemainsReachableAboveOneByte",
+            "line": 76,
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "method": "widerDrawRejectsWholeGroupsAndReportsPartialExhaustion",
+            "line": 87,
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "method": "byteWidthChangesOnlyWhenTheEligibleLineCountRequiresIt",
+            "line": 109,
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
           }
         ]
       },
@@ -948,7 +990,7 @@
       "disposition": "Required",
       "audit": {
         "classification": "implemented",
-        "spec_line": 121,
+        "spec_line": 129,
         "published_vectors": [
           "window-metadata",
           "window-title-trim-space-and-sanitize",
@@ -961,7 +1003,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -993,7 +1035,7 @@
       "disposition": "Required",
       "audit": {
         "classification": "implemented",
-        "spec_line": 129,
+        "spec_line": 137,
         "published_vectors": [
           "trailing-spaces-and-periods",
           "reserved-device-name",
@@ -1008,7 +1050,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -1037,7 +1079,7 @@
       "disposition": "Required",
       "audit": {
         "classification": "implemented",
-        "spec_line": 141,
+        "spec_line": 149,
         "published_vectors": [
           "path-mode-components",
           "path-mode-rejects-traversal",
@@ -1049,7 +1091,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -1076,7 +1118,7 @@
       "disposition": "Required",
       "audit": {
         "classification": "implemented",
-        "spec_line": 148,
+        "spec_line": 156,
         "published_vectors": [
           "counter-base36",
           "counter-overflow"
@@ -1086,7 +1128,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -1105,7 +1147,7 @@
       ]
     },
     "FN-026": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "counter-overflow",
         "extension-exceeds-max-length",
@@ -1118,9 +1160,12 @@
         "unterminated-argument",
         "random-file-line",
         "random-file-permission-denied",
-        "random-file-empty"
+        "random-file-empty",
+        "random-file-wide-last-line",
+        "random-file-wide-rejection-and-following-token",
+        "random-file-wide-partial-draw"
       ],
-      "note": "Typed error code/token/scalar-offset behavior is covered for supported contexts; %rf still omits eligible lines after the first 256, contrary to selecting among all nonempty lines.",
+      "note": "All declared typed expansion errors retain token and Unicode-scalar offset; errors preserve the original counter. Random files now select among all nonempty trimmed LF/CRLF lines, without the former first-256 truncation. Shared wide-draw exhaustion vectors and native scalar-offset/counter/rejection tests pass alongside all existing filename vectors.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -1132,8 +1177,8 @@
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
-        "spec_line": 152,
+        "classification": "implemented",
+        "spec_line": 160,
         "published_vectors": [
           "counter-overflow",
           "extension-exceeds-max-length",
@@ -1148,12 +1193,12 @@
           "random-file-permission-denied",
           "random-file-empty"
         ],
-        "coverage": "Typed error code/token/scalar-offset behavior is covered for supported contexts; %rf still omits eligible lines after the first 256, contrary to selecting among all nonempty lines.",
+        "coverage": "All declared typed expansion errors retain token and Unicode-scalar offset; errors preserve the original counter. Random files now select among all nonempty trimmed LF/CRLF lines, without the former first-256 truncation. Shared wide-draw exhaustion vectors and native scalar-offset/counter/rejection tests pass alongside all existing filename vectors.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -1165,15 +1210,33 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
-            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e",
             "method": "randomFileReadsOneTrimmedLineWhenGranted",
             "line": 66
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
-            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e",
             "method": "randomFileFailuresAreTypedAndExposeNothing",
-            "line": 89
+            "line": 131
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "method": "everyLineRemainsReachableAboveOneByte",
+            "line": 76,
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "method": "widerDrawRejectsWholeGroupsAndReportsPartialExhaustion",
+            "line": 87,
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "method": "byteWidthChangesOnlyWhenTheEligibleLineCountRequiresIt",
+            "line": 109,
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
           }
         ]
       },
@@ -1200,7 +1263,7 @@
       "disposition": "Required",
       "audit": {
         "classification": "implemented",
-        "spec_line": 161,
+        "spec_line": 169,
         "published_vectors": [
           "preview-does-not-commit"
         ],
@@ -1209,7 +1272,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
-            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+            "sha256": "b28b82f6ffe6aa821d7ccbf7e89ec74ab677ee9f7d96954932361c73779d0861"
           }
         ],
         "test_anchors": [
@@ -1221,9 +1284,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
-            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e",
             "method": "previewNeverNeedsInjectedRandomness",
-            "line": 107
+            "line": 149
           }
         ]
       },
@@ -1232,10 +1295,10 @@
   },
   "audit_scope": "All normative Linux-applicable clauses reviewed against current production and automated test bodies; candidate implementation is separate from physical, cross-platform and human acceptance.",
   "audit": {
-    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
-    "checked_at": "2026-11-04T14:04:38.855452+00:00",
+    "source_revision": "8af27f166cc7c416e7166bb9f21a1203fd82f623",
+    "checked_at": "2026-11-12T00:06:20.613045+00:00",
     "specification": "product-contract/capabilities/FILENAME-GENERATION-001/SPEC.md",
-    "specification_sha256": "fa57017ec8237ab136799f4e3d2234e5a290b210af9215315c4cf0c208c0e6ff",
+    "specification_sha256": "8fe3e33ca0cd0f5afec0c3914adfbf8754ddccf973f2fc34e9bad1794ea0b798",
     "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
     "production_surfaces": [
       "platforms/linux/linux-qt/app/CaptureSave.cpp",
@@ -1255,12 +1318,15 @@
         "defaultCapturePatternUsesSystemRandom",
         "previewNeverNeedsInjectedRandomness",
         "randomFileFailuresAreTypedAndExposeNothing",
-        "randomFileReadsOneTrimmedLineWhenGranted"
+        "randomFileReadsOneTrimmedLineWhenGranted",
+        "everyLineRemainsReachableAboveOneByte",
+        "widerDrawRejectsWholeGroupsAndReportsPartialExhaustion",
+        "byteWidthChangesOnlyWhenTheEligibleLineCountRequiresIt"
       ]
     },
-    "remaining_scope": "FN-009; FN-021; FN-026",
+    "remaining_scope": "Cross-platform implementations and parity, privacy/accessibility and release acceptance remain Required; no remaining Linux filename implementation clauses.",
     "reviewed_requirement_count": 27,
-    "finding": "Current source review: {'implemented': 24, 'partial': 3}. Per-row reasons and exact hashed anchors record scope and limitations.",
+    "finding": "27 Linux filename requirements implemented. The 24 existing implemented rows retain their behavior; approved 0.2.1 wide-file sampling closes FN-009/FN-021/FN-026. Existing and added independent conformance vectors plus native grant/error/random-source tests verify the production path.",
     "review_anchor": {
       "production": {
         "path": "platforms/linux/linux-qt/app/CaptureSave.cpp",
@@ -1333,5 +1399,20 @@
       },
       "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
     }
+  },
+  "wide_random_file_checkpoint": {
+    "approval": "product-contract/reviews/APPROVAL-2026-11-12-FILENAME-WIDE-SAMPLING.json",
+    "capability_version": "0.2.1",
+    "requirements": [
+      "FN-009",
+      "FN-021",
+      "FN-026"
+    ],
+    "platform_disposition": "Linux required behavior implemented; cross-platform implementation/conformance and activation remain Required. Windows/macOS are documentation stubs, not evidence of conformance.",
+    "evidence": [
+      "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+      "product-contract/capabilities/FILENAME-GENERATION-001/test-vectors.json"
+    ],
+    "isolated_proof": "All 65536 two-byte inputs for 257 entries: each entry has 255 accepted inputs; FFFF rejects. This is arithmetic/behavior evidence, not a performance measurement."
   }
 }
