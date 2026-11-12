@@ -303,7 +303,16 @@
           }
         ]
       },
-      "previous_note": "Native Image annotation accepts an explicitly selected validated file or explicitly read clipboard image. Owned worker preparation validates per-image dimensions/resources, applies orientation once and embeds PNG with alpha. Aspect-fitted drag or natural-size click commits one editable annotation and one undo step. File and clipboard sources stay unchanged; Cancel, stale state/selection/source/tool and owner destruction cannot publish. No bypass preference or optional screen source is offered. Aggregate document resource limits and complete target qualification remain EC-017/ES-028 obligations."
+      "previous_note": "Native Image annotation accepts an explicitly selected validated file or explicitly read clipboard image. Owned worker preparation validates per-image dimensions/resources, applies orientation once and embeds PNG with alpha. Aspect-fitted drag or natural-size click commits one editable annotation and one undo step. File and clipboard sources stay unchanged; Cancel, stale state/selection/source/tool and owner destruction cannot publish. No bypass preference or optional screen source is offered. Aggregate document resource limits and complete target qualification remain EC-017/ES-028 obligations.",
+      "verification_environment": {
+        "ctest_target": "image-insert",
+        "environment": [
+          "QT_QPA_PLATFORM=offscreen",
+          "QT_QPA_PLATFORMTHEME="
+        ],
+        "reason": "Offscreen fixtures select the default Qt platform theme explicitly. The inherited qtengine plugin loads Qt6Network transitively and alters QFileDialog delivery, so its unrelated desktop state must not enter the isolated annotation/file-picker fixtures. Assertions and timeouts remain unchanged; physical desktop theme qualification remains separate.",
+        "regression_evidence": "Both targets failed in the full gate and isolated retry with inherited qtengine; the unchanged binaries passed with an empty theme, and the configured targets passed with qtengine deliberately inherited after the fixture environment fix."
+      }
     },
     "EC-005": {
       "disposition": "Required",
