@@ -24,6 +24,8 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/packaging/com.xerahs.app.desktop
   DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/packaging/com.xerahs.app.metainfo.xml
   DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/packaging/icons/com.xerahs.app.svg
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps)
 install(FILES ${XERAHS_REPO_ROOT}/LICENSE
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/xerahs)
 
@@ -66,6 +68,8 @@ set(CPACK_RPM_PACKAGE_GROUP "Applications/Multimedia")
 set(CPACK_RPM_PACKAGE_URL "${CPACK_PACKAGE_HOMEPAGE_URL}")
 set(CPACK_RPM_PACKAGE_AUTOREQ ON)
 set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
-  /usr/share/applications /usr/share/metainfo /usr/share/doc)
+  /usr/share/applications /usr/share/metainfo /usr/share/doc
+  /usr/share/icons /usr/share/icons/hicolor /usr/share/icons/hicolor/scalable
+  /usr/share/icons/hicolor/scalable/apps)
 
 include(CPack)

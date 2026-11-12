@@ -13,6 +13,7 @@
 #include "NativeEditorPreferences.h"
 #include "NativeInstance.h"
 #include "ApplicationWindow.h"
+#include "ApplicationIcon.h"
 #include "AppContext.h"
 #include "CommandRegistry.h"
 #include "features/CommandWindowAttach.h"
@@ -32,8 +33,6 @@
 #include <QMenu>
 #include <QJsonDocument>
 #include <QMessageBox>
-#include <QPainter>
-#include <QPainterPath>
 #include <QPointer>
 #include <QScopedValueRollback>
 #include <QStandardPaths>
@@ -44,7 +43,6 @@
 
 #include <cstdio>
 #include <algorithm>
-#include <tuple>
 
 using xerahs::app::CaptureController;
 
@@ -71,34 +69,6 @@ void reportLaunch(const xerahs::shell::ActivationRequest &request, bool json, co
   }
   if (!diagnostic.isEmpty()) std::fprintf(stderr, "xerahs: %s: %s\n", qPrintable(diagnostic), qPrintable(xerahs::app::activationFailureMessage(
       request.action == xerahs::shell::ActivationAction::RunWorkflow && diagnostic == "activation-unavailable" ? QStringLiteral("workflow-unavailable") : diagnostic)));
-}
-
-// Monochrome capture-frame mark, drawn so no asset pipeline is needed yet.
-QIcon appIcon() {
-  QIcon icon;
-  for (int size : {16, 22, 24, 32, 48, 64, 128, 256}) {
-    QPixmap pixmap(size, size);
-    pixmap.fill(Qt::transparent);
-    QPainter p(&pixmap);
-    p.setRenderHint(QPainter::Antialiasing);
-    const double s = size;
-    QPainterPath body;
-    body.addRoundedRect(QRectF(s * 0.06, s * 0.06, s * 0.88, s * 0.88), s * 0.2, s * 0.2);
-    p.fillPath(body, QColor(24, 24, 27));
-    QPen pen(QColor(245, 245, 245), std::max(1.5, s * 0.085), Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin);
-    p.setPen(pen);
-    const double a = s * 0.27;
-    const double b = s * 0.73;
-    const double l = s * 0.15;
-    for (const auto &[x, y, sx, sy] : {std::tuple{a, a, 1.0, 1.0}, std::tuple{b, a, -1.0, 1.0},
-                                       std::tuple{a, b, 1.0, -1.0}, std::tuple{b, b, -1.0, -1.0}}) {
-      p.drawLine(QPointF(x, y), QPointF(x + sx * l, y));
-      p.drawLine(QPointF(x, y), QPointF(x, y + sy * l));
-    }
-    p.end();
-    icon.addPixmap(pixmap);
-  }
-  return icon;
 }
 
 }  // namespace
@@ -175,7 +145,7 @@ int main(int argc, char *argv[]) {
   QApplication::setDesktopFileName(QStringLiteral("com.xerahs.app"));
   QApplication::setOrganizationDomain(QStringLiteral("xerahs.com"));
   QApplication::setQuitOnLastWindowClosed(false);
-  QApplication::setWindowIcon(appIcon());
+  QApplication::setWindowIcon(xerahs::app::applicationIcon());
 
   if (!earlyCommand && !parser.parse(app.arguments())) { reportLaunch(makeActivationRequest(ActivationAction::Activate), app.arguments().contains("--json"), {}, "usage-invalid"); return 1; }
   if (parser.isSet("help") || parser.isSet("help-all")) parser.showHelp();
@@ -239,7 +209,7 @@ int main(int argc, char *argv[]) {
   refreshCaptureStyle();
   QObject::connect(&xerahs::app::nativeEditorPreferenceEvents(), &xerahs::app::NativeEditorPreferenceEvents::drawingDefaultsChanged, &capture, refreshCaptureStyle);
 
-  QSystemTrayIcon tray(appIcon());
+  QSystemTrayIcon tray(xerahs::app::applicationIcon());
   tray.setToolTip(QStringLiteral("XerahS"));
   QMenu menu;
   xerahs::app::RecordingController recording;

@@ -246,6 +246,7 @@ target_compile_options(xerahs_workflow_shortcuts PRIVATE -Wall -Wextra -Wpedanti
 # xerahs_core; app/ only wires it to Qt and the desktop.
 # The application's shell wiring lives in an object library so tests can build the real command registry.
 add_library(xerahs_app OBJECT
+  app/ApplicationIcon.cpp app/ApplicationIcon.h
   app/DiagnosticsDialog.cpp app/DiagnosticsDialog.h
   app/features/DiagnosticsFeature.cpp app/features/DiagnosticsFeature.h
   app/CaptureWorkflows.cpp
@@ -512,6 +513,14 @@ target_include_directories(capture-permission-help-test PRIVATE app)
 target_link_libraries(capture-permission-help-test PRIVATE Qt6::Widgets Qt6::Test)
 add_test(NAME capture-permission-help COMMAND capture-permission-help-test)
 set_tests_properties(capture-permission-help PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(application-icon-test tests/ApplicationIconTest.cpp app/ApplicationIcon.cpp app/ApplicationIcon.h)
+set_target_properties(application-icon-test PROPERTIES AUTOMOC ON)
+target_include_directories(application-icon-test PRIVATE app)
+target_link_libraries(application-icon-test PRIVATE Qt6::Gui Qt6::Test)
+target_compile_options(application-icon-test PRIVATE -Wall -Wextra -Wpedantic)
+add_test(NAME application-icon COMMAND application-icon-test)
+set_tests_properties(application-icon PROPERTIES
+  ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=;QT_SCALE_FACTOR=1" TIMEOUT 30)
 add_executable(application-window-test tests/ApplicationWindowTest.cpp app/ApplicationWindow.cpp app/ApplicationWindow.h
   app/CommandRegistry.cpp app/CommandRegistry.h app/features/ToolsFeature.cpp app/features/ToolsFeature.h)
 set_target_properties(application-window-test PROPERTIES AUTOMOC ON)

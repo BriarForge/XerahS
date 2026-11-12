@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Original XerahS application icon for the hicolor scalable theme.
+  Copyright the XerahS contributors.
+  SPDX-License-Identifier: GPL-3.0-or-later
+  Drawn for this repository. Not derived from the ShareX or Avalonia XerahS logos.
+  Geometry matches app/ApplicationIcon.cpp (256 viewBox). Change both together.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">XerahS</title>
+  <desc id="desc">An amber X inside a paper capture frame on an ink field.</desc>
+  <rect x="16" y="16" width="224" height="224" rx="52" fill="#F3EEE4"/>
+  <rect x="32" y="32" width="192" height="192" rx="40" fill="#243044"/>
+  <g fill="none" stroke="#F3EEE4" stroke-width="28" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="2">
+    <path d="M100 48 H48 V100"/>
+    <path d="M156 48 H208 V100"/>
+    <path d="M100 208 H48 V156"/>
+    <path d="M156 208 H208 V156"/>
+  </g>
+  <g fill="none" stroke="#E39B12" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M92 92 L164 164"/>
+    <path d="M164 92 L92 164"/>
+  </g>
+</svg>
