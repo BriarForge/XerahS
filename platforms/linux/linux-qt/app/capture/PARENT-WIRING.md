@@ -50,3 +50,22 @@ in `protocol/`. They were generated with wayland-scanner 1.26 using
 `server-header`, and `private-code` outputs. The capture-source XML deliberately
 contains only the output-source factory: this backend does not use or link the
 foreign-toplevel source interface. Preserve the copyright and licence notices.
+
+## Controlled native proof — 2026-11-13
+
+Qt 6.4.2 and private headless Sway 1.9 exercised the production last-region
+controller with cursor inclusion enabled and no injected compositor reader.
+The save receipt identified the reopened PNG: 76×12 pixels, exactly 84 cursor
+pixels in one clipped 12×7 rectangle, zero pixel mismatches and no visible
+selection overlay. The real wlr-screencopy client acquired the frame before
+cropping. All compositor sockets and the virtual pointer were private; the
+host desktop was not captured.
+
+The synthetic [PNG](../../tests/fixtures/native-cursor-proof/cursor-proof.png)
+and [observation with source hashes](../../tests/fixtures/native-cursor-proof/observation.json)
+retain this result. The temporary harness and logs live in
+`/tmp/xerahs-cursor-proof`; those temporary files are not a shipped test target.
+A callback lifetime error in that harness was corrected before this run, and
+the real save receipt accessor passed. This single-output proof does not
+qualify other desktops, ext-image-copy-capture, hardware displays or cursor
+exclusion on the default portal path. RC-013 remains partial.

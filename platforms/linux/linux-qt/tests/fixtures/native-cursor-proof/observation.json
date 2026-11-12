@@ -1,0 +1,62 @@
+{
+  "date": "2026-11-13",
+  "base_revision": "10ff31d",
+  "qt_version": "6.4.2",
+  "compositor": "Sway 1.9 headless, pixman",
+  "protocol": "wlr-screencopy-unstable-v1 v3",
+  "capture": "production CaptureController last-region, includeCursor=true, no injected compositor reader, save-only workflow",
+  "frame": [
+    640,
+    480
+  ],
+  "cursor": {
+    "size": [
+      20,
+      12
+    ],
+    "hotspot": [
+      4,
+      5
+    ],
+    "pointer": [
+      100,
+      80
+    ],
+    "rgb": [
+      255,
+      0,
+      180
+    ]
+  },
+  "crop_ltrb": [
+    104,
+    70,
+    180,
+    82
+  ],
+  "saved_size": [
+    76,
+    12
+  ],
+  "cursor_pixels": 84,
+  "cursor_bounds_xywh": [
+    0,
+    5,
+    12,
+    7
+  ],
+  "pixel_mismatches": 0,
+  "visible_overlays": 0,
+  "receipt_path_verified": true,
+  "sha256": {
+    "app/CaptureController.cpp": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3",
+    "app/CaptureController.h": "cfae296c636c05a813a278a3fc7953d35211cd998b43b93cbed9dfaca3456fc8",
+    "app/capture/CompositorFrame.cpp": "760ddb6e1512732504a7b3a187bac2a840d7398c7cf00a46d5c7b55585f1e771",
+    "app/capture/CompositorFrame.h": "bd7bb57a2ae196ba4b9ea1a25693b27bb32d46e1b07352ecf0c2fe987599e22b",
+    "tests/fixtures/native-cursor-proof/cursor-proof.png": "74b18068fd1fbc84b0b55a098ea104231788881a04f7b7e7c965708541455cfa"
+  },
+  "limits": [
+    "One normal output at scale 1 on a private headless desktop.",
+    "Does not qualify ext-image-copy-capture, other desktops, hardware displays or software-cursor exclusion on the portal path."
+  ]
+}
