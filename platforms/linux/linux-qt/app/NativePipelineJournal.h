@@ -11,6 +11,7 @@ struct JournalEntry {
   xerahs::actions::PipelineJournalParse parsed;
 };
 // CORE-020, CORE-023: source files are references, never capture-created artifacts.
+enum class FileUploadJournalState { Terminal, Interrupted };
 struct FileUploadHistoryRecord {
   QString taskId, path, origin, destinationName, failureCode;
   QDateTime createdAt;
@@ -29,7 +30,7 @@ public:
   // they stop occupying history slots and are preserved for manual recovery. Unsupported-version, unsafe
   // and unreadable files are left untouched. `quarantined` counts the files set aside.
   JournalListing listRecovering() const;
-  JournalWrite recordFileUpload(const FileUploadHistoryRecord &upload) const;
+  JournalWrite recordFileUpload(const FileUploadHistoryRecord &upload, FileUploadJournalState state = FileUploadJournalState::Terminal) const;
   JournalWrite erase(const QString &id, const QByteArray &expected) const;
 private:
   QString m_directory;

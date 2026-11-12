@@ -119,7 +119,7 @@ void WatchFolderService::finishFileWork(const QString &path, const FileResult &r
     else if (!result.error.isEmpty()) stepFailed(!result.read ? (code == QLatin1String("watch-copy-open-failed") ? "read-file" : "copy-file") : !result.copied ? "copy-file" : "remove-source");
   }
   const auto steps = m_execution ? m_execution->record().steps : QJsonArray{};
-  const auto terminal = fileOperationTerminal(m_execution ? m_execution->record().id : QString{}, operation, steps, result.error.isEmpty() ? QString{} : code);
+  const auto terminal = fileOperationTerminal(m_execution ? m_execution->record().id : QString{}, operation, steps, result.error.isEmpty() ? QString{} : code, 0);
   m_terminalState = m_execution ? terminal.state : (result.error.isEmpty() ? QStringLiteral("succeeded") : (result.copied ? QStringLiteral("partial") : cancelled ? QStringLiteral("cancelled") : QStringLiteral("permanent-failure")));
   if (m_execution) { stored = m_execution->finish(terminal.state, terminal.diagnostic, terminal.outputs) && stored; m_terminalObservation = m_execution->recordedObservation(); m_execution.reset(); }
   QString error = result.error;

@@ -13,6 +13,9 @@ FailureClass classifyFileOperationFailure(const QString &code, int httpStatus) {
   if (code == "destination-missing" || code == "destination-catalog-unreadable") return FailureClass::UnavailableDependency;
   return xerahs::actions::classifyFailure(code, httpStatus);
 }
+bool uploadRemoteOutcomeUnknown(const QString &code, int attempts) {
+  return attempts > 0 && (code == QLatin1String("timeout") || code == QLatin1String("network-error"));
+}
 QString fileOperationDiagnostic(const QString &code) {
   const auto trimmed = code.section(QLatin1Char(';'), 0, 0).section(QLatin1Char(':'), 0, 0).trimmed();
   static const QStringList known{"input-missing", "input-not-file", "input-unreadable", "input-too-large", "destination-catalog-unreadable", "destination-missing",
@@ -21,7 +24,7 @@ QString fileOperationDiagnostic(const QString &code) {
       "watch-copy-commit-failed", "watch-move-remove-failed"};
   return known.contains(trimmed) ? trimmed : QStringLiteral("action-failed");
 }
-FileOperationTerminal fileOperationTerminal(const QString &executionId, const QString &operation, const QJsonArray &steps, const QString &diagnostic) {
+FileOperationTerminal fileOperationTerminal(const QString &executionId, const QString &operation, const QJsonArray &steps, const QString &diagnostic, int uploadAttempts) {
   bool committed = false, failed = false, cancelled = false, denied = false;
   std::optional<FailureClass> failure;
   const auto isUpload = operation == QLatin1String("upload");
@@ -32,7 +35,11 @@ FileOperationTerminal fileOperationTerminal(const QString &executionId, const QS
     cancelled |= state == "cancelled"; denied |= state == "permission-denied";
   }
   FileOperationTerminal result; result.diagnostic = diagnostic;
-  if (failed && committed) result.state = "partial";
+  // PCA-012, STATE_MACHINE: no acknowledgement after send is interrupted, not a
+  // failure class. The missing upload step is the unknown action, not a success.
+  const bool unacknowledgedUpload = isUpload && !failed && !committed && !cancelled && !denied && uploadRemoteOutcomeUnknown(diagnostic, uploadAttempts);
+  if (unacknowledgedUpload) result.state = QStringLiteral("interrupted");
+  else if (failed && committed) result.state = "partial";
   else if (failed) result.state = xerahs::actions::failureClassName(failure.value_or(FailureClass::PermanentFailure));
   else if (denied) result.state = "permission-denied";
   else if (cancelled) result.state = committed ? QStringLiteral("partial") : QStringLiteral("cancelled");
@@ -51,6 +58,9 @@ FileOperationNotice fileOperationNotice(const QString &operation, const QString 
   if (notice.completed) notice.headline = (upload ? QStringLiteral("Uploaded %1") : QStringLiteral("Processed %1")).arg(fileName);
   else if (state == "partial") notice.headline = QStringLiteral("%1 was only partly processed (partial)").arg(fileName);
   else if (state == "cancelled") notice.headline = QStringLiteral("%1 was cancelled").arg(fileName);
+  else if (state == QLatin1String("interrupted") && upload)
+    notice.headline = QStringLiteral("%1: remote publication is unconfirmed (interrupted)").arg(fileName);
+  else if (state == QLatin1String("interrupted")) notice.headline = QStringLiteral("%1 is interrupted").arg(fileName);
   else notice.headline = QStringLiteral("%1 did not complete (%2)").arg(fileName, state);
   return notice;
 }

@@ -168,17 +168,23 @@ void FileUploadController::recordCompletion(const uploads::UploadOutcome &outcom
       field->replace(secret, QStringLiteral("[redacted]"));
       field->replace(QString::fromLatin1(QUrl::toPercentEncoding(secret)), QStringLiteral("[redacted]"));
     }
+  // A sent request without an acknowledgement is not a failed publication.
+  // Keep the stable code on the execution; the journal stays interrupted.
+  const bool publicationUnknown = m_requestBuilt && workflows::uploadRemoteOutcomeUnknown(record.failureCode, record.result.attempts);
   if (!record.failureCode.isEmpty()) {
     const auto message = record.result.errorMessage;
-    record.result.errorMessage = record.failureCode + QStringLiteral(": ") +
-        (message.isEmpty() || message == record.failureCode ? QStringLiteral("The file upload did not complete.") : message);
+    if (!publicationUnknown)
+      record.result.errorMessage = record.failureCode + QStringLiteral(": ") +
+          (message.isEmpty() || message == record.failureCode ? QStringLiteral("The file upload did not complete.") : message);
+    else if (message.isEmpty())
+      record.result.errorMessage = record.failureCode + QStringLiteral(": remote publication is unconfirmed. Review the destination before retrying.");
     record.result.url.clear(); record.result.thumbnailUrl.clear(); record.result.deletionUrl.clear();
   }
   m_sensitiveValues.clear();
   const auto storage = m_ports.history ? m_ports.history : std::make_shared<NativePipelineJournal>(NativePipelineJournal::defaultDirectory());
   m_preparing = true;
-  OwnedWork::run<JournalWrite>(this, [storage, record](const OwnedWork::Context &) {
-    return storage->recordFileUpload(record);
+  OwnedWork::run<JournalWrite>(this, [storage, record, publicationUnknown](const OwnedWork::Context &) {
+    return storage->recordFileUpload(record, publicationUnknown ? FileUploadJournalState::Interrupted : FileUploadJournalState::Terminal);
   }, [this, done = std::move(done)](JournalWrite written) {
     m_preparing = false;
     done(written.stored ? QString{} : QStringLiteral("upload-history-write-failed: Could not save the upload to history (%1).").arg(written.diagnostic));
@@ -217,8 +223,9 @@ workflows::FileOperationNotice FileUploadController::settle(bool uploaded) {
   if (m_execution) {
     if (uploaded) m_executionStored = m_execution->step(QStringLiteral("upload-file"), QStringLiteral("succeeded")) && m_executionStored;
     else if (code == QLatin1String("cancelled")) m_executionStored = m_execution->step(action, QStringLiteral("cancelled")) && m_executionStored;
-    else m_executionStored = m_execution->step(action, QStringLiteral("failed"), code, classifyFileOperationFailure(code, m_httpStatus)) && m_executionStored;
-    terminal = fileOperationTerminal(m_historyRecord.taskId, QStringLiteral("upload"), m_execution->record().steps, uploaded ? QString{} : code);
+    else if (!(m_requestBuilt && workflows::uploadRemoteOutcomeUnknown(code, m_historyRecord.result.attempts)))
+      m_executionStored = m_execution->step(action, QStringLiteral("failed"), code, classifyFileOperationFailure(code, m_httpStatus)) && m_executionStored;
+    terminal = fileOperationTerminal(m_historyRecord.taskId, QStringLiteral("upload"), m_execution->record().steps, uploaded ? QString{} : code, m_requestBuilt ? m_historyRecord.result.attempts : 0);
     m_executionStored = m_execution->finish(terminal->state, terminal->diagnostic, terminal->outputs) && m_executionStored;
   }
   m_terminalObservation = m_execution ? m_execution->recordedObservation() : QJsonObject{{"task_id", m_historyRecord.taskId}, {"state", "outcome-unconfirmed"}, {"outputs", QJsonArray{}}};

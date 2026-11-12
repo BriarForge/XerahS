@@ -940,7 +940,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Capture acquisition, capture-action pipelines, recording, file upload and watch-folder copy/move/upload now expose consistent terminal states and opaque output references in qInfo logs, native shell activity, notifications and durable workflow history. Real native tests compare the projections for success, partial failure, cancellation, denial and storage faults; no private filename, path, URL, credential or payload is published in ordinary terminal text. File-operation observations read the last successfully stored execution snapshot, so failed publication reports outcome-unconfirmed and suppresses references absent from history while private results retain actual effects. Watch upload completion still checkpoints the actual remote effect against replay. The former file-operation log/progress gap and pre-pipeline capture reporting omissions are fixed. Full catalogue coverage, including utility/application-control and other unimplemented admitted workflow families, remains partial.",
+      "note": "Capture acquisition, capture-action pipelines, recording, file upload and watch-folder copy/move/upload now expose consistent terminal states and opaque output references in qInfo logs, native shell activity, notifications and durable workflow history. Real native tests compare the projections for success, partial failure, cancellation, denial and storage faults; no private filename, path, URL, credential or payload is published in ordinary terminal text. File-operation observations read the last successfully stored execution snapshot, so failed publication reports outcome-unconfirmed and suppresses references absent from history while private results retain actual effects. Watch upload completion still checkpoints the actual remote effect against replay. The former file-operation log/progress gap and pre-pipeline capture reporting omissions are fixed. Full catalogue coverage, including utility/application-control and other unimplemented admitted workflow families, remains partial. File uploads with a started request and a timeout or network loss before acknowledgement now persist interrupted/unconfirmed execution and non-terminal pipeline history, with no failed upload step or receipt. Explicit attempt facts distinguish unsent preparation failures, HTTP rejection and Cancel; later explicit uploads are separate tasks and do not overwrite or retry the unknown result. NativePipelineJournal owns both terminal and interrupted file-upload serialization.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -967,7 +967,8 @@
         "platforms/linux/linux-qt/app/CaptureController.cpp",
         "platforms/linux/linux-qt/app/FileUploadController.cpp",
         "platforms/linux/linux-qt/app/features/UploadFeature.cpp",
-        "platforms/linux/linux-qt/tests/TerminalLogCapture.h"
+        "platforms/linux/linux-qt/tests/TerminalLogCapture.h",
+        "platforms/linux/linux-qt/app/NativePipelineJournal.cpp"
       ],
       "audit": {
         "classification": "partial",

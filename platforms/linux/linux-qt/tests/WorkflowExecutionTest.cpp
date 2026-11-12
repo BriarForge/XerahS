@@ -185,7 +185,7 @@ private slots:
     QVERIFY(execution.step("read-file", "succeeded"));
     QVERIFY(execution.step(upload ? "upload-file" : "copy-file", "succeeded"));
     if (operation == "move") QVERIFY(execution.step("remove-source", "succeeded"));
-    const auto terminal = fileOperationTerminal(id, operation, execution.record().steps, {});
+    const auto terminal = fileOperationTerminal(id, operation, execution.record().steps, {}, 0);
     QCOMPARE(terminal.state, QString("succeeded")); QCOMPARE(terminal.outputs, QStringList{id + (upload ? "/upload.receipt" : "/watch.copy")});
     QVERIFY(execution.finish(terminal.state, terminal.diagnostic, terminal.outputs));
     const auto result = store.result(id);
@@ -241,21 +241,48 @@ private slots:
     const auto failure = classifyFileOperationFailure(code, http);
     QJsonArray steps{QJsonObject{{"action", "read-file"}, {"state", "succeeded"}},
         QJsonObject{{"action", "upload-file"}, {"state", "failed"}, {"failure_class", failureClassName(failure)}}};
-    const auto terminal = fileOperationTerminal(uuid(), "upload", steps, code);
+    const auto terminal = fileOperationTerminal(uuid(), "upload", steps, code, 0);
     QCOMPARE(terminal.state, state); QCOMPARE(terminal.diagnostic, code); QVERIFY(terminal.outputs.isEmpty());
   }
   void cancellationAndPartialStatesAndNoSuccessBeforeCommit() {
     const auto id = uuid();
     const QJsonObject read{{"action", "read-file"}, {"state", "succeeded"}}, copy{{"action", "copy-file"}, {"state", "succeeded"}};
     // Cancelled before a durable effect: cancelled, nothing to reference.
-    auto t = fileOperationTerminal(id, "copy", {read, QJsonObject{{"action", "copy-file"}, {"state", "cancelled"}}}, "cancelled");
+    auto t = fileOperationTerminal(id, "copy", {read, QJsonObject{{"action", "copy-file"}, {"state", "cancelled"}}}, "cancelled", 0);
     QCOMPARE(t.state, QString("cancelled")); QVERIFY(t.outputs.isEmpty());
     // Move: the copy committed but source removal failed, so the outcome is partial and keeps the copy.
-    t = fileOperationTerminal(id, "move", {read, copy, QJsonObject{{"action", "remove-source"}, {"state", "failed"}, {"failure_class", "permanent-failure"}}}, "watch-move-remove-failed");
+    t = fileOperationTerminal(id, "move", {read, copy, QJsonObject{{"action", "remove-source"}, {"state", "failed"}, {"failure_class", "permanent-failure"}}}, "watch-move-remove-failed", 0);
     QCOMPARE(t.state, QString("partial")); QCOMPARE(t.outputs, QStringList{id + "/watch.copy"}); QCOMPARE(t.diagnostic, QString("watch-move-remove-failed"));
     // Nothing committed (no upload/copy step succeeded) can never be succeeded.
-    t = fileOperationTerminal(id, "upload", {read}, {}); QCOMPARE(t.state, QString("permanent-failure"));
-    t = fileOperationTerminal(id, "move", {read}, {}); QVERIFY(t.state != "succeeded"); QVERIFY(t.outputs.isEmpty());
+    t = fileOperationTerminal(id, "upload", {read}, {}, 0); QCOMPARE(t.state, QString("permanent-failure"));
+    t = fileOperationTerminal(id, "upload", {read}, "network-error", 0);
+    QVERIFY(t.state != "interrupted"); QVERIFY(t.state != "succeeded"); QVERIFY(t.outputs.isEmpty());
+    // A sent upload with no acknowledgement is interrupted, not a failure class.
+    t = fileOperationTerminal(id, "upload", {read}, "timeout", 1);
+    QCOMPARE(t.state, QString("interrupted")); QCOMPARE(t.diagnostic, QString("timeout")); QVERIFY(t.outputs.isEmpty());
+    t = fileOperationTerminal(id, "upload", {read}, "network-error", 1);
+    QCOMPARE(t.state, QString("interrupted")); QVERIFY(t.outputs.isEmpty());
+    // A recorded failed step keeps the failure class. HTTP rejection is not unknown.
+    t = fileOperationTerminal(id, "upload", {read, QJsonObject{{"action", "upload-file"}, {"state", "failed"}, {"failure_class", "transient-failure"}}}, "timeout", 1);
+    QCOMPARE(t.state, QString("transient-failure"));
+    t = fileOperationTerminal(id, "upload", {read, QJsonObject{{"action", "upload-file"}, {"state", "failed"}, {"failure_class", "permanent-failure"}}}, "http-error", 1);
+    QCOMPARE(t.state, QString("permanent-failure"));
+    const auto unknownNotice = fileOperationNotice("upload", "interrupted", "a.png");
+    QVERIFY(!unknownNotice.completed); QVERIFY(unknownNotice.headline.contains("unconfirmed")); QVERIFY(unknownNotice.headline.contains("interrupted"));
+    QVERIFY(!unknownNotice.headline.contains("transient")); QVERIFY(!uploadRemoteOutcomeUnknown("http-error", 1));
+    QVERIFY(uploadRemoteOutcomeUnknown("timeout", 1)); QVERIFY(!uploadRemoteOutcomeUnknown("timeout", 0));
+    QVERIFY(uploadRemoteOutcomeUnknown("network-error", 2)); QVERIFY(!uploadRemoteOutcomeUnknown("cancelled", 1));
+    {
+      QTemporaryDir records; NativeWorkflowExecutions executions(records.filePath("records"));
+      WorkflowExecution unknown(uuid(), "file-upload", fileOperationSnapshot("upload", "dest", "Fixture"), executions.writer());
+      QVERIFY(unknown.admit()); QVERIFY(unknown.start()); QVERIFY(unknown.step("read-file", "succeeded"));
+      const auto terminal = fileOperationTerminal(unknown.record().id, "upload", unknown.record().steps, "network-error", 1);
+      QVERIFY(unknown.finish(terminal.state, terminal.diagnostic, terminal.outputs));
+      const auto saved = parseWorkflowExecution(serializeWorkflowExecution(unknown.record()), unknown.record().id); QVERIFY(saved);
+      QCOMPARE(saved->state, QString("interrupted")); QCOMPARE(saved->diagnostic, QString("network-error"));
+      QCOMPARE(saved->steps.size(), 1); QVERIFY(saved->outputs.isEmpty());
+    }
+    t = fileOperationTerminal(id, "move", {read}, {}, 0); QVERIFY(t.state != "succeeded"); QVERIFY(t.outputs.isEmpty());
     // Presentation: only succeeded reads as completed.
     for (const auto *state : {"partial", "cancelled", "permanent-failure", "transient-failure", "validation-failure"}) {
       const auto notice = fileOperationNotice("move", state, "a.png");

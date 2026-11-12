@@ -10,7 +10,11 @@ namespace xerahs::workflows {
 QJsonObject fileOperationSnapshot(const QString &operation, const QString &destinationId = {}, const QString &destinationName = {},
     const std::optional<QJsonObject> &rule = std::nullopt);
 // WFCAT-004: failure class of a stable file-operation or upload diagnostic code.
+// A recorded failure only. An unacknowledged upload is not a failure class.
 xerahs::actions::FailureClass classifyFileOperationFailure(const QString &code, int httpStatus = 0);
+// PCA-012: timeout or network-error after at least one request was sent. The
+// remote publication is unknown. Attempts of zero never left this machine.
+bool uploadRemoteOutcomeUnknown(const QString &code, int attempts);
 // Stable diagnostic code which may be stored (unknown codes become action-failed).
 QString fileOperationDiagnostic(const QString &code);
 struct FileOperationTerminal {
@@ -21,7 +25,10 @@ struct FileOperationTerminal {
 // Terminal state from the ordered step facts. A step must be recorded as
 // succeeded only after its durable effect committed. A move whose copy committed
 // but whose source removal failed is partial and keeps the copy reference.
-FileOperationTerminal fileOperationTerminal(const QString &executionId, const QString &operation, const QJsonArray &steps, const QString &diagnostic);
+// An upload that was sent and not acknowledged has no failed step: its state is
+// interrupted, with no receipt. A recorded failed step keeps its failure class.
+// uploadAttempts is zero when no upload request has been started.
+FileOperationTerminal fileOperationTerminal(const QString &executionId, const QString &operation, const QJsonArray &steps, const QString &diagnostic, int uploadAttempts);
 // Presentation shared by dialogs, notifications and history. Only a succeeded
 // execution reads as completed; partial and failed never do.
 struct FileOperationNotice {

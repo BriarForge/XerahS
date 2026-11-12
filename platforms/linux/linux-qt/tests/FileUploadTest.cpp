@@ -58,6 +58,7 @@ public:
   QTcpServer server;
   int status = 200;
   bool holdFirst = false;
+  bool dropAfterBody = false;
   int received = 0;
   QVector<QByteArray> bodies;
   QPointer<QTcpSocket> held;
@@ -104,6 +105,7 @@ private:
     m_done.insert(peer);
     ++received;
     bodies.append(wire.mid(split + 4));
+    if (dropAfterBody) { peer->disconnectFromHost(); return; }
     if (holdFirst && received == 1) { held = peer; return; }
     reply(peer);
   }
@@ -815,6 +817,102 @@ private slots:
     QTest::qWait(200);
     QCOMPARE(http.received, 1);
     for (auto *dialog : dialogs()) QVERIFY(before.contains(dialog));
+  }
+
+  void sentRequestWithoutAResponseIsInterruptedNotAFailure() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    HttpFixture http; http.dropAfterBody = true; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    const auto destination = http.destination();
+    DestinationCatalog catalog(dir.filePath(QStringLiteral("destinations.json"))); QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>();
+    QVERIFY(credentials->store(destination.id, QStringLiteral("token"), QStringLiteral("fixture-secret")).ok());
+    const auto path = writeFile(dir, QStringLiteral("dropped.txt"), QByteArray("dropped-body"));
+    QVERIFY(!path.isEmpty());
+    NativeWorkflowExecutions store(dir.filePath(QStringLiteral("executions")));
+    auto ports = portsFor(dir.filePath(QStringLiteral("destinations.json")), credentials); ports.executions = store.writer();
+    QWidget parent; parent.show();
+    FileUploadController controller(ports, &parent);
+    QSignalSpy idle(&controller, &FileUploadController::finished);
+    QSignalSpy completed(&controller, &FileUploadController::fileCompleted);
+    QSignalSpy observed(&controller, &FileUploadController::terminalObserved);
+    QSignalSpy notices(&controller, &FileUploadController::notify);
+    QSignalSpy finished(&controller, &FileUploadController::executionFinished);
+    controller.upload({path});
+    QTRY_COMPARE_WITH_TIMEOUT(idle.count(), 1, 7000);
+    QCOMPARE(http.received, 1);
+    QVERIFY(http.bodies.first().contains("dropped-body"));
+    QCOMPARE(completed.count(), 1);
+    QCOMPARE(completed.first().at(1).toBool(), false);
+    const auto message = dialogs().first()->findChild<QLabel *>(QStringLiteral("uploadMessage"))->text();
+    QVERIFY(message.contains(QStringLiteral("publication is unconfirmed")));
+    QVERIFY(message.contains(QStringLiteral("network-error")));
+    QVERIFY(!message.contains(QStringLiteral("transient-failure")));
+    QVERIFY(!dialogs().first()->findChild<QLineEdit *>(QStringLiteral("uploadUrl")));
+    const auto terminal = dialogs().first()->findChild<QLabel *>(QStringLiteral("uploadTerminalState"))->text();
+    QVERIFY(terminal.contains(QStringLiteral("interrupted")));
+    QVERIFY(terminal.contains(QStringLiteral("unconfirmed")));
+    QVERIFY(!terminal.contains(QStringLiteral("transient-failure")));
+    QVERIFY(!terminal.contains(QStringLiteral("failed")));
+    const auto listing = store.list(); QCOMPARE(listing.entries.size(), std::size_t(1));
+    const auto execution = xerahs::workflows::parseWorkflowExecution(listing.entries.front().snapshot, listing.entries.front().id);
+    QVERIFY(execution);
+    QCOMPARE(execution->state, QStringLiteral("interrupted"));
+    QCOMPARE(execution->diagnostic, QStringLiteral("network-error"));
+    QVERIFY(execution->outputs.isEmpty());
+    QCOMPARE(execution->steps.size(), 1);
+    QCOMPARE(execution->steps.at(0).toObject().value(QStringLiteral("action")).toString(), QStringLiteral("read-file"));
+    QCOMPARE(execution->steps.at(0).toObject().value(QStringLiteral("state")).toString(), QStringLiteral("succeeded"));
+    const auto observation = observed.first().first().toJsonObject();
+    QCOMPARE(observation.value(QStringLiteral("state")).toString(), QStringLiteral("interrupted"));
+    QCOMPARE(finished.first().at(2).toString(), QStringLiteral("interrupted"));
+    QVERIFY(finished.first().at(3).toStringList().isEmpty());
+    QCOMPARE(notices.first().at(1).toString(), xerahs::actions::pipelineObservationText(observation));
+    QVERIFY(!notices.first().at(2).toBool());
+    const auto history = NativePipelineJournal(dir.filePath(QStringLiteral("history"))).list();
+    QCOMPARE(history.entries.size(), std::size_t(1));
+    const auto &journal = *history.entries.front().parsed.record;
+    QVERIFY(!journal.terminal);
+    QCOMPARE(journal.report.value(QStringLiteral("pipeline_state")).toString(), QStringLiteral("interrupted"));
+    QCOMPARE(journal.pendingAction, std::optional<QString>(QStringLiteral("upload")));
+    QCOMPARE(journal.report.value(QStringLiteral("ordered_results")).toArray().size(), 0);
+    const auto native = journal.report.value(QStringLiteral("extensions")).toObject().value(QStringLiteral("com.xerahs.app")).toObject();
+    QCOMPARE(native.value(QStringLiteral("terminal_observation")).toObject().value(QStringLiteral("state")).toString(), QStringLiteral("interrupted"));
+    QCOMPARE(native.value(QStringLiteral("file_upload")).toObject().value(QStringLiteral("failure_code")).toString(), QString());
+    const auto upload = native.value(QStringLiteral("upload_result")).toObject();
+    QVERIFY(upload.value(QStringLiteral("url")).toString().isEmpty());
+    QVERIFY(upload.value(QStringLiteral("error_message")).toString().contains(QStringLiteral("publication is unconfirmed")));
+    QVERIFY(upload.value(QStringLiteral("attempts")).toInt() >= 1);
+    const auto items = xerahs::history::captureHistoryItems({journal});
+    QCOMPARE(items.size(), std::size_t(1));
+    QCOMPARE(items.front().state, QStringLiteral("interrupted"));
+    QCOMPARE(items.front().outcome, QStringLiteral("interrupted"));
+    QVERIFY(items.front().failureMessage.contains(QStringLiteral("publication is unconfirmed")));
+    QVERIFY(QFileInfo::exists(path));
+    const auto firstBytes = history.entries.front().bytes;
+    const auto firstId = history.entries.front().taskId;
+    for (auto *dialog : dialogs()) dialog->close();
+    http.dropAfterBody = false;
+    const auto second = writeFile(dir, QStringLiteral("next.txt"), QByteArray("next-body"));
+    QVERIFY(!second.isEmpty());
+    QSignalSpy again(&controller, &FileUploadController::finished);
+    controller.upload({second});
+    QTRY_COMPARE_WITH_TIMEOUT(again.count(), 1, 7000);
+    QCOMPARE(http.received, 2);
+    QVERIFY(http.bodies.at(1).contains("next-body"));
+    QVERIFY(!http.bodies.at(1).contains("dropped-body"));
+    const auto after = NativePipelineJournal(dir.filePath(QStringLiteral("history"))).list();
+    QCOMPARE(after.entries.size(), std::size_t(2));
+    int interrupted = 0, succeeded = 0;
+    for (const auto &entry : after.entries) {
+      if (entry.taskId == firstId) {
+        QCOMPARE(entry.bytes, firstBytes);
+        ++interrupted;
+      } else if (entry.parsed.record && entry.parsed.record->terminal) {
+        ++succeeded;
+      }
+    }
+    QCOMPARE(interrupted, 1);
+    QCOMPARE(succeeded, 1);
   }
 
   void uploadFileActionIsSharedWithTheWindow() {
