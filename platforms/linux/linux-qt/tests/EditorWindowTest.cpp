@@ -1536,7 +1536,9 @@ private slots:
       if (configured) return; configured = true;
       QCOMPARE(picker->nameFilters().size(), 3); picker->selectNameFilter(format == "jpeg" ? "JPEG image (*.jpg *.jpeg)" : "WebP image (*.webp)");
       picker->findChild<QLineEdit *>("editorSaveQuality")->setText("90"); if (format == "jpeg") picker->findChild<QLineEdit *>("editorSaveJpegMatte")->setText("#112233");
-      picker->selectFile(target); QMetaObject::invokeMethod(picker, "accept");
+      // Qt 6.12 selectFile does not change the filename edit while that edit has focus.
+      if (auto *buttons = picker->findChild<QDialogButtonBox *>()) if (auto *save = buttons->button(QDialogButtonBox::Save)) save->setFocus();
+      picker->selectFile(target); QCOMPARE(picker->selectedFiles().value(0), target); QMetaObject::invokeMethod(picker, "accept");
     });
     QSignalSpy saved(window.get(), &EditorWindow::saveFinished); timer.start(5); trigger(*window, "saveImage"); timer.stop();
     QVERIFY(configured && !timeout); QCOMPARE(saved.count(), 1); QVERIFY(saved[0][0].toBool() && saved[0][1].toBool()); QCOMPARE(QImageReader::imageFormat(target), format.toLatin1()); QVERIFY(loadSource(target).document);
@@ -2285,7 +2287,12 @@ private slots:
     bool picked = false, reported = false, confirmed = false; QString shown; QTimer timer;
     connect(&timer, &QTimer::timeout, [&] {
       if (auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget())) {
-        picked = true; if (!failure) picker->reject(); else { picker->selectFile(target); QMetaObject::invokeMethod(picker, "accept"); }
+        if (!failure) { picked = true; picker->reject(); }
+        else {
+          // Qt 6.12 selectFile does not change the filename edit while that edit has focus.
+          if (auto *buttons = picker->findChild<QDialogButtonBox *>()) if (auto *open = buttons->button(QDialogButtonBox::Open)) open->setFocus();
+          picker->selectFile(target); QCOMPARE(picker->selectedFiles().value(0), target); picked = true; QMetaObject::invokeMethod(picker, "accept");
+        }
       } else if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) {
         reported = box->windowTitle() == u"Cannot open image"; confirmed = box->windowTitle() == u"Replace current image"; shown = box->text(); box->reject();
       }

@@ -1,7 +1,7 @@
 # Graph Report - linux  (2026-11-13)
 
 ## Corpus Check
-- 771 files · ~870,979 words
+- 771 files · ~871,042 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 15 file(s) not represented in the graph (top: .sxcu 5, .xml 4, (none) 2)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `38e1c7e1`
+- Built from commit: `50b70d66`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -2830,7 +2830,7 @@ Nodes (3): ManualTimer, armed, interval
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Native editor save and companion repair` connect `Native capture result journal and recovery` to `EditorWindow.cpp`, `EditorSave.cpp`?**
-  _High betweenness centrality (0.063) - this node is a cross-community bridge._
+  _High betweenness centrality (0.055) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `QApplication` (e.g. with `Integration` and `Runtime API`) actually correct?**
   _`QApplication` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `public`, `m_choices`, `m_selected` to the rest of the system?**
@@ -2838,7 +2838,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Native Linux CMake build` be split into smaller, more focused modules?**
   _Cohesion score 0.02130952380952381 - nodes in this community are weakly interconnected._
 - **Why does `xerahs_core` connect `xerahs_core` to `Native Linux CMake build`, `Argb`, `CaptureHistoryItem`, `DestinationCatalog`, `makeActivationRequest()`, `qtest`, `UploadDestination.cpp`, `Effect.h`, `AnnotationDocument`, `AnnotationDocument.cpp`, `VideoConversion.cpp`, `xerahs`, `WatchFolders.cpp`, `ToolbarPreferences.cpp`, `WorkflowShortcutPlan`, `RegionSession`, `WorkflowExecution.cpp`, `PointF`, `MemoryCredentialStore`, `ApplicationSettingsTest`, `SavedFileArtifact`, `RecentImages`, `render`, `workflows/CaptureWorkflows.cpp`, `RegionCaptureNativeTest`, `QrEncoder.cpp`, `ScrollStitcher`, `ColorFormats.cpp`, `CaptureSchedule.cpp`, `runPipeline()`, `actionSelectionChoices()`, `CounterError`, `PhysicalRect`, `FilenameGenerator.cpp`, `RasterSaveOptions`, `RectangleAnnotation`, `EditorViewport`, `Argb`, `importSxcu()`, `HotkeyBindings.cpp`, `CaptureController.cpp`, `loadEditorPreferences`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+  _High betweenness centrality (0.047) - this node is a cross-community bridge._
 - **Are the 9 inferred relationships involving `ParamValues` (e.g. with `deserializeParameters()` and `.handComputedPixels()`) actually correct?**
   _`ParamValues` has 9 INFERRED edges - model-reasoned connections that need verification._
 - **Should `QApplication` be split into smaller, more focused modules?**
