@@ -29,8 +29,9 @@ private slots:
     const auto first = store.checkpoint("first");
     auto result = WatchFolders::writeCheckpoint(first);
     QVERIFY(result.error.isEmpty()); QVERIFY(result.processed.contains("first"));
+    result.processed.insert("worker-only");
     QCOMPARE(store.adoptCheckpoint(first, std::move(result)), QString());
-    QVERIFY(store.processed("first"));
+    QVERIFY(store.processed("first")); QVERIFY(store.processed("worker-only"));
     const auto stale = store.checkpoint("stale");
     QCOMPARE(store.remember("second"), QString());
     CheckpointResult staleResult{{}, {}, {"stale"}};
