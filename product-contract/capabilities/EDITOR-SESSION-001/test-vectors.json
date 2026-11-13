@@ -231,6 +231,110 @@
       "requirements": ["ES-030"],
       "input": { "raster_path": "shots/shot.png", "existing_files": ["shots/shot.xann"] },
       "expected": { "write_path": "shots/shot.png.xann", "read_path": "shots/shot.xann" }
+    },
+    {
+      "id": "path-traversal-reports-document-invalid",
+      "operation": "parse-document",
+      "requirements": [
+        "ES-017",
+        "ES-029"
+      ],
+      "input": {
+        "document": {
+          "version": 1,
+          "imagePath": "../private/image.png",
+          "imageHash": "",
+          "canvasWidth": 1,
+          "canvasHeight": 1,
+          "createdAt": "2026-08-30T00:00:00Z",
+          "modifiedAt": "2026-08-30T00:00:00Z",
+          "sourceImagePngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP4DwQACfsD/Wj6HMwAAAAASUVORK5CYII=",
+          "embeddedImages": {},
+          "annotations": []
+        }
+      },
+      "expected": {
+        "error": "document-invalid"
+      }
+    },
+    {
+      "id": "unsafe-extension-reports-document-invalid",
+      "operation": "parse-document",
+      "requirements": [
+        "ES-017",
+        "ES-029"
+      ],
+      "input": {
+        "document": {
+          "version": 1,
+          "imagePath": "",
+          "imageHash": "",
+          "canvasWidth": 1,
+          "canvasHeight": 1,
+          "createdAt": "2026-08-30T00:00:00Z",
+          "modifiedAt": "2026-08-30T00:00:00Z",
+          "sourceImagePngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP4DwQACfsD/Wj6HMwAAAAASUVORK5CYII=",
+          "embeddedImages": {},
+          "annotations": [],
+          "extensions": {
+            "$ref": "#"
+          }
+        }
+      },
+      "expected": {
+        "error": "document-invalid"
+      }
+    },
+    {
+      "id": "too-large-outranks-traversal",
+      "operation": "parse-document",
+      "requirements": [
+        "ES-017",
+        "ES-029"
+      ],
+      "input": {
+        "document": {
+          "version": 1,
+          "imagePath": "../private/image.png",
+          "imageHash": "",
+          "canvasWidth": 20000,
+          "canvasHeight": 20000,
+          "createdAt": "2026-08-30T00:00:00Z",
+          "modifiedAt": "2026-08-30T00:00:00Z",
+          "sourceImagePngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP4DwQACfsD/Wj6HMwAAAAASUVORK5CYII=",
+          "embeddedImages": {},
+          "annotations": []
+        }
+      },
+      "expected": {
+        "error": "document-too-large",
+        "pixels_allocated": false
+      }
+    },
+    {
+      "id": "version-outranks-traversal",
+      "operation": "parse-document",
+      "requirements": [
+        "ES-017",
+        "ES-029"
+      ],
+      "input": {
+        "document": {
+          "version": 2,
+          "imagePath": "../private/image.png",
+          "imageHash": "",
+          "canvasWidth": 1,
+          "canvasHeight": 1,
+          "createdAt": "2026-08-30T00:00:00Z",
+          "modifiedAt": "2026-08-30T00:00:00Z",
+          "sourceImagePngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP4DwQACfsD/Wj6HMwAAAAASUVORK5CYII=",
+          "embeddedImages": {},
+          "annotations": []
+        }
+      },
+      "expected": {
+        "error": "document-version-unsupported"
+      }
     }
   ]
 }

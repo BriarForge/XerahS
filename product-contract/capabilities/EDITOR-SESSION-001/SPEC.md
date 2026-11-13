@@ -1,8 +1,8 @@
 # EDITOR-SESSION-001 Native editor session
 
-Version: 0.2.0
+Version: 0.2.1
 
-Status: Approved by the human product owner on 2026-08-31 (0.1.0) and 2026-09-28 (0.2.0 implementation-readiness clarifications); conformance required before activation
+Status: Approved by the human product owner on 2026-08-31 (0.1.0) and 2026-09-28 (0.2.0 implementation-readiness clarifications) and by the maintainer on 2026-11-13 (0.2.1 diagnostic/reason clarification); conformance required before activation
 
 ## User intent
 
@@ -146,6 +146,11 @@ The complete approved editor surface is expanded by `EDITOR-ANNOTATIONS-001`,
   `raster-save-failed`, and `sidecar-save-failed`. When several document
   failures apply, the first in this order MUST be reported:
   `document-version-unsupported`, `document-too-large`, `document-invalid`.
+  A reader MAY record a more specific, value-free rejection reason for import
+  reports, but the reported diagnostic MUST be one of the codes above.
+  Exceeding a lexical resource budget (nesting depth or element count) reports
+  `document-too-large`; duplicate keys, invalid encoding, path traversal and
+  unsafe or executable content report `document-invalid`.
 - **ES-030:** The default sidecar path MUST be the raster file's full name with
   `.xann` appended (for example `shot.png.xann`). When that file is absent,
   readers MUST also look for the raster's name with its last extension
@@ -180,3 +185,14 @@ baseline commits recorded in `kova-0.29.0.yaml`. Ledger links:
 Disposition: preserve the session, rectangle, history, export, and re-editable
 sidecar outcomes; correct non-atomic save/dirty ambiguity and make mismatched
 source handling explicit.
+
+## Changelog
+
+- **0.2.1, 2026-11-13:** Maintainer Aoife approved separating ES-029's closed
+  failure diagnostics from value-free import rejection reasons. Lexical resource
+  budgets map to `document-too-large`; unsafe or malformed content maps to
+  `document-invalid`. The four new vectors cover traversal, unsafe extensions
+  and existing version/size precedence. Linux readers and native Open messages
+  implement this clarification; macOS and Windows remain unimplemented and
+  must use the same diagnostics when built. The persisted `.xann` format,
+  rejection rules, permissions and supported platforms are unchanged.
