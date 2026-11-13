@@ -2,7 +2,7 @@
   "schema_version": 2,
   "date": "2026-11-14",
   "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
-  "contract_version": "0.3.2",
+  "contract_version": "0.4.0",
   "scope": "All 16 manifest capabilities reviewed for Linux applicability; 325 desktop requirements classified and 20 mobile-only requirements explicitly outside Linux scope. Counts measure candidate behavior, not completion percentage or release acceptance.",
   "classification_rules": {
     "implemented": "Candidate Linux behavior has automated production-path evidence; does not approve release, parity or human qualification.",

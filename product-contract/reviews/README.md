@@ -20,6 +20,11 @@ adding native Android and iOS targets through `MOBILE-PLATFORM-001`.
 `APPROVAL-2026-10-08-LINUX-HYPRLAND-TOOLKIT.json` approves contract version
 `0.3.1`: `CORE-PLATFORM-001` version `0.5.1` confirms Qt 6 with LayerShellQt as
 the `linux-hyprland` toolkit under D-LIN-002.
+`APPROVAL-2026-11-14-CORE-025-WATCH-PUBLICATION.json` approves contract version
+`0.4.0`: `CORE-PLATFORM-001` version `0.6.0` adds the CORE-025 watch
+publication disposition and retention subsection, with its decision record and
+test vectors. The other 15 packages carry forward to contract 0.4.0 unchanged
+in normative text from 0.3.2.
 Records for earlier contract versions
 are retained history; only records for the manifest's current version count.
 All records explicitly withhold activation, census closure, and release

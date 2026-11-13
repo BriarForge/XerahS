@@ -1,6 +1,6 @@
 # Native implementation readiness
 
-Contract version `0.3.1` (approval `APPROVAL-2026-10-08-LINUX-HYPRLAND-TOOLKIT`) is ready
+Contract version `0.4.0` (approval `APPROVAL-2026-11-14-CORE-025-WATCH-PUBLICATION`) is ready
 for native coding to start on Windows, macOS, Linux, Android, and iOS. This page
 states what each platform team starts with, in what order, and which gates stay
 open without blocking the start.

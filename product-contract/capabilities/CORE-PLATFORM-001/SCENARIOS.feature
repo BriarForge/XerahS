@@ -62,3 +62,24 @@ Feature: Native platform capability invariants
     Given linux-qt and linux-hyprland are both supported editions
     And linux-hyprland has no accepted disposition for a requirement
     Then the requirement's Linux disposition is not accepted
+
+  Scenario: A watch publication response is lost and the process restarts
+    Given a watched file's publication request was sent and its response was lost
+    And the process stopped before the publication could be confirmed
+    When the application restarts and finds the publication still recorded as sending
+    Then the publication is unconfirmed
+    And the file is not uploaded again automatically under the same key
+
+  Scenario: A watch publication is stopped during the request
+    Given a watched file's publication request was sent
+    And the request was stopped before any HTTP response was received
+    When the publication attempt ends
+    Then the publication is unconfirmed
+    And the file is not uploaded again automatically under the same key
+
+  Scenario: A watch root is temporarily unavailable
+    Given a watched file was checkpointed as processed
+    And the file's parent directory is no longer present because the root was unmounted or removed
+    When the checkpoint store is written
+    Then the checkpoint entry is kept
+    And the entry is not pruned as a deleted file

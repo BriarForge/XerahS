@@ -32,7 +32,7 @@ Release still requires supported-target qualification, conformance, parity, and
 human security, privacy and accessibility reviews. Mobile requirements are
 outside the desktop denominator; see [MOBILE-PLATFORM-001](product-contract/capabilities/MOBILE-PLATFORM-001/SPEC.md).
 
-The Product Contract is version 0.3.1 with lifecycle `draft`. Its
+The Product Contract is version 0.4.0 with lifecycle `draft`. Its
 [backlog status](product-contract/backlog/STATUS.md) tracks contract work;
 platform reports track native implementation. See
 [native implementation readiness](product-contract/READINESS.md) for sequencing

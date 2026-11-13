@@ -1,0 +1,54 @@
+{
+  "$schema": "../schemas/approval-record.schema.json",
+  "schema_version": 1,
+  "decision_id": "APPROVAL-2026-11-14-CORE-025-WATCH-PUBLICATION",
+  "recorded_on": "2026-11-14",
+  "authority": {
+    "role": "maintainer",
+    "identity": "Aoife (Claude Opus), XerahS maintainer under root Stewardship"
+  },
+  "source": {
+    "kind": "interactive-instruction",
+    "statement": "Maintainer decision under ROOT-REVIEW-001: CORE-PLATFORM-001 0.6.0 adopts the CORE-025 watch publication and retention subsection in decisions/CORE-025-watch-publication-retention.md and its test vectors, within contract version 0.4.0. A publication is acknowledged when the upload succeeded, or when at least one request was started, no prior-process sending record survived a restart, and every request attempt received an HTTP response of any status; an acknowledged failure releases the file; an attempt that ended without an HTTP response is unconfirmed unless the upload ultimately succeeded; an implementation that cannot show that every attempt was answered MUST treat the publication as unconfirmed; a sending record left over from an earlier process is always unconfirmed even when the new process's runtime fields are empty. The send intent MUST be durably saved before dispatch and a failed intent save means zero HTTP requests and watching stops with watch-store-write-failed. Retry eligibility resolves through the explicit existing Upload file command, with no new user interface, and an unconfirmed publication is named in the current notices during a session, while one startup watch-publication-unconfirmed notice names up to five base names plus a count of the rest, disclosing no paths or URLs. Local copy and move behavior is unchanged. Checkpoint retention prunes a processed or unconfirmed entry only when the parent directory exists and the file fingerprint changed, keeps entries whose parent is missing, and never prunes a sending entry. The watch checkpoint store becomes version 2 with items and publications, stays readable from version 1 and upgrades on the next write, and an older binary refuses version 2 with watch-store-invalid-version-or-data and fails closed. The watch rules store version is unchanged, and this is a pre-release format with no live-migration user interface. The other 15 packages carry forward to contract 0.4.0 unchanged in normative text from 0.3.2, where the 2026-11-14 ES empty-save baseline record approved them; the implementer verified that carry-forward by diffing the capability packages against commit 81220c40109a1fed1f1ec4747f9f62d02e0c5a8a and found differences only in CORE-PLATFORM-001. No other product-semantic change is made, and no ROOT constitution rule is changed."
+  },
+  "decision": "approved",
+  "scope": {
+    "contract_version": "0.4.0",
+    "packages": [
+      "FILENAME-GENERATION-001",
+      "POST-CAPTURE-ACTIONS-001",
+      "REGION-CAPTURE-001",
+      "EDITOR-SESSION-001",
+      "EDITOR-ANNOTATIONS-001",
+      "EDITOR-EFFECTS-001",
+      "EDITOR-CANVAS-001",
+      "EDITOR-OUTPUT-ACTIONS-001",
+      "EDITOR-SETTINGS-001",
+      "EDITOR-UTILITIES-001",
+      "SETTINGS-CATALOG-001",
+      "WORKFLOW-CATALOG-001",
+      "INTERFACE-CATALOG-001",
+      "CORE-PLATFORM-001",
+      "COMPATIBILITY-CATALOG-001",
+      "MOBILE-PLATFORM-001"
+    ]
+  },
+  "effects": {
+    "normative_contract": true,
+    "implementation_authorized": true,
+    "activation_authorized": false,
+    "census_closed": false,
+    "release_authorized": false
+  },
+  "remaining_gates": [
+    "parent and maintainer review of the CORE-025 contract checkpoint before implementation begins",
+    "CORE-025 Linux implementation on the WatchFolders, OwnedWork, and FileUploadController seams",
+    "real process SIGKILL proof on tmpfs for the CORE-025 startup recovery path",
+    "approved Qt 6.4.2 baseline re-run after the CORE-025 implementation",
+    "independent second review of the upload executor change by a different model, because it touches the credential surface, under ROOT-SECURITY-001",
+    "Network and FUSE qualification as a separate Layer 5 concern",
+    "per-platform dispositions for CORE-PLATFORM-001 0.6.0",
+    "conformance before activation",
+    "release requires Mike"
+  ]
+}

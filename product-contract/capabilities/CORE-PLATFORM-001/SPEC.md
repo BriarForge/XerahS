@@ -1,8 +1,8 @@
 # CORE-PLATFORM-001 Native platform capability foundation
 
-Version: 0.5.1
+Version: 0.6.0
 
-Status: Approved by the human product owner on 2026-08-31 and 2026-09-28 (0.4.0 Linux editions; 0.5.0 mobile targets); conformance required before activation
+Status: Approved by the human product owner on 2026-08-31 and 2026-09-28 (0.4.0 Linux editions; 0.5.0 mobile targets); the CORE-025 watch-publication and retention subsection was approved by the maintainer on 2026-11-14 and is conformance-required before activation
 
 ## Shared requirements
 
@@ -19,6 +19,7 @@ Status: Approved by the human product owner on 2026-08-31 and 2026-09-28 (0.4.0 
 - **CORE-003:** Native adapters MAY differ in presentation and OS mechanism but
   MUST return shared semantic results and stable error categories. Degraded,
   unavailable, and substitute behavior requires an accepted disposition.
+
 - **CORE-004:** Long-running operations MUST expose progress where knowable,
   cooperative cancellation, deterministic terminal state, redacted diagnostics,
   and recoverable completed outputs.
@@ -182,9 +183,146 @@ Status: Approved by the human product owner on 2026-08-31 and 2026-09-28 (0.4.0 
   conflict with this contract. A candidate edition becomes release-blocking only
   when the product owner promotes it to `supported`.
 
+## CORE-025 watch publication and retention
+
+This subsection decides the outcome of a watch-folder publication, the evidence a
+new process inherits after an unclean stop, and the retention rules for the
+watch checkpoint store. It refines CORE-024 and CORE-025 and creates no new
+requirement ID.
+
+The normative evidence for this subsection is `test-vectors.json`, which
+exercises two operations: `watch-publication-disposition` decides the
+disposition of one publication, and `watch-retain` decides which checkpoint
+entries survive a checkpoint write.
+
+### P1 Publication disposition
+
+A watched file's publication is acknowledged when the upload succeeded, or when
+at least one request was started, no prior-process sending record survived a
+restart, and every request attempt for that publication received an HTTP
+response of any status. An acknowledged failure releases the file. If any
+attempt ended without an HTTP response (timeout, network error, abort, or lost
+reply), the publication is unconfirmed unless the upload ultimately succeeded,
+whatever the later attempts returned. An implementation that cannot show that
+every attempt was answered MUST treat the publication as unconfirmed. A sending
+record left over from an earlier process is always unconfirmed, even when the
+new process's runtime fields are empty.
+
+The disposition of one publication attempt is decided by the first matching
+rule, in this order:
+
+1. A publication left over as `sending` from an earlier process is
+   `unconfirmed`.
+2. A publication that succeeded is `processed`. It MUST be checkpointed as
+   complete and MUST NOT be uploaded again under the same key.
+3. A publication for which at least one request was started and every request
+   attempt received an HTTP response, but which did not succeed, is `released`.
+   It MUST NOT be retried again in the current session and MUST remain
+   discoverable, so that a later session can find the work again.
+4. A publication for which at least one request was started and any attempt
+   ended without an HTTP response is `unconfirmed`. It MAY or MAY NOT have
+   reached the remote, and it MUST NOT be uploaded again automatically under
+   the same key.
+5. A publication for which no request was started is `released`. A publication
+   that was never sent includes validation failure, a missing destination,
+   cancellation before transfer, and a send intent that was not saved. It MUST
+   remain discoverable.
+
+An implementation MUST NOT derive the acknowledged condition from the last
+attempt's status alone. A later answered attempt does not repair an earlier
+unanswered attempt.
+
+### P2 Durable send intent
+
+The intent to publish a watched file MUST be durably saved before the request
+is dispatched, through the checkpoint work lane that already owns watch-folder
+checkpoint writes. If the intent cannot be saved, the implementation MUST NOT
+issue any HTTP request, MUST stop watching, and MUST report the failure as
+`watch-store-write-failed`.
+
+At startup, every leftover publication still recorded as `sending` is
+`unconfirmed`, whatever the new process's runtime fields contain.
+
+### P3 Retry eligibility and notices
+
+Retry eligibility MUST be resolved by the explicit existing Upload file
+command, which produces a new file fingerprint and therefore a new key. This
+subsection adds no new user interface.
+
+During a session, an `unconfirmed` publication MUST be named in the current
+notices, together with the file it names. At startup, the implementation MUST
+show one `watch-publication-unconfirmed` notice that names up to five base
+names and then reports how many further names remain. The notice MUST NOT
+disclose directory paths, remote URLs, or any other location detail.
+
+### P4 Local copy and move are unchanged
+
+Local copy and move behavior is unchanged by this subsection. A crash before
+the checkpoint is written MAY repeat the copy. Generated output names MUST NOT
+overwrite an existing file, and a move MUST remove the source only after the
+copy has committed.
+
+### P5 Checkpoint retention
+
+Each checkpoint write MUST prune a `processed` or `unconfirmed` entry when the
+entry's parent directory exists AND the file's current fingerprint differs from
+the fingerprint recorded in the key. The entry was then deleted, moved, or
+changed.
+
+A `processed` or `unconfirmed` entry whose parent directory does not exist MUST
+be kept, because the parent may be an unmounted or removed root rather than a
+deleted file.
+
+An entry recorded as `sending` MUST NEVER be pruned.
+
+A file that is deleted and later reappears with the same size and modification
+time is treated as a new file and is accepted again.
+
+### P6 Watch store format
+
+The watch checkpoint store is version 2 and holds
+`{"items": [keys], "publications": [{"key": ..., "state": "sending" | "unconfirmed", "at": ...}]}`.
+
+A version 1 store MUST be readable, and MUST be upgraded on the next write.
+An implementation that only understands version 1 MUST refuse a version 2 store
+with `watch-store-invalid-version-or-data` and MUST fail closed without
+republishing any watched file.
+
+The version of the watch rules store is unchanged.
+
+This is a pre-release format. It carries no live-migration user interface.
+
+### P7 Implementation qualification
+
+CORE-025 is implemented on Linux only after a real process `SIGKILL` proof on
+`tmpfs` and the approved Qt 6.4.2 baseline. Network and FUSE qualification is
+a separate Layer 5 concern, and a periodic scan fallback exists.
+
 ## Baseline traceability and disposition
 
 The capability parity ledger supplies the exhaustive discovery IDs linked to
 this package. Existing filename, post-capture, region-capture, and ImageEditor
 packages remain more-specific authorities. No source class or current platform
 implementation becomes normative merely through this package.
+
+## Changelog
+
+- **0.6.0, 2026-11-14:** Maintainer Aoife approved the CORE-025 watch
+  publication and retention subsection. A publication is acknowledged when it
+  succeeded, or when at least one request was started, no prior-process sending
+  record survived a restart, and every attempt received an HTTP response of any
+  status. An acknowledged failure releases the file; an attempt that ended
+  without an HTTP response is unconfirmed unless the upload ultimately
+  succeeded; an implementation that cannot prove every attempt was answered
+  MUST treat the publication as unconfirmed. The send intent MUST be durably
+  saved before dispatch, every startup leftover `sending` record is
+  unconfirmed, retry eligibility resolves through the existing Upload file
+  command, local copy and move are unchanged, checkpoint retention prunes by
+  parent existence and fingerprint change, and the watch checkpoint store
+  becomes version 2 with a version 1 read and next-write upgrade. Contract
+  0.4.0 records the decision and the vectors. Linux implements it first, and
+  only after a real process `SIGKILL` proof on `tmpfs` and the approved Qt
+  6.4.2 baseline; macOS and Windows remain unimplemented and MUST follow this
+  policy when built. No platform waiver, activation, census closure or release
+  approval is granted. See
+  [decision CORE-025](../../decisions/CORE-025-watch-publication-retention.md).
