@@ -142,6 +142,7 @@ private:
   void rememberAnnotationTool();
   void persistDrawingDefaults(quint64 expectedRevision);
   void refresh();
+  void updateStatusMessage();
   void scheduleRecovery();
   void discardRecovery();
   void updatePointerStatus();

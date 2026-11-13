@@ -5,8 +5,11 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QProcess>
 #include <QTemporaryDir>
 #include <QTest>
+#include "storage/PrivateJsonFile.h"
 
 #include <sys/stat.h>
 
@@ -27,6 +30,12 @@ AnnotationDocument document(int rectangles = 1) {
   return d;
 }
 QByteArray bytes(const QString &path) { QFile f(path); return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray(); }
+qint64 exitedOwner() {
+  QProcess child; child.start(QStringLiteral("/bin/true"));
+  if (!child.waitForStarted()) return 0;
+  const auto pid = child.processId();
+  return child.waitForFinished() ? pid : 0;
+}
 }  // namespace
 
 class EditorRecoveryTest final : public QObject {
@@ -84,13 +93,88 @@ private slots:
   }
   void countIsBoundedOldestPruned() {
     QTemporaryDir dir; EditorRecoveryStore store(dir.filePath("r")); QStringList ids;
+    const auto owner = exitedOwner(); QVERIFY(owner > 0);
     for (int i = 0; i < EditorRecoveryStore::kMaxRecords + 3; ++i) {
-      ids << EditorRecoveryStore::newId(); QCOMPARE(store.write(ids.last(), {}, document(), 1), QString());
+      ids << EditorRecoveryStore::newId(); QCOMPARE(store.write(ids.last(), {}, document(), owner), QString());
       QFile::setPermissions(store.directory() + "/" + ids.last() + ".json", QFile::ReadOwner | QFile::WriteOwner);
       QTest::qWait(5);
     }
     const auto left = QDir(store.directory()).entryList({"*.json"}, QDir::Files);
     QVERIFY(left.size() <= EditorRecoveryStore::kMaxRecords); QVERIFY(left.contains(ids.last() + ".json"));
+  }
+  void countPruningPreservesProtectedRecords_data() {
+    QTest::addColumn<QString>("kind");
+    QTest::newRow("newer-version") << QString("newer");
+    QTest::newRow("live-owner") << QString("live");
+    QTest::newRow("foreign-format") << QString("foreign");
+    QTest::newRow("corrupt-record") << QString("corrupt");
+  }
+  void countPruningPreservesProtectedRecords() {
+    QFETCH(QString, kind);
+    QTemporaryDir dir; EditorRecoveryStore store(dir.filePath("r"));
+    const auto owner = exitedOwner(); QVERIFY(owner > 0);
+    const auto id = EditorRecoveryStore::newId(), path = store.directory() + '/' + id + ".json";
+    QCOMPARE(store.write(id, {}, document(), kind == "live" ? QCoreApplication::applicationPid() : owner), QString());
+    auto payload = QJsonDocument::fromJson(bytes(path)).object();
+    if (kind == "newer") payload.insert("version", 2);
+    if (kind == "foreign") payload.insert("format", "another.application");
+    { QFile f(path); QVERIFY(f.open(QIODevice::WriteOnly));
+      const auto content = kind == "corrupt" ? QByteArray("damaged recovery record") : QJsonDocument(payload).toJson();
+      QCOMPARE(f.write(content), content.size());
+      QVERIFY(f.flush());
+      QVERIFY(f.setFileTime(QDateTime(QDate(2000, 1, 1), QTime(), Qt::UTC), QFileDevice::FileModificationTime)); }
+    const auto protectedBytes = bytes(path);
+    for (int i = 0; i < EditorRecoveryStore::kMaxRecords; ++i)
+      QCOMPARE(store.write(EditorRecoveryStore::newId(), {}, document(), owner), QString());
+    QCOMPARE(bytes(path), protectedBytes);
+    QVERIFY(QDir(store.directory()).entryList({"*.json"}, QDir::Files).size() <= EditorRecoveryStore::kMaxRecords);
+  }
+  void fullLiveCollectionRefusesNewRecoveryWithoutEvictingWork() {
+    QTemporaryDir dir; EditorRecoveryStore store(dir.filePath("r")); QMap<QString, QByteArray> original;
+    for (int i = 0; i < EditorRecoveryStore::kMaxRecords; ++i) {
+      const auto id = EditorRecoveryStore::newId();
+      QCOMPARE(store.write(id, {}, document(), QCoreApplication::applicationPid()), QString());
+      original.insert(id, bytes(store.directory() + '/' + id + ".json"));
+    }
+    const auto extra = EditorRecoveryStore::newId();
+    QVERIFY(!store.write(extra, {}, document(), QCoreApplication::applicationPid()).isEmpty());
+    QVERIFY(!QFile::exists(store.directory() + '/' + extra + ".json"));
+    for (auto it = original.cbegin(); it != original.cend(); ++it)
+      QCOMPARE(bytes(store.directory() + '/' + it.key() + ".json"), it.value());
+    QCOMPARE(store.write(original.firstKey(), {}, document(3), QCoreApplication::applicationPid()), QString());
+    QCOMPARE(store.list().records.size(), size_t(EditorRecoveryStore::kMaxRecords));
+  }
+  void failedPublicationDoesNotPruneExistingRecovery() {
+    QTemporaryDir dir; EditorRecoveryStore store(dir.filePath("r")); QMap<QString, QByteArray> original;
+    const auto owner = exitedOwner(); QVERIFY(owner > 0);
+    for (int i = 0; i < EditorRecoveryStore::kMaxRecords; ++i) {
+      const auto id = EditorRecoveryStore::newId(); QCOMPARE(store.write(id, {}, document(), owner), QString());
+      original.insert(id, bytes(store.directory() + '/' + id + ".json"));
+    }
+    const auto extra = EditorRecoveryStore::newId();
+    xerahs::storage::StoreOptions options; options.format = "xerahs.editor-recovery";
+    xerahs::storage::PrivateJsonFile target(store.directory() + '/' + extra + ".json", options);
+    xerahs::storage::StoreLock held; QCOMPARE(target.lock(held), xerahs::storage::StoreStatus::Ok);
+    QVERIFY(!store.write(extra, {}, document(), owner).isEmpty());
+    for (auto it = original.cbegin(); it != original.cend(); ++it)
+      QCOMPARE(bytes(store.directory() + '/' + it.key() + ".json"), it.value());
+  }
+  void removalPreservesNewerOrChangedRecords_data() {
+    QTest::addColumn<bool>("newer");
+    QTest::newRow("newer-version") << true;
+    QTest::newRow("changed-supported") << false;
+  }
+  void removalPreservesNewerOrChangedRecords() {
+    QFETCH(bool, newer);
+    QTemporaryDir dir; EditorRecoveryStore store(dir.filePath("r"));
+    const auto id = EditorRecoveryStore::newId(), path = store.directory() + '/' + id + ".json";
+    QCOMPARE(store.write(id, {}, document(), QCoreApplication::applicationPid()), QString());
+    auto payload = QJsonDocument::fromJson(bytes(path)).object();
+    if (newer) payload.insert("version", 2); else payload.insert("sourcePath", "changed.png");
+    { QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); const auto changed = QJsonDocument(payload).toJson(); QCOMPARE(file.write(changed), changed.size()); }
+    const auto changed = bytes(path);
+    QVERIFY(!store.remove(id).isEmpty());
+    QCOMPARE(bytes(path), changed);
   }
   void ageAndSourceDisclosure() {
     QCOMPARE(describeRecoveryAge(5), QString("less than a minute ago")); QCOMPARE(describeRecoveryAge(60), QString("1 minute ago"));

@@ -792,6 +792,12 @@ void EditorWindow::refresh() {
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   if (!owner) return;
   updatePointerStatus();
+  updateStatusMessage();
+  if (!owner) return;
+  m_canvas->viewport()->update();
+}
+
+void EditorWindow::updateStatusMessage() {
   QString status = EditorWindow::tr("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
                                .arg(m_image.width()).arg(m_image.height())
                                .arg(m_session->document().annotations.size()).arg(m_session->selection().size())
@@ -808,13 +814,17 @@ void EditorWindow::refresh() {
   if (!m_wallpaperMessage.isEmpty()) status += " · " + m_wallpaperMessage;
   if (!m_annotationMessage.isEmpty()) status += " · " + m_annotationMessage;
   if (!m_importMessage.isEmpty()) status += " · " + m_importMessage;
+  if (m_recoveryDiagnostic == QLatin1String("recovery-storage-full"))
+    status += tr(" · Recovery storage is full. Existing copies were kept. Save this image explicitly.");
+  else if (m_recoveryDiagnostic == QLatin1String("recovery-retention-failed"))
+    status += tr(" · Recovery snapshot saved; cleanup of older copies failed.");
+  else if (!m_recoveryDiagnostic.isEmpty())
+    status += tr(" · Recovery snapshot could not be saved. Save this image explicitly.");
   auto *bar = statusBar(); const bool notify = bar->currentMessage() != status;
   // QStatusBar emits during its internal hide/show traversal. Complete that
   // traversal before notifying observers that can destroy this window/bar.
   { const QSignalBlocker blocker(bar); bar->showMessage(status); }
   if (notify) emit bar->messageChanged(status);
-  if (!owner) return;
-  m_canvas->viewport()->update();
 }
 
 void EditorWindow::updatePointerStatus() {
@@ -1709,8 +1719,10 @@ QString EditorWindow::writeRecoveryNow() {
   const QString source = m_path.isEmpty() ? m_recoverySource : absoluteImagePath(m_path);
   m_recoveryDiagnostic = EditorRecoveryStore(EditorRecoveryStore::defaultDirectory())
       .write(m_recoveryId, source, m_session->document(), QCoreApplication::applicationPid());
-  if (m_recoveryDiagnostic.isEmpty()) m_recoveredState = m_session->stateId();
-  return m_recoveryDiagnostic;
+  if (m_recoveryDiagnostic.isEmpty() || m_recoveryDiagnostic == QLatin1String("recovery-retention-failed")) m_recoveredState = m_session->stateId();
+  const auto diagnostic = m_recoveryDiagnostic;
+  updateStatusMessage();
+  return diagnostic;
 }
 
 int EditorWindow::offerRecovery(QWidget *parent) {
@@ -1736,8 +1748,9 @@ int EditorWindow::offerRecovery(QWidget *parent) {
     window->m_recoverySource = record.sourcePath;
     window->m_importMessage = recoveryDisclosure(record, QDateTime::currentDateTimeUtc());
     window->show(); window->refresh();
-    window->writeRecoveryNow();  // the restored editor owns its own recovery copy before the old one goes
-    store.remove(record.id); ++restored;
+    const auto saved = window->writeRecoveryNow();
+    if (saved.isEmpty()) store.remove(record.id);
+    ++restored;
   }
   return restored;
 }

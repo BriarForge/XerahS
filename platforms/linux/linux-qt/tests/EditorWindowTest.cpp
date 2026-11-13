@@ -335,6 +335,40 @@ private slots:
     QTimer drop; connect(&drop, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; for (auto *b : box->buttons()) if (b->text() == "Discard") { b->click(); return; } });
     drop.start(5); QCOMPARE(EditorWindow::offerRecovery(), 0); drop.stop(); QVERIFY(store.list().records.empty());
   }
+  void restorePreservesOriginalWhenRecoveryStorageIsFull() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    const auto previousState = qgetenv("XDG_STATE_HOME");
+    const auto restoreState = qScopeGuard([previousState] { qputenv("XDG_STATE_HOME", previousState); });
+    qputenv("XDG_STATE_HOME", dir.path().toUtf8());
+    const auto source = prepareCapturedSource(fixture()); QVERIFY(source.document);
+    EditorRecoveryStore store(EditorRecoveryStore::defaultDirectory()); QMap<QString, QByteArray> original;
+    for (int i = 0; i < EditorRecoveryStore::kMaxRecords; ++i) {
+      const auto id = EditorRecoveryStore::newId();
+      QCOMPARE(store.write(id, {}, *source.document, QCoreApplication::applicationPid()), QString());
+      const auto path = store.directory() + '/' + id + ".json"; original.insert(path, storedBytes(path));
+    }
+    QSet<EditorWindow *> previousEditors;
+    for (auto *top : QApplication::topLevelWidgets()) if (auto *editor = qobject_cast<EditorWindow *>(top)) previousEditors.insert(editor);
+    int prompts = 0; QTimer answer;
+    connect(&answer, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+      if (!box || box->objectName() != "editorRecoveryNotice") return;
+      const bool restore = prompts++ == 0;
+      for (auto *button : box->buttons()) if (button->text() == (restore ? "Restore" : "Decide later")) { button->click(); return; }
+    });
+    answer.start(1); QCOMPARE(EditorWindow::offerRecovery(), 1); answer.stop();
+    QCOMPARE(prompts, EditorRecoveryStore::kMaxRecords);
+    EditorWindow *restored = nullptr;
+    for (auto *top : QApplication::topLevelWidgets()) if (auto *editor = qobject_cast<EditorWindow *>(top); editor && !previousEditors.contains(editor)) restored = editor;
+    QVERIFY(restored);
+    const QScopedPointer<EditorWindow> cleanup(restored);
+    for (auto it = original.cbegin(); it != original.cend(); ++it) QCOMPARE(storedBytes(it.key()), it.value());
+    QVERIFY(restored->windowTitle().contains(" •"));
+    QVERIFY(restored->findChild<QAction *>("saveImage")->isEnabled());
+    QVERIFY(restored->statusBar()->currentMessage().contains("Recovery storage is full"));
+    QVERIFY(restored->statusBar()->currentMessage().contains("Save"));
+  }
+
   void applicationQuitUsesDirtyEditorClosePolicyAndBlocksModalWork() {
     QTemporaryDir folder; QVERIFY(folder.isValid());
     QVERIFY(initializeNativeEditorPreferences(folder.filePath("preferences.json")).isEmpty());

@@ -9,12 +9,18 @@
 #include <QUuid>
 
 #include <algorithm>
+#include <cerrno>
+#include <cmath>
+#include <limits>
+#include <optional>
+#include <signal.h>
 
 namespace xerahs::editor {
 namespace {
 using storage::PrivateJsonFile;
 using storage::StoreOptions;
 using storage::StoreStatus;
+using storage::StoreLock;
 
 StoreOptions options() {
   StoreOptions o;
@@ -22,6 +28,45 @@ StoreOptions options() {
   o.maxVersion = 1;
   o.maxBytes = EditorRecoveryStore::kMaxFileBytes;
   return o;
+}
+
+struct PruneRecord {
+  QString id, path;
+  QByteArray snapshot;
+  StoreLock lock;
+};
+
+bool exitedOwner(const QJsonObject &record) {
+  const auto owner = record.value(QStringLiteral("ownerPid"));
+  if (!owner.isDouble()) return false;
+  const auto pid = owner.toDouble();
+  if (!std::isfinite(pid) || pid < 1 || pid > std::numeric_limits<pid_t>::max() || std::floor(pid) != pid) return false;
+  return ::kill(static_cast<pid_t>(pid), 0) == -1 && errno == ESRCH;
+}
+
+// Hold the ordinary per-file writer locks until publication and pruning finish.
+// Unknown or live records consume capacity but never become cleanup candidates.
+std::optional<std::vector<PruneRecord>> planPruning(const QString &directory, const QString &keepId) {
+  const auto files = QDir(directory).entryInfoList({QStringLiteral("*.json")}, QDir::Files | QDir::NoSymLinks, QDir::Time);
+  QList<QFileInfo> others;
+  for (const auto &info : files)
+    if (EditorRecoveryStore::validId(info.completeBaseName()) && info.completeBaseName() != keepId) others.append(info);
+  const auto needed = std::max<qsizetype>(0, others.size() - (EditorRecoveryStore::kMaxRecords - 1));
+  std::vector<PruneRecord> plan;
+  for (auto it = others.crbegin(); qsizetype(plan.size()) < needed && it != others.crend(); ++it) {
+    PruneRecord candidate; candidate.id = it->completeBaseName(); candidate.path = it->absoluteFilePath();
+    const PrivateJsonFile file(candidate.path, options());
+    if (file.lock(candidate.lock) != StoreStatus::Ok) continue;
+    const auto read = file.read();
+    if (read.status != StoreStatus::Ok || !exitedOwner(read.document)) continue;
+    if (!QDateTime::fromString(read.document.value(QStringLiteral("savedAt")).toString(), Qt::ISODateWithMs).isValid() ||
+        !read.document.value(QStringLiteral("document")).isObject() ||
+        !parseDocument(read.document.value(QStringLiteral("document")).toObject()).document) continue;
+    candidate.snapshot = read.snapshot;
+    plan.push_back(std::move(candidate));
+  }
+  if (qsizetype(plan.size()) != needed) return std::nullopt;
+  return plan;
 }
 }  // namespace
 
@@ -53,7 +98,11 @@ QString EditorRecoveryStore::write(const QString &id, const QString &sourcePath,
   payload.insert(QStringLiteral("ownerPid"), double(ownerPid));
   payload.insert(QStringLiteral("document"), serializeDocument(document));
   const PrivateJsonFile file(pathFor(id), options());
-  prune(id);
+  StoreLock collectionLock, targetLock;
+  if (PrivateJsonFile(m_directory + QStringLiteral("/.collection"), options()).lock(collectionLock) != StoreStatus::Ok ||
+      file.lock(targetLock) != StoreStatus::Ok) return QStringLiteral("recovery-write-failed");
+  auto pruning = planPruning(m_directory, id);
+  if (!pruning) return QStringLiteral("recovery-storage-full");
   for (int attempt = 0; attempt < 2; ++attempt) {
     QByteArray expected = m_snapshots.value(id);
     if (attempt == 1) {
@@ -62,8 +111,18 @@ QString EditorRecoveryStore::write(const QString &id, const QString &sourcePath,
       expected = current.snapshot;
     }
     QByteArray written;
-    const auto status = file.write(payload, 1, expected, &written);
-    if (status == StoreStatus::Ok) { m_snapshots.insert(id, written); return {}; }
+    const auto status = file.write(payload, 1, expected, &written, &targetLock);
+    if (status == StoreStatus::Ok) {
+      m_snapshots.insert(id, written);
+      for (const auto &candidate : *pruning) {
+        const auto current = PrivateJsonFile(candidate.path, options()).read();
+        if (current.status == StoreStatus::Missing) { m_snapshots.remove(candidate.id); continue; }
+        if (current.status != StoreStatus::Ok || current.snapshot != candidate.snapshot || !QFile::remove(candidate.path))
+          return QStringLiteral("recovery-retention-failed");
+        m_snapshots.remove(candidate.id);
+      }
+      return {};
+    }
     if (status != StoreStatus::Changed) return QStringLiteral("recovery-write-failed");
   }
   return QStringLiteral("recovery-write-failed");
@@ -71,22 +130,17 @@ QString EditorRecoveryStore::write(const QString &id, const QString &sourcePath,
 
 QString EditorRecoveryStore::remove(const QString &id) {
   if (!validId(id)) return QStringLiteral("recovery-id-invalid");
-  m_snapshots.remove(id);
   const auto path = pathFor(id);
-  const QFileInfo info(path);
-  if (!info.isFile() && !info.isSymLink()) return {};
-  return QFile::remove(path) ? QString() : QStringLiteral("recovery-remove-failed");
-}
-
-void EditorRecoveryStore::prune(const QString &keepId) {
-  const QDir dir(m_directory);
-  const auto files = dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files | QDir::NoSymLinks, QDir::Time);  // newest first
-  QList<QFileInfo> others;
-  for (const auto &info : files) if (info.completeBaseName() != keepId) others.append(info);
-  for (int i = kMaxRecords - 1; i < others.size(); ++i) {
-    QFile::remove(others.at(i).absoluteFilePath());
-    m_snapshots.remove(others.at(i).completeBaseName());
-  }
+  const PrivateJsonFile file(path, options());
+  if (file.read().status == StoreStatus::Missing) { m_snapshots.remove(id); return {}; }
+  StoreLock lock;
+  if (file.lock(lock) != StoreStatus::Ok) return QStringLiteral("recovery-remove-failed");
+  const auto current = file.read();
+  if (current.status == StoreStatus::Missing) { m_snapshots.remove(id); return {}; }
+  if (current.status != StoreStatus::Ok || (m_snapshots.contains(id) && current.snapshot != m_snapshots.value(id)) || !QFile::remove(path))
+    return QStringLiteral("recovery-remove-failed");
+  m_snapshots.remove(id);
+  return {};
 }
 
 void EditorRecoveryStore::trimSetAside() {

@@ -728,6 +728,19 @@
         "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
         "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
       ]
+    },
+    {
+      "date": "2026-11-13",
+      "requirements": [
+        "ES-018",
+        "CORE-027"
+      ],
+      "outcome": "Candidate recovery cleanup preserves protected records and refuses new recovery at protected capacity. Cleanup follows successful publication, removal retains newer/changed data, and Restore keeps its original on replacement-write failure. Existing eight-record cleanup applies only to supported snapshots with exited owners. Native UI reports explicit-save guidance. Store and native regressions pass; maintainer review, configured retention decisions and worker-owned recovery I/O remain pending.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
+        "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+      ]
     }
   ],
   "audit_method": "All 16 manifest capabilities / 345 IDs reviewed against current production and meaningful named automated test bodies. 325 desktop rows classified; 20 mobile-only requirements explicitly outside Linux scope.",

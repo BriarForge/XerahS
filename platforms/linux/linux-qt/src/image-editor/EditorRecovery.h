@@ -35,8 +35,9 @@ struct RecoveryListing {
 
 class EditorRecoveryStore {
 public:
-  // Bounds: oldest records are pruned on write beyond kMaxRecords; a record
-  // above kMaxFileBytes is not written; at most kMaxSetAside corrupt files stay.
+  // Bounds: only supported records with exited owners may be count-pruned.
+  // A protected full collection refuses a new record; existing records remain
+  // writable. A record above kMaxFileBytes is not written.
   static constexpr int kMaxRecords = 8;
   static constexpr int kMaxSetAside = 4;
   static constexpr qint64 kMaxFileBytes = 192LL * 1024 * 1024;
@@ -55,7 +56,6 @@ public:
 
 private:
   QString pathFor(const QString &id) const;
-  void prune(const QString &keepId);
   void trimSetAside();
   QString m_directory;
   std::function<QDateTime()> m_clock;

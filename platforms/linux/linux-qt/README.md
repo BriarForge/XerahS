@@ -320,6 +320,14 @@ such files until explicit recovery/removal. Recovery paths never authorize
 automatic cleanup or retry; pending/retained records cannot be forgotten.
 `CaptureDeleteTest` covers real filesystem/HTTP, restart and native history flows.
 
+**Editor recovery:** Recovery snapshots stay separate from explicitly saved
+images. Count cleanup preserves newer-version, foreign, corrupt and live-owner
+records and runs after a replacement is saved. If protected records fill the
+collection, a new snapshot is refused with explicit-save guidance. Restore
+keeps its original recovery file when a replacement snapshot cannot be stored.
+Candidate behavior is covered by real-file and native editor tests; maintainer
+review and the broader configured retention policy remain pending.
+
 **Watch-folder discovery:** Recursive directory enumeration, filtering and file
 fingerprints run on an owned worker. Repeated timer and filesystem notifications
 coalesce into a follow-up scan. Stop stays reachable during discovery; an older
