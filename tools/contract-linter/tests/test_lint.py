@@ -68,7 +68,7 @@ class ContractLintTests(unittest.TestCase):
             LINT.lint_approval_records(repo, findings)
             self.assertTrue(
                 any(
-                    "approved capability lacks human product-owner approval record: SAMPLE-CAPABILITY-001"
+                    "approved capability lacks product-owner approval record: SAMPLE-CAPABILITY-001"
                     in item
                     for item in findings.items
                 )
@@ -100,7 +100,43 @@ class ContractLintTests(unittest.TestCase):
             findings = LINT.Findings()
             LINT.lint_approval_records(repo, findings)
             self.assertEqual(1, len(findings.items))
-            self.assertIn("lacks human product-owner approval record: SAMPLE-CAPABILITY-001", findings.items[0])
+            self.assertIn("lacks product-owner approval record: SAMPLE-CAPABILITY-001", findings.items[0])
+
+    def approval_findings(self, role: str | None, version: str = "1.3.0") -> list[str]:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            contract = repo / "product-contract"
+            (contract / "reviews").mkdir(parents=True)
+            (contract / "manifest.yaml").write_text(
+                "contract_version: 1.3.0\nstatus: draft\ncapabilities:\n"
+                "  - id: SAMPLE-CAPABILITY-001\n"
+                "    path: capabilities/SAMPLE-CAPABILITY-001\n"
+                "    version: 1.0.0\n    status: approved\n"
+                "    requirements: [SAM-001]\n", encoding="utf-8")
+            authority = {"identity": "fixture owner"}
+            if role is not None:
+                authority["role"] = role
+            (contract / "reviews/APPROVAL-2026-01-01-CURRENT.json").write_text(json.dumps({
+                "schema_version": 1, "decision": "approved", "authority": authority,
+                "scope": {"contract_version": version, "packages": ["SAMPLE-CAPABILITY-001"]},
+                "effects": {"normative_contract": True}}), encoding="utf-8")
+            findings = LINT.Findings()
+            LINT.lint_approval_records(repo, findings)
+            return findings.items
+
+    def test_current_maintainer_approval_covers_package(self) -> None:
+        self.assertEqual([], self.approval_findings("maintainer"))
+
+    def test_agent_is_not_an_approval_authority(self) -> None:
+        self.assertTrue(any("approval authority must be" in f for f in self.approval_findings("agent")))
+
+    def test_missing_approval_role_is_rejected(self) -> None:
+        self.assertTrue(any("approval authority must be" in f for f in self.approval_findings(None)))
+
+    def test_earlier_maintainer_approval_gives_no_current_coverage(self) -> None:
+        findings = self.approval_findings("maintainer", "1.2.3")
+        self.assertEqual(1, len(findings))
+        self.assertIn("lacks product-owner approval record: SAMPLE-CAPABILITY-001", findings[0])
 
     def test_vector_file_structure_is_validated(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

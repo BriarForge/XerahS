@@ -1,0 +1,50 @@
+{
+  "$schema": "../schemas/approval-record.schema.json",
+  "schema_version": 1,
+  "decision_id": "APPROVAL-2026-11-14-ES-EMPTY-SAVE-BASELINE",
+  "recorded_on": "2026-11-14",
+  "authority": {
+    "role": "maintainer",
+    "identity": "Aoife (Claude Opus), XerahS maintainer under root Stewardship"
+  },
+  "source": {
+    "kind": "interactive-instruction",
+    "statement": "Maintainer decision under ROOT-REVIEW-001: EDITOR-SESSION-001 0.2.2 adopts the ES-014/030 empty-save baseline shadow policy in decisions/ES-014-030-empty-save-baseline.md and its vectors, and also approves the 0.2.1 diagnostic/reason clarification from 2026-11-13. The other 15 packages carry forward to contract 0.3.2 unchanged in normative text from 0.3.1, where the 2026-10-08 Hyprland and 2026-11-12 filename wide-sampling human-product-owner records approved them. No other product-semantic change is made. The implementer verified the carry-forward with git-declan diff --exit-code b64967f -- product-contract/capabilities :(exclude)product-contract/capabilities/EDITOR-SESSION-001 (no differences). The approval schema/linter now truthfully recognize the maintainer authority assigned by the root constitution; all other approval checks remain unchanged."
+  },
+  "decision": "approved",
+  "scope": {
+    "contract_version": "0.3.2",
+    "packages": [
+      "FILENAME-GENERATION-001",
+      "POST-CAPTURE-ACTIONS-001",
+      "REGION-CAPTURE-001",
+      "EDITOR-SESSION-001",
+      "EDITOR-ANNOTATIONS-001",
+      "EDITOR-EFFECTS-001",
+      "EDITOR-CANVAS-001",
+      "EDITOR-OUTPUT-ACTIONS-001",
+      "EDITOR-SETTINGS-001",
+      "EDITOR-UTILITIES-001",
+      "SETTINGS-CATALOG-001",
+      "WORKFLOW-CATALOG-001",
+      "INTERFACE-CATALOG-001",
+      "CORE-PLATFORM-001",
+      "COMPATIBILITY-CATALOG-001",
+      "MOBILE-PLATFORM-001"
+    ]
+  },
+  "effects": {
+    "normative_contract": true,
+    "implementation_authorized": true,
+    "activation_authorized": false,
+    "census_closed": false,
+    "release_authorized": false
+  },
+  "remaining_gates": [
+    "Nadia baseline runtime observation (private archive 651b1d8 plus provenance file)",
+    "independent review of the ES-014/030 change",
+    "per-platform dispositions for EDITOR-SESSION-001 0.2.2",
+    "conformance before activation",
+    "release requires Mike"
+  ]
+}

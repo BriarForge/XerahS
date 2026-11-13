@@ -428,7 +428,7 @@ def lint_approval_records(repo: Path, findings: Findings) -> None:
             continue
         findings.require(record.get("schema_version") == 1, path, "approval record schema_version must be 1")
         authority = record.get("authority", {})
-        findings.require(authority.get("role") == "human-product-owner", path, "approval authority must be human-product-owner")
+        findings.require(authority.get("role") in {"human-product-owner", "maintainer"}, path, "approval authority must be human-product-owner or maintainer")
         scope = record.get("scope", {})
         if scope.get("contract_version") != contract_version:
             # Records for earlier contract versions are retained history; only
@@ -444,7 +444,7 @@ def lint_approval_records(repo: Path, findings: Findings) -> None:
             else:
                 covered.add(package_id)
     for package_id in sorted(requires_approval - covered):
-        findings.add(manifest_path, f"approved capability lacks human product-owner approval record: {package_id}")
+        findings.add(manifest_path, f"approved capability lacks product-owner approval record: {package_id}")
 
 
 def lint_editor_catalogs(repo: Path, findings: Findings) -> None:

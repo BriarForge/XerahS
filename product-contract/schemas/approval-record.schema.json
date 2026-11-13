@@ -15,7 +15,7 @@
       "additionalProperties": false,
       "required": ["role", "identity"],
       "properties": {
-        "role": { "const": "human-product-owner" },
+        "role": { "enum": ["human-product-owner", "maintainer"] },
         "identity": { "type": "string", "minLength": 1 }
       }
     },

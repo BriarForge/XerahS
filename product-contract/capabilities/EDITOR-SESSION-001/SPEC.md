@@ -1,8 +1,8 @@
 # EDITOR-SESSION-001 Native editor session
 
-Version: 0.2.1
+Version: 0.2.2
 
-Status: Approved by the human product owner on 2026-08-31 (0.1.0) and 2026-09-28 (0.2.0 implementation-readiness clarifications) and by the maintainer on 2026-11-13 (0.2.1 diagnostic/reason clarification); conformance required before activation
+Status: Approved by the human product owner on 2026-08-31 (0.1.0) and 2026-09-28 (0.2.0 implementation-readiness clarifications) and by the maintainer on 2026-11-13 (0.2.1 diagnostic/reason clarification) and on 2026-11-14 (0.2.2 empty-save baseline shadow); conformance required before activation
 
 ## User intent
 
@@ -74,7 +74,9 @@ The complete approved editor surface is expanded by `EDITOR-ANNOTATIONS-001`,
   timestamps, ordered annotations, and embedded annotation images.
 - **ES-014:** Saving a document with no annotations MUST remove an existing
   default sidecar only after explicit sidecar-save intent and MUST return no
-  sidecar path. It MUST NOT delete the raster image.
+  sidecar path, unless a baseline sidecar (ES-030) exists for the raster. In
+  that case it MUST write a zero-annotation default sidecar, return its path,
+  and leave the baseline sidecar unchanged. It MUST NOT delete the raster image.
 - **ES-015:** Loading a newer unsupported major document version MUST fail
   without rewriting it. Unknown additive properties and unknown annotation
   types in a compatible version MUST be retained for round-trip and MAY be
@@ -156,7 +158,7 @@ The complete approved editor surface is expanded by `EDITOR-ANNOTATIONS-001`,
   readers MUST also look for the raster's name with its last extension
   replaced by `.xann` so that baseline sidecars remain discoverable; the
   baseline convention MUST be confirmed by runtime observation before
-  activation.
+  activation. See the [baseline runtime observation](../../reference-baselines/provenance/kova-0.29.0-xann-sidecar-observation.md).
 
 ## Native adaptation
 
@@ -187,6 +189,15 @@ sidecar outcomes; correct non-atomic save/dirty ambiguity and make mismatched
 source handling explicit.
 
 ## Changelog
+
+- **0.2.2, 2026-11-14:** Maintainer Aoife resolved ES-014/030 empty-save policy:
+  preserve the baseline companion and write a zero-annotation default shadow
+  after explicit intent. Without a baseline, default removal is unchanged.
+  Contract 0.3.2 records the decision and three vectors. All native editions
+  must follow this policy; Linux implements it first, while macOS and Windows
+  remain unimplemented. The version-1 document schema, raster ownership,
+  unsupported-companion protection and no-intent behavior are unchanged.
+  See [decision ES-014-030](../../decisions/ES-014-030-empty-save-baseline.md).
 
 - **0.2.1, 2026-11-13:** Maintainer Aoife approved separating ES-029's closed
   failure diagnostics from value-free import rejection reasons. Lexical resource

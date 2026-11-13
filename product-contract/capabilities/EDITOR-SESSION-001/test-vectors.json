@@ -178,6 +178,69 @@
       "expected": { "sidecar_exists": false, "sidecar_path": null, "raster_untouched": true }
     },
     {
+      "id": "empty-document-shadows-baseline-sidecar",
+      "operation": "save-sidecar",
+      "requirements": [
+        "ES-014",
+        "ES-030"
+      ],
+      "input": {
+        "existing_sidecar": false,
+        "existing_baseline_sidecar": true,
+        "annotations": [],
+        "sidecar_intent": true
+      },
+      "expected": {
+        "sidecar_exists": true,
+        "sidecar_path": "capture.png.xann",
+        "baseline_untouched": true,
+        "raster_untouched": true,
+        "sidecar_annotation_count": 0
+      }
+    },
+    {
+      "id": "empty-document-replaces-default-when-baseline-present",
+      "operation": "save-sidecar",
+      "requirements": [
+        "ES-014",
+        "ES-030"
+      ],
+      "input": {
+        "existing_sidecar": true,
+        "existing_baseline_sidecar": true,
+        "annotations": [],
+        "sidecar_intent": true
+      },
+      "expected": {
+        "sidecar_exists": true,
+        "sidecar_path": "capture.png.xann",
+        "baseline_untouched": true,
+        "raster_untouched": true,
+        "sidecar_annotation_count": 0
+      }
+    },
+    {
+      "id": "empty-document-no-intent-leaves-baseline",
+      "operation": "save-sidecar",
+      "requirements": [
+        "ES-014",
+        "ES-030"
+      ],
+      "input": {
+        "existing_sidecar": true,
+        "existing_baseline_sidecar": true,
+        "annotations": [],
+        "sidecar_intent": false
+      },
+      "expected": {
+        "sidecar_exists": true,
+        "sidecar_path": null,
+        "baseline_untouched": true,
+        "raster_untouched": true,
+        "default_untouched": true
+      }
+    },
+    {
       "id": "newer-version-read-only-failure",
       "operation": "parse-document",
       "requirements": ["ES-015", "ES-029"],
