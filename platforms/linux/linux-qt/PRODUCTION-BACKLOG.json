@@ -807,6 +807,19 @@
         "platforms/linux/linux-qt/app/features/UploadFeature.cpp",
         "platforms/linux/linux-qt/app/main.cpp"
       ]
+    },
+    {
+      "date": "2026-11-14",
+      "requirements": [
+        "CORE-004",
+        "SETCAT-019"
+      ],
+      "outcome": "Settings export/import, previous-app inspection/migration, backup revision/probe, restore and dismiss now run through one dialog-owned OwnedWork lane with copied paths/plans only. Busy covers picker, inspection, preview and publication; transfer/Apply/OK/reset re-entry is disabled, and late picker rejection after selection does not end the operation. Confirmed commits ignore ordinary dialog completion and disable Cancel until live store adoption and callbacks finish. ApplicationSettingsStore is loaded on the worker and moved into the GUI-owned store; existing refresh, shortcut invalidation, imported and applied callbacks retain owner fencing and order. Before commit, close/cancel drops delivery; a confirmed commit continues after forced owner deletion without callbacks, either completing atomically on disk or using existing startup recovery. App quit is not intercepted and no new exit mechanism is introduced. GUI-side imported callbacks still reload editor/workflow settings and remain a separate follow-up. Persisted formats, transaction fences, source preservation, backups, secret omission and the 8MiB input bound are unchanged. Native tests cover asynchronous stage boundaries, all five busy transfer controls, picker rejection/destruction, preview cancellation, commit-close refusal, teardown in inspect/preview/commit, and backup enablement. Synchronous commit mutation fails the immediate-publication and owner-teardown assertions. Candidate: maintainer and independent threading/import review plus full gate pending; statuses stay partial and coverage174/324 unchanged.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+        "platforms/linux/linux-qt/app/SettingsDialog.h",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
+      ]
     }
   ],
   "audit_method": "All 16 capabilities and 345 IDs revalidated. Existing unchanged source/test behavior was compared to frozen reviewed evidence, changed production paths and meaningful test bodies inspected, and exact current hashes/method lines repinned. 325 desktop rows remain conservative candidate classifications; 20 MOB rows remain outside desktop scope.",
