@@ -32,7 +32,7 @@ Trace status retains the established enum. `audit.classification` and `blocked_r
 
 The current next foundation is the remaining synchronous storage boundaries.
 Recovery recreation after external removal is implemented with store/native
-regression proof; maintainer/independent review and the full gate are pending. Steps 1–4 below
+regression proof; both reviews approved it and it landed as fdc728f after the full gate. Steps 1–4 below
 have landed and remain as the historical build sequence; their broader retention
 and supported-target qualification edges stay open.
 
