@@ -735,7 +735,7 @@
         "ES-018",
         "CORE-027"
       ],
-      "outcome": "Candidate recovery cleanup preserves protected records and refuses new recovery at protected capacity. Cleanup follows successful publication, removal retains newer/changed data, and Restore keeps its original on replacement-write failure. Existing eight-record cleanup applies only to supported snapshots with exited owners. Native UI reports explicit-save guidance. Store and native regressions pass; maintainer review, configured retention decisions and worker-owned recovery I/O remain pending.",
+      "outcome": "Candidate recovery cleanup preserves protected records, refuses new recovery at protected capacity and still allows updates above capacity. Cleanup follows successful publication. Restore now adopts its selected id and expected snapshot, leaving all seven other deferred files unchanged in the eight-record crash-leftover regression. Failed/changed takeover preserves bytes and the editor retains its own optimistic-write snapshot for future updates/removal. Maintainer accepted protected-capacity refusal and narrowing the existing count bound, requested the now-fixed takeover defect, and must re-review the corrected candidate. Configured retention, PID namespaces and worker-owned recovery I/O remain pending.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
         "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",

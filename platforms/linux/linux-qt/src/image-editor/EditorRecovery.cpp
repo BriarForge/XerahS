@@ -101,7 +101,10 @@ QString EditorRecoveryStore::write(const QString &id, const QString &sourcePath,
   StoreLock collectionLock, targetLock;
   if (PrivateJsonFile(m_directory + QStringLiteral("/.collection"), options()).lock(collectionLock) != StoreStatus::Ok ||
       file.lock(targetLock) != StoreStatus::Ok) return QStringLiteral("recovery-write-failed");
-  auto pruning = planPruning(m_directory, id);
+  const auto previous = file.read();
+  if (previous.status != StoreStatus::Ok && previous.status != StoreStatus::Missing) return QStringLiteral("recovery-write-failed");
+  auto pruning = previous.status == StoreStatus::Missing ? planPruning(m_directory, id)
+      : std::optional<std::vector<PruneRecord>>(std::in_place);
   if (!pruning) return QStringLiteral("recovery-storage-full");
   for (int attempt = 0; attempt < 2; ++attempt) {
     QByteArray expected = m_snapshots.value(id);
@@ -123,9 +126,16 @@ QString EditorRecoveryStore::write(const QString &id, const QString &sourcePath,
       }
       return {};
     }
-    if (status != StoreStatus::Changed) return QStringLiteral("recovery-write-failed");
+    if (status != StoreStatus::Changed || m_snapshots.contains(id)) return QStringLiteral("recovery-write-failed");
   }
   return QStringLiteral("recovery-write-failed");
+}
+
+EditorRecoveryStore EditorRecoveryStore::forRecord(const QString &id) const {
+  EditorRecoveryStore store(m_directory, m_clock);
+  const auto snapshot = m_snapshots.constFind(id);
+  if (snapshot != m_snapshots.cend()) store.m_snapshots.insert(id, snapshot.value());
+  return store;
 }
 
 QString EditorRecoveryStore::remove(const QString &id) {

@@ -53,6 +53,8 @@ public:
   QString write(const QString &id, const QString &sourcePath, const AnnotationDocument &document, qint64 ownerPid);
   QString remove(const QString &id);
   RecoveryListing list();
+  // Retain only this listed record's optimistic-write snapshot for its editor.
+  EditorRecoveryStore forRecord(const QString &id) const;
 
 private:
   QString pathFor(const QString &id) const;

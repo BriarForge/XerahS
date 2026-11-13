@@ -162,6 +162,7 @@ private:
   QString m_path;
   QTimer *m_recoveryTimer = nullptr;
   QString m_recoveryId;
+  std::unique_ptr<xerahs::editor::EditorRecoveryStore> m_recoveryStore;
   QString m_recoverySource;  // origin of a restored session while it has no path of its own
   QString m_recoveryDiagnostic;
   std::optional<quint64> m_recoveredState;

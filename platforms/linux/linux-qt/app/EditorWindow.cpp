@@ -818,6 +818,8 @@ void EditorWindow::updateStatusMessage() {
     status += tr(" · Recovery storage is full. Existing copies were kept. Save this image explicitly.");
   else if (m_recoveryDiagnostic == QLatin1String("recovery-retention-failed"))
     status += tr(" · Recovery snapshot saved; cleanup of older copies failed.");
+  else if (m_recoveryDiagnostic == QLatin1String("recovery-remove-failed"))
+    status += tr(" · Recovery copy could not be removed.");
   else if (!m_recoveryDiagnostic.isEmpty())
     status += tr(" · Recovery snapshot could not be saved. Save this image explicitly.");
   auto *bar = statusBar(); const bool notify = bar->currentMessage() != status;
@@ -1707,7 +1709,8 @@ void EditorWindow::discardRecovery() {
   m_recoveredState.reset();
   if (m_recoveryId.isEmpty()) return;
   liveRecoveryIds().remove(m_recoveryId);
-  m_recoveryDiagnostic = EditorRecoveryStore(EditorRecoveryStore::defaultDirectory()).remove(m_recoveryId);
+  m_recoveryDiagnostic = m_recoveryStore ? m_recoveryStore->remove(m_recoveryId)
+      : EditorRecoveryStore(EditorRecoveryStore::defaultDirectory()).remove(m_recoveryId);
   m_recoveryId.clear();
 }
 
@@ -1715,10 +1718,10 @@ QString EditorWindow::writeRecoveryNow() {
   if (!m_session || !m_session->dirty()) return {};
   if (m_recoveryTimer) m_recoveryTimer->stop();
   if (m_recoveryId.isEmpty()) m_recoveryId = EditorRecoveryStore::newId();
+  if (!m_recoveryStore) m_recoveryStore = std::make_unique<EditorRecoveryStore>(EditorRecoveryStore::defaultDirectory());
   liveRecoveryIds().insert(m_recoveryId);
   const QString source = m_path.isEmpty() ? m_recoverySource : absoluteImagePath(m_path);
-  m_recoveryDiagnostic = EditorRecoveryStore(EditorRecoveryStore::defaultDirectory())
-      .write(m_recoveryId, source, m_session->document(), QCoreApplication::applicationPid());
+  m_recoveryDiagnostic = m_recoveryStore->write(m_recoveryId, source, m_session->document(), QCoreApplication::applicationPid());
   if (m_recoveryDiagnostic.isEmpty() || m_recoveryDiagnostic == QLatin1String("recovery-retention-failed")) m_recoveredState = m_session->stateId();
   const auto diagnostic = m_recoveryDiagnostic;
   updateStatusMessage();
@@ -1743,13 +1746,16 @@ int EditorWindow::offerRecovery(QWidget *parent) {
     box.exec();
     if (box.clickedButton() == discard) { store.remove(record.id); continue; }
     if (box.clickedButton() != restore) continue;
-    auto *window = fromCapturedDocument(record.document, parent);
+    const QPointer<EditorWindow> window(fromCapturedDocument(record.document, parent));
     if (!window) continue;  // the recovery document is kept
+    window->m_recoveryId = record.id;
+    window->m_recoveryStore = std::make_unique<EditorRecoveryStore>(store.forRecord(record.id));
+    liveRecoveryIds().insert(record.id);
     window->m_recoverySource = record.sourcePath;
     window->m_importMessage = recoveryDisclosure(record, QDateTime::currentDateTimeUtc());
-    window->show(); window->refresh();
-    const auto saved = window->writeRecoveryNow();
-    if (saved.isEmpty()) store.remove(record.id);
+    window->show(); if (!window) continue;
+    window->refresh(); if (!window) continue;
+    window->writeRecoveryNow();
     ++restored;
   }
   return restored;

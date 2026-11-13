@@ -1,6 +1,8 @@
 // Actual native actions, modal dialogs, worker preparation, undo and persisted
 // PNG/sidecar reopening. All images and files are temporary fixtures.
 #include "EditorWindow.h"
+#include "storage/PrivateJsonFile.h"
+#include <QProcess>
 #include "image-editor/ToolbarPreferences.h"
 #include "EditorShutdown.h"
 #include "ApplicationControl.h"
@@ -335,18 +337,40 @@ private slots:
     QTimer drop; connect(&drop, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; for (auto *b : box->buttons()) if (b->text() == "Discard") { b->click(); return; } });
     drop.start(5); QCOMPARE(EditorWindow::offerRecovery(), 0); drop.stop(); QVERIFY(store.list().records.empty());
   }
-  void restorePreservesOriginalWhenRecoveryStorageIsFull() {
+  void restoreTakesOverOnlyItsSelectedRecovery_data() {
+    QTest::addColumn<QString>("mode");
+    QTest::newRow("exited-owners") << QString("exited");
+    QTest::newRow("protected-capacity") << QString("live");
+    QTest::newRow("replacement-write-blocked") << QString("locked");
+    QTest::newRow("replacement-changed") << QString("changed");
+  }
+  void restoreTakesOverOnlyItsSelectedRecovery() {
+    QFETCH(QString, mode);
     QTemporaryDir dir; QVERIFY(dir.isValid());
     const auto previousState = qgetenv("XDG_STATE_HOME");
     const auto restoreState = qScopeGuard([previousState] { qputenv("XDG_STATE_HOME", previousState); });
     qputenv("XDG_STATE_HOME", dir.path().toUtf8());
     const auto source = prepareCapturedSource(fixture()); QVERIFY(source.document);
-    EditorRecoveryStore store(EditorRecoveryStore::defaultDirectory()); QMap<QString, QByteArray> original;
+    QProcess child; child.start(QStringLiteral("/bin/true")); QVERIFY(child.waitForStarted());
+    const auto exited = child.processId(); QVERIFY(exited > 0); QVERIFY(child.waitForFinished());
+    const auto pid = mode == "live" ? QCoreApplication::applicationPid() : exited;
+    QDateTime now(QDate(2020, 1, 1), QTime(), Qt::UTC);
+    EditorRecoveryStore store(EditorRecoveryStore::defaultDirectory(), [&] { return now; });
+    QMap<QString, QByteArray> original;
     for (int i = 0; i < EditorRecoveryStore::kMaxRecords; ++i) {
+      now = now.addSecs(1);
       const auto id = EditorRecoveryStore::newId();
-      QCOMPARE(store.write(id, {}, *source.document, QCoreApplication::applicationPid()), QString());
+      QCOMPARE(store.write(id, {}, *source.document, pid), QString());
       const auto path = store.directory() + '/' + id + ".json"; original.insert(path, storedBytes(path));
+      QFile file(path); QVERIFY(file.open(QIODevice::ReadWrite));
+      QVERIFY(file.setFileTime(now, QFileDevice::FileModificationTime));
     }
+    const auto selectedId = store.list().records.front().id;
+    const auto selectedPath = store.directory() + '/' + selectedId + ".json";
+    xerahs::storage::StoreOptions options; options.format = "xerahs.editor-recovery";
+    xerahs::storage::PrivateJsonFile selected(selectedPath, options);
+    xerahs::storage::StoreLock lock;
+    if (mode == "locked") QCOMPARE(selected.lock(lock), xerahs::storage::StoreStatus::Ok);
     QSet<EditorWindow *> previousEditors;
     for (auto *top : QApplication::topLevelWidgets()) if (auto *editor = qobject_cast<EditorWindow *>(top)) previousEditors.insert(editor);
     int prompts = 0; QTimer answer;
@@ -354,19 +378,33 @@ private slots:
       auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
       if (!box || box->objectName() != "editorRecoveryNotice") return;
       const bool restore = prompts++ == 0;
+      if (restore && mode == "changed") {
+        auto replacement = QJsonDocument::fromJson(original.value(selectedPath)).object();
+        replacement.insert("sourcePath", "concurrently-changed.png");
+        QFile file(selectedPath); QVERIFY(file.open(QIODevice::WriteOnly));
+        const auto contents = QJsonDocument(replacement).toJson(); QCOMPARE(file.write(contents), contents.size());
+        original[selectedPath] = contents;
+      }
       for (auto *button : box->buttons()) if (button->text() == (restore ? "Restore" : "Decide later")) { button->click(); return; }
     });
     answer.start(1); QCOMPARE(EditorWindow::offerRecovery(), 1); answer.stop();
     QCOMPARE(prompts, EditorRecoveryStore::kMaxRecords);
     EditorWindow *restored = nullptr;
     for (auto *top : QApplication::topLevelWidgets()) if (auto *editor = qobject_cast<EditorWindow *>(top); editor && !previousEditors.contains(editor)) restored = editor;
-    QVERIFY(restored);
-    const QScopedPointer<EditorWindow> cleanup(restored);
-    for (auto it = original.cbegin(); it != original.cend(); ++it) QCOMPARE(storedBytes(it.key()), it.value());
+    QVERIFY(restored); const QScopedPointer<EditorWindow> cleanup(restored);
+    for (auto it = original.cbegin(); it != original.cend(); ++it)
+      if (it.key() != selectedPath || mode == "locked" || mode == "changed") QCOMPARE(storedBytes(it.key()), it.value());
     QVERIFY(restored->windowTitle().contains(" •"));
     QVERIFY(restored->findChild<QAction *>("saveImage")->isEnabled());
-    QVERIFY(restored->statusBar()->currentMessage().contains("Recovery storage is full"));
-    QVERIFY(restored->statusBar()->currentMessage().contains("Save"));
+    if (mode == "locked" || mode == "changed") {
+      QVERIFY(!restored->writeRecoveryNow().isEmpty());
+      QVERIFY(restored->statusBar()->currentMessage().contains("Recovery snapshot could not be saved"));
+    } else {
+      QCOMPARE(restored->writeRecoveryNow(), QString());
+      QCOMPARE(store.list().records.size(), size_t(EditorRecoveryStore::kMaxRecords));
+      const auto replacement = QJsonDocument::fromJson(storedBytes(selectedPath)).object();
+      QCOMPARE(replacement.value("ownerPid").toDouble(), double(QCoreApplication::applicationPid()));
+    }
   }
 
   void applicationQuitUsesDirtyEditorClosePolicyAndBlocksModalWork() {

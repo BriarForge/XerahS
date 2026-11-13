@@ -324,7 +324,9 @@ automatic cleanup or retry; pending/retained records cannot be forgotten.
 images. Count cleanup preserves newer-version, foreign, corrupt and live-owner
 records and runs after a replacement is saved. If protected records fill the
 collection, a new snapshot is refused with explicit-save guidance. Restore
-keeps its original recovery file when a replacement snapshot cannot be stored.
+updates only its selected record in place and preserves every other deferred
+record. If its expected bytes changed or the update fails, the original file
+stays untouched. Updates to existing records remain possible above capacity.
 Candidate behavior is covered by real-file and native editor tests; maintainer
 review and the broader configured retention policy remain pending.
 

@@ -143,6 +143,12 @@ private slots:
       QCOMPARE(bytes(store.directory() + '/' + it.key() + ".json"), it.value());
     QCOMPARE(store.write(original.firstKey(), {}, document(3), QCoreApplication::applicationPid()), QString());
     QCOMPARE(store.list().records.size(), size_t(EditorRecoveryStore::kMaxRecords));
+    auto foreign = QJsonDocument::fromJson(original.first()).object(); foreign.insert("version", 2);
+    const auto foreignPath = store.directory() + '/' + extra + ".json";
+    { QFile file(foreignPath); QVERIFY(file.open(QIODevice::WriteOnly)); const auto contents = QJsonDocument(foreign).toJson(); QCOMPARE(file.write(contents), contents.size()); }
+    const auto foreignBytes = bytes(foreignPath);
+    QCOMPARE(store.write(original.firstKey(), {}, document(4), QCoreApplication::applicationPid()), QString());
+    QCOMPARE(bytes(foreignPath), foreignBytes);
   }
   void failedPublicationDoesNotPruneExistingRecovery() {
     QTemporaryDir dir; EditorRecoveryStore store(dir.filePath("r")); QMap<QString, QByteArray> original;
@@ -174,6 +180,8 @@ private slots:
     { QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); const auto changed = QJsonDocument(payload).toJson(); QCOMPARE(file.write(changed), changed.size()); }
     const auto changed = bytes(path);
     QVERIFY(!store.remove(id).isEmpty());
+    QCOMPARE(bytes(path), changed);
+    QVERIFY(!store.write(id, {}, document(3), QCoreApplication::applicationPid()).isEmpty());
     QCOMPARE(bytes(path), changed);
   }
   void ageAndSourceDisclosure() {
