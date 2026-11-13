@@ -327,8 +327,9 @@ collection, a new snapshot is refused with explicit-save guidance. Restore
 updates only its selected record in place and preserves every other deferred
 record. If its expected bytes changed or the update fails, the original file
 stays untouched. Updates to existing records remain possible above capacity.
-Candidate behavior is covered by real-file and native editor tests; maintainer
-review and the broader configured retention policy remain pending.
+Behavior is covered by real-file and native editor tests and approved by the
+maintainer subject to the full integration gate. The broader configured
+retention policy remains open.
 
 **Watch-folder discovery:** Recursive directory enumeration, filtering and file
 fingerprints run on an owned worker. Repeated timer and filesystem notifications
