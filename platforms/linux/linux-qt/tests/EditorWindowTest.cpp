@@ -1,6 +1,11 @@
 // Actual native actions, modal dialogs, worker preparation, undo and persisted
 // PNG/sidecar reopening. All images and files are temporary fixtures.
 #include "EditorWindow.h"
+#include "EditorRecoveryQueue.h"
+#include <QSemaphore>
+#include <QThread>
+#include <QScopeGuard>
+#include <atomic>
 #include "storage/PrivateJsonFile.h"
 #include <QProcess>
 #include "image-editor/ToolbarPreferences.h"
@@ -290,7 +295,106 @@ private slots:
     qputenv("XDG_STATE_HOME", recoveryState->path().toLocal8Bit());
     initializeNativeEditorPreferences();
   }
-  void cleanup() { initializeNativeEditorPreferences(); }
+  void cleanup() { EditorRecoveryQueue::setWorkHookForTest({}); EditorRecoveryQueue::instance().waitIdle(); initializeNativeEditorPreferences(); }
+  void recoveryIoKeepsTheEditorResponsive_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto *mode : {"write", "save", "discard", "destroy", "two-editors", "list"})
+      QTest::newRow(mode) << QString::fromLatin1(mode);
+  }
+  void recoveryIoKeepsTheEditorResponsive() {
+    QFETCH(QString, mode);
+    struct Probe { QSemaphore gate; std::atomic_int calls{0}; std::atomic_bool entered{false}, onGui{false}; };
+    auto probe = std::make_shared<Probe>();
+    auto *guiThread = QThread::currentThread();
+    EditorRecoveryQueue::setWorkHookForTest([probe, guiThread] {
+      if (probe->calls.fetch_add(1) != 0) return;
+      probe->onGui = QThread::currentThread() == guiThread;
+      probe->entered = true;
+      if (!probe->onGui) probe->gate.acquire();
+    });
+    const auto release = qScopeGuard([probe] { probe->gate.release(); });
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    const auto path = dir.filePath("source.png"); QVERIFY(fixture().save(path));
+    const auto originalPng = storedBytes(path);
+    EditorRecoveryStore store(EditorRecoveryStore::defaultDirectory());
+    int ticks = 0;
+    QTimer heartbeat;
+    connect(&heartbeat, &QTimer::timeout, [&] { ++ticks; }); heartbeat.start(1);
+    if (mode == "list") {
+      const auto id = EditorRecoveryStore::newId();
+      const auto doc = loadSource(path); QVERIFY(doc.document);
+      QVERIFY(store.write(id, path, *doc.document, QCoreApplication::applicationPid()).isEmpty());
+      const auto badPath = QDir(store.directory()).filePath(EditorRecoveryStore::newId() + ".json");
+      QFile bad(badPath); QVERIFY(bad.open(QIODevice::WriteOnly)); bad.write("broken-json"); bad.close();
+      QTimer driver;
+      connect(&driver, &QTimer::timeout, [&] {
+        if (probe->entered && ticks >= 3) probe->gate.release();
+        if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) box->defaultButton()->click();
+      }); driver.start(2);
+      QCOMPARE(EditorWindow::offerRecovery(), 0);
+      QVERIFY(probe->entered); QVERIFY(!probe->onGui); QVERIFY(ticks >= 3);
+      QVERIFY(!QFile::exists(badPath));
+      QCOMPARE(store.list().records.size(), size_t(1));
+      return;
+    }
+    QPointer<EditorWindow> window = EditorWindow::open(path); QVERIFY(window); window->show();
+    QPointer<EditorWindow> second;
+    const auto destroy = qScopeGuard([&] { delete window.data(); delete second.data(); });
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas);
+    drawRectangle(*canvas);
+    QTRY_VERIFY_WITH_TIMEOUT(probe->entered.load(), 2000);
+    QVERIFY(!probe->onGui); QTRY_VERIFY(ticks >= 3);
+    if (mode == "destroy") {
+      delete window.data();
+      probe->gate.release(); EditorRecoveryQueue::instance().waitIdle();
+      const auto listing = store.list(); QCOMPARE(listing.records.size(), size_t(1));
+      QCOMPARE(listing.records.front().document.annotations.size(), size_t(1));
+      QCOMPARE(storedBytes(path), originalPng);
+      return;
+    }
+    if (mode == "save") {
+      trigger(*window, "saveImage"); QVERIFY(!window->windowTitle().contains(" •"));
+      const auto savedPng = storedBytes(path), savedXann = storedBytes(path + ".xann");
+      QVERIFY(!savedXann.isEmpty());
+      probe->gate.release(); EditorRecoveryQueue::instance().waitIdle();
+      QVERIFY(store.list().records.empty());
+      QCOMPARE(storedBytes(path), savedPng); QCOMPARE(storedBytes(path + ".xann"), savedXann);
+      return;
+    }
+    if (mode == "discard") {
+      QTimer discard;
+      connect(&discard, &QTimer::timeout, [&] {
+        auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+        if (!box) return;
+        if (auto *button = box->button(QMessageBox::Discard)) {
+          button->click(); QTimer::singleShot(0, [probe] { probe->gate.release(); });
+        }
+      }); discard.start(2);
+      QVERIFY(window->close());
+      QVERIFY(store.list().records.empty()); QCOMPARE(storedBytes(path), originalPng);
+      return;
+    }
+    // A second canvas edit is accepted while the first snapshot is still writing.
+    QTest::keyClick(canvas, Qt::Key_Escape);
+    canvas->setTool(EditorCanvas::Tool::Rectangle);
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({32, 24}).toPoint());
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({48, 34}).toPoint());
+    QCOMPARE(canvas->annotationDocument().annotations.size(), size_t(2));
+    if (mode == "two-editors") {
+      second = EditorWindow::open(path); QVERIFY(second); second->show();
+      drawRectangle(*second->findChild<EditorCanvas *>());
+    }
+    probe->gate.release();
+    QTRY_VERIFY([&] {
+      const auto listing = store.list();
+      if (listing.records.size() != (mode == "two-editors" ? 2u : 1u)) return false;
+      for (const auto &record : listing.records) if (record.document.annotations.size() == 2) return true;
+      return false;
+    }());
+    QVERIFY(window->writeRecoveryNow().isEmpty());
+    if (second) QVERIFY(second->writeRecoveryNow().isEmpty());
+    QCOMPARE(storedBytes(path), originalPng);
+  }
   // ES-018: separate recovery document, never the explicit save; disclosed and restorable.
   void recoveryDocumentLifecycleAndRestartNotice() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); const auto path = dir.filePath("recover.png"), prefs = dir.filePath("prefs.json");

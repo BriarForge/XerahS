@@ -1,5 +1,6 @@
 #include "NativeAccessibility.h"
 #include "EditorWindow.h"
+#include "EditorRecoveryQueue.h"
 #include "image-editor/ShapePainter.h"
 #include "EditorSaveDialog.h"
 #include "EffectsDialog.h"
@@ -192,7 +193,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   new NativeAccessibility(*this, EditorWindow::tr("Edit the image using menus, tools and the canvas. Save is explicit. Close offers recovery for unsaved changes."), false);
   guardEditorShutdown(*this);
   m_recoveryTimer = new QTimer(this); m_recoveryTimer->setSingleShot(true);
-  connect(m_recoveryTimer, &QTimer::timeout, this, [this] { writeRecoveryNow(); });
+  connect(m_recoveryTimer, &QTimer::timeout, this, [this] { submitRecoveryWrite(); });
   applyCreationDefaults();
   m_canvas = new EditorCanvas(*m_session, m_image, nullptr, displaySource);
   // ESET-006: the saved last tool selects the first tool of this window only; it never edits objects.
@@ -894,7 +895,7 @@ void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QStri
   // Keep the old session alive until the canvas has cancelled its gesture and
   // switched its session pointer. Retaining the widget preserves action bindings.
   auto previous = std::move(m_session);
-  discardRecovery(); m_recoverySource.clear();
+  discardRecovery(); ++m_recoveryGeneration; m_recoverySource.clear();
   m_session = std::move(next);
   applyCreationDefaults();
   m_image = std::move(source);
@@ -1688,7 +1689,8 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
     }
   }
   if (!guard) { event->ignore(); return; }
-  discardRecovery();  // ES-018: clean close or explicit Discard removes the recovery document
+  discardRecovery(true);  // ES-018: finish removal before accepting a clean close or Discard
+  if (!guard) { event->ignore(); return; }
   const auto diagnostic = m_windowState->remember();
   if (!diagnostic.isEmpty()) QMessageBox::warning(this, EditorWindow::tr("Window preferences not saved"), editorPreferenceDiagnosticMessage(diagnostic));
   event->accept();
@@ -1700,56 +1702,94 @@ void EditorWindow::setRecoveryDelay(int milliseconds) { g_recoveryDelayMs = std:
 void EditorWindow::scheduleRecovery() {
   if (!m_recoveryTimer || !m_session) return;
   if (!m_session->dirty()) { discardRecovery(); return; }
-  if (m_recoveredState == m_session->stateId() || m_recoveryTimer->isActive()) return;
+  if (m_recoveredState == m_session->stateId() || m_recoveryRequestedState == m_session->stateId() || m_recoveryTimer->isActive()) return;
   m_recoveryTimer->start(g_recoveryDelayMs);
 }
 
-void EditorWindow::discardRecovery() {
+void EditorWindow::discardRecovery(bool wait) {
   if (m_recoveryTimer) m_recoveryTimer->stop();
-  m_recoveredState.reset();
-  if (m_recoveryId.isEmpty()) return;
-  liveRecoveryIds().remove(m_recoveryId);
-  m_recoveryDiagnostic = m_recoveryStore ? m_recoveryStore->remove(m_recoveryId)
-      : EditorRecoveryStore(EditorRecoveryStore::defaultDirectory()).remove(m_recoveryId);
-  m_recoveryId.clear();
+  m_recoveredState.reset(); m_recoveryRequestedState.reset(); m_recoveryJob = 0;
+  if (!m_recoveryId.isEmpty()) {
+    const auto generation = ++m_recoveryGeneration;
+    const auto id = m_recoveryId;
+    auto store = m_recoveryStore;
+    if (!store) store = std::make_shared<EditorRecoveryStore>(EditorRecoveryStore::defaultDirectory());
+    m_recoveryId.clear(); m_recoveryStore.reset();
+    const QPointer<EditorWindow> owner(this);
+    EditorRecoveryQueue::instance().remove(store, id, [owner, id, generation](QString diagnostic) {
+      liveRecoveryIds().remove(id);
+      if (!owner || owner->m_recoveryGeneration != generation) return;
+      owner->m_recoveryDiagnostic = std::move(diagnostic);
+      owner->updateStatusMessage();
+    });
+  }
+  if (wait) EditorRecoveryQueue::instance().waitIdle();
+}
+
+quint64 EditorWindow::submitRecoveryWrite() {
+  if (!m_session || !m_session->dirty()) return 0;
+  if (m_recoveryTimer) m_recoveryTimer->stop();
+  const auto state = m_session->stateId();
+  if (m_recoveryRequestedState == state) return m_recoveryJob;
+  if (m_recoveryId.isEmpty()) m_recoveryId = EditorRecoveryStore::newId();
+  if (!m_recoveryStore) m_recoveryStore = std::make_shared<EditorRecoveryStore>(EditorRecoveryStore::defaultDirectory());
+  liveRecoveryIds().insert(m_recoveryId);
+  const QString source = m_path.isEmpty() ? m_recoverySource : absoluteImagePath(m_path);
+  const auto generation = ++m_recoveryGeneration;
+  m_recoveryRequestedState = state;
+  const QPointer<EditorWindow> owner(this);
+  m_recoveryJob = EditorRecoveryQueue::instance().write(m_recoveryStore, m_recoveryId, source,
+      m_session->document(), QCoreApplication::applicationPid(), [owner, generation, state](QString diagnostic) {
+    if (!owner || owner->m_recoveryGeneration != generation) return;
+    owner->m_recoveryRequestedState.reset(); owner->m_recoveryJob = 0;
+    owner->m_recoveryDiagnostic = std::move(diagnostic);
+    if (owner->m_recoveryDiagnostic.isEmpty() || owner->m_recoveryDiagnostic == QLatin1String("recovery-retention-failed"))
+      owner->m_recoveredState = state;
+    owner->updateStatusMessage();
+    if (owner && owner->m_session->dirty() && owner->m_session->stateId() != state) owner->scheduleRecovery();
+  });
+  return m_recoveryJob;
 }
 
 QString EditorWindow::writeRecoveryNow() {
-  if (!m_session || !m_session->dirty()) return {};
-  if (m_recoveryTimer) m_recoveryTimer->stop();
-  if (m_recoveryId.isEmpty()) m_recoveryId = EditorRecoveryStore::newId();
-  if (!m_recoveryStore) m_recoveryStore = std::make_unique<EditorRecoveryStore>(EditorRecoveryStore::defaultDirectory());
-  liveRecoveryIds().insert(m_recoveryId);
-  const QString source = m_path.isEmpty() ? m_recoverySource : absoluteImagePath(m_path);
-  m_recoveryDiagnostic = m_recoveryStore->write(m_recoveryId, source, m_session->document(), QCoreApplication::applicationPid());
-  if (m_recoveryDiagnostic.isEmpty() || m_recoveryDiagnostic == QLatin1String("recovery-retention-failed")) m_recoveredState = m_session->stateId();
-  const auto diagnostic = m_recoveryDiagnostic;
-  updateStatusMessage();
-  return diagnostic;
+  const auto job = submitRecoveryWrite();
+  return job ? EditorRecoveryQueue::instance().wait(job) : QString{};
 }
 
 int EditorWindow::offerRecovery(QWidget *parent) {
-  EditorRecoveryStore store(EditorRecoveryStore::defaultDirectory());
-  const auto listing = store.list();
+  auto store = std::make_shared<EditorRecoveryStore>(EditorRecoveryStore::defaultDirectory());
+  auto listing = std::make_shared<RecoveryListing>();
+  const QPointer<QWidget> parentGuard(parent);
+  const auto job = EditorRecoveryQueue::instance().list(store, [listing](RecoveryListing result) { *listing = std::move(result); });
+  if (!EditorRecoveryQueue::instance().wait(job).isEmpty() || (parent && !parentGuard)) return 0;
   int restored = 0;
-  for (const auto &record : listing.records) {
+  for (const auto &record : listing->records) {
     // A document held by an editor that is still running is not a crash leftover.
     if (liveRecoveryIds().contains(record.id)) continue;
     if (record.ownerPid != QCoreApplication::applicationPid() && processAlive(record.ownerPid)) continue;
-    QMessageBox box(QMessageBox::Question, QStringLiteral("Recover unsaved editor session"), recoveryDisclosure(record, QDateTime::currentDateTimeUtc()), QMessageBox::NoButton, parent);
-    box.setObjectName(QStringLiteral("editorRecoveryNotice")); box.setTextFormat(Qt::PlainText);
-    box.setInformativeText(QStringLiteral("Restore opens the recovered work as an unsaved editor. Discard permanently deletes the recovery copy. Decide later keeps it."));
-    auto *restore = box.addButton(QStringLiteral("Restore"), QMessageBox::AcceptRole);
-    auto *discard = box.addButton(QStringLiteral("Discard"), QMessageBox::DestructiveRole);
-    auto *later = box.addButton(QStringLiteral("Decide later"), QMessageBox::RejectRole);
-    box.setDefaultButton(later); box.setEscapeButton(later);
-    box.exec();
-    if (box.clickedButton() == discard) { store.remove(record.id); continue; }
-    if (box.clickedButton() != restore) continue;
+    if (parent && !parentGuard) return restored;
+    const QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, QStringLiteral("Recover unsaved editor session"), recoveryDisclosure(record, QDateTime::currentDateTimeUtc()), QMessageBox::NoButton, parent));
+    box->setObjectName(QStringLiteral("editorRecoveryNotice")); box->setTextFormat(Qt::PlainText);
+    box->setInformativeText(QStringLiteral("Restore opens the recovered work as an unsaved editor. Discard permanently deletes the recovery copy. Decide later keeps it."));
+    auto *restore = box->addButton(QStringLiteral("Restore"), QMessageBox::AcceptRole);
+    auto *discard = box->addButton(QStringLiteral("Discard"), QMessageBox::DestructiveRole);
+    auto *later = box->addButton(QStringLiteral("Decide later"), QMessageBox::RejectRole);
+    box->setDefaultButton(later); box->setEscapeButton(later);
+    box->exec();
+    if (!box || (parent && !parentGuard)) return restored;
+    const bool discardChosen = box->clickedButton() == discard, restoreChosen = box->clickedButton() == restore;
+    delete box.data();
+    if (discardChosen) {
+      const auto removal = EditorRecoveryQueue::instance().remove(store, record.id, {});
+      EditorRecoveryQueue::instance().wait(removal);
+      if (parent && !parentGuard) return restored;
+      continue;
+    }
+    if (!restoreChosen) continue;
     const QPointer<EditorWindow> window(fromCapturedDocument(record.document, parent));
     if (!window) continue;  // the recovery document is kept
     window->m_recoveryId = record.id;
-    window->m_recoveryStore = std::make_unique<EditorRecoveryStore>(store.forRecord(record.id));
+    window->m_recoveryStore = std::make_shared<EditorRecoveryStore>(store->forRecord(record.id));
     liveRecoveryIds().insert(record.id);
     window->m_recoverySource = record.sourcePath;
     window->m_importMessage = recoveryDisclosure(record, QDateTime::currentDateTimeUtc());

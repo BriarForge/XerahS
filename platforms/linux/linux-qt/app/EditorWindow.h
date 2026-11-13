@@ -144,7 +144,8 @@ private:
   void refresh();
   void updateStatusMessage();
   void scheduleRecovery();
-  void discardRecovery();
+  quint64 submitRecoveryWrite();
+  void discardRecovery(bool wait = false);
   void updatePointerStatus();
   void restoreHistory(bool redo);
   void cropImage();
@@ -162,7 +163,9 @@ private:
   QString m_path;
   QTimer *m_recoveryTimer = nullptr;
   QString m_recoveryId;
-  std::unique_ptr<xerahs::editor::EditorRecoveryStore> m_recoveryStore;
+  std::shared_ptr<xerahs::editor::EditorRecoveryStore> m_recoveryStore;
+  quint64 m_recoveryGeneration = 0, m_recoveryJob = 0;
+  std::optional<quint64> m_recoveryRequestedState;
   QString m_recoverySource;  // origin of a restored session while it has no path of its own
   QString m_recoveryDiagnostic;
   std::optional<quint64> m_recoveredState;

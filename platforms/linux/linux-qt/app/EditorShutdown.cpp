@@ -1,4 +1,5 @@
 #include "EditorShutdown.h"
+#include "EditorRecoveryQueue.h"
 #include <QApplication>
 #include <QEvent>
 #include <QPointer>
@@ -33,6 +34,7 @@ QString closeEditorsForShutdown() {
     if (shutdownBlockedByModalWork()) return QStringLiteral("application-busy");
     if (editor && !editor->close()) return QStringLiteral("editor-close-cancelled");
   }
+  EditorRecoveryQueue::instance().waitIdle();
   return shutdownBlockedByModalWork() ? QStringLiteral("application-busy") : QString{};
 }
 namespace {

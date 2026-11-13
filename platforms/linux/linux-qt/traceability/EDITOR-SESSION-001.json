@@ -85,7 +85,9 @@
     "platforms/linux/linux-qt/app/AppearanceDialog.cpp",
     "platforms/linux/linux-qt/app/ToolbarDialog.cpp",
     "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
-    "platforms/linux/linux-qt/src/storage/PrivateJsonFile.cpp"
+    "platforms/linux/linux-qt/src/storage/PrivateJsonFile.cpp",
+    "platforms/linux/linux-qt/app/EditorRecoveryQueue.h",
+    "platforms/linux/linux-qt/app/EditorRecoveryQueue.cpp"
   ],
   "requirements": {
     "ES-001": {
@@ -1466,7 +1468,7 @@
     "ES-018": {
       "status": "implemented",
       "vectors": [],
-      "note": "Separate private recovery documents preserve explicit raster/sidecar bytes, record source/UTC time and disclose age/source in Restore/Discard/Decide-later restart UI. Candidate cleanup now keeps newer-version, foreign, corrupt, locked and live-owner records. Existing PrivateJsonFile locks coordinate collection writes and eligible file cleanup. Count cleanup runs only after successful publication; a full protected collection refuses a new record and retains existing copies. Removal preserves newer or changed snapshots. Restore takes over only the selected record id and its expected snapshot, preserving all other deferred records. A failed or stale takeover leaves the original bytes untouched and exposes explicit-save guidance. The editor retains only its own record snapshot for future writes/removal, so later edits cannot overwrite an intervening change. Existing records remain updatable even when protected records put the collection above capacity. Store regressions failed before these fixes; native Restore and ordinary recovery lifecycle tests pass afterward. New recovery I/O remains synchronous in GUI timer/restart paths, and approved configured retention remains a separate policy gate. Maintainer accepted protected-capacity refusal and narrowing the existing eight-record cleanup, without approving a new configured retention default. Claude Opus maintainer approved corrected candidate 8bfd4a9 on 2026-11-13, conditional on the full integration gate; the historical audit below describes the prior blind pruning. A missing externally deleted recovery file currently leaves a known writer snapshot stale until the editor session ends; the explicit-save warning remains visible. Recreating that missing record safely is a follow-up. The full gate exposed shared recovery-state accumulation in the native editor fixture. EditorWindowTest now isolates recovery storage per case; all three editor partitions pass on Qt 6.12 and Qt 6.4.2 without weakening assertions or suppressing recovery warnings. The private Qt 6.4 test root includes the already-recommended image-format plugins for the WebP Save As case.",
+      "note": "Separate private recovery documents preserve explicit raster/sidecar bytes, record source/UTC time and disclose age/source in Restore/Discard/Decide-later restart UI. Candidate cleanup now keeps newer-version, foreign, corrupt, locked and live-owner records. Existing PrivateJsonFile locks coordinate collection writes and eligible file cleanup. Count cleanup runs only after successful publication; a full protected collection refuses a new record and retains existing copies. Removal preserves newer or changed snapshots. Restore takes over only the selected record id and its expected snapshot, preserving all other deferred records. A failed or stale takeover leaves the original bytes untouched and exposes explicit-save guidance. The editor retains only its own record snapshot for future writes/removal, so later edits cannot overwrite an intervening change. Existing records remain updatable even when protected records put the collection above capacity. Store regressions failed before these fixes; native Restore and ordinary recovery lifecycle tests pass afterward. Configured retention remains a separate policy gate. Maintainer accepted protected-capacity refusal and narrowing the existing eight-record cleanup, without approving a new configured retention default. Claude Opus maintainer approved corrected candidate 8bfd4a9 on 2026-11-13, conditional on the full integration gate; the historical audit below describes the prior blind pruning. A missing externally deleted recovery file currently leaves a known writer snapshot stale until the editor session ends; the explicit-save warning remains visible. Recreating that missing record safely is a follow-up. The full gate exposed shared recovery-state accumulation in the native editor fixture. EditorWindowTest now isolates recovery storage per case; all three editor partitions pass on Qt 6.12 and Qt 6.4.2 without weakening assertions or suppressing recovery warnings. The private Qt 6.4 test root includes the already-recommended image-format plugins for the WebP Save As case. Editor recovery serialization, storage, removal, pruning and restart listing now run through one process-owned FIFO on OwnedWork. Autosaves return immediately and coalesce queued writes by record; Save/Discard removes pending writes and orders removal after any running write. Close and explicit writes wait through a Qt event loop, and shutdown drains the queue. Window destruction leaves started writes to finish without delivering into the dead window. Native held-worker tests cover GUI timers, a second canvas edit reaching the latest snapshot, Save/Discard cleanup, owner destruction, two editors and corrupt-file startup listing. Existing takeover and lifecycle rules remain unchanged. Maintainer review and the rebuilt full integration gate are pending for this slice.",
       "disposition": "Required",
       "audit": {
         "classification": "implemented",
@@ -1518,7 +1520,9 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-        "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp"
+        "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
+        "platforms/linux/linux-qt/app/EditorRecoveryQueue.h",
+        "platforms/linux/linux-qt/app/EditorRecoveryQueue.cpp"
       ]
     },
     "ES-019": {

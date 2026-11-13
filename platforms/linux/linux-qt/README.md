@@ -321,7 +321,12 @@ automatic cleanup or retry; pending/retained records cannot be forgotten.
 `CaptureDeleteTest` covers real filesystem/HTTP, restart and native history flows.
 
 **Editor recovery:** Recovery snapshots stay separate from explicitly saved
-images. Count cleanup preserves newer-version, foreign, corrupt and live-owner
+images. Serialization, storage, cleanup and startup listing run on an owned
+worker through a process-wide queue. Autosave keeps the editor responsive while
+new edits continue. Save and Discard order removal after any active write; a
+destroyed editor leaves a started snapshot to finish. Explicit recovery writes,
+Close and startup recovery wait through the Qt event loop. Shutdown drains the
+queue. Count cleanup preserves newer-version, foreign, corrupt and live-owner
 records and runs after a replacement is saved. If protected records fill the
 collection, a new snapshot is refused with explicit-save guidance. Restore
 updates only its selected record in place and preserves every other deferred

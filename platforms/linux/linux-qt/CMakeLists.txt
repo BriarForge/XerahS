@@ -1655,7 +1655,8 @@ foreach(native_target IN LISTS XERAHS_NATIVE_TARGETS)
 endforeach()
 
 # EO-011/012/013 and ESET-014 share the native task lifetime and preference UI.
-target_sources(xerahs_editor_source PRIVATE app/EditorShutdown.cpp app/EditorShutdown.h
+target_sources(xerahs_editor_source PRIVATE app/EditorRecoveryQueue.cpp app/EditorRecoveryQueue.h
+  app/EditorShutdown.cpp app/EditorShutdown.h
   app/EditorTemporaryFiles.cpp app/EditorTemporaryFiles.h)
 add_library(xerahs_application_control STATIC app/ApplicationControl.cpp app/ApplicationControl.h)
 target_include_directories(xerahs_application_control PUBLIC app)
