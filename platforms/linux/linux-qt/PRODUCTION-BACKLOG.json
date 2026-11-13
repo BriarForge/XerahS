@@ -792,6 +792,21 @@
         "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ]
+    },
+    {
+      "date": "2026-11-14",
+      "requirements": [
+        "CORE-004",
+        "CORE-025"
+      ],
+      "outcome": "Watch-folder processed checkpoints now freeze inputs on the GUI thread and serialize/re-read/atomically publish through OwnedWork. Completion is reported only after save or explicit checkpoint failure; no next file dispatches while pending. Stop does not cancel an already-earned checkpoint; owner destruction drops only adoption, retaining the worker write. The post-exec drain waits for completion, including signal exits; a conflicting writer or failed write blocks watching without adoption or retry. GUI-thread watcher registration remains accepted because QFileSystemWatcher owns its thread-bound inotify watches; the final one-file fingerprint remains accepted to refuse replacement immediately before dispatch. Rule persistence, execution-record writes, settings transfer/import/migration and other storage boundaries remain separate. Unknown-publication restart policy and checkpoint retention remain open; CORE-025 stays partial. Held-worker tests pass for settle, Stop/Start, destruction, drain and writer conflict on Qt 6.12 and Qt 6.4.2. The synchronous-path mutation fails the new responsiveness case. Repeated suites, maintainer review and full gate are pending.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+        "platforms/linux/linux-qt/app/features/UploadFeature.cpp",
+        "platforms/linux/linux-qt/app/main.cpp"
+      ]
     }
   ],
   "audit_method": "All 16 capabilities and 345 IDs revalidated. Existing unchanged source/test behavior was compared to frozen reviewed evidence, changed production paths and meaningful test bodies inspected, and exact current hashes/method lines repinned. 325 desktop rows remain conservative candidate classifications; 20 MOB rows remain outside desktop scope.",
@@ -2474,7 +2489,7 @@
       "id": "remaining-storage-boundaries",
       "classification": "partial",
       "source": "app/FileUploadController.cpp:145; app/WatchFolderService.cpp:143,243,251",
-      "finding": "Upload execution persistence and watch checkpoint/watcher/final identity work retain synchronous GUI boundaries; recursive discovery and recovery serialization/storage already use OwnedWork."
+      "finding": "Upload execution persistence retains a synchronous GUI boundary. Watch checkpoint serialization/storage now uses OwnedWork; watcher registration and the final per-file fingerprint remain accepted GUI work because the watcher owns thread-bound inotify state and the fingerprint refuses last-moment replacements. Rule persistence and settings transfer/import/migration remain separate. Recursive discovery and recovery serialization/storage already use OwnedWork."
     }
   ],
   "raw_trace_counts": {

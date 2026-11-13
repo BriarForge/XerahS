@@ -22,6 +22,8 @@ struct Rule {
 QString authorizeRoot(const QString &path, const QString &captures, QString *canonical);
 bool matches(const Rule &rule, const QString &path);
 QString fingerprint(const QString &path);
+struct CheckpointWrite { QString path; QSet<QString> processed; QString key; QByteArray expected; };
+struct CheckpointResult { QString error; QByteArray snapshot; };
 class WatchFolders {
 public:
   explicit WatchFolders(QString directory);
@@ -31,6 +33,9 @@ public:
   QString saveRules(const QVector<Rule> &rules, const QString &captures);
   bool processed(const QString &key) const { return m_processed.contains(key); }
   QString remember(const QString &key);
+  CheckpointWrite checkpoint(const QString &key) const;
+  static CheckpointResult writeCheckpoint(const CheckpointWrite &write);
+  QString adoptCheckpoint(const CheckpointWrite &write, const CheckpointResult &result);
 private:
   QString m_directory, m_error;
   QByteArray m_rulesSnapshot, m_processedSnapshot;

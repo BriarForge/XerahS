@@ -33,7 +33,7 @@ struct UploadLifetime {
   std::unique_ptr<xerahs::watch::WatchFolders> store;
   FileUploadController *files = nullptr;
   FileUploadController *watchUploads = nullptr;
-  WatchFolderService *service = nullptr;
+  QPointer<WatchFolderService> service;
 };
 
 UploadLifetime &lifetime() {
@@ -58,6 +58,10 @@ void showDestinations(AppContext &ctx, QWidget *parent) {
 }
 
 }  // namespace
+
+void drainWatchFolders() {
+  if (auto service = lifetime().service) service->finishCheckpoint();
+}
 
 void installUpload(AppContext &ctx) {
   auto &state = lifetime();

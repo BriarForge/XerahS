@@ -155,11 +155,25 @@ QString WatchFolders::saveRules(const QVector<Rule> &rules, const QString &captu
 }
 QString WatchFolders::remember(const QString &key) {
   if (!m_error.isEmpty()) return m_error;
-  auto next = m_processed; next.insert(key); QJsonArray items;
+  const auto write = checkpoint(key);
+  return adoptCheckpoint(write, writeCheckpoint(write));
+}
+CheckpointWrite WatchFolders::checkpoint(const QString &key) const {
+  return {QDir(m_directory).filePath("watch-processed.json"), m_processed, key, m_processedSnapshot};
+}
+CheckpointResult WatchFolders::writeCheckpoint(const CheckpointWrite &write) {
+  auto next = write.processed; next.insert(write.key); QJsonArray items;
   for (const auto &item : next) items.append(item);
-  const auto error = writeStoreSnapshot(QDir(m_directory).filePath("watch-processed.json"), items, &m_processedSnapshot);
-  if (error.isEmpty()) m_processed = std::move(next);
-  return error;
+  auto snapshot = write.expected;
+  const auto error = writeStoreSnapshot(write.path, items, &snapshot);
+  return {error, snapshot};
+}
+QString WatchFolders::adoptCheckpoint(const CheckpointWrite &write, const CheckpointResult &result) {
+  if (!result.error.isEmpty()) return result.error;
+  if (m_processedSnapshot != write.expected) return QStringLiteral("watch-store-write-failed");
+  m_processed.insert(write.key);
+  m_processedSnapshot = result.snapshot;
+  return {};
 }
 StabilityTracker::StabilityTracker(Clock clock) : m_clock(std::move(clock)) {
   if (!m_clock) { QElapsedTimer timer; timer.start(); m_clock = [timer] { return timer.elapsed(); }; }

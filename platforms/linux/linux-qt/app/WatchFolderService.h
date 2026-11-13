@@ -22,6 +22,8 @@ public:
   void setFileOperationHook(std::function<void(const QString &)> hook);
   // Test seam: called on the worker before each directory enumeration.
   void setDiscoveryHook(std::function<void()> hook);
+  void setCheckpointHook(std::function<void()> hook);
+  void finishCheckpoint();
   bool discovering() const { return m_discovery.running(); }
   // WFCAT-002: execution records for copy/move; empty uses the shared directory.
   // Test seam: called on the worker thread after the copy committed, before the source is removed.
@@ -40,6 +42,8 @@ signals:
   void processed(const QString &path, bool success);
   void progress(const QString &path, qint64 done, qint64 total);
 private:
+  Q_SIGNAL void checkpointSettled();
+  void settle(const QString &path, bool success, const QString &error, const QString &saved);
   void startFileWork(const QString &path, const QString &key, const watch::Rule &rule);
   struct FileResult { QString error; bool read = false, copied = false; };
   void finishFileWork(const QString &path, const FileResult &result);
@@ -58,6 +62,9 @@ private:
   QString m_terminalState;  // shared terminal projection of the pending operation
   OwnedWork m_work;
   OwnedWork m_discovery;
+  OwnedWork m_checkpoint;
+  bool m_checkpointing = false;
+  std::function<void()> m_checkpointHook;
   quint64 m_discoveryGeneration = 0;
   bool m_rescanRequested = false;
   std::function<void(const QString &)> m_fileHook, m_removeHook;

@@ -27,6 +27,7 @@
 #include <QTimer>
 #include <atomic>
 #include <memory>
+#include <thread>
 
 using namespace xerahs;
 using namespace xerahs::app;
@@ -93,6 +94,74 @@ private slots:
   void initTestCase() {
     static QTemporaryDir state;  // services without an explicit writer must not touch the real state directory
     qputenv("XDG_STATE_HOME", state.path().toUtf8());
+  }
+
+  void checkpointDoesNotBlockTheGui_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto mode : {"settle", "stop", "destroy", "drain", "conflict"}) QTest::newRow(mode) << QString(mode);
+  }
+  void checkpointDoesNotBlockTheGui() {
+    QFETCH(QString, mode);
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto source = dir.filePath("input/first.png"), captures = dir.filePath("captures");
+    QVERIFY(writeFile(source)); const auto key = watch::fingerprint(source);
+    QWidget owner; FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store")); qint64 now = 0;
+    auto service = std::make_unique<WatchFolderService>(store, uploads, [&] { return captures; }, [&] { return now; });
+    watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
+    QCOMPARE(service->setRules({rule}), QString());
+    struct Probe { std::atomic_bool entered{false}, release{false}, onGui{false}, exited{false}; };
+    const auto probe = std::make_shared<Probe>();
+    struct Release { std::shared_ptr<Probe> probe; ~Release() { probe->release = true; } } release{probe};
+    const auto gui = QThread::currentThread();
+    const auto checkpointPath = dir.filePath("store/watch-processed.json");
+    const QByteArray foreign = R"({"format":"com.xerahs.app/watch-folders","version":1,"items":["other-writer"]})";
+    service->setCheckpointHook([probe, gui, mode, checkpointPath, foreign] {
+      probe->onGui = QThread::currentThread() == gui; probe->entered = true;
+      if (probe->onGui) return;
+      while (!probe->release) QThread::msleep(2);
+      if (mode == "conflict") writeFile(checkpointPath, foreign);
+      probe->exited = true;
+    });
+    QSignalSpy processed(service.get(), &WatchFolderService::processed), notified(service.get(), &WatchFolderService::notify);
+    service->start(); scan(*service); now = 2000; scan(*service);
+    QTRY_VERIFY_WITH_TIMEOUT(probe->entered.load(), 5000);
+    QVERIFY2(!probe->onGui.load(), "Checkpoint serialization and storage must run outside the GUI thread");
+    int ticks = 0; QTimer timer; connect(&timer, &QTimer::timeout, [&] { ++ticks; }); timer.start(1);
+    QTRY_VERIFY(ticks >= 3);
+    QCOMPARE(processed.count(), 0); QVERIFY(!store.processed(key));
+    QVERIFY(writeFile(dir.filePath("input/second.png")));
+    scan(*service); now += 2000; scan(*service);
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 1);
+    if (mode != "settle") QVERIFY(QFile::remove(dir.filePath("input/second.png")));
+    if (mode == "stop") { service->stop(); service->start(); scan(*service); }
+    if (mode == "destroy") service.reset();
+    if (mode == "drain") {
+      std::thread releaser([probe] { QThread::msleep(100); probe->release = true; });
+      service->finishCheckpoint(); releaser.join();
+      QVERIFY(store.processed(key)); QCOMPARE(processed.count(), 1);
+    } else probe->release = true;
+    QTRY_VERIFY(probe->exited.load());
+    if (mode == "destroy") {
+      QTRY_VERIFY(watch::WatchFolders(dir.filePath("store")).processed(key));
+      QCOMPARE(processed.count(), 0); return;
+    }
+    QTRY_COMPARE(processed.count(), 1);
+    if (mode == "conflict") {
+      QVERIFY(!store.processed(key)); QCOMPARE(readFile(checkpointPath), foreign);
+      bool found = false; for (const auto &note : notified) found |= note[0].toString().contains("not checkpointed");
+      QVERIFY(found);
+      now += 2000; scan(*service);
+      QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 1);
+    } else {
+      QVERIFY(store.processed(key)); QVERIFY(watch::WatchFolders(dir.filePath("store")).processed(key));
+      QVERIFY(processed.first()[1].toBool());
+      service->setCheckpointHook({});
+      now += 2000; scan(*service);
+      if (mode == "settle") { QTRY_COMPARE(processed.count(), 2); QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 2); }
+      else { service->stop(); service->start(); scan(*service); now += 2000; scan(*service); QCOMPARE(processed.count(), 1); }
+    }
+    service->stop(); service->finishCheckpoint();
   }
 
   void discoveryDoesNotBlockTheGui_data() {

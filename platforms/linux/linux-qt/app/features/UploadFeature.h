@@ -3,6 +3,7 @@
 namespace xerahs::app {
 class ApplicationWindow;
 struct AppContext;
+void drainWatchFolders();
 void installUpload(AppContext &ctx);
 void attachUploadWindow(AppContext &ctx, ApplicationWindow &window);
 }  // namespace xerahs::app

@@ -6,6 +6,7 @@
 #include "OwnedWork.h"
 #include "NativeWorkflowExecutions.h"
 #include <QDir>
+#include <QEventLoop>
 #include <QFileInfo>
 #include <QSaveFile>
 #include <QUuid>
@@ -138,14 +139,45 @@ void WatchFolderService::finishFileWork(const QString &path, const FileResult &r
   complete(path, result.error.isEmpty(), error);
 }
 void WatchFolderService::complete(const QString &path, bool success, const QString &error) {
-  if (path != m_pendingPath || path.isEmpty()) return;
-  if (success) {
-    const auto saved = m_store.remember(m_pendingKey);
-    if (!saved.isEmpty()) { m_blocked = true; emit notify(saved + ": watching stopped; completed action was not checkpointed.", false); }
+  if (path != m_pendingPath || path.isEmpty() || m_checkpointing) return;
+  if (!success || !m_store.loadError().isEmpty()) {
+    settle(path, success, error, success ? m_store.loadError() : QString{});
+    return;
+  }
+  m_checkpointing = true;
+  const auto write = m_store.checkpoint(m_pendingKey);
+  const auto hook = m_checkpointHook;
+  m_checkpoint = OwnedWork::run<watch::CheckpointResult>(this,
+      [write, hook](const OwnedWork::Context &) -> watch::CheckpointResult {
+    try {
+      if (hook) hook();
+      return watch::WatchFolders::writeCheckpoint(write);
+    } catch (...) { return {QStringLiteral("watch-store-write-failed"), {}}; }
+  }, [this, write, path, success, error](const watch::CheckpointResult &result) {
+    const auto saved = m_store.adoptCheckpoint(write, result);
+    m_checkpointing = false;
+    const QPointer<WatchFolderService> guard(this);
+    settle(path, success, error, saved);
+    if (guard) emit checkpointSettled();
+  });
+}
+void WatchFolderService::setCheckpointHook(std::function<void()> hook) { m_checkpointHook = std::move(hook); }
+void WatchFolderService::finishCheckpoint() {
+  if (!m_checkpointing) return;
+  QEventLoop loop;
+  connect(this, &WatchFolderService::checkpointSettled, &loop, &QEventLoop::quit);
+  connect(this, &QObject::destroyed, &loop, &QEventLoop::quit);
+  loop.exec(QEventLoop::ExcludeUserInputEvents);
+}
+void WatchFolderService::settle(const QString &path, bool success, const QString &error, const QString &saved) {
+  const QPointer<WatchFolderService> guard(this);
+  if (!saved.isEmpty()) {
+    m_blocked = true;
+    emit notify(saved + ": watching stopped; completed action was not checkpointed.", false);
+    if (!guard) return;
   }
   // A cancelled action (stop mid-processing) is not a verdict on the file: forget the attempt so it is discovered again.
   if (!success && (!m_running || error == QLatin1String("cancelled"))) m_attempted.remove(m_pendingKey);
-  const QPointer<WatchFolderService> guard(this);
   emit processed(path, success && (m_terminalState.isEmpty() || m_terminalState == QLatin1String("succeeded")));
   if (!guard) return;
   // WFCAT-017: the notification reads the terminal state, so a partial or failed

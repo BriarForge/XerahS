@@ -50,3 +50,7 @@ The scheduler still blocks remove_background, QR scanning/OCR dependencies, the 
 ## Verification
 
 The full Debug offscreen suite and final push gate must pass on the integrated tree. Actual results are recorded in shared loop state after push. Contract lint, backlog/progress freshness and current anchor integrity are checked separately.
+
+## Watch-folder checkpoint candidate — 2026-11-14
+
+Watch-folder processed checkpoints now freeze inputs on the GUI thread and serialize/re-read/atomically publish through OwnedWork. Completion is reported only after save or explicit checkpoint failure; no next file dispatches while pending. Stop does not cancel an already-earned checkpoint; owner destruction drops only adoption, retaining the worker write. The post-exec drain waits for completion, including signal exits; a conflicting writer or failed write blocks watching without adoption or retry. GUI-thread watcher registration remains accepted because QFileSystemWatcher owns its thread-bound inotify watches; the final one-file fingerprint remains accepted to refuse replacement immediately before dispatch. Rule persistence, execution-record writes, settings transfer/import/migration and other storage boundaries remain separate. Unknown-publication restart policy and checkpoint retention remain open; CORE-025 stays partial. Targeted Qt 6.12 / 6.4.2 suites pass, and the synchronous-path mutation fails the new responsiveness regression. Twenty-repeat runs, maintainer review and the full gate are pending. Coverage remains 174/324.

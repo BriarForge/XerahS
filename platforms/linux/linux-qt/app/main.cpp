@@ -21,6 +21,7 @@
 #include "features/CaptureFeature.h"
 #include "features/PreferencesFeature.h"
 #include "features/ShellFeatures.h"
+#include "features/UploadFeature.h"
 #include "shell/ActivationDispatcher.h"
 #include "RecordingController.h"
 #include "image-editor/EditorPreferences.h"
@@ -265,6 +266,7 @@ int main(int argc, char *argv[]) {
   QTimer::singleShot(0, &window, [] { xerahs::app::EditorWindow::offerRecovery(nullptr); });
   const int result = terminationSignal ? xerahs::shell::TerminationSignals::exitStatus(terminationSignal) : app.exec();
   xerahs::app::drainEditorRecovery();
+  xerahs::app::drainWatchFolders();
   instance.setAdmission({});
   return terminationSignal ? xerahs::shell::TerminationSignals::exitStatus(terminationSignal) : result;
 }
