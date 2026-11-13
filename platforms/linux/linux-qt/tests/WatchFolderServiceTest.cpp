@@ -557,7 +557,10 @@ private slots:
 
   // CORE-025: stopping while an upload is in flight leaves the file in place, unchecked-in, and discoverable
   // again by the same service after start() and by a fresh service after restart.
-  void stoppingMidUploadLeavesTheFileDiscoverable() {
+  // CORE-025 P1: a publication stopped mid-request is unconfirmed. The file
+  // stays on disk and remains discoverable for the explicit Upload file
+  // command, but it is never uploaded again automatically under the same key.
+  void stoppingMidUploadLeavesTheFileUnconfirmed() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     QVERIFY(QDir(dir.path()).mkpath("input"));
@@ -598,16 +601,15 @@ private slots:
     QCOMPARE(readFile(source), QByteArray("watch fixture pixels"));
     QVERIFY(!store.processed(watch::fingerprint(source)));
     QVERIFY(QDir(captures).entryList(QDir::Files).isEmpty());
-    // The same service picks the file up again once started.
+    // CORE-025: the publication is unconfirmed, so the same service never
+    // uploads the file again automatically under the same key.
     http.stall = false;
     service.start(); scan(service);
     now += 3000;
     scan(service);
-    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 2, 7000);
-    QCOMPARE(processed.at(1).at(0).toString(), source);
-    QCOMPARE(processed.at(1).at(1).toBool(), true);
-    QCOMPARE(http.received, 2);
-    QVERIFY(store.processed(watch::fingerprint(source)));
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QCOMPARE(http.received, 1);
+    QVERIFY(!store.processed(watch::fingerprint(source)));
     service.stop();
   }
 
@@ -931,6 +933,209 @@ private slots:
     watch::WatchFolders removed(dir.filePath("store"));
     QVERIFY(removed.loadError().isEmpty());
     QVERIFY(removed.rules().isEmpty());
+  }
+  // CORE-025 P1/P2: the send intent is durable before any dispatch, and a
+  // request that is stopped mid-flight is unconfirmed and is never uploaded
+  // again automatically under the same key.
+  void stoppingMidRequestLeavesThePublicationUnconfirmed() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures");
+    const auto source = dir.filePath("input/new.png");
+    HttpFixture http;
+    http.stall = true;
+    QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    UploadDestination destination;
+    destination.id = QUuid::createUuid();
+    destination.name = "Watch fixture";
+    destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    destination.body = BodyType::MultipartFormData;
+    destination.fileFormName = "file";
+    destination.resultUrl = "{json:url}";
+    auto ports = portsFor(dir);
+    DestinationCatalog catalog(ports.catalogPath);
+    QCOMPARE(catalog.add(destination), QString());
+    qint64 now = 0;
+    QWidget owner;
+    FileUploadController uploads(ports, &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    watch::Rule rule;
+    rule.path = dir.filePath("input");
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed);
+    QSignalSpy notices(&service, &WatchFolderService::notify);
+    service.start(); scan(service);
+    QVERIFY(writeFile(source));
+    scan(service);
+    now = 2000;
+    scan(service);
+    QTRY_COMPARE_WITH_TIMEOUT(http.received, 1, 7000);
+    // The intent is durable while the request is in flight.
+    QVERIFY(store.publicationPending(watch::fingerprint(source)));
+    service.stop();
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QCOMPARE(processed.first().at(1).toBool(), false);
+    // The publication is unconfirmed, so it is not checkpointed as processed.
+    QVERIFY(!store.processed(watch::fingerprint(source)));
+    QVERIFY(store.publicationPending(watch::fingerprint(source)));
+    // The unconfirmed publication is named in the current notices.
+    bool named = false;
+    for (const auto &notice : notices) {
+      const auto text = notice.at(0).toString();
+      if (text.contains("watch-publication-unconfirmed") && text.contains("new.png")) named = true;
+    }
+    QVERIFY(named);
+  }
+
+  // CORE-025 P1: a publication that never started is released, so the file
+  // stays discoverable and may be picked up again.
+  void stoppingBeforeDispatchReleasesTheFile() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures");
+    const auto source = dir.filePath("input/new.png");
+    HttpFixture http;
+    QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    UploadDestination destination;
+    destination.id = QUuid::createUuid();
+    destination.name = "Watch fixture";
+    destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    destination.body = BodyType::MultipartFormData;
+    destination.fileFormName = "file";
+    destination.resultUrl = "{json:url}";
+    auto ports = portsFor(dir);
+    DestinationCatalog catalog(ports.catalogPath);
+    QCOMPARE(catalog.add(destination), QString());
+    qint64 now = 0;
+    QWidget owner;
+    FileUploadController uploads(ports, &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    watch::Rule rule;
+    rule.path = dir.filePath("input");
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed);
+    service.start(); scan(service);
+    QVERIFY(writeFile(source));
+    // The file is not stable yet, so it is not dispatched and never sent.
+    service.stop();
+    QVERIFY(!store.processed(watch::fingerprint(source)));
+    QVERIFY(!store.publicationPending(watch::fingerprint(source)));
+    QCOMPARE(http.received, 0);
+    QVERIFY(QFileInfo::exists(source));
+  }
+
+  // CORE-025 P2: when the intent cannot be saved, no HTTP request is sent and
+  // watching stops with watch-store-write-failed.
+  void anUnsavableIntentSendsNothingAndBlocksWatching() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures");
+    const auto source = dir.filePath("input/new.png");
+    HttpFixture http;
+    QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    UploadDestination destination;
+    destination.id = QUuid::createUuid();
+    destination.name = "Watch fixture";
+    destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    destination.body = BodyType::MultipartFormData;
+    destination.fileFormName = "file";
+    destination.resultUrl = "{json:url}";
+    auto ports = portsFor(dir);
+    DestinationCatalog catalog(ports.catalogPath);
+    QCOMPARE(catalog.add(destination), QString());
+    qint64 now = 0;
+    QWidget owner;
+    FileUploadController uploads(ports, &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    watch::Rule rule;
+    rule.path = dir.filePath("input");
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy notices(&service, &WatchFolderService::notify);
+    // The store cannot be written, so the intent cannot be saved. The store
+    // file is replaced by a directory, which is a real write failure.
+    const auto storeFile = dir.filePath("store/watch-processed.json");
+    if (QFileInfo::exists(storeFile)) QVERIFY(QFile::remove(storeFile));
+    QVERIFY(QDir(storeFile).mkpath("."));
+    service.start(); scan(service);
+    QVERIFY(writeFile(source));
+    now = 2000;
+    scan(service);
+    now += 3000;
+    scan(service);
+    // The intent failure is reported and watching stops.
+    QTRY_VERIFY_WITH_TIMEOUT(notices.count() > 0, 7000);
+    bool reported = false;
+    for (const auto &notice : notices) {
+      const auto text = notice.at(0).toString();
+      if (text.contains("watch-store-write-failed") || text.contains("watch-store-read-failed")) reported = true;
+    }
+    QVERIFY(reported);
+    // Zero HTTP requests: the intent is saved before the dispatch.
+    QCOMPARE(http.received, 0);
+  }
+
+  // CORE-025 P2/P3: a leftover sending record from an earlier process is
+  // unconfirmed. It is named in the startup notice without a path, and it is
+  // never uploaded again automatically under the same key.
+  void aLeftoverSendingRecordIsNeverUploadedAgain() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures");
+    const auto source = dir.filePath("input/new.png");
+    HttpFixture http;
+    QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    UploadDestination destination;
+    destination.id = QUuid::createUuid();
+    destination.name = "Watch fixture";
+    destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    destination.body = BodyType::MultipartFormData;
+    destination.fileFormName = "file";
+    destination.resultUrl = "{json:url}";
+    auto ports = portsFor(dir);
+    DestinationCatalog catalog(ports.catalogPath);
+    QCOMPARE(catalog.add(destination), QString());
+    QVERIFY(writeFile(source));
+    const auto key = watch::fingerprint(source);
+    qint64 now = 0;
+    QWidget owner;
+    FileUploadController uploads(ports, &owner);
+    // The previous process left a sending record behind.
+    watch::WatchFolders store(dir.filePath("store"));
+    const auto intent = store.publicationIntent(key);
+    auto intentResult = watch::WatchFolders::writeIntent(intent);
+    QCOMPARE(intentResult.error, QString());
+    QCOMPARE(store.adoptIntent(intent, std::move(intentResult)), QString());
+
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    watch::Rule rule;
+    rule.path = dir.filePath("input");
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy notices(&service, &WatchFolderService::notify);
+    service.start(); scan(service);
+    now = 2000;
+    scan(service);
+    // The startup notice names the file, and discloses no path or URL.
+    bool named = false;
+    for (const auto &notice : notices) {
+      const auto text = notice.at(0).toString();
+      if (text.contains("watch-publication-unconfirmed") && text.contains("new.png")) {
+        named = true;
+        QVERIFY(!text.contains(dir.path()));
+        QVERIFY(!text.contains("http"));
+      }
+    }
+    QVERIFY(named);
+    // The leftover publication is never uploaded again automatically.
+    scan(service);
+    QCOMPARE(http.received, 0);
+    QVERIFY(!store.processed(key));
   }
 };
 

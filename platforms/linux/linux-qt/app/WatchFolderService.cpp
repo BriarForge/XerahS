@@ -189,14 +189,31 @@ void WatchFolderService::beginPublication(const QString &path, const QString &ke
       return watch::WatchFolders::writeIntent(intent);
     } catch (...) { return {QStringLiteral("watch-store-write-failed"), {}, {}, {}}; }
   }, [this, intent, path, rule](watch::IntentResult result) {
-    const auto saved = m_store.adoptIntent(intent, std::move(result));
+    // CORE-025 P2: an intent that cannot be saved is always reported as
+    // watch-store-write-failed, whichever store error caused it.
+    const auto failed = !result.error.isEmpty();
+    const auto saved = failed ? QString() : m_store.adoptIntent(intent, std::move(result));
     m_checkpointing = false;
     const QPointer<WatchFolderService> guard(this);
     if (!saved.isEmpty()) {
       // CORE-025 P2: zero HTTP requests, and watching stops.
       m_blocked = true;
       emit notify(saved + QStringLiteral(": watching stopped; the upload was not sent because its publication could not be saved."), false);
-      if (guard) emit checkpointSettled();
+      if (guard) {
+        // The operation ends without a publication: the file was never sent.
+        settle(path, false, saved, {});
+        emit checkpointSettled();
+      }
+      return;
+    }
+    if (failed) {
+      // CORE-025 P2: zero HTTP requests, and watching stops.
+      m_blocked = true;
+      emit notify(QStringLiteral("watch-store-write-failed: watching stopped; the upload was not sent because its publication could not be saved."), false);
+      if (guard) {
+        settle(path, false, QStringLiteral("watch-store-write-failed"), {});
+        emit checkpointSettled();
+      }
       return;
     }
     if (!guard) return;
@@ -251,8 +268,18 @@ void WatchFolderService::writeSettlement(const QString &path, watch::Publication
         return;
       }
       if (!guard) return;
-      // The publication is settled: the file may be discovered again.
-      m_attempted.remove(m_pendingKey);
+      // The publication is settled durably. The operation now ends: a released
+      // publication is discovered again, and an unconfirmed one is never sent
+      // again automatically under the same key.
+      const bool unconfirmed = m_queuedSettlement == watch::PublicationState::Unconfirmed;
+      const auto settledKey = m_pendingKey;
+      settle(m_queuedSettlementPath, false, QStringLiteral("cancelled"), {});
+      if (!guard) return;
+      if (unconfirmed && !settledKey.isEmpty()) {
+        // The unconfirmed publication keeps its record, so the file is not
+        // published again automatically under the same key.
+        m_attempted.insert(settledKey);
+      }
       emit checkpointSettled();
     });
   };
@@ -268,7 +295,7 @@ void WatchFolderService::complete(const QString &path, bool success, const QStri
   if (path != m_pendingPath || path.isEmpty() || m_checkpointing) return;
   // CORE-025 P1: the disposition decides what happens to a publication. A copy
   // or move is not a publication and keeps its existing checkpoint behavior.
-  if (!m_publicationAction) {
+  if (m_publicationAction) {
     watch::PublicationFacts facts;
     facts.requestStarted = m_requestStarted;
     facts.attempts = m_uploadAttempts;
