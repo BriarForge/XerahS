@@ -59,6 +59,70 @@ private slots:
     QCOMPARE(store.remove(id), QString()); QVERIFY(!QFileInfo::exists(file)); QVERIFY(store.list().records.empty());
     QCOMPARE(store.remove(id), QString());  // removing twice is harmless
   }
+  void externallyRemovedRecoveryIsRecreatedByItsWriter() {
+    QTemporaryDir dir; EditorRecoveryStore store(dir.filePath("r"));
+    const auto id = EditorRecoveryStore::newId(), path = store.directory() + '/' + id + ".json";
+    QCOMPARE(store.write(id, {}, document(), QCoreApplication::applicationPid()), QString());
+    QVERIFY(QFile::remove(path));
+    const auto latest = document(3);
+    QCOMPARE(store.write(id, {}, latest, QCoreApplication::applicationPid()), QString());
+    QVERIFY(QFileInfo::exists(path));
+    const auto listing = store.list(); QCOMPARE(listing.records.size(), size_t(1));
+    QCOMPARE(listing.records[0].id, id);
+    QCOMPARE(serializeDocument(listing.records[0].document).value("annotations"), serializeDocument(latest).value("annotations"));
+    QCOMPARE(store.write(id, {}, document(4), QCoreApplication::applicationPid()), QString());
+    QCOMPARE(store.list().records[0].document.annotations.size(), size_t(4));
+    QCOMPARE(store.remove(id), QString()); QVERIFY(!QFileInfo::exists(path));
+  }
+  void recreationAtProtectedCapacityRefusesAndKeepsEveryRecord() {
+    QTemporaryDir dir; EditorRecoveryStore store(dir.filePath("r"));
+    const auto id = EditorRecoveryStore::newId(), path = store.directory() + '/' + id + ".json";
+    QCOMPARE(store.write(id, {}, document(), QCoreApplication::applicationPid()), QString());
+    for (int i = 0; i < EditorRecoveryStore::kMaxRecords - 1; ++i)
+      QCOMPARE(store.write(EditorRecoveryStore::newId(), {}, document(), QCoreApplication::applicationPid()), QString());
+    QVERIFY(QFile::remove(path));
+    QCOMPARE(store.write(EditorRecoveryStore::newId(), {}, document(), QCoreApplication::applicationPid()), QString());
+    QMap<QString, QByteArray> before;
+    for (const auto &name : QDir(store.directory()).entryList({"*.json"}, QDir::Files)) {
+      const auto file = QDir(store.directory()).filePath(name); before.insert(file, bytes(file));
+    }
+    QCOMPARE(before.size(), EditorRecoveryStore::kMaxRecords);
+    QCOMPARE(store.write(id, {}, document(3), QCoreApplication::applicationPid()), QString("recovery-storage-full"));
+    QVERIFY(!QFileInfo::exists(path));
+    for (auto it = before.begin(); it != before.end(); ++it) QCOMPARE(bytes(it.key()), it.value());
+    // A refused recreation must retain the old snapshot, preventing later takeover.
+    auto replacement = QJsonDocument::fromJson(before.first()).object(); replacement.insert("sourcePath", "replacement.png");
+    const auto changed = QJsonDocument(replacement).toJson();
+    { QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); QCOMPARE(file.write(changed), changed.size());
+      QVERIFY(file.setPermissions(QFile::ReadOwner | QFile::WriteOwner)); }
+    QVERIFY(!store.write(id, {}, document(4), QCoreApplication::applicationPid()).isEmpty());
+    QCOMPARE(bytes(path), changed);
+    for (auto it = before.begin(); it != before.end(); ++it) QCOMPARE(bytes(it.key()), it.value());
+  }
+  void recreationNeverAdoptsAnInterveningRecord_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto *mode : {"changed", "newer", "corrupt", "symlink"}) QTest::newRow(mode) << QString(mode);
+  }
+  void recreationNeverAdoptsAnInterveningRecord() {
+    QFETCH(QString, mode);
+    QTemporaryDir dir; EditorRecoveryStore store(dir.filePath("r"));
+    const auto id = EditorRecoveryStore::newId(), path = store.directory() + '/' + id + ".json";
+    QCOMPARE(store.write(id, {}, document(), QCoreApplication::applicationPid()), QString());
+    auto replacement = QJsonDocument::fromJson(bytes(path)).object(); replacement.insert("sourcePath", "replacement.png");
+    if (mode == "newer") replacement.insert("version", 2);
+    const auto changed = mode == "corrupt" ? QByteArray("corrupt-record") : QJsonDocument(replacement).toJson();
+    QVERIFY(QFile::remove(path));
+    const auto victim = dir.filePath("private-record.json");
+    const auto destination = mode == "symlink" ? victim : path;
+    { QFile file(destination); QVERIFY(file.open(QIODevice::WriteOnly)); QCOMPARE(file.write(changed), changed.size());
+      QVERIFY(file.setPermissions(QFile::ReadOwner | QFile::WriteOwner)); }
+    if (mode == "symlink") QVERIFY(QFile::link(victim, path));
+    const auto link = QFileInfo(path).symLinkTarget();
+    QVERIFY(!store.write(id, {}, document(3), QCoreApplication::applicationPid()).isEmpty());
+    QCOMPARE(bytes(path), changed); QCOMPARE(QFileInfo(path).symLinkTarget(), link);
+    QCOMPARE(QFileInfo(path).isSymLink(), mode == "symlink");
+    if (mode == "symlink") QCOMPARE(bytes(victim), changed);
+  }
   void neverTouchesTheUsersSaveTargetOrSidecar() {
     QTemporaryDir dir; const auto png = dir.filePath("save.png"), xann = png + ".xann";
     QVERIFY(QFile(png).open(QIODevice::WriteOnly)); { QFile f(xann); QVERIFY(f.open(QIODevice::WriteOnly)); f.write("explicit"); }

@@ -30,8 +30,9 @@ Trace status retains the established enum. `audit.classification` and `blocked_r
 
 ## Next work in build order
 
-The current next foundation is safe recreation of an externally removed recovery
-snapshot, followed by remaining synchronous storage boundaries. Steps 1–4 below
+The current next foundation is the remaining synchronous storage boundaries.
+Recovery recreation after external removal is implemented with store/native
+regression proof; maintainer/independent review and the full gate are pending. Steps 1–4 below
 have landed and remain as the historical build sequence; their broader retention
 and supported-target qualification edges stay open.
 

@@ -442,6 +442,45 @@ private slots:
     if (second) QVERIFY(second->writeRecoveryNow().isEmpty());
     QCOMPARE(storedBytes(path), originalPng);
   }
+  void externallyRemovedRecoveryIsRecreatedOnTheNextEdit() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); const auto path = dir.filePath("recover.png");
+    QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
+    EditorRecoveryStore store(EditorRecoveryStore::defaultDirectory());
+    QVERIFY(store.directory().startsWith(recoveryState->path()));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->setAttribute(Qt::WA_DeleteOnClose, false); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas);
+    canvas->setTool(EditorCanvas::Tool::Rectangle); drawRectangle(*canvas);
+    QVERIFY(window->writeRecoveryNow().isEmpty());
+    auto listing = store.list(); QCOMPARE(listing.records.size(), size_t(1));
+    const auto id = listing.records[0].id;
+    const auto file = QDir(store.directory()).filePath(id + ".json"); QVERIFY(QFile::remove(file));
+    const auto drawNext = [&] {
+      canvas->setTool(EditorCanvas::Tool::Rectangle);
+      QTest::mousePress(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({32, 24}).toPoint());
+      QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({48, 34}).toPoint());
+    };
+    drawNext(); QVERIFY(window->writeRecoveryNow().isEmpty());
+    listing = store.list(); QCOMPARE(listing.records.size(), size_t(1)); QCOMPARE(listing.records[0].id, id);
+    QCOMPARE(listing.records[0].document.annotations.size(), size_t(2));
+    QVERIFY(!window->statusBar()->currentMessage().contains("could not be saved"));
+    QCOMPARE(storedBytes(path), original);
+    trigger(*window, "saveImage"); QTRY_VERIFY(store.list().records.empty());
+    const auto saved = storedBytes(path), sidecar = storedBytes(path + ".xann"); QVERIFY(!sidecar.isEmpty());
+    trigger(*window, "undo"); QVERIFY(window->writeRecoveryNow().isEmpty());
+    listing = store.list(); QCOMPARE(listing.records.size(), size_t(1));
+    const auto nextId = listing.records[0].id;
+    QVERIFY(QFile::remove(QDir(store.directory()).filePath(nextId + ".json")));
+    drawNext(); QVERIFY(window->writeRecoveryNow().isEmpty());
+    listing = store.list(); QCOMPARE(listing.records.size(), size_t(1)); QCOMPARE(listing.records[0].id, nextId);
+    QCOMPARE(listing.records[0].document.annotations.size(), size_t(2));
+    QTimer discard; connect(&discard, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      if (auto *button = box->button(QMessageBox::Discard)) button->click();
+    }); discard.start(2);
+    QVERIFY(window->close()); discard.stop(); QVERIFY(store.list().records.empty());
+    QCOMPARE(storedBytes(path), saved); QCOMPARE(storedBytes(path + ".xann"), sidecar);
+  }
   // ES-018: separate recovery document, never the explicit save; disclosed and restorable.
   void recoveryDocumentLifecycleAndRestartNotice() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); const auto path = dir.filePath("recover.png"), prefs = dir.filePath("prefs.json");

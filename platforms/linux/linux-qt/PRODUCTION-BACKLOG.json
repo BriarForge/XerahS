@@ -771,6 +771,19 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "product-contract/capabilities/EDITOR-SESSION-001/test-vectors.json"
       ]
+    },
+    {
+      "date": "2026-11-14",
+      "requirements": [
+        "ES-018",
+        "CORE-027"
+      ],
+      "outcome": "Maintainer decision, 2026-11-14: external deletion is not an explicit Discard of a running dirty editor. Its next ordinary write recreates the private recovery record under the same id. A locked Missing read uses an empty expected snapshot, while the writer keeps its cached ownership snapshot until publication succeeds. Recreation still passes new-record capacity/pruning admission; protected capacity refuses without changing other files. Changed supported, newer, corrupt and linked intervening files are preserved. Store and native tests cover latest-document recreation, subsequent updates/removal, refusal at protected capacity followed by a foreign replacement, four intervening-file cases, and Save/Undo/Discard after recreation. The original store/native regressions fail before the fix; preservation cases stay green. The rebuilt probe succeeds with subsequent_write=ok and exists=1. No watcher, queue/lifetime change, new retention threshold or contract change. Maintainer review, independent model review and the full integration gate are pending; broader retention and release qualification remain open.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
+        "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+      ]
     }
   ],
   "audit_method": "All 16 manifest capabilities / 345 IDs reviewed against current production and meaningful named automated test bodies. 325 desktop rows classified; 20 mobile-only requirements explicitly outside Linux scope.",

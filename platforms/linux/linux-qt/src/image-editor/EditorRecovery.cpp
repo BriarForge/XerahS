@@ -107,7 +107,7 @@ QString EditorRecoveryStore::write(const QString &id, const QString &sourcePath,
       : std::optional<std::vector<PruneRecord>>(std::in_place);
   if (!pruning) return QStringLiteral("recovery-storage-full");
   for (int attempt = 0; attempt < 2; ++attempt) {
-    QByteArray expected = m_snapshots.value(id);
+    QByteArray expected = previous.status == StoreStatus::Missing ? QByteArray{} : m_snapshots.value(id);
     if (attempt == 1) {
       const auto current = file.read();
       if (current.status != StoreStatus::Ok && current.status != StoreStatus::Missing) return QStringLiteral("recovery-write-failed");
