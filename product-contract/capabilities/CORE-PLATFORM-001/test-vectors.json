@@ -2,9 +2,8 @@
   "schema_version": 2,
   "capability": "CORE-PLATFORM-001",
   "comparison": "subset",
-  "notes": "Watch-folder publication disposition and retention, CORE-025 subsection P1-P6. Two operations call future production pure helpers through the platform's headless test seam; they are normative contract behavior, not an implementation of it. Operation `watch-publication-disposition` decides what happens to one watch-folder publication attempt that has just ended, or what a new process must assume about a publication that was still in flight when the previous process stopped. Operation `watch-retain` decides which checkpoint entries survive a checkpoint write. Expected values come from the CORE-025 P1-P6 policy text, never from one implementation (ROOT-PROHIBIT-001). INPUT FORMAT for `watch-publication-disposition`: `request_started` (boolean, required) says whether a network request was actually issued for this publication; `attempts` (integer >= 0, required) counts the request attempts made, including the attempt whose outcome is unknown; `http_response_on_every_attempt` (boolean, required) says whether production can prove every attempt that was made received a final HTTP response of any status; `succeeded` (boolean, required) says whether the publication is known to have succeeded; `restart_with_sending` (boolean, required) says whether the input describes a fresh process that found a still-`sending` publication left over from a previous process. `restart_with_sending` overrides every other runtime field: when it is true the only inputs that matter are `restart_with_sending` and the attempt facts, and the publication is `unconfirmed` regardless of `request_started`, `attempts`, `http_response_on_every_attempt`, `succeeded`, or any empty runtime field. PRECEDENCE (first match wins): `restart_with_sending` true gives `unconfirmed`; otherwise `succeeded` true gives `processed`; otherwise `request_started` and `http_response_on_every_attempt` both true gives `released`; otherwise `request_started` true gives `unconfirmed`; otherwise `request_started` false gives `released`. `attempts` is retained as input because it carries the proof semantics: `http_response_on_every_attempt` is a claim that production can show every one of the `attempts` attempts was answered, and an implementation that cannot show that MUST report `http_response_on_every_attempt` as false. `http_response_on_every_attempt` is never derived from the last attempt's status alone; a later answered attempt does not repair an earlier unanswered attempt. OUTPUT: `disposition` is one of `processed`, `released`, or `unconfirmed`. `processed` means the publication is checkpointed as complete and MUST NOT be uploaded again under the same key. `released` means the publication is released for rediscovery in the current session and MUST NOT be retried again in this session; it remains discoverable. `unconfirmed` means the publication MAY or MAY NOT have reached the remote and MUST NOT be uploaded again automatically under the same key. INPUT FORMAT for `watch-retain`: `keys` (array of strings, required) is the full checkpoint key set before the write; `files` (array of objects, required) gives the current facts for each watched file, each with `key` (string, the checkpoint key), `parent_exists` (boolean, whether the file's parent directory still exists), `fingerprint` (string or null, the current fingerprint of the file as produced by the platform fingerprint helper, or null when the file cannot be read), and `fingerprint_matches_key` (boolean, whether the current fingerprint equals the fingerprint recorded in the key). A key whose parent does not exist is kept even when its file is gone, because the parent may be an unmounted or removed root rather than a deleted file. A key whose parent exists and whose fingerprint no longer equals the recorded fingerprint is pruned, because the file was deleted, moved, or changed. A key recorded as `sending` is NEVER pruned. OUTPUT: `kept` is the array of surviving keys, in the order the keys were given.",
+  "notes": "watch-publication-disposition inputs are request_started (boolean), attempts (nonnegative integer), http_response_on_every_attempt (boolean), succeeded (boolean), and restart_with_sending (boolean). First match wins: restart_with_sending -> unconfirmed; succeeded -> processed; request_started and http_response_on_every_attempt -> released; other request_started -> unconfirmed; otherwise released. A surviving sending record overrides all runtime fields. Production proves response coverage using answeredAttempts == attempts with attempts > 0; the final HTTP status alone is insufficient. An acknowledged failure is not retried in the current session but remains discoverable in a later session. Unsent work stays discoverable under existing Start/Stop behavior. processed and unconfirmed hold the watch key against automatic publication; an explicit Upload file command is independent of that hold. watch-retain inputs are keys (array of checkpoint key strings), files (array of {key, parent_exists, fingerprint}, with fingerprint string or null), and optional sending_keys (array of keys, default empty). The keys include processed, unconfirmed and sending records. A sending key is always kept. Otherwise a key is kept when its parent is missing or the current fingerprint equals the key. fingerprint is the current complete key returned by the platform fingerprint helper; null means no current fingerprint. Output kept preserves input keys order. The adapter supplies observations to the same pure retain helper used by production; it does not implement the retention decision itself.",
   "requirement_ids": [
-    "CORE-024",
     "CORE-025"
   ],
   "vectors": [
@@ -102,7 +101,7 @@
       "input": {
         "request_started": false,
         "attempts": 0,
-        "http_response_on_every_attempt": true,
+        "http_response_on_every_attempt": false,
         "succeeded": false,
         "restart_with_sending": false
       },
@@ -261,14 +260,12 @@
           {
             "key": "key-a",
             "parent_exists": true,
-            "fingerprint": "fp-a",
-            "fingerprint_matches_key": true
+            "fingerprint": "key-a"
           },
           {
             "key": "key-b",
             "parent_exists": true,
-            "fingerprint": "fp-b",
-            "fingerprint_matches_key": true
+            "fingerprint": "key-b"
           }
         ]
       },
@@ -294,14 +291,12 @@
           {
             "key": "key-a",
             "parent_exists": true,
-            "fingerprint": "fp-a",
-            "fingerprint_matches_key": true
+            "fingerprint": "key-a"
           },
           {
             "key": "key-b",
             "parent_exists": true,
-            "fingerprint": null,
-            "fingerprint_matches_key": false
+            "fingerprint": null
           }
         ]
       },
@@ -326,14 +321,12 @@
           {
             "key": "key-a",
             "parent_exists": true,
-            "fingerprint": "fp-a",
-            "fingerprint_matches_key": true
+            "fingerprint": "key-a"
           },
           {
             "key": "key-b",
             "parent_exists": true,
-            "fingerprint": "fp-b2",
-            "fingerprint_matches_key": false
+            "fingerprint": "fp-b2"
           }
         ]
       },
@@ -358,14 +351,46 @@
           {
             "key": "key-a",
             "parent_exists": true,
-            "fingerprint": "fp-a",
-            "fingerprint_matches_key": true
+            "fingerprint": "key-a"
           },
           {
             "key": "key-b",
             "parent_exists": false,
-            "fingerprint": null,
-            "fingerprint_matches_key": false
+            "fingerprint": null
+          }
+        ]
+      },
+      "expected": {
+        "kept": [
+          "key-a",
+          "key-b"
+        ]
+      }
+    },
+    {
+      "id": "retain-never-prunes-sending",
+      "operation": "watch-retain",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "keys": [
+          "key-a",
+          "key-b"
+        ],
+        "sending_keys": [
+          "key-b"
+        ],
+        "files": [
+          {
+            "key": "key-a",
+            "parent_exists": true,
+            "fingerprint": "key-a"
+          },
+          {
+            "key": "key-b",
+            "parent_exists": true,
+            "fingerprint": null
           }
         ]
       },

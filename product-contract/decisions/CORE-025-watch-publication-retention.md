@@ -3,7 +3,7 @@
 Decision: CORE-025-WATCH-PUBLICATION-2026-11-14, resolved by maintainer Aoife on
 2026-11-14.
 Source: interactive maintainer brief, "CORE025 watch publication retention".
-Contract: 0.4.0; CORE-PLATFORM-001: 0.6.0. Requirements: CORE-024, CORE-025.
+Contract: 0.4.0; CORE-PLATFORM-001: 0.6.0. Requirements: CORE-025.
 
 ## Problem
 
@@ -24,7 +24,7 @@ The publication disposition follows the first matching rule.
 1. A publication left over as `sending` from an earlier process is
    `unconfirmed`.
 2. A publication that succeeded is `processed`: it is checkpointed as complete
-   and is never uploaded again under the same key.
+   and is never uploaded again automatically under the same key.
 3. A publication for which at least one request was started and every request
    attempt received an HTTP response, but which did not succeed, is `released`:
    it is not retried again in the current session and stays discoverable, so a
@@ -63,9 +63,11 @@ This is why the startup rule is checked first and overrides every runtime fact.
 
 ### Retry eligibility and notices
 
-Retry is explicit. The existing Upload file command produces a new file
-fingerprint and therefore a new key, which is the only way an unconfirmed
-publication may be published again. No new user interface is added.
+Retry is controlled by explicit user action. The user can use the existing
+Upload file command independently of the watch key, or change the file, which
+gives it a new fingerprint and therefore a new key. The Upload file command
+does not change the fingerprint or clear the existing watch hold. No new user
+interface is added.
 
 During a session, an unconfirmed publication is named in the current notices.
 At startup, one `watch-publication-unconfirmed` notice names up to five base

@@ -19,7 +19,6 @@ Status: Approved by the human product owner on 2026-08-31 and 2026-09-28 (0.4.0 
 - **CORE-003:** Native adapters MAY differ in presentation and OS mechanism but
   MUST return shared semantic results and stable error categories. Degraded,
   unavailable, and substitute behavior requires an accepted disposition.
-
 - **CORE-004:** Long-running operations MUST expose progress where knowable,
   cooperative cancellation, deterministic terminal state, redacted diagnostics,
   and recoverable completed outputs.
@@ -187,8 +186,7 @@ Status: Approved by the human product owner on 2026-08-31 and 2026-09-28 (0.4.0 
 
 This subsection decides the outcome of a watch-folder publication, the evidence a
 new process inherits after an unclean stop, and the retention rules for the
-watch checkpoint store. It refines CORE-024 and CORE-025 and creates no new
-requirement ID.
+watch checkpoint store. It refines CORE-025 and creates no new requirement ID.
 
 The normative evidence for this subsection is `test-vectors.json`, which
 exercises two operations: `watch-publication-disposition` decides the
@@ -214,7 +212,7 @@ rule, in this order:
 1. A publication left over as `sending` from an earlier process is
    `unconfirmed`.
 2. A publication that succeeded is `processed`. It MUST be checkpointed as
-   complete and MUST NOT be uploaded again under the same key.
+   complete and MUST NOT be uploaded again automatically under the same key.
 3. A publication for which at least one request was started and every request
    attempt received an HTTP response, but which did not succeed, is `released`.
    It MUST NOT be retried again in the current session and MUST remain
@@ -245,9 +243,10 @@ At startup, every leftover publication still recorded as `sending` is
 
 ### P3 Retry eligibility and notices
 
-Retry eligibility MUST be resolved by the explicit existing Upload file
-command, which produces a new file fingerprint and therefore a new key. This
-subsection adds no new user interface.
+Retry eligibility MUST remain controlled by explicit user action. The user MAY
+use the existing Upload file command for an explicit upload independently of the
+watch key, or change the file, which gives it a new fingerprint and therefore a
+new key. This subsection adds no new user interface.
 
 During a session, an `unconfirmed` publication MUST be named in the current
 notices, together with the file it names. At startup, the implementation MUST
@@ -316,8 +315,9 @@ implementation becomes normative merely through this package.
   succeeded; an implementation that cannot prove every attempt was answered
   MUST treat the publication as unconfirmed. The send intent MUST be durably
   saved before dispatch, every startup leftover `sending` record is
-  unconfirmed, retry eligibility resolves through the existing Upload file
-  command, local copy and move are unchanged, checkpoint retention prunes by
+  unconfirmed, retry eligibility resolves through an explicit Upload file
+  command or a changed file with a new fingerprint, local copy and move are
+  unchanged, checkpoint retention prunes by
   parent existence and fingerprint change, and the watch checkpoint store
   becomes version 2 with a version 1 read and next-write upgrade. Contract
   0.4.0 records the decision and the vectors. Linux implements it first, and
