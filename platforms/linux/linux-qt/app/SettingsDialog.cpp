@@ -36,6 +36,9 @@ struct SettingsDialog::TransferState {
   bool busy = false, committing = false, closed = false, backupAvailable = false;
   OwnedWork work;
 };
+SettingsDialog::~SettingsDialog() {
+  m_transfer->closed = true; m_transfer->work.cancel();
+}
 void SettingsDialog::done(int result) {
   if (m_transfer->committing) return;
   m_transfer->closed = true; m_transfer->work.cancel();

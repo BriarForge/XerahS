@@ -125,6 +125,25 @@ private slots:
     dialog.reset(); QVERIFY(!orphan); QCOMPARE(imported, 1);
   }
 
+  void deletingOwnerWithAnUntouchedPicker_data() {
+    QTest::addColumn<QString>("command");
+    for (const auto command : {"exportSettings", "importSettings", "migrateReferenceSettings"}) QTest::newRow(command) << QString(command);
+  }
+  void deletingOwnerWithAnUntouchedPicker() {
+    QFETCH(QString, command);
+    QTemporaryDir dir;
+    ConfigurationPaths paths{dir.filePath("app.json"), dir.filePath("editor.json"), dir.filePath("workflows.json"), dir.filePath("destinations.json"), dir.path()};
+    ApplicationSettingsStore store(paths.application, dir.path());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    int imported = 0, applied = 0;
+    auto *dialog = new xerahs::app::SettingsDialog(store, dir.path(), {}, shortcuts, [&] { ++applied; }, nullptr, paths, [&] { ++imported; });
+    dialog->show(); auto *button = dialog->findChild<QPushButton *>(command); QVERIFY(button); QTRY_VERIFY(button->isEnabled()); button->click();
+    QPointer<QFileDialog> picker = dialog->findChild<QFileDialog *>(); QVERIFY(picker); QVERIFY(picker->isVisible());
+    delete dialog;
+    QVERIFY(!picker); QCOMPARE(imported, 0); QCOMPARE(applied, 0);
+    QTest::qWait(20); QVERIFY(!QFile::exists(paths.application)); QVERIFY(!QFile::exists(paths.application + ".import-recovery"));
+  }
+
   void transferOwnerTeardown_data() {
     QTest::addColumn<QString>("phase");
     for (const auto phase : {"inspect", "preview", "commit"}) QTest::newRow(phase) << QString(phase);

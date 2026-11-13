@@ -13,6 +13,7 @@ public:
       const xerahs::workflows::WorkflowShortcutPlan &plan, WorkflowShortcutActions &shortcuts,
       std::function<void()> applied, QWidget *parent = nullptr, xerahs::settings::ConfigurationPaths transferPaths = {},
       std::function<void()> imported = {});
+  ~SettingsDialog() override;
   void done(int result) override;
 private:
   struct TransferState;
