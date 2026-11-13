@@ -1,8 +1,27 @@
 # Empty save and baseline companion policy
 
 Decision ID: ES-014-030-LINUX-2026-10-15
-Status: pending product-owner decision; no shared contract/approval changed.
-Requirements: ES-011/012/014/015/030 and EA-019/020. Disposition: Required.
+Status: resolved by maintainer Aoife on 2026-11-14 under ROOT-REVIEW-001.
+Requirements: ES-014, ES-030, EO-006. Disposition: Required.
+
+The [contract decision](../../../../product-contract/decisions/ES-014-030-empty-save-baseline.md)
+and EDITOR-SESSION-001 0.2.2 settle the conflict below. An explicit empty save
+writes a zero-annotation default companion when a baseline companion exists.
+The default is bound to the published raster SHA-256 and takes read precedence.
+The baseline is checked for existence only and remains byte-identical.
+
+Without a baseline, explicit empty save removes only the supported default and
+returns no path. Without intent, both files remain unchanged. Unsupported or
+damaged defaults still refuse. A baseline arriving after removal admission
+still causes honest partial failure; explicit Retry then writes the shadow.
+
+Native editor tests exercise clear, Save, close and reopen under private XDG
+with the real EditorWindow and production store. They also cover the late-alias
+Retry path; capture publication writes the same hash-bound empty shadow.
+Baseline runtime-observation evidence is recorded separately before ES-030 can
+be promoted. No release or physical-desktop qualification is claimed here.
+
+## Historical clarification and probes (superseded)
 
 ES-014 requires explicit empty-document save to remove the default companion
 and return no companion path. ES-030 requires readers to look for a last-extension

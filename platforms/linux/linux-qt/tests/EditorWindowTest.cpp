@@ -633,15 +633,54 @@ private slots:
     QVERIFY(closeEditorsForShutdown().isEmpty()); discard.stop(); QVERIFY(asked);
     delete window.data();
   }
-  void emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion_data() {
-    QTest::addColumn<bool>("keepDefault"); QTest::addColumn<bool>("lateAlias"); QTest::newRow("default-and-baseline") << true << false; QTest::newRow("baseline-only") << false << false; QTest::newRow("late-baseline") << true << true;
+  void emptySaveWithBaselineCompanionWritesShadowAndKeepsLegacy_data() {
+    QTest::addColumn<bool>("keepDefault"); QTest::addColumn<bool>("lateAlias");
+    QTest::newRow("default-and-baseline") << true << false;
+    QTest::newRow("baseline-only") << false << false;
+    QTest::newRow("late-baseline") << true << true;
   }
-  void emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion() {
-    QFETCH(bool, keepDefault); QFETCH(bool, lateAlias); QTemporaryDir dir; const auto path = dir.filePath("legacy.png"), alias = dir.filePath("legacy.xann"); QVERIFY(fixture().save(path)); auto d = *loadSource(path).document; RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {5, 5}; r.end = {20, 20}; d.annotations = {r}; const auto bytes = writeXann(d); QVERIFY(bytes); if (!lateAlias) { QFile legacy(alias); QVERIFY(legacy.open(QIODevice::WriteOnly)); QCOMPARE(legacy.write(*bytes), bytes->size()); } QVERIFY(saveEdit(path, fixture(), d).sidecarSaved);
-    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas->selectAnnotations({r.id}, canvas->annotationState(), canvas->documentGeneration())); trigger(*window, "deleteSelection"); QVERIFY(canvas->annotationDocument().annotations.empty()); const auto empty = serializeDocument(canvas->annotationDocument()); const auto companion = storedBytes(path + ".xann"); if (!keepDefault) QVERIFY(QFile::remove(path + ".xann"));
-    std::atomic<bool> planted{false}; if (lateAlias) { EditorSaveHooks hooks; hooks.beforePublish = [&](EditorSaveArtifact kind, const QString &) { if (kind != EditorSaveArtifact::Sidecar) return; QFile legacy(alias); planted = legacy.open(QIODevice::WriteOnly) && legacy.write(*bytes) == bytes->size(); }; window->setSaveHooks(hooks); }
-    bool warned = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; warned = true; QVERIFY(box->text().contains("PNG saved")); box->accept(); }); timer.start(5); QSignalSpy finished(window.get(), &EditorWindow::saveFinished); trigger(*window, "saveImage"); timer.stop(); QVERIFY(warned); QCOMPARE(finished.count(), 1); QVERIFY(finished[0][0].toBool()); QVERIFY(!finished[0][1].toBool()); QVERIFY(window->windowTitle().contains(" •")); QCOMPARE(serializeDocument(canvas->annotationDocument()), empty); QCOMPARE(QImage(path), fixture()); QCOMPARE(storedBytes(alias), *bytes); if (lateAlias) QVERIFY(planted);
-    QCOMPARE(QFile::exists(path + ".xann"), keepDefault); if (keepDefault) QCOMPARE(storedBytes(path + ".xann"), companion);
+  void emptySaveWithBaselineCompanionWritesShadowAndKeepsLegacy() {
+    QFETCH(bool, keepDefault); QFETCH(bool, lateAlias);
+    QTemporaryDir dir; const auto path = dir.filePath("legacy.png"), alias = dir.filePath("legacy.xann");
+    QVERIFY(fixture().save(path)); auto d = *loadSource(path).document;
+    RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {5, 5}; r.end = {20, 20}; d.annotations = {r};
+    const auto bytes = writeXann(d); QVERIFY(bytes);
+    if (!lateAlias) { QFile legacy(alias); QVERIFY(legacy.open(QIODevice::WriteOnly)); QCOMPARE(legacy.write(*bytes), bytes->size()); }
+    QVERIFY(saveEdit(path, fixture(), d).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas->selectAnnotations({r.id}, canvas->annotationState(), canvas->documentGeneration()));
+    trigger(*window, "deleteSelection"); QVERIFY(canvas->annotationDocument().annotations.empty());
+    const auto empty = serializeDocument(canvas->annotationDocument()); const auto companion = storedBytes(path + ".xann");
+    if (!keepDefault) QVERIFY(QFile::remove(path + ".xann"));
+    std::atomic<bool> planted{false};
+    if (lateAlias) {
+      EditorSaveHooks hooks; hooks.beforePublish = [&](EditorSaveArtifact kind, const QString &) {
+        if (kind != EditorSaveArtifact::Sidecar) return;
+        QFile legacy(alias); planted = legacy.open(QIODevice::WriteOnly) && legacy.write(*bytes) == bytes->size();
+      }; window->setSaveHooks(hooks);
+    }
+    int warnings = 0; bool retryConfirmed = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      if (box->objectName() == "retryEditorSidecarDialog") { retryConfirmed = true; box->button(QMessageBox::Retry)->click(); }
+      else { ++warnings; QVERIFY(box->text().contains("PNG saved")); box->accept(); }
+    });
+    timer.start(5); QSignalSpy finished(window.get(), &EditorWindow::saveFinished); trigger(*window, "saveImage");
+    QCOMPARE(finished.count(), 1); QVERIFY(finished[0][0].toBool());
+    if (lateAlias) {
+      QVERIFY(planted); QCOMPARE(warnings, 1); QVERIFY(!finished[0][1].toBool()); QVERIFY(window->windowTitle().contains(" •"));
+      QCOMPARE(storedBytes(path + ".xann"), companion);
+      window->setSaveHooks({}); auto *retry = window->findChild<QAction *>("retryEditorSidecar"); QVERIFY(retry && retry->isEnabled());
+      trigger(*window, "retryEditorSidecar"); QVERIFY(retryConfirmed); QCOMPARE(finished.count(), 2); QVERIFY(finished[1][1].toBool());
+    } else { QCOMPARE(warnings, 0); QVERIFY(finished[0][1].toBool()); }
+    timer.stop(); QCOMPARE(warnings, lateAlias ? 1 : 0);
+    QVERIFY(!window->windowTitle().contains(" •")); QCOMPARE(serializeDocument(canvas->annotationDocument()), empty);
+    QCOMPARE(QImage(path), fixture()); QCOMPARE(storedBytes(alias), *bytes);
+    const auto shadow = readXann(storedBytes(path + ".xann")); QVERIFY(shadow.document); QVERIFY(shadow.document->annotations.empty());
+    QCOMPARE(shadow.document->imageHash, QString("sha256:") + QString::fromLatin1(QCryptographicHash::hash(storedBytes(path), QCryptographicHash::Sha256).toHex()));
+    window.reset(); std::unique_ptr<EditorWindow> reopened(EditorWindow::open(path)); QVERIFY(reopened); reopened->show();
+    QVERIFY(reopened->findChild<EditorCanvas *>()->annotationDocument().annotations.empty()); QVERIFY(!reopened->windowTitle().contains(" •"));
+    QCOMPARE(storedBytes(alias), *bytes);
   }
   void keyboardTransformsPersistNativeGroupAndExactHistory_data() {
     QTest::addColumn<int>("key"); QTest::addColumn<int>("modifiers"); QTest::addColumn<double>("dx"); QTest::addColumn<double>("dy"); QTest::addColumn<double>("angle");

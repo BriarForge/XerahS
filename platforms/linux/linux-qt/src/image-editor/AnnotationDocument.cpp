@@ -867,15 +867,17 @@ SidecarSaveResult saveSidecar(SidecarStore &store, const QString &rasterPath, co
   result.report = {QStringLiteral("xann"), document.version, {}};
   const QString path = sidecarPaths(rasterPath, [](const QString &) { return false; }).writePath;
   if (document.annotations.empty()) {
-    // ES-014 removes the default, while ES-030 then exposes a baseline alias.
-    // Until its archive/reconciliation policy is approved, never report an
-    // editable save complete while that older document would become visible.
     const auto baseline = baselineSidecarPath(rasterPath);
     if (sidecarIntent && baseline && store.exists(*baseline)) {
-      result.ok = false; result.diagnostic = diagnostic::sidecarSaveFailed; return result;
+      const auto bytes = writeXann(document, &result.report);
+      if (!bytes || !store.write(path, *bytes)) {
+        result.ok = false; result.diagnostic = diagnostic::sidecarSaveFailed; return result;
+      }
+      result.sidecarPath = path;
+      return result;
     }
     // ES-014: an empty document removes the default sidecar only on explicit
-    // intent, and never returns a sidecar path.
+    // intent, and returns no path when no baseline needs shadowing.
     if (sidecarIntent && store.exists(path) && !store.remove(path)) {
       result.ok = false;
       result.diagnostic = diagnostic::sidecarSaveFailed;

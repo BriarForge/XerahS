@@ -482,16 +482,19 @@ class MemorySidecarStore final : public ed::SidecarStore {
 public:
   std::set<QString> files;
   bool rasterTouched = false;
+  QMap<QString, QByteArray> contents;
   QString rasterPath;
 
   bool exists(const QString &path) override { return files.count(path) > 0; }
-  bool write(const QString &path, const QByteArray &) override {
+  bool write(const QString &path, const QByteArray &bytes) override {
+    contents.insert(path, bytes);
     rasterTouched = rasterTouched || path == rasterPath;
     files.insert(path);
     return true;
   }
   bool remove(const QString &path) override {
     rasterTouched = rasterTouched || path == rasterPath;
+    contents.remove(path);
     return files.erase(path) > 0;
   }
 };
@@ -611,15 +614,23 @@ QJsonObject runEditorSession(const QString &operation, const QJsonObject &input)
     store.rasterPath = raster;
     store.files.insert(raster);
     const QString sidecar = ed::sidecarPaths(raster, [](const QString &) { return false; }).writePath;
-    if (input.value(u"existing_sidecar").toBool()) store.files.insert(sidecar);
+    if (input.value(u"existing_sidecar").toBool()) { store.files.insert(sidecar); store.contents.insert(sidecar, "DEFAULT"); }
+    const QString baseline = QStringLiteral("capture.xann");
+    const bool baselineExisted = input.value(u"existing_baseline_sidecar").toBool();
+    if (baselineExisted) { store.files.insert(baseline); store.contents.insert(baseline, "BASELINE"); }
+    const auto baselineBefore = store.contents.value(baseline), defaultBefore = store.contents.value(sidecar);
     QJsonObject payload = ed::serializeDocument(blankDocument(1, 1));
     payload.insert(QStringLiteral("annotations"), input.value(u"annotations").toArray());
     const ed::ParseResult parsed = ed::parseDocument(payload);
     if (!parsed.document) return adapterError(QStringLiteral("invalid annotations: ") + *parsed.error);
     const ed::SidecarSaveResult result =
         ed::saveSidecar(store, raster, *parsed.document, input.value(u"sidecar_intent").toBool());
+    const auto saved = ed::readXann(store.contents.value(sidecar));
     return QJsonObject{{QStringLiteral("sidecar_exists"), store.exists(sidecar)},
                        {QStringLiteral("sidecar_path"), result.sidecarPath ? QJsonValue(*result.sidecarPath) : QJsonValue::Null},
+                       {QStringLiteral("sidecar_annotation_count"), saved.document ? QJsonValue(qint64(saved.document->annotations.size())) : QJsonValue::Null},
+                       {QStringLiteral("baseline_untouched"), store.exists(baseline) == baselineExisted && store.contents.value(baseline) == baselineBefore},
+                       {QStringLiteral("default_untouched"), store.contents.value(sidecar) == defaultBefore},
                        {QStringLiteral("raster_untouched"), !store.rasterTouched && store.exists(raster)},
                        {QStringLiteral("error"), result.diagnostic ? QJsonValue(*result.diagnostic) : QJsonValue::Null}};
   }

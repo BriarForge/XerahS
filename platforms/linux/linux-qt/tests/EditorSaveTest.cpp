@@ -257,6 +257,15 @@ private slots:
     auto future = *source.document; future.version = 2; const auto encoded = writeXann(future); QVERIFY(encoded); write(path + ".xann", *encoded);
     const auto refused = saveEdit(path, source.image, empty); QVERIFY(refused.rasterSaved && !refused.sidecarSaved); QCOMPARE(bytes(path + ".xann"), *encoded); QCOMPARE(QImage(path), pixels());
   }
+  void emptyShadowSavePreservesUnsupportedDefaultAndBaseline() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.png"), baseline = dir.filePath("image.xann");
+    const auto source = edited(); QVERIFY(saveEdit(path, source.image, *source.document).sidecarSaved);
+    auto future = *source.document; future.version = 2; const auto encoded = writeXann(future); QVERIFY(encoded);
+    write(path + ".xann", *encoded); write(baseline, "KEEP LEGACY");
+    auto empty = *source.document; empty.annotations.clear(); const auto refused = saveEdit(path, source.image, empty);
+    QVERIFY(refused.rasterSaved && !refused.sidecarSaved); QCOMPARE(bytes(path + ".xann"), *encoded);
+    QCOMPARE(bytes(baseline), QByteArray("KEEP LEGACY")); QCOMPARE(QImage(path), pixels());
+  }
   void cancelledBeforePublicationPreservesFilesAndAfterRasterRetainsPartialFacts_data() {
     QTest::addColumn<bool>("afterRaster"); QTest::newRow("before PNG") << false; QTest::newRow("after PNG") << true;
   }

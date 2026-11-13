@@ -101,13 +101,17 @@ private slots:
     }
     QCOMPARE(session.document().embeddedImages, d.embeddedImages); QCOMPARE(session.document().extra, d.extra);
   }
-  void emptySidecarSaveRefusesToExposeBaselineCompanion_data() {
+  void emptySidecarSaveShadowsBaselineCompanion_data() {
     QTest::addColumn<bool>("defaultExists"); QTest::addColumn<bool>("intent");
     for (bool exists : {false, true}) for (bool intent : {false, true}) QTest::newRow(qPrintable(QString("%1-%2").arg(exists).arg(intent))) << exists << intent;
   }
-  void emptySidecarSaveRefusesToExposeBaselineCompanion() {
+  void emptySidecarSaveShadowsBaselineCompanion() {
     QFETCH(bool, defaultExists); QFETCH(bool, intent); MapStore store; store.files["dir.with.dot/shot.xann"] = "LEGACY"; if (defaultExists) store.files["dir.with.dot/shot.png.xann"] = "DEFAULT"; const auto before = store.files;
-    const auto saved = saveSidecar(store, "dir.with.dot/shot.png", document(), intent); QCOMPARE(saved.ok, !intent); QVERIFY(!saved.sidecarPath); QCOMPARE(saved.diagnostic, intent ? std::optional<QString>(diagnostic::sidecarSaveFailed) : std::nullopt); QCOMPARE(store.files, before);
+    const auto saved = saveSidecar(store, "dir.with.dot/shot.png", document(), intent); QVERIFY(saved.ok); QVERIFY(!saved.diagnostic);
+    QCOMPARE(store.files.at("dir.with.dot/shot.xann"), QByteArray("LEGACY"));
+    if (!intent) { QVERIFY(!saved.sidecarPath); QCOMPARE(store.files, before); return; }
+    QCOMPARE(saved.sidecarPath, std::optional<QString>("dir.with.dot/shot.png.xann"));
+    const auto reopened = readXann(store.files.at(*saved.sidecarPath)); QVERIFY(reopened.document); QVERIFY(reopened.document->annotations.empty());
   }
   void guardedDeleteKeepsRemainingPayloadAssetsAndExactHistory_data() {
     QTest::addColumn<QString>("selected"); QTest::addColumn<QString>("remaining");
