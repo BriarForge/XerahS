@@ -749,10 +749,11 @@
         "ES-018",
         "CORE-027"
       ],
-      "outcome": "Editor recovery serialization, storage, removal, pruning and restart listing now run through one process-owned FIFO on OwnedWork. Autosaves return immediately and coalesce queued writes by record; Save/Discard removes pending writes and orders removal after any running write. Close and explicit writes wait through a Qt event loop, and shutdown drains the queue. Window destruction leaves started writes to finish without delivering into the dead window. Native held-worker tests cover GUI timers, a second canvas edit reaching the latest snapshot, Save/Discard cleanup, owner destruction, two editors and corrupt-file startup listing. Existing takeover and lifecycle rules remain unchanged. Maintainer review and the rebuilt full integration gate are pending for this slice.",
+      "outcome": "Editor recovery serialization, storage, removal, pruning and restart listing now run through one process-owned FIFO on OwnedWork. Autosaves return immediately and coalesce queued writes by record; Save/Discard removes pending writes and orders removal after any running write. Close and explicit writes wait through a Qt event loop, and shutdown drains the queue. Window destruction leaves started writes to finish without delivering into the dead window. Native held-worker tests cover GUI timers, a second canvas edit reaching the latest snapshot, Save/Discard cleanup, owner destruction, two editors and corrupt-file startup listing. Existing takeover and lifecycle rules remain unchanged. Maintainer review and the rebuilt full integration gate are pending for this slice. Maintainer review found signal-triggered QApplication::exit can interrupt nested close waits. The application now drains recovery again after exec returns, preserving explicit Discard even during SIGTERM/SIGINT. Subprocess tests first failed with a surviving recovery file for both signals when that drain was omitted; both pass with the real termination handler and post-loop drain. Final maintainer re-review and full integration gate remain pending.",
       "evidence": [
         "platforms/linux/linux-qt/app/EditorRecoveryQueue.cpp",
-        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorExitTest.cpp"
       ]
     }
   ],

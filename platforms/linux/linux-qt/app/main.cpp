@@ -39,6 +39,7 @@
 #include <QSystemTrayIcon>
 #include <QTimer>
 #include "EditorWindow.h"
+#include "EditorShutdown.h"
 #include <QWidget>
 
 #include <cstdio>
@@ -263,6 +264,7 @@ int main(int argc, char *argv[]) {
   // ES-018: disclose and offer any editor recovery documents left by a crash.
   QTimer::singleShot(0, &window, [] { xerahs::app::EditorWindow::offerRecovery(nullptr); });
   const int result = terminationSignal ? xerahs::shell::TerminationSignals::exitStatus(terminationSignal) : app.exec();
+  xerahs::app::drainEditorRecovery();
   instance.setAdmission({});
   return terminationSignal ? xerahs::shell::TerminationSignals::exitStatus(terminationSignal) : result;
 }

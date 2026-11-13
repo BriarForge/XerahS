@@ -9,6 +9,7 @@
 #include <QWidget>
 #include <QSessionManager>
 namespace xerahs::app {
+void drainEditorRecovery() { EditorRecoveryQueue::instance().waitIdle(); }
 namespace {
 bool shutdownBlockedByModalWork() {
   const auto *modal = QApplication::activeModalWidget();

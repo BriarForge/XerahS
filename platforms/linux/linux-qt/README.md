@@ -326,7 +326,7 @@ worker through a process-wide queue. Autosave keeps the editor responsive while
 new edits continue. Save and Discard order removal after any active write; a
 destroyed editor leaves a started snapshot to finish. Explicit recovery writes,
 Close and startup recovery wait through the Qt event loop. Shutdown drains the
-queue. Count cleanup preserves newer-version, foreign, corrupt and live-owner
+queue, including after signal-triggered event-loop exit. Count cleanup preserves newer-version, foreign, corrupt and live-owner
 records and runs after a replacement is saved. If protected records fill the
 collection, a new snapshot is refused with explicit-save guidance. Restore
 updates only its selected record in place and preserves every other deferred

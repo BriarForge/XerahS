@@ -3,6 +3,14 @@
 #include "EditorCanvas.h"
 #include "EditorSource.h"
 #include "EditorShutdown.h"
+#include "EditorRecoveryQueue.h"
+#include "shell/TerminationSignals.h"
+#include <QProcess>
+#include <QProcessEnvironment>
+#include <QSemaphore>
+#include <QDir>
+#include <atomic>
+#include <csignal>
 #include "NativeEditorPreferences.h"
 #include <QAbstractButton>
 #include <QAction>
@@ -62,6 +70,30 @@ QByteArray bytes(const QString &path) {
 class EditorExitTest : public QObject {
   Q_OBJECT
 private slots:
+  void terminationDuringDiscardFinishesRecoveryRemoval_data() {
+    QTest::addColumn<int>("signal");
+    QTest::newRow("SIGTERM") << int(SIGTERM);
+    QTest::newRow("SIGINT") << int(SIGINT);
+  }
+  void terminationDuringDiscardFinishesRecoveryRemoval() {
+    QFETCH(int, signal);
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    auto env = QProcessEnvironment::systemEnvironment();
+    for (const auto *key : {"XDG_STATE_HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_RUNTIME_DIR"}) {
+      const auto path = dir.filePath(QString::fromLatin1(key));
+      QVERIFY(QDir().mkpath(path)); QVERIFY(QFile::setPermissions(path, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner));
+      env.insert(QString::fromLatin1(key), path);
+    }
+    QProcess child; child.setProcessEnvironment(env);
+    child.start(QCoreApplication::applicationFilePath(), {"--recovery-exit-child", QString::number(signal)});
+    QVERIFY(child.waitForStarted()); QVERIFY(child.waitForFinished(15000));
+    const auto output = child.readAllStandardOutput() + child.readAllStandardError();
+    QCOMPARE(child.exitStatus(), QProcess::NormalExit);
+    QVERIFY2(child.exitCode() == 128 + signal, output.constData());
+    EditorRecoveryStore store(QDir(env.value("XDG_STATE_HOME")).filePath("com.xerahs.app/editor-recovery"));
+    QVERIFY2(store.list().records.empty(), output.constData());
+  }
+
   void fourKRectangleOpensToInteractiveWithin500ms() {
 #if defined(__has_feature)
 #if __has_feature(address_sanitizer) || __has_feature(thread_sanitizer) || __has_feature(undefined_behavior_sanitizer)
@@ -361,5 +393,66 @@ private slots:
     QCOMPARE(window->isVisible(), !close); QCOMPARE(bytes(path), original); QVERIFY(!QFile::exists(path + ".xann"));
   }
 };
-QTEST_MAIN(EditorExitTest)
+namespace {
+int recoveryExitChild(QApplication &app, int signal) {
+  QApplication::setQuitOnLastWindowClosed(false);
+  QCoreApplication::setAttribute(Qt::AA_DontUseNativeDialogs);
+  initializeNativeEditorPreferences();
+  EditorWindow::setRecoveryDelay(0);
+  QPointer<EditorWindow> window(EditorWindow::fromCapturedImage(pixels()));
+  if (!window) return 90;
+  window->show();
+  auto *canvas = window->findChild<EditorCanvas *>();
+  auto draw = [canvas](QPointF from, QPointF to) {
+    canvas->setTool(EditorCanvas::Tool::Rectangle);
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView(from).toPoint());
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView(to).toPoint());
+  };
+  draw({8, 8}, {22, 16});
+  if (!window->writeRecoveryNow().isEmpty()) return 91;
+  struct Probe { QSemaphore gate; std::atomic_bool entered{false}; };
+  const auto probe = std::make_shared<Probe>();
+  EditorRecoveryQueue::setWorkHookForTest([probe] { if (!probe->entered.exchange(true)) probe->gate.acquire(); });
+  draw({32, 24}, {48, 34});
+  xerahs::shell::TerminationSignals termination;
+  if (!termination.installed()) return 92;
+  QObject::connect(&termination, &xerahs::shell::TerminationSignals::requested, &app, [](int received) {
+    QCoreApplication::exit(xerahs::shell::TerminationSignals::exitStatus(received));
+  });
+  bool closing = false, accepted = false, discarded = false;
+  QTimer close, prompt;
+  QObject::connect(&close, &QTimer::timeout, [&] {
+    if (!probe->entered || closing) return;
+    closing = true;
+    accepted = window->close();
+  }); close.start(2);
+  QObject::connect(&prompt, &QTimer::timeout, [&] {
+    auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+    if (!closing || !box || discarded) return;
+    auto *button = box->button(QMessageBox::Discard);
+    if (!button) return;
+    discarded = true; button->click();
+    QTimer::singleShot(0, [signal] { ::raise(signal); });
+  }); prompt.start(2);
+  QTimer::singleShot(10000, &app, [] { QCoreApplication::exit(93); });
+  const int result = app.exec();
+  close.stop(); prompt.stop();
+  probe->gate.release();
+  drainEditorRecovery();
+  EditorRecoveryQueue::setWorkHookForTest({});
+  delete window.data();
+  return accepted && discarded ? result : 94;
+}
+}
+int main(int argc, char **argv) {
+  QApplication app(argc, argv);
+  app.setAttribute(Qt::AA_Use96Dpi, true);
+  if (argc == 3 && QString::fromLocal8Bit(argv[1]) == QLatin1String("--recovery-exit-child"))
+    return recoveryExitChild(app, QString::fromLocal8Bit(argv[2]).toInt());
+  EditorExitTest test;
+  QTEST_SET_MAIN_SOURCE_PATH
+  const int result = QTest::qExec(&test, argc, argv);
+  drainEditorRecovery();
+  return result;
+}
 #include "EditorExitTest.moc"
