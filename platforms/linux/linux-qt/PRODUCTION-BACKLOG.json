@@ -2,7 +2,7 @@
   "schema_version": 2,
   "date": "2026-11-14",
   "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
-  "contract_version": "0.3.1",
+  "contract_version": "0.3.2",
   "scope": "All 16 manifest capabilities reviewed for Linux applicability; 325 desktop requirements classified and 20 mobile-only requirements explicitly outside Linux scope. Counts measure candidate behavior, not completion percentage or release acceptance.",
   "classification_rules": {
     "implemented": "Candidate Linux behavior has automated production-path evidence; does not approve release, parity or human qualification.",
@@ -15,11 +15,11 @@
   "capability_count": 16,
   "desktop_capability_count": 15,
   "counts": {
-    "blocked": 34,
-    "implemented": 174,
+    "blocked": 32,
+    "implemented": 177,
     "not-applicable": 1,
     "not-started": 5,
-    "partial": 111
+    "partial": 110
   },
   "capabilities": [
     {
@@ -53,8 +53,8 @@
       "capability": "EDITOR-SESSION-001",
       "requirements": 30,
       "counts": {
-        "blocked": 3,
-        "implemented": 24,
+        "blocked": 1,
+        "implemented": 26,
         "partial": 3
       },
       "trace": "traceability/EDITOR-SESSION-001.json"
@@ -93,8 +93,8 @@
       "capability": "EDITOR-OUTPUT-ACTIONS-001",
       "requirements": 16,
       "counts": {
-        "implemented": 9,
-        "partial": 7
+        "implemented": 10,
+        "partial": 6
       },
       "trace": "traceability/EDITOR-OUTPUT-ACTIONS-001.json"
     },
@@ -251,13 +251,34 @@
       "to": "partial",
       "reason": "Default-off, profile-local cursor inclusion now uses an owned compositor frame before the overlay. Native controller/crop/PNG integration verifies saved cursor pixels exactly once, frozen preferences, unsupported/mismatched refusal, cancellation, stale completion and owner-loss fencing. Mixed-scale/rotated/multi-output and every supported desktop remain unqualified; partial, not absent or fully implemented.",
       "revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+    },
+    {
+      "capability": "EDITOR-SESSION-001",
+      "requirement": "ES-014",
+      "previous": "partial",
+      "current": "implemented",
+      "reason": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites; full rebuilt suites and reviews remain required before push. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion."
+    },
+    {
+      "capability": "EDITOR-SESSION-001",
+      "requirement": "ES-030",
+      "previous": "partial",
+      "current": "implemented",
+      "reason": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites; full rebuilt suites and reviews remain required before push. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion."
+    },
+    {
+      "capability": "EDITOR-OUTPUT-ACTIONS-001",
+      "requirement": "EO-006",
+      "previous": "partial",
+      "current": "implemented",
+      "reason": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites; full rebuilt suites and reviews remain required before push. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion."
     }
   ],
   "review_limitations": [
     "Candidate Linux behavior only; physical target and cross-platform qualification and human acceptance remain separate.",
     "Scheduler model/dependency/threshold/security/release gates remain explicit even where upstream code or approval documentation exists.",
     "Source-extracted defects without a current runtime repro are identified as source findings, not demonstrated failures.",
-    "No native behavior, contract, expected test results, dependency or approval changed in this audit.",
+    "The frozen source audit changed no product behavior; the separately approved 0.3.2 ES-014/030 checkpoint adds ownership-preserving empty-save shadows and associated expected results.",
     "Retained upstream author notes for CORE-004, CORE-025, WFCAT-002 and RC-013 refer to earlier audit text now preserved in audit_history. Current audit.coverage and revision-specific anchors record this revalidation."
   ],
   "waiting_on_mike": [
@@ -268,18 +289,8 @@
     },
     {
       "capability": "EDITOR-SESSION-001",
-      "requirement": "ES-014",
-      "question": "Known compatible default-sidecar removal is tested, but empty save with legacy fallback remains explicitly refused pending product-approved non-resurrection/removal policy."
-    },
-    {
-      "capability": "EDITOR-SESSION-001",
       "requirement": "ES-020",
       "question": "Explicit output authority and private temporary storage exist; approved configured editor temp/recovery retention and secure-delete limits are still an unanswered policy gate."
-    },
-    {
-      "capability": "EDITOR-SESSION-001",
-      "requirement": "ES-030",
-      "question": "Default and fallback path handling exists, but required baseline runtime observation and legacy fallback empty-save policy remain unapproved."
     },
     {
       "capability": "EDITOR-ANNOTATIONS-001",
@@ -819,6 +830,27 @@
         "platforms/linux/linux-qt/app/SettingsDialog.cpp",
         "platforms/linux/linux-qt/app/SettingsDialog.h",
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
+      ]
+    },
+    {
+      "date": "2026-11-14",
+      "requirements": [
+        "ES-014",
+        "ES-030",
+        "EO-006"
+      ],
+      "outcome": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites; full rebuilt suites and reviews remain required before push. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion. Linux candidate coverage becomes 177/324; full gates and both reviews pending. Other platforms remain unimplemented with no waiver.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/app/EditorSave.cpp",
+        "platforms/linux/linux-qt/app/CaptureSave.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "product-contract/reference-baselines/provenance/kova-0.29.0-xann-sidecar-observation.md"
       ]
     }
   ],
@@ -2506,10 +2538,10 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 174,
+    "implemented": 177,
     "not-applicable": 1,
     "not-started": 19,
-    "partial": 131
+    "partial": 128
   },
   "full_audit_counts": {
     "blocked": 34,
@@ -2518,7 +2550,7 @@
     "not-started": 5,
     "partial": 111
   },
-  "integration_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+  "integration_revision": "1fc988d275359bd8d8524c7d908801cd8916ac69",
   "incremental_classification_updates": [
     {
       "requirement": "EO-014",
@@ -2551,5 +2583,5 @@
       "source_revision": "e8bc3a9"
     }
   ],
-  "integration_note": "Current review incorporates recovery preservation/takeover/owned I/O, upload admission and unknown-publication/replay handling, owned watch discovery, profile-local cursor inclusion, and the maintainer-approved ES-029 diagnostic/reason boundary. Historical findings are retained in audit_history, not represented as current missing features. Integration at fdc728fb6c33dc0a7685205e77dfdcfd37217db6 preserves landed recovery recreation and its store/native regression proof. It removes that completed item from the current backlog; maintainer/independent acceptance of that implementation remains separately recorded upstream."
+  "integration_note": "Current review incorporates recovery preservation/takeover/owned I/O, upload admission and unknown-publication/replay handling, owned watch discovery, profile-local cursor inclusion, and the maintainer-approved ES-029 diagnostic/reason boundary. Historical findings are retained in audit_history, not represented as current missing features. Integration at fdc728fb6c33dc0a7685205e77dfdcfd37217db6 preserves landed recovery recreation and its store/native regression proof. It removes that completed item from the current backlog; maintainer/independent acceptance of that implementation remains separately recorded upstream. ES-014, ES-030 and EO-006 are now implemented Linux candidates with explicit approved shadow policy, baseline runtime observation, native save/reopen and conformance evidence; reviews and full gates pending."
 }

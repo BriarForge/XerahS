@@ -1,7 +1,7 @@
 {
   "capability": "EDITOR-OUTPUT-ACTIONS-001",
   "capability_version": "0.1.0",
-  "contract_version": "0.3.1",
+  "contract_version": "0.3.2",
   "platform": "linux",
   "edition": "linux-qt",
   "implementation": [
@@ -385,10 +385,10 @@
       }
     },
     "EO-006": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Paired raster/sidecar split/mismatch/dirty handling is tested, but ES-014/030 legacy fallback policy and runtime observation remain blocked.",
+      "note": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites; full rebuilt suites and reviews remain required before push. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion. Candidate completion of this Linux clause only; independent/maintainer reviews and full gates pending. Native editor journey is automated with real widgets and files under offscreen/private XDG; no physical desktop or release approval is claimed.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -401,18 +401,25 @@
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
         "platforms/linux/linux-qt/tests/EditorUploadTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorTaskTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorTaskTest.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/app/EditorSave.cpp",
+        "platforms/linux/linux-qt/app/CaptureSave.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "product-contract/reference-baselines/provenance/kova-0.29.0-xann-sidecar-observation.md",
+        "product-contract/decisions/ES-014-030-empty-save-baseline.md"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 26,
-        "coverage": "Paired raster/sidecar split/mismatch/dirty handling is tested, but ES-014/030 legacy fallback policy and runtime observation remain blocked.",
+        "coverage": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites; full rebuilt suites and reviews remain required before push. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion. Candidate completion of this Linux clause only; independent/maintainer reviews and full gates pending. Native editor journey is automated with real widgets and files under offscreen/private XDG; no physical desktop or release approval is claimed.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
         ],
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "1fc988d275359bd8d8524c7d908801cd8916ac69",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -433,12 +440,20 @@
           {
             "path": "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
             "sha256": "c4fb74375689b9863b9a0d3c2e6324a96a6e3292fe6c559ceb2131c61984fadf"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "5bee73e6d358f5920e1430789c4c61494d4ca5f715c9177d62807cd892b9eead"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/CaptureSave.cpp",
+            "sha256": "b30d9e08a0d94e5d368d711a44f3250e568ead9235c77dd543698ff7ba57f903"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
             "method": "incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng",
             "line": 242
           },
@@ -447,16 +462,102 @@
             "sha256": "1c168da104070d675fdaf426f99c11e393382b8dbbb64c5f7813cd1251b12ed0",
             "method": "changedRasterRequiresChoiceAndKeepsValidatedSnapshots",
             "line": 336
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+            "sha256": "90f9feb3ef04616fb00663d024a41388afe7da0376e97bd527c98bc82920f517",
+            "method": "emptySidecarSaveShadowsBaselineCompanion",
+            "line": 108
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+            "sha256": "357cf1cc79163857a594798ba8fa800e16f01dcb0c9d8ab12cb4e5b9887f560c",
+            "method": "emptySaveWithBaselineCompanionWritesShadowAndKeepsLegacy",
+            "line": 642
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
+            "method": "explicitEmptySaveRemovesOnlyTheKnownCompatibleDefaultSidecar",
+            "line": 253
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
+            "method": "emptyShadowSavePreservesUnsupportedDefaultAndBaseline",
+            "line": 260
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+            "sha256": "28f133ff687b05c503b175b7342a7d06b747175396c2b5449ee18484cb423840",
+            "method": "captureDeleteIsKeyboardAccessibleAndPublishesOnlyAcceptedState",
+            "line": 271
           }
         ],
         "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "specification": "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md",
+        "specification_sha256": "5c966c9f044cd1135c70e7d69e345b1cfb4ffffabd26f58e6ec9e7eb582c824f",
+        "baseline_observation": {
+          "path": "product-contract/reference-baselines/provenance/kova-0.29.0-xann-sidecar-observation.md",
+          "sha256": "abf791c7198970c7ca4f1aa4996f208a4bc05c2cdeef0b21c0d7982a001cdff1",
+          "kind": "Linux library runtime observation",
+          "baseline_commit": "651b1d8de4bc1f874790870560314670cd038684"
+        }
       },
-      "previous_note": "Audit 2026-11-04: Clauses: paired persistence, artifact-specific partial failure, dirty state and repair are proven by EditorSaveTest::realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash and incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng, EditorWindowTest::incompleteSaveOffersDefaultCancelCompanionOnlyRepairAndKeepsRedo and partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes. Mismatch refusal and explicit source choice remain covered by EditorSourceTest::changedRasterRequiresChoiceAndKeepsValidatedSnapshots. Empty companion/legacy fallback policy depends on deferred ES-014/ES-030; the conservative refusal is not full closure. EO-004 format metadata is not approved by this audit.",
-      "incremental_note": {
-        "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
-        "note": "Paired raster/sidecar split/mismatch/dirty handling is tested, but ES-014/030 legacy fallback policy and runtime observation remain blocked. Codex queue evidence (2026-11-05): Audit 2026-11-05: Clauses: paired persistence, artifact-specific partial failure, dirty state and repair are proven by EditorSaveTest::realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash and incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng, EditorWindowTest::incompleteSaveOffersDefaultCancelCompanionOnlyRepairAndKeepsRedo and partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes. Mismatch refusal and explicit source choice remain covered by EditorSourceTest::changedRasterRequiresChoiceAndKeepsValidatedSnapshots. Empty companion/legacy fallback policy depends on deferred ES-014/ES-030; the conservative refusal is not full closure. EO-004 format metadata is not approved by this audit."
-      }
+      "previous_note": "Audit 2026-11-04: Clauses: paired persistence, artifact-specific partial failure, dirty state and repair are proven by EditorSaveTest::realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash and incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng, EditorWindowTest::incompleteSaveOffersDefaultCancelCompanionOnlyRepairAndKeepsRedo and partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes. Mismatch refusal and explicit source choice remain covered by EditorSourceTest::changedRasterRequiresChoiceAndKeepsValidatedSnapshots. Empty companion/legacy fallback policy depends on deferred ES-014/ES-030; the conservative refusal is not full closure. EO-004 format metadata is not approved by this audit. Previous checkpoint: Paired raster/sidecar split/mismatch/dirty handling is tested, but ES-014/030 legacy fallback policy and runtime observation remain blocked.",
+      "incremental_note": "Resolved by the ES-014/030 shadow policy, pinned runtime observation and native save/reopen evidence at 1fc988d275359bd8d8524c7d908801cd8916ac69",
+      "audit_history": [
+        {
+          "classification": "partial",
+          "spec_line": 26,
+          "coverage": "Paired raster/sidecar split/mismatch/dirty handling is tested, but ES-014/030 legacy fallback policy and runtime observation remain blocked.",
+          "incremental_evidence": [
+            "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+          ],
+          "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+          "production_anchors": [
+            {
+              "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
+              "sha256": "635e6ef5e8a799b28fe8ea718e5ac45fcc84c54a9dcea2ccd36dd5307fae959f"
+            },
+            {
+              "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
+              "sha256": "7df7843b5085789dc78112cd03d83f79c37fc92a8cd7a38d3fe33e18cf437c2b"
+            },
+            {
+              "path": "platforms/linux/linux-qt/app/EditorCopy.cpp",
+              "sha256": "8de8ceacddb80f30fc5f9a0101c6a2f46372125e490ced7cffaf046e5deaa365"
+            },
+            {
+              "path": "platforms/linux/linux-qt/app/EditorPrint.cpp",
+              "sha256": "73017941feafc143a10a28a234e9f0665bc271c778581971e197fc3cefcb36b4"
+            },
+            {
+              "path": "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
+              "sha256": "c4fb74375689b9863b9a0d3c2e6324a96a6e3292fe6c559ceb2131c61984fadf"
+            }
+          ],
+          "test_anchors": [
+            {
+              "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+              "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+              "method": "incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng",
+              "line": 242
+            },
+            {
+              "path": "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+              "sha256": "1c168da104070d675fdaf426f99c11e393382b8dbbb64c5f7813cd1251b12ed0",
+              "method": "changedRasterRequiresChoiceAndKeepsValidatedSnapshots",
+              "line": 336
+            }
+          ],
+          "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+          "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        }
+      ]
     },
     "EO-007": {
       "status": "implemented",
@@ -1359,8 +1460,8 @@
     "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
     "reviewed_requirement_count": 16,
     "counts": {
-      "implemented": 9,
-      "partial": 7
+      "partial": 6,
+      "implemented": 10
     },
     "production_surfaces": [
       "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
@@ -1435,8 +1536,9 @@
         "summary": "Actual encoder /dev/full ENOSPC proof exists; do not describe all disk-full failures as only mocked, and do not claim publication ENOSPC or full EO016 completion."
       }
     ],
-    "remaining_scope": "EO-001, EO-004, EO-006, EO-009, EO-010, EO-014, EO-015, EO-016",
-    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
+    "remaining_scope": "EO-001, EO-004, EO-009, EO-010, EO-014, EO-015, EO-016",
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval.",
+    "counts_revision": "1fc988d275359bd8d8524c7d908801cd8916ac69"
   },
   "previous_audit": {
     "source_revision": "43b11bbf5dda234d6d1b65bfd720ed58dedcc898",
@@ -3048,5 +3150,20 @@
       "EO-014"
     ],
     "method": "Review each intervening trace change and production/test seams. Preserve frozen audit anchors and all upstream incremental records. Upload storage fencing remains partial after source recheck."
-  }
+  },
+  "incremental_completion_reviews": [
+    {
+      "date": "2026-11-14",
+      "source_revision": "1fc988d275359bd8d8524c7d908801cd8916ac69",
+      "requirements": [
+        "EO-006"
+      ],
+      "outcome": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites; full rebuilt suites and reviews remain required before push. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion.",
+      "pending": [
+        "independent persistence review",
+        "maintainer line-by-line review",
+        "full host and Qt 6.4 integration suites"
+      ]
+    }
+  ]
 }
