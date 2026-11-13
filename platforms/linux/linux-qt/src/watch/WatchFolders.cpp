@@ -166,12 +166,12 @@ CheckpointResult WatchFolders::writeCheckpoint(const CheckpointWrite &write) {
   for (const auto &item : next) items.append(item);
   auto snapshot = write.expected;
   const auto error = writeStoreSnapshot(write.path, items, &snapshot);
-  return {error, snapshot};
+  return {error, snapshot, std::move(next)};
 }
-QString WatchFolders::adoptCheckpoint(const CheckpointWrite &write, const CheckpointResult &result) {
+QString WatchFolders::adoptCheckpoint(const CheckpointWrite &write, CheckpointResult result) {
   if (!result.error.isEmpty()) return result.error;
   if (m_processedSnapshot != write.expected) return QStringLiteral("watch-store-write-failed");
-  m_processed.insert(write.key);
+  m_processed = std::move(result.processed);
   m_processedSnapshot = result.snapshot;
   return {};
 }

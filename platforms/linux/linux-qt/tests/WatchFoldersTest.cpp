@@ -24,6 +24,21 @@ QByteArray readFile(const QString &path) {
 class WatchFoldersTest final : public QObject {
   Q_OBJECT
 private slots:
+  void checkpointAdoptsTheWorkerSetAndRefusesStaleSnapshots() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); WatchFolders store(dir.path());
+    const auto first = store.checkpoint("first");
+    auto result = WatchFolders::writeCheckpoint(first);
+    QVERIFY(result.error.isEmpty()); QVERIFY(result.processed.contains("first"));
+    QCOMPARE(store.adoptCheckpoint(first, std::move(result)), QString());
+    QVERIFY(store.processed("first"));
+    const auto stale = store.checkpoint("stale");
+    QCOMPARE(store.remember("second"), QString());
+    CheckpointResult staleResult{{}, {}, {"stale"}};
+    QCOMPARE(store.adoptCheckpoint(stale, std::move(staleResult)), QString("watch-store-write-failed"));
+    QVERIFY(!store.processed("stale")); QVERIFY(store.processed("first")); QVERIFY(store.processed("second"));
+    WatchFolders reloaded(dir.path()); QVERIFY(reloaded.processed("first")); QVERIFY(reloaded.processed("second"));
+  }
+
   void canonicalizesRootsAndRefusesLoops() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
