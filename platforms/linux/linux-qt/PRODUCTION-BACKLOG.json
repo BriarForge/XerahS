@@ -257,7 +257,8 @@
     "Candidate Linux behavior only; physical target and cross-platform qualification and human acceptance remain separate.",
     "Scheduler model/dependency/threshold/security/release gates remain explicit even where upstream code or approval documentation exists.",
     "Source-extracted defects without a current runtime repro are identified as source findings, not demonstrated failures.",
-    "No native behavior, contract, expected test results, dependency or approval changed in this audit."
+    "No native behavior, contract, expected test results, dependency or approval changed in this audit.",
+    "Retained upstream author notes for CORE-004, CORE-025, WFCAT-002 and RC-013 refer to earlier audit text now preserved in audit_history. Current audit.coverage and revision-specific anchors record this revalidation."
   ],
   "waiting_on_mike": [
     {

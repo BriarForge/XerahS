@@ -505,7 +505,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 29,
-        "coverage": "Native screenshot/ScreenCast consent and cancellation exist. Default-off cursor inclusion now uses a frozen, validated single-output compositor frame and stays profile-local across configuration transfer. Mixed-scale/rotated/multi-output mapping, physical audio permission and complete supported-target/degraded-mode guarantees remain incomplete.",
+        "coverage": "Native screenshot/ScreenCast consent and cancellation exist. Default-off cursor inclusion for region capture now uses a frozen, validated single-output compositor frame and stays profile-local across configuration transfer. Mixed-scale/rotated/multi-output mapping, physical audio permission and complete supported-target/degraded-mode guarantees remain incomplete. Region cursor evidence is recorded under RC-013 in REGION-CAPTURE-001.json.",
         "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {

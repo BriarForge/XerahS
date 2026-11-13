@@ -847,7 +847,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 64,
-        "coverage": "Full-screen/monitor/active-window entry points and default-off cursor inclusion through a validated single-output compositor frame have native automated evidence. Authoritative mixed-scale/rotated physical mapping and complete supported-target capture qualification remain partial.",
+        "coverage": "Full-screen, monitor and active-window capture entry points and error paths exist. The newly referenced cursor integration tests exercise region capture (RC-013) only. Cursor and delay options for the three CORE-014 capture sources have no named behavioral evidence on this row and remain open, along with authoritative mixed-scale physical mapping and complete supported-target qualification.",
         "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
