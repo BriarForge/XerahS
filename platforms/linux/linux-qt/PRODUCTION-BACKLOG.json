@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 34,
-    "implemented": 173,
+    "implemented": 174,
     "not-applicable": 1,
     "not-started": 6,
-    "partial": 111
+    "partial": 110
   },
   "capabilities": [
     {
@@ -54,8 +54,8 @@
       "requirements": 30,
       "counts": {
         "blocked": 3,
-        "implemented": 23,
-        "partial": 4
+        "implemented": 24,
+        "partial": 3
       },
       "trace": "traceability/EDITOR-SESSION-001.json"
     },
@@ -206,9 +206,9 @@
     {
       "capability": "EDITOR-SESSION-001",
       "requirement": "ES-029",
-      "previous": "implemented",
-      "current": "partial",
-      "reason": "The upstream oversized-document regression now accumulates unsafe/traversal findings and correctly reports version-unsupported before too-large before invalid. However parseDocument/readXann still emit document-unsafe-content, document-path-traversal, document-duplicate-key, document-invalid-encoding, document-too-deep and document-too-many-elements beyond the ES-029 diagnostic list. Current XannCompatibilityTest explicitly expects these extra codes; complete list/compatibility boundary disposition remains unresolved. Do not redo the fixed too-large precedence regression."
+      "previous": "partial",
+      "current": "implemented",
+      "reason": "Maintainer-approved EDITOR-SESSION-001 0.2.1 keeps the nine ES-029 diagnostics closed and carries value-free rejection reasons separately. parseDocument and parseAnnotationList map traversal and unsafe content to document-invalid; readXann maps malformed/duplicate-key/encoding failures to document-invalid and lexical depth/element/size limits to document-too-large. Unknown future JSON-boundary failures fall back to document-invalid, never a constructed public code. Validation, per-record rejection findings and persisted XANN bytes remain unchanged. Version then size then invalid precedence is covered by native tests and four new vectors. LoadedSource carries the reason; standalone Open and replacement show a localized diagnostic, a separate Rejected document reason and the import report, preserving raster/sidecar bytes and omitting payload values. Both Qt 6.12 and Qt 6.4.2 pass XannCompatibilityTest, EditorSessionTest, EditorSourceTest, all three EditorWindowTest partitions and all 23 conformance vectors. Prior-reader closure, old mappings and omitted native reason tests fail before the fix. This is an implemented Linux candidate; maintainer review and the rebuilt full integration gate remain pending, with target/parity/release qualification separate."
     },
     {
       "capability": "EDITOR-UTILITIES-001",
@@ -754,6 +754,22 @@
         "platforms/linux/linux-qt/app/EditorRecoveryQueue.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/EditorExitTest.cpp"
+      ]
+    },
+    {
+      "date": "2026-11-13",
+      "requirements": [
+        "ES-029"
+      ],
+      "outcome": "Maintainer-approved EDITOR-SESSION-001 0.2.1 keeps the nine ES-029 diagnostics closed and carries value-free rejection reasons separately. parseDocument and parseAnnotationList map traversal and unsafe content to document-invalid; readXann maps malformed/duplicate-key/encoding failures to document-invalid and lexical depth/element/size limits to document-too-large. Unknown future JSON-boundary failures fall back to document-invalid, never a constructed public code. Validation, per-record rejection findings and persisted XANN bytes remain unchanged. Version then size then invalid precedence is covered by native tests and four new vectors. LoadedSource carries the reason; standalone Open and replacement show a localized diagnostic, a separate Rejected document reason and the import report, preserving raster/sidecar bytes and omitting payload values. Both Qt 6.12 and Qt 6.4.2 pass XannCompatibilityTest, EditorSessionTest, EditorSourceTest, all three EditorWindowTest partitions and all 23 conformance vectors. Prior-reader closure, old mappings and omitted native reason tests fail before the fix. This is an implemented Linux candidate; maintainer review and the rebuilt full integration gate remain pending, with target/parity/release qualification separate.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.h",
+        "platforms/linux/linux-qt/app/EditorSource.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "product-contract/capabilities/EDITOR-SESSION-001/test-vectors.json"
       ]
     }
   ],
@@ -1514,8 +1530,8 @@
     {
       "capability": "EDITOR-SESSION-001",
       "finding": {
-        "kind": "question",
-        "summary": "How should ES-029 closed diagnostics reconcile with compatibility rejection codes? Too-large precedence is fixed; current code/tests retain extra security/lexical codes. Do not silently change security diagnostics in audit."
+        "kind": "resolved",
+        "summary": "ES-029 diagnostic/reason boundary resolved by maintainer-approved capability 0.2.1, native reader/UI mappings and conformance vectors; candidate verified at e8bc3a9. Review/full gate pending."
       }
     },
     {
@@ -1602,9 +1618,9 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 173,
+    "implemented": 174,
     "not-applicable": 1,
-    "not-started": 20,
+    "not-started": 19,
     "partial": 131
   },
   "full_audit_counts": {
@@ -1639,7 +1655,13 @@
       "previous": "partial",
       "current": "implemented",
       "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+    },
+    {
+      "requirement": "ES-029",
+      "previous": "partial",
+      "current": "implemented",
+      "source_revision": "e8bc3a9"
     }
   ],
-  "integration_note": "Ten upstream commits integrated after the full audit: approved wide random-file sampling resolves FN-009/021/026; explicit editor host contracts close EO-014. Other source/test updates and evidence remain preserved. The frozen full audit is still pinned to d25064e."
+  "integration_note": "Ten upstream commits integrated after the full audit: approved wide random-file sampling resolves FN-009/021/026; explicit editor host contracts close EO-014. Other source/test updates and evidence remain preserved. The frozen full audit is still pinned to d25064e. ES-029 capability 0.2.1 adds the fifth completion beyond the frozen 169-row implemented audit, bringing current candidate implementations to 174; frozen audit counts remain historical."
 }

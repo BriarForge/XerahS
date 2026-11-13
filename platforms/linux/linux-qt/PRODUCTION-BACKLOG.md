@@ -1,8 +1,8 @@
 # Linux production backlog
 
-Full audit date: 2026-11-11 at `d25064efea688636af7f6b7c7b043db2a4d0ed09`; integration reviewed 2026-11-12 at `4dffe3cbe074129f50a6eaf483d76b885261d459`. The frozen audit counted 169 implemented candidates; four reviewed upstream completions bring the current inventory to 173. Product Contract 0.3.1.
+Full audit date: 2026-11-11 at `d25064efea688636af7f6b7c7b043db2a4d0ed09`; integration reviewed 2026-11-12 at `4dffe3cbe074129f50a6eaf483d76b885261d459`. The frozen audit counted 169 implemented candidates; four filename/host completions plus ES-029 bring the current inventory to 174. Product Contract 0.3.1.
 
-All 16 manifest capabilities / 345 IDs were reviewed. The 325 desktop rows classify **173 tested candidate implementations, 111 partial, 6 not started, 34 blocked and 1 mobile-scope-only row**; all 20 MOB requirements are outside Linux desktop scope. These are candidate-behavior classifications, not parity, release acceptance or remaining effort.
+All 16 manifest capabilities / 345 IDs were reviewed. The 325 desktop rows classify **174 tested candidate implementations, 110 partial, 6 not started, 34 blocked and 1 mobile-scope-only row**; all 20 MOB requirements are outside Linux desktop scope. These are candidate-behavior classifications, not parity, release acceptance or remaining effort.
 
 [traceability/](traceability/) records every clause, reason and exact source/test method hash. [PRODUCTION-BACKLOG.json](PRODUCTION-BACKLOG.json) retains previous audit metadata and current findings. Anchors are **EXTRACTED** source evidence; graph links and mere test presence did not establish compliance. Existing vectors, dispositions and earlier audit records were preserved, including the new upstream filename vectors and their approved contract clarification.
 
@@ -15,7 +15,7 @@ Trace status retains the established enum. `audit.classification` and `blocked_r
 | FILENAME-GENERATION-001 | 27 | 27 | 0 | 0 | 0 | 0 |
 | POST-CAPTURE-ACTIONS-001 | 24 | 24 | 0 | 0 | 0 | 0 |
 | REGION-CAPTURE-001 | 27 | 19 | 5 | 2 | 1 | 0 |
-| EDITOR-SESSION-001 | 30 | 23 | 4 | 0 | 3 | 0 |
+| EDITOR-SESSION-001 | 30 | 24 | 3 | 0 | 3 | 0 |
 | EDITOR-ANNOTATIONS-001 | 20 | 16 | 3 | 0 | 1 | 0 |
 | EDITOR-EFFECTS-001 | 18 | 7 | 10 | 0 | 1 | 0 |
 | EDITOR-CANVAS-001 | 17 | 14 | 2 | 0 | 1 | 0 |
@@ -30,11 +30,16 @@ Trace status retains the established enum. `audit.classification` and `blocked_r
 
 ## Next work in build order
 
+The current next foundation is safe recreation of an externally removed recovery
+snapshot, followed by remaining synchronous storage boundaries. Steps 1–4 below
+have landed and remain as the historical build sequence; their broader retention
+and supported-target qualification edges stay open.
+
 1. Preserve newer-version and live-owner recovery records before pruning. A scratch program linked to current production code seeded an older private version-2 recovery file and wrote eight valid version-1 records; the newer file was deleted. Add the regression before fixing ownership/version-safe cleanup. Do not select an unapproved retention threshold.
 2. Move editor recovery serialization, write/list/remove and restart review through OwnedWork with owner/snapshot fencing and asynchronous prompts. Separate recovery files and age/source disclosure already work; preserve that journey.
 3. Fence file-upload network publication when shared execution admission/start/read-file-step persistence fails. FileUploadController currently records a false flag and still starts UploadExecutor; this is a source finding, not a demonstrated network repro. Inject writer failures in the existing native upload fixture before fixing it. Shared upload/watch snapshots and result records already exist.
 4. Move watch-folder recursive directory discovery and stat work through cancellable owned work. Copy/move/upload effects already run on workers; synchronous discovery in rescan remains a GUI-thread gap for large or slow authorized trees.
-5. Complete ES-029 editor diagnostic boundaries: too-large precedence is fixed, but current parser/reader emits additional compatibility/lexical codes outside the contracted list. Preserve rejection detail and bounded parsing while applying the specified editor failure contract. Continue approved capture/output/catalogue gaps only after the foundation above.
+5. ES-029 implemented candidate: capability 0.2.1 keeps public diagnostics closed and preserves value-free rejection reasons separately. Lexical resource bounds report document-too-large; malformed or unsafe input reports document-invalid. Native Open/replacement warnings and 23 conformance vectors pass on both Qt baselines. Maintainer review and the full gate remain pending before landing.
 6. Retain explicit model/dependency/threshold/semantic/retention/security/release questions and finish supported-target qualification after working journeys. Do not redo reviewed JSON/XML/SQLite history import, shared execution, existing worker copies, diagnostics export or recovery disclosure.
 
 ## Current findings

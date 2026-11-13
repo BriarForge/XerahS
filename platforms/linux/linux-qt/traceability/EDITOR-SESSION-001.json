@@ -1,6 +1,6 @@
 {
   "capability": "EDITOR-SESSION-001",
-  "capability_version": "0.2.0",
+  "capability_version": "0.2.1",
   "contract_version": "0.3.1",
   "platform": "linux",
   "edition": "linux-qt",
@@ -2298,13 +2298,17 @@
       "previous_note": "Canvas and embedded-image limits are checked from JSON and PNG headers; readXann stops inflating at the JSON byte limit (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. The annotation-transfer checkpoint brought toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required."
     },
     "ES-029": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "newer-version-read-only-failure",
         "duplicate-annotation-ids-rejected",
-        "oversized-canvas-rejected-before-allocation"
+        "oversized-canvas-rejected-before-allocation",
+        "path-traversal-reports-document-invalid",
+        "unsafe-extension-reports-document-invalid",
+        "too-large-outranks-traversal",
+        "version-outranks-traversal"
       ],
-      "note": "The upstream oversized-document regression now accumulates unsafe/traversal findings and correctly reports version-unsupported before too-large before invalid. However parseDocument/readXann still emit document-unsafe-content, document-path-traversal, document-duplicate-key, document-invalid-encoding, document-too-deep and document-too-many-elements beyond the ES-029 diagnostic list. Current XannCompatibilityTest explicitly expects these extra codes; complete list/compatibility boundary disposition remains unresolved. Do not redo the fixed too-large precedence regression.",
+      "note": "Maintainer-approved EDITOR-SESSION-001 0.2.1 keeps the nine ES-029 diagnostics closed and carries value-free rejection reasons separately. parseDocument and parseAnnotationList map traversal and unsafe content to document-invalid; readXann maps malformed/duplicate-key/encoding failures to document-invalid and lexical depth/element/size limits to document-too-large. Unknown future JSON-boundary failures fall back to document-invalid, never a constructed public code. Validation, per-record rejection findings and persisted XANN bytes remain unchanged. Version then size then invalid precedence is covered by native tests and four new vectors. LoadedSource carries the reason; standalone Open and replacement show a localized diagnostic, a separate Rejected document reason and the import report, preserving raster/sidecar bytes and omitting payload values. Both Qt 6.12 and Qt 6.4.2 pass XannCompatibilityTest, EditorSessionTest, EditorSourceTest, all three EditorWindowTest partitions and all 23 conformance vectors. Prior-reader closure, old mappings and omitted native reason tests fail before the fix. This is an implemented Linux candidate; maintainer review and the rebuilt full integration gate remain pending, with target/parity/release qualification separate.",
       "evidence": [
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS.md",
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS-EVIDENCE.json",
@@ -2313,10 +2317,159 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp"
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.h",
+        "platforms/linux/linux-qt/app/EditorSource.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "disposition": "Required",
       "audit": {
+        "classification": "implemented",
+        "spec_line": 143,
+        "published_vectors": [
+          "newer-version-read-only-failure",
+          "duplicate-annotation-ids-rejected",
+          "oversized-canvas-rejected-before-allocation",
+          "path-traversal-reports-document-invalid",
+          "unsafe-extension-reports-document-invalid",
+          "too-large-outranks-traversal",
+          "version-outranks-traversal"
+        ],
+        "coverage": "Maintainer-approved EDITOR-SESSION-001 0.2.1 keeps the nine ES-029 diagnostics closed and carries value-free rejection reasons separately. parseDocument and parseAnnotationList map traversal and unsafe content to document-invalid; readXann maps malformed/duplicate-key/encoding failures to document-invalid and lexical depth/element/size limits to document-too-large. Unknown future JSON-boundary failures fall back to document-invalid, never a constructed public code. Validation, per-record rejection findings and persisted XANN bytes remain unchanged. Version then size then invalid precedence is covered by native tests and four new vectors. LoadedSource carries the reason; standalone Open and replacement show a localized diagnostic, a separate Rejected document reason and the import report, preserving raster/sidecar bytes and omitting payload values. Both Qt 6.12 and Qt 6.4.2 pass XannCompatibilityTest, EditorSessionTest, EditorSourceTest, all three EditorWindowTest partitions and all 23 conformance vectors. Prior-reader closure, old mappings and omitted native reason tests fail before the fix. This is an implemented Linux candidate; maintainer review and the rebuilt full integration gate remain pending, with target/parity/release qualification separate.",
+        "reviewed_at_revision": "e8bc3a9",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.h",
+            "sha256": "74e9c65142dff8ecb7ddedb1d9a7ade5a90a93a16be83292872729b1e435676d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
+            "sha256": "3c8009d24a1ac0bb08326e1ee73fad14a5917c2b5a938a4c019ea8d5418e65d8"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
+            "sha256": "635e6ef5e8a799b28fe8ea718e5ac45fcc84c54a9dcea2ccd36dd5307fae959f"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
+            "method": "everyRejectionUsesAnEs029Diagnostic",
+            "line": 181
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
+            "method": "futureJsonBoundaryCodeCannotEscapeTheDiagnosticSet",
+            "line": 175
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
+            "method": "adversarialJsonIsRejected",
+            "line": 133
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
+            "method": "lexicalElementBudgetIsEnforcedBeforeDocumentConstruction",
+            "line": 147
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
+            "method": "oversizedCanvasOutranksUnsafeContentAndTraversal",
+            "line": 159
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
+            "method": "pathTraversalAndCyclicReferencesReject",
+            "line": 152
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
+            "method": "unsafeUnknownsRejectWithoutEcho",
+            "line": 116
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+            "sha256": "441f4a42f10f9788a639c225d1adafb61b71fd0f1ea3ceeb2e1ecc4c0d760edb",
+            "method": "rejectedSidecarUsesLocalizedDiagnosticAndSeparateReason",
+            "line": 288
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+            "sha256": "1c168da104070d675fdaf426f99c11e393382b8dbbb64c5f7813cd1251b12ed0",
+            "method": "invalidOrNewerSidecarsNeverCreateABareRasterSession",
+            "line": 363
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+            "sha256": "3a6ff68b67e0ebbb4b2713be632bbafc388f86fc60158e8c39c3a36032d72e99",
+            "method": "documentFailurePriorityIsVersionThenTooLargeThenInvalid",
+            "line": 712
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+            "sha256": "3a6ff68b67e0ebbb4b2713be632bbafc388f86fc60158e8c39c3a36032d72e99",
+            "method": "documentFailurePriorityHoldsThroughTheGzipReader",
+            "line": 728
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+            "sha256": "1c168da104070d675fdaf426f99c11e393382b8dbbb64c5f7813cd1251b12ed0",
+            "method": "rejectsNonImages",
+            "line": 293
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+            "sha256": "1c168da104070d675fdaf426f99c11e393382b8dbbb64c5f7813cd1251b12ed0",
+            "method": "capturedSourceRejectsEmptyOversizedInputAndRedactsCallbackExceptions",
+            "line": 125
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+            "sha256": "1c168da104070d675fdaf426f99c11e393382b8dbbb64c5f7813cd1251b12ed0",
+            "method": "rasterHeadersAreLimitedBeforePixelDecode",
+            "line": 217
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+            "sha256": "1c168da104070d675fdaf426f99c11e393382b8dbbb64c5f7813cd1251b12ed0",
+            "method": "truncatedPngReportsSourceCorruptWithoutCreatingASession",
+            "line": 280
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+            "method": "nativeEncoderDiskFullPreservesThePreviousPair",
+            "line": 33
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+            "method": "resultsReportDestinationFormatAndRecoverabilityAndNeverCarryPrivatePayloads",
+            "line": 207
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+            "sha256": "3a6ff68b67e0ebbb4b2713be632bbafc388f86fc60158e8c39c3a36032d72e99",
+            "method": "sidecarFailureKeepsSessionDirty",
+            "line": 750
+          }
+        ]
+      },
+      "previous_note": "Document diagnostics follow the required priority and sidecar-save-failed and raster-save-failed are reported; the source-* diagnostics arrive with the source loader. Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged. Audit 2026-11-03: every ES-029 diagnostic has a named test: source-unsupported/source-empty/source-too-large (EditorSourceTest::rejectsNonImages, rasterHeadersAreLimitedBeforePixelDecode), source-corrupt (EditorSourceTest::truncatedPngReportsSourceCorruptWithoutCreatingASession), document-version-unsupported/document-invalid (EditorSourceTest::invalidOrNewerSidecarsNeverCreateABareRasterSession), document-too-large (EditorSessionTest::decompressionLimitIsEnforced, tooLargeOutranksInvalid), raster-save-failed (EditorSaveTest), sidecar-save-failed (EditorSessionTest::sidecarFailureKeepsSessionDirty), and the document priority order with all three failures applying together (EditorSessionTest::documentFailurePriorityIsVersionThenTooLargeThenInvalid, documentFailurePriorityHoldsThroughTheGzipReader).",
+      "previous_audit": {
         "classification": "partial",
         "spec_line": 143,
         "published_vectors": [
@@ -2368,8 +2521,7 @@
             "line": 133
           }
         ]
-      },
-      "previous_note": "Document diagnostics follow the required priority and sidecar-save-failed and raster-save-failed are reported; the source-* diagnostics arrive with the source loader. Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged. Audit 2026-11-03: every ES-029 diagnostic has a named test: source-unsupported/source-empty/source-too-large (EditorSourceTest::rejectsNonImages, rasterHeadersAreLimitedBeforePixelDecode), source-corrupt (EditorSourceTest::truncatedPngReportsSourceCorruptWithoutCreatingASession), document-version-unsupported/document-invalid (EditorSourceTest::invalidOrNewerSidecarsNeverCreateABareRasterSession), document-too-large (EditorSessionTest::decompressionLimitIsEnforced, tooLargeOutranksInvalid), raster-save-failed (EditorSaveTest), sidecar-save-failed (EditorSessionTest::sidecarFailureKeepsSessionDirty), and the document priority order with all three failures applying together (EditorSessionTest::documentFailurePriorityIsVersionThenTooLargeThenInvalid, documentFailurePriorityHoldsThroughTheGzipReader)."
+      }
     },
     "ES-030": {
       "status": "partial",
@@ -2453,8 +2605,8 @@
     "reviewed_requirement_count": 30,
     "counts": {
       "blocked": 3,
-      "implemented": 23,
-      "partial": 4
+      "implemented": 24,
+      "partial": 3
     },
     "production_surfaces": [
       "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -2574,8 +2726,9 @@
         "summary": "How should ES-029 closed diagnostics reconcile with compatibility rejection codes? Too-large precedence is fixed; current code/tests retain extra security/lexical codes. Do not silently change security diagnostics in audit."
       }
     ],
-    "remaining_scope": "ES-009, ES-014, ES-019, ES-020, ES-022, ES-029, ES-030",
-    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
+    "remaining_scope": "ES-009, ES-014, ES-019, ES-020, ES-022, ES-030",
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval.",
+    "incremental_note": "ES-029 rechecked at e8bc3a9 against capability 0.2.1; its row has current hashes and coverage. Other full-audit anchors retain their original revision."
   },
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
