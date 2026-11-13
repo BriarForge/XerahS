@@ -261,6 +261,7 @@ void runRotationPreview(EditorWindow &window, bool accept) {
 class EditorWindowTest : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
+  std::unique_ptr<QTemporaryDir> recoveryState;
 private slots:
   void xannImportReportAppearsOnOpenAndReplacement() {
     QTemporaryDir dir; const auto path = dir.filePath("report.png"); QVERIFY(fixture().save(path));
@@ -281,11 +282,14 @@ private slots:
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
     qputenv("CUPS_SERVER", dialogPreferences.filePath("unavailable-cups.sock").toLocal8Bit());
-    // ES-018: editors write recovery documents; keep them out of the real state directory.
-    static QTemporaryDir recoveryState; QVERIFY(recoveryState.isValid()); qputenv("XDG_STATE_HOME", recoveryState.path().toLocal8Bit());
     EditorWindow::setRecoveryDelay(0);
   }
-  void init() { initializeNativeEditorPreferences(); }
+  void init() {
+    // Each case owns its recovery collection, including simulated crash leftovers.
+    recoveryState = std::make_unique<QTemporaryDir>(); QVERIFY(recoveryState->isValid());
+    qputenv("XDG_STATE_HOME", recoveryState->path().toLocal8Bit());
+    initializeNativeEditorPreferences();
+  }
   void cleanup() { initializeNativeEditorPreferences(); }
   // ES-018: separate recovery document, never the explicit save; disclosed and restorable.
   void recoveryDocumentLifecycleAndRestartNotice() {
