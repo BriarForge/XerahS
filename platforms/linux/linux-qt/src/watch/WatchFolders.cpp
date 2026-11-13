@@ -46,12 +46,81 @@ QString fingerprint(const QString &path) {
   if (!info.isFile() || info.isSymLink()) return {};
   return info.canonicalFilePath() + '\n' + QString::number(info.size()) + '\n' + QString::number(info.lastModified().toMSecsSinceEpoch());
 }
+QString publicationDispositionName(PublicationDisposition disposition) {
+  switch (disposition) {
+    case PublicationDisposition::Processed: return QStringLiteral("processed");
+    case PublicationDisposition::Released: return QStringLiteral("released");
+    case PublicationDisposition::Unconfirmed: return QStringLiteral("unconfirmed");
+  }
+  return QStringLiteral("unconfirmed");
+}
+QString publicationStateName(PublicationState state) {
+  return state == PublicationState::Unconfirmed ? QStringLiteral("unconfirmed") : QStringLiteral("sending");
+}
+PublicationDisposition publicationDisposition(const PublicationFacts &facts) {
+  // CORE-025 P1. The order is the contract; the first match wins.
+  if (facts.restartWithSending) return PublicationDisposition::Unconfirmed;
+  if (facts.succeeded) return PublicationDisposition::Processed;
+  if (facts.requestStarted && facts.everyAttemptAnswered) return PublicationDisposition::Released;
+  if (facts.requestStarted) return PublicationDisposition::Unconfirmed;
+  return PublicationDisposition::Released;
+}
+QStringList retainedKeys(const QStringList &keys, const QList<RetentionFacts> &facts) {
+  QHash<QString, RetentionFacts> byKey;
+  for (const auto &fact : facts) byKey.insert(fact.key, fact);
+  QStringList kept;
+  for (const auto &key : keys) {
+    const auto it = byKey.constFind(key);
+    if (it == byKey.constEnd()) { kept.append(key); continue; }
+    const auto &fact = *it;
+    // A sending publication is never pruned.
+    if (fact.sending) { kept.append(key); continue; }
+    // A missing parent may be an unmounted or removed root, not a deleted file.
+    if (!fact.parentExists) { kept.append(key); continue; }
+    // The file is kept only while its fingerprint still equals the recorded key.
+    if (fact.fingerprint == key) kept.append(key);
+  }
+  return kept;
+}
 namespace {
 storage::PrivateJsonFile watchFile(const QString &path) {
+  return {path, {QStringLiteral("com.xerahs.app/watch-folders"), 2, 16 * 1024 * 1024}};
+}
+storage::PrivateJsonFile rulesFile(const QString &path) {
   return {path, {QStringLiteral("com.xerahs.app/watch-folders"), 1, 16 * 1024 * 1024}};
 }
-QString readStoreSnapshot(const QString &path, QJsonArray *items, QByteArray *snapshot) {
+// CORE-025 P6: read the processed store. Version 1 holds only `items`; version 2
+// adds `publications`. A version 2 store is refused by a reader that only
+// understands version 1, so the refusal happens in the version check below.
+QString readProcessedStore(const QString &path, QJsonArray *items, QJsonArray *publications,
+                           QByteArray *snapshot, int *version) {
   const auto read = watchFile(path).read();
+  *snapshot = read.snapshot;
+  switch (read.status) {
+    case storage::StoreStatus::Missing: return {};
+    case storage::StoreStatus::Unsafe: return "watch-store-unsafe";
+    case storage::StoreStatus::TooLarge:
+    case storage::StoreStatus::ReadFailed: return "watch-store-read-failed";
+    case storage::StoreStatus::Ok: break;
+    default: return "watch-store-invalid-version-or-data";
+  }
+  if (!read.document.value("items").isArray()) return "watch-store-invalid-version-or-data";
+  if (read.version == 1) {
+    *items = read.document.value("items").toArray();
+    if (publications) *publications = QJsonArray{};
+    if (version) *version = 1;
+    return {};
+  }
+  if (read.version != 2) return "watch-store-invalid-version-or-data";
+  const auto records = read.document.value("publications");
+  if (!records.isArray()) return "watch-store-invalid-version-or-data";
+  *items = read.document.value("items").toArray();
+  if (publications) *publications = records.toArray();
+  if (version) *version = 2;
+  return {};
+}
+QString readRulesStore(const QString &path, QJsonArray *items, QByteArray *snapshot) {
+  const auto read = rulesFile(path).read();
   *snapshot = read.snapshot;
   switch (read.status) {
     case storage::StoreStatus::Missing: return {};
@@ -65,8 +134,50 @@ QString readStoreSnapshot(const QString &path, QJsonArray *items, QByteArray *sn
   *items = read.document.value("items").toArray();
   return {};
 }
-QString writeStoreSnapshot(const QString &path, const QJsonArray &items, QByteArray *snapshot) {
+QJsonArray publicationsJson(const QList<PublicationRecord> &records) {
+  QJsonArray array;
+  for (const auto &record : records)
+    array.append(QJsonObject{{"key", record.key}, {"state", publicationStateName(record.state)}, {"at", record.at}});
+  return array;
+}
+QList<PublicationRecord> publicationsFrom(const QJsonArray &array, QString *error) {
+  QList<PublicationRecord> records;
+  for (const auto &value : array) {
+    const auto object = value.toObject();
+    const auto key = object.value("key").toString();
+    const auto state = object.value("state").toString();
+    if (key.isEmpty() || (state != QLatin1String("sending") && state != QLatin1String("unconfirmed"))) {
+      if (error) *error = "watch-store-invalid-version-or-data";
+      return {};
+    }
+    records.append({key, state == QLatin1String("unconfirmed") ? PublicationState::Unconfirmed : PublicationState::Sending,
+                    object.value("at").toString()});
+  }
+  return records;
+}
+QString writeProcessedStore(const QString &path, const QJsonArray &items, const QJsonArray &publications,
+                             QByteArray *snapshot) {
   const auto store = watchFile(path);
+  const auto read = store.read();
+  if (read.status == storage::StoreStatus::Unsafe) return "watch-store-unsafe";
+  if (read.status == storage::StoreStatus::ReadFailed || read.status == storage::StoreStatus::TooLarge) return "watch-store-read-failed";
+  if (read.status != storage::StoreStatus::Missing &&
+      (read.status != storage::StoreStatus::Ok || (read.version != 1 && read.version != 2))) return "watch-store-invalid-version-or-data";
+  const auto parent = QFileInfo(path).absolutePath();
+  const QFileInfo dir(parent);
+  if ((dir.exists() && dir.ownerId() != uint(geteuid())) || !QDir().mkpath(parent)) return "watch-store-unsafe";
+  if (!QFile::setPermissions(parent, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner)) return "watch-store-permissions";
+  const auto status = store.write({{"items", items}, {"publications", publications}}, 2, *snapshot, snapshot);
+  switch (status) {
+    case storage::StoreStatus::Ok: return {};
+    case storage::StoreStatus::Unsafe: return "watch-store-unsafe";
+    case storage::StoreStatus::TooLarge: return "watch-store-full";
+    default: return "watch-store-write-failed";
+  }
+}
+// The watch rules store keeps version 1; CORE-025 P6 changes only the checkpoint store.
+QString writeRulesStore(const QString &path, const QJsonArray &items, QByteArray *snapshot) {
+  const auto store = rulesFile(path);
   const auto read = store.read();
   if (read.status == storage::StoreStatus::Unsafe) return "watch-store-unsafe";
   if (read.status == storage::StoreStatus::ReadFailed || read.status == storage::StoreStatus::TooLarge) return "watch-store-read-failed";
@@ -86,9 +197,10 @@ QString writeStoreSnapshot(const QString &path, const QJsonArray &items, QByteAr
 }
 }
 WatchFolders::WatchFolders(QString directory) : m_directory(std::move(directory)) {
-  QJsonArray rules, processed;
-  m_error = readStoreSnapshot(QDir(m_directory).filePath("watch-folders.json"), &rules, &m_rulesSnapshot);
-  if (m_error.isEmpty()) m_error = readStoreSnapshot(QDir(m_directory).filePath("watch-processed.json"), &processed, &m_processedSnapshot);
+  QJsonArray rules, processed, publications;
+  m_error = readRulesStore(QDir(m_directory).filePath("watch-folders.json"), &rules, &m_rulesSnapshot);
+  if (m_error.isEmpty())
+    m_error = readProcessedStore(QDir(m_directory).filePath("watch-processed.json"), &processed, &publications, &m_processedSnapshot, nullptr);
   if (!m_error.isEmpty()) return;
   if (rules.size() > maximumWatchRules) { m_error = "watch-store-full"; return; }
   QSet<QUuid> ids; QSet<QString> paths;
@@ -118,6 +230,9 @@ WatchFolders::WatchFolders(QString directory) : m_directory(std::move(directory)
     if (!value.isString()) { m_error = "watch-checkpoint-invalid"; return; }
     m_processed.insert(value.toString());
   }
+  QString publicationsError;
+  m_publications = publicationsFrom(publications, &publicationsError);
+  if (!publicationsError.isEmpty()) { m_error = publicationsError; return; }
 }
 QString WatchFolders::saveRules(const QVector<Rule> &rules, const QString &captures) {
   if (!m_error.isEmpty()) return m_error;
@@ -149,7 +264,7 @@ QString WatchFolders::saveRules(const QVector<Rule> &rules, const QString &captu
     normalized.append(rule);
   }
   for (const auto &raw : m_unreadable) items.append(raw);
-  const auto error = writeStoreSnapshot(QDir(m_directory).filePath("watch-folders.json"), items, &m_rulesSnapshot);
+  const auto error = writeRulesStore(QDir(m_directory).filePath("watch-folders.json"), items, &m_rulesSnapshot);
   if (error.isEmpty()) m_rules = normalized;
   return error;
 }
@@ -165,7 +280,7 @@ CheckpointResult WatchFolders::writeCheckpoint(const CheckpointWrite &write) {
   auto next = write.processed; next.insert(write.key); QJsonArray items;
   for (const auto &item : next) items.append(item);
   auto snapshot = write.expected;
-  const auto error = writeStoreSnapshot(write.path, items, &snapshot);
+  const auto error = writeProcessedStore(write.path, items, QJsonArray{}, &snapshot);
   return {error, snapshot, std::move(next)};
 }
 QString WatchFolders::adoptCheckpoint(const CheckpointWrite &write, CheckpointResult result) {
@@ -174,6 +289,57 @@ QString WatchFolders::adoptCheckpoint(const CheckpointWrite &write, CheckpointRe
   m_processed = std::move(result.processed);
   m_processedSnapshot = result.snapshot;
   return {};
+}
+bool WatchFolders::publicationPending(const QString &key) const {
+  for (const auto &record : m_publications) if (record.key == key) return true;
+  return false;
+}
+CheckpointIntent WatchFolders::publicationIntent(const QString &key, const QString &at) const {
+  auto records = m_publications;
+  records.removeIf([&](const PublicationRecord &record) { return record.key == key; });
+  records.append({key, PublicationState::Sending, at});
+  return {QDir(m_directory).filePath("watch-processed.json"), m_processed, records, key, m_processedSnapshot};
+}
+IntentResult WatchFolders::writeIntent(const CheckpointIntent &intent) {
+  QJsonArray items;
+  for (const auto &item : intent.processed) items.append(item);
+  auto snapshot = intent.expected;
+  const auto error = writeProcessedStore(intent.path, items, publicationsJson(intent.publications), &snapshot);
+  return {error, snapshot, intent.processed, intent.publications};
+}
+QString WatchFolders::adoptIntent(const CheckpointIntent &intent, IntentResult result) {
+  if (!result.error.isEmpty()) return result.error;
+  if (m_processedSnapshot != intent.expected) return QStringLiteral("watch-store-write-failed");
+  m_publications = std::move(result.publications);
+  m_processedSnapshot = result.snapshot;
+  return {};
+}
+SettleRequest WatchFolders::settlePublication(const QString &key, PublicationState state) const {
+  auto records = m_publications;
+  records.removeIf([&](const PublicationRecord &record) { return record.key == key; });
+  if (state == PublicationState::Unconfirmed)
+    records.append({key, PublicationState::Unconfirmed, QString{}});
+  return {QDir(m_directory).filePath("watch-processed.json"), m_processed, records, key, state, m_processedSnapshot};
+}
+SettleResult WatchFolders::writeSettlement(const SettleRequest &request) {
+  auto next = request.processed;
+  QJsonArray items;
+  if (request.state == PublicationState::Sending) next.insert(request.key);
+  for (const auto &item : next) items.append(item);
+  auto snapshot = request.expected;
+  const auto error = writeProcessedStore(request.path, items, publicationsJson(request.publications), &snapshot);
+  return {error, snapshot, std::move(next), request.publications};
+}
+QString WatchFolders::adoptSettlement(const SettleRequest &request, SettleResult result) {
+  if (!result.error.isEmpty()) return result.error;
+  if (m_processedSnapshot != request.expected) return QStringLiteral("watch-store-write-failed");
+  m_processed = std::move(result.processed);
+  m_publications = std::move(result.publications);
+  m_processedSnapshot = result.snapshot;
+  return {};
+}
+QStringList WatchFolders::retained(const QStringList &keys, const QList<RetentionFacts> &facts) {
+  return retainedKeys(keys, facts);
 }
 StabilityTracker::StabilityTracker(Clock clock) : m_clock(std::move(clock)) {
   if (!m_clock) { QElapsedTimer timer; timer.start(); m_clock = [timer] { return timer.elapsed(); }; }

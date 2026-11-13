@@ -12,6 +12,12 @@ struct UploadOutcome {
   QString code;
   int httpStatus = 0;
   int attempts = 0; // actual network attempts, not published objects
+  // CORE-025: attempts that ended with an actual HTTP status. An attempt that
+  // timed out, was aborted, or failed without a status is not answered. The
+  // count proves whether every attempt was answered; the last status alone
+  // cannot, because a later answered attempt does not repair an earlier
+  // unanswered one.
+  int answeredAttempts = 0;
 };
 // XML supports absolute element paths, first matching sibling, no predicates,
 // attributes, namespace resolution, external entities or general XPath evaluation.

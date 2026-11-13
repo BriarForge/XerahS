@@ -27,6 +27,17 @@ class QNetworkAccessManager;
 
 namespace xerahs::app {
 
+// CORE-025 P1: the typed outcome of one upload publication.
+//   Unsent      - no request was started (validation, missing destination,
+//                 cancelled before transfer, or a send intent that was not saved);
+//   Acknowledged - the destination answered with an HTTP status of any kind,
+//                 and the upload did not succeed;
+//   Unknown     - a request was started and at least one attempt ended without
+//                 an HTTP response, so the remote state cannot be known;
+//   Succeeded   - the upload succeeded.
+// The type is derived from the attempt facts, never from the last status alone.
+enum class UploadPublication { Unsent, Acknowledged, Unknown, Succeeded };
+QString uploadPublicationName(UploadPublication publication);
 struct FileUploadPorts {
   QString catalogPath;
   std::shared_ptr<uploads::CredentialStore> credentials;
@@ -59,6 +70,10 @@ signals:
   // Emitted when the queue has drained or been cancelled.
   void finished();
   void fileCompleted(const QString &path, bool success, const QString &error);
+  // CORE-025: the typed publication outcome of the finished upload, with the
+  // attempt facts that produced it. `attempts` is the number of request
+  // attempts and `answeredAttempts` the number that ended with an HTTP status.
+  void publicationResolved(const QString &path, const QString &publication, int attempts, int answeredAttempts);
   // WFCAT-017: the terminal projection shared by dialog, notification and history.
   void activityChanged(const QString &text);
   void notify(const QString &title, const QString &body, bool success);
@@ -77,6 +92,8 @@ private:
   void scheduleNext();
   void onProgress(qint64 sent, qint64 total);
   void onFinished(const uploads::UploadOutcome &outcome);
+  // CORE-025: the typed publication outcome of the current upload.
+  UploadPublication publication() const;
 
   FileUploadPorts m_ports;
   QPointer<QWidget> m_dialogParent;
@@ -91,6 +108,12 @@ private:
   QString m_destinationId;
   bool m_requestBuilt = false, m_executionStored = true;
   int m_httpStatus = 0;
+  // CORE-025: the attempt facts of the finished upload. Every attempt must be
+  // accounted for before the controller may claim the publication was
+  // acknowledged.
+  int m_uploadAttempts = 0;
+  int m_answeredAttempts = 0;
+  bool m_requestStarted = false;
   QStringList m_executionOutputs;
   QJsonObject m_terminalObservation;
   QString m_currentName;

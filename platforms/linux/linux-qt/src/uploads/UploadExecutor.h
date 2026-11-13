@@ -24,7 +24,10 @@ signals:
 private:
   void sendAttempt();
   void drain();
-  void attemptFinished(UploadOutcome, bool transient);
+  // CORE-025: `answered` is true only when the attempt ended with an actual
+  // HTTP status. A timeout, a network abort or a failure without a status is
+  // not answered, even when the attempt count grows.
+  void attemptFinished(UploadOutcome, bool transient, bool answered);
   void releaseReply();
   bool retrySafe() const;
   void complete(UploadOutcome);
@@ -32,6 +35,7 @@ private:
   QPointer<QNetworkReply> m_reply;
   QTimer m_timer, m_retryTimer;
   int m_attempts = 0;
+  int m_answeredAttempts = 0;
   int m_timeoutMs;
   bool m_active = false, m_finishing = false;
   quint64 m_generation = 0;

@@ -34,6 +34,15 @@ QString fileNameOf(const QString &path) {
   return name.isEmpty() ? path : name;
 }
 }  // namespace
+QString uploadPublicationName(UploadPublication publication) {
+  switch (publication) {
+    case UploadPublication::Unsent: return QStringLiteral("unsent");
+    case UploadPublication::Acknowledged: return QStringLiteral("acknowledged");
+    case UploadPublication::Unknown: return QStringLiteral("unknown");
+    case UploadPublication::Succeeded: return QStringLiteral("succeeded");
+  }
+  return QStringLiteral("unsent");
+}
 
 FileUploadController::FileUploadController(FileUploadPorts ports, QWidget *dialogParent, QObject *parent)
     : QObject(parent), m_ports(std::move(ports)), m_dialogParent(dialogParent),
@@ -99,6 +108,8 @@ void FileUploadController::startNext() {
   m_historyRecord.path = path; m_historyRecord.origin = queued.origin;
   m_existingFile = false; m_sensitiveValues.clear();
   m_rule = queued.rule; m_requestBuilt = false; m_httpStatus = 0; m_executionOutputs.clear(); m_executionStored = true; m_execution.reset();
+  // CORE-025: the attempt facts reset with every queued file.
+  m_uploadAttempts = 0; m_answeredAttempts = 0; m_requestStarted = false;
   showProgress(m_currentName);
   const auto credentials = m_ports.credentials;
   const auto catalogPath = m_ports.catalogPath;
@@ -164,6 +175,9 @@ void FileUploadController::startNext() {
     }
     m_requestBuilt = true;
     m_transferring = true;
+    // CORE-025 P1: the request is started here. A request that never reaches
+    // this point is unsent, not an unknown publication.
+    m_requestStarted = true;
     m_executor->start(*result.request.request);
   });
 }
@@ -261,12 +275,16 @@ workflows::FileOperationNotice FileUploadController::settle(bool uploaded) {
 void FileUploadController::showFailure(const QString &fileName, const QString &message, bool missingDestination, const QString &detail) {
   uploads::UploadOutcome outcome; outcome.errorMessage = detail.isEmpty() ? message : message + ": " + detail;
   outcome.attempts = m_historyRecord.result.attempts;
+  outcome.answeredAttempts = m_answeredAttempts;
   if (m_historyRecord.failureCode.isEmpty()) m_historyRecord.failureCode = "upload-failed";
   const QPointer<FileUploadController> guard(this);
   const auto notice = settle(false);
   if (!guard) return;
   const auto storage = m_executionStored ? QString{} : QStringLiteral("workflow-storage-unavailable: Could not save the upload execution record.");
   recordCompletion(outcome, [this, fileName, message, missingDestination, detail, notice, storage](const QString &historyError) {
+    // CORE-025: the publication facts are published before the completion, so
+    // the watch service can apply the disposition to this very attempt.
+    emit publicationResolved(m_currentPath, uploadPublicationName(publication()), m_uploadAttempts, m_answeredAttempts);
     emit fileCompleted(m_currentPath, false, message);
     closeProgress();
     QStringList text{message}; if (!historyError.isEmpty()) text.append(historyError); if (!storage.isEmpty()) text.append(storage);
@@ -283,6 +301,7 @@ void FileUploadController::showSuccess(const QString &fileName, const uploads::U
   if (!guard) return;
   const auto storage = m_executionStored ? QString{} : QStringLiteral("workflow-storage-unavailable: Could not save the upload execution record.");
   recordCompletion(outcome, [this, fileName, outcome, notice, storage](const QString &historyError) {
+    emit publicationResolved(m_currentPath, uploadPublicationName(UploadPublication::Succeeded), m_uploadAttempts, m_answeredAttempts);
     emit fileCompleted(m_currentPath, true, {});
     closeProgress();
     auto *dialog = new FileUploadResultDialog(fileName, outcome, m_dialogParent, notice.headline + QLatin1Char('\n') + actions::pipelineObservationText(m_terminalObservation));
@@ -294,6 +313,13 @@ void FileUploadController::showSuccess(const QString &fileName, const uploads::U
   });
 }
 
+UploadPublication FileUploadController::publication() const {
+  // CORE-025 P1. The acknowledgement test is proof over every attempt, not
+  // the last status. A started request with any unanswered attempt is unknown.
+  if (!m_requestStarted || m_uploadAttempts <= 0) return UploadPublication::Unsent;
+  if (m_answeredAttempts == m_uploadAttempts) return UploadPublication::Acknowledged;
+  return UploadPublication::Unknown;
+}
 void FileUploadController::scheduleNext() {
   QTimer::singleShot(0, this, [this] {
     if (!m_busy) return;
@@ -314,6 +340,11 @@ void FileUploadController::onFinished(const uploads::UploadOutcome &outcome) {
   m_historyRecord.failureCode = outcome.code;
   m_httpStatus = outcome.httpStatus;
   m_historyRecord.result.attempts = outcome.attempts;
+  // CORE-025: every attempt must be accounted for before the publication may
+  // be called acknowledged. The last status cannot answer that question: a
+  // later answered attempt does not repair an earlier unanswered one.
+  m_uploadAttempts = outcome.attempts;
+  m_answeredAttempts = outcome.answeredAttempts;
   if (m_stop || outcome.code == QLatin1String("cancelled")) {
     m_historyRecord.failureCode = "cancelled";
     showFailure(m_currentName, QStringLiteral("cancelled"), false, outcome.attempts > 0

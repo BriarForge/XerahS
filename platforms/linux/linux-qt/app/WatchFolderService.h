@@ -25,6 +25,9 @@ public:
   void setCheckpointHook(std::function<void()> hook);
   void finishCheckpoint();
   bool discovering() const { return m_discovery.running(); }
+  // CORE-025: the durable publication facts of the pending file, for tests and
+  // for the startup notice.
+  bool publicationPending(const QString &key) const { return m_store.publicationPending(key); }
   // WFCAT-002: execution records for copy/move; empty uses the shared directory.
   // Test seam: called on the worker thread after the copy committed, before the source is removed.
   void setBeforeRemoveHook(std::function<void(const QString &)> hook);
@@ -48,6 +51,14 @@ private:
   struct FileResult { QString error; bool read = false, copied = false; };
   void finishFileWork(const QString &path, const FileResult &result);
   void complete(const QString &path, bool success, const QString &error);
+  // CORE-025 P2: durably record the send intent before any dispatch.
+  void beginPublication(const QString &path, const QString &key, const QJsonObject &rule);
+  // CORE-025 P1: settle the pending publication with its typed outcome.
+  void settlePublication(const QString &path, watch::PublicationDisposition disposition);
+  void writeSettlement(const QString &path, watch::PublicationState state);
+  void announceUnconfirmed(const QString &path);
+  // CORE-025 P5: the retained checkpoint facts, frozen on the worker.
+  void pruneProcessed();
   watch::WatchFolders &m_store;
   FileUploadController &m_uploads;
   std::function<QString()> m_captures;
@@ -64,6 +75,22 @@ private:
   OwnedWork m_discovery;
   OwnedWork m_checkpoint;
   bool m_checkpointing = false;
+  // CORE-025: a queued settlement that must run after the current checkpoint.
+  bool m_settlementQueued = false;
+  watch::PublicationState m_queuedSettlement = watch::PublicationState::Unconfirmed;
+  QString m_queuedSettlementPath;
+  // CORE-025: the settlement writer waiting for the checkpoint lane.
+  std::function<void()> m_pendingSettlement;
+  // CORE-025: the attempt facts of the pending publication.
+  bool m_requestStarted = false;
+  int m_uploadAttempts = 0;
+  int m_answeredAttempts = 0;
+  // CORE-025: the typed publication outcome reported by the upload controller.
+  bool m_publicationSucceeded = false;
+  bool m_publicationAcknowledged = false;
+  bool m_publicationUnknown = false;
+  // CORE-025 P4: a copy or move is not a publication and keeps its own path.
+  bool m_publicationAction = false;
   std::function<void()> m_checkpointHook;
   quint64 m_discoveryGeneration = 0;
   bool m_rescanRequested = false;

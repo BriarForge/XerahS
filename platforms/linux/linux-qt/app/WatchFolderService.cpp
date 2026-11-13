@@ -25,12 +25,46 @@ WatchFolderService::WatchFolderService(watch::WatchFolders &store, FileUploadCon
     }
   });
   connect(&m_uploads, &FileUploadController::fileCompleted, this, &WatchFolderService::complete);
+  // CORE-025 P1: the typed publication outcome decides the disposition.
+  connect(&m_uploads, &FileUploadController::publicationResolved, this,
+      [this](const QString &path, const QString &publication, int attempts, int answeredAttempts) {
+    if (path != m_pendingPath || path.isEmpty()) return;
+    m_uploadAttempts = attempts;
+    m_answeredAttempts = answeredAttempts;
+    // CORE-025 P1: a started request with at least one attempt is a request
+    // that reached the network.
+    m_requestStarted = attempts > 0;
+    if (publication == QLatin1String("succeeded")) m_publicationSucceeded = true;
+    else if (publication == QLatin1String("acknowledged")) m_publicationAcknowledged = true;
+    else if (publication == QLatin1String("unknown")) m_publicationUnknown = true;
+  });
 }
 void WatchFolderService::start() {
   if (m_running) return;
   m_running = true;
   if (!m_store.loadError().isEmpty()) { m_blocked = true; emit notify(m_store.loadError(), false); return; }
   for (const auto &diagnostic : m_store.diagnostics()) emit notify(diagnostic, false);
+  // CORE-025 P2/P3: a leftover sending record from an earlier process is
+  // unconfirmed. It is never uploaded again automatically under the same key,
+  // and the startup notice names the files without disclosing any path.
+  const auto leftovers = m_store.publications();
+  if (!leftovers.isEmpty()) {
+    QStringList names;
+    int remaining = 0;
+    for (const auto &record : leftovers) {
+      if (record.state != watch::PublicationState::Sending) continue;
+      const auto name = QFileInfo(record.key).fileName();
+      if (names.size() < 5) {
+        if (!name.isEmpty() && !names.contains(name)) names.append(name);
+      } else ++remaining;
+    }
+    if (!names.isEmpty()) {
+      auto notice = QStringLiteral("watch-publication-unconfirmed: %1 may already have been uploaded. Use Upload file to retry.")
+          .arg(names.join(QStringLiteral(", ")));
+      if (remaining > 0) notice += QStringLiteral(" and %1 more").arg(remaining);
+      emit notify(notice, false);
+    }
+  }
   m_timer.start(); rescan();
 }
 void WatchFolderService::stop() {
@@ -136,10 +170,118 @@ void WatchFolderService::finishFileWork(const QString &path, const FileResult &r
     error += QStringLiteral("workflow-storage-unavailable: Watching stopped; could not save the execution record. Completed file work was retained.");
   }
   qInfo().noquote() << "Workflow terminal" << actions::pipelineObservationText(m_terminalObservation);
+  // CORE-025 P4: local copy and move are unchanged. They never enter the
+  // publication disposition path.
   complete(path, result.error.isEmpty(), error);
+}
+// CORE-025 P2: the send intent is durably saved before any HTTP request is
+// issued. When the intent cannot be saved, no request is sent and watching
+// stops with watch-store-write-failed.
+void WatchFolderService::beginPublication(const QString &path, const QString &key, const QJsonObject &rule) {
+  const auto at = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+  const auto intent = m_store.publicationIntent(key, at);
+  const auto hook = m_checkpointHook;
+  m_checkpointing = true;
+  m_checkpoint = OwnedWork::run<watch::IntentResult>(this,
+      [intent, hook](const OwnedWork::Context &) -> watch::IntentResult {
+    try {
+      if (hook) hook();
+      return watch::WatchFolders::writeIntent(intent);
+    } catch (...) { return {QStringLiteral("watch-store-write-failed"), {}, {}, {}}; }
+  }, [this, intent, path, rule](watch::IntentResult result) {
+    const auto saved = m_store.adoptIntent(intent, std::move(result));
+    m_checkpointing = false;
+    const QPointer<WatchFolderService> guard(this);
+    if (!saved.isEmpty()) {
+      // CORE-025 P2: zero HTTP requests, and watching stops.
+      m_blocked = true;
+      emit notify(saved + QStringLiteral(": watching stopped; the upload was not sent because its publication could not be saved."), false);
+      if (guard) emit checkpointSettled();
+      return;
+    }
+    if (!guard) return;
+    // The intent is durable. Only now may the upload be dispatched.
+    m_uploads.uploadFromWatchFolder(path, rule);
+    emit checkpointSettled();
+  });
+}
+void WatchFolderService::settlePublication(const QString &path, watch::PublicationDisposition disposition) {
+  if (disposition == watch::PublicationDisposition::Processed) {
+    // The publication completed: checkpoint it as processed.
+    complete(path, true, {});
+    return;
+  }
+  if (disposition == watch::PublicationDisposition::Released) {
+    // Nothing was sent, or every attempt was answered: the file is released
+    // for rediscovery, and the publication record is removed.
+    writeSettlement(path, watch::PublicationState::Sending);
+    return;
+  }
+  // Unconfirmed: the file must not be uploaded again automatically.
+  announceUnconfirmed(path);
+  writeSettlement(path, watch::PublicationState::Unconfirmed);
+}
+void WatchFolderService::announceUnconfirmed(const QString &path) {
+  const auto name = QFileInfo(path).fileName();
+  emit notify(QStringLiteral("watch-publication-unconfirmed: %1 may already have been uploaded. Use Upload file to retry.").arg(name), false);
+}
+void WatchFolderService::writeSettlement(const QString &path, watch::PublicationState state) {
+  const auto request = m_store.settlePublication(m_pendingKey, state);
+  const auto hook = m_checkpointHook;
+  // A settlement waits behind any checkpoint still in flight; the checkpoint
+  // lane stays serial so the store never sees two writers at once.
+  m_settlementQueued = true;
+  m_queuedSettlement = state;
+  m_queuedSettlementPath = path;
+  const auto start = [this, request, hook]() {
+    m_checkpoint = OwnedWork::run<watch::SettleResult>(this,
+        [request, hook](const OwnedWork::Context &) -> watch::SettleResult {
+      try {
+        if (hook) hook();
+        return watch::WatchFolders::writeSettlement(request);
+      } catch (...) { return {QStringLiteral("watch-store-write-failed"), {}, {}, {}}; }
+    }, [this, request](watch::SettleResult result) {
+      const auto saved = m_store.adoptSettlement(request, std::move(result));
+      m_settlementQueued = false;
+      const QPointer<WatchFolderService> guard(this);
+      if (!saved.isEmpty()) {
+        m_blocked = true;
+        emit notify(saved + QStringLiteral(": watching stopped; the publication could not be settled."), false);
+        if (guard) emit checkpointSettled();
+        return;
+      }
+      if (!guard) return;
+      // The publication is settled: the file may be discovered again.
+      m_attempted.remove(m_pendingKey);
+      emit checkpointSettled();
+    });
+  };
+  if (m_checkpointing) {
+    // The current checkpoint must finish first. The settlement is written when
+    // the checkpoint settles; an early return here would lose it.
+    m_pendingSettlement = start;
+    return;
+  }
+  start();
 }
 void WatchFolderService::complete(const QString &path, bool success, const QString &error) {
   if (path != m_pendingPath || path.isEmpty() || m_checkpointing) return;
+  // CORE-025 P1: the disposition decides what happens to a publication. A copy
+  // or move is not a publication and keeps its existing checkpoint behavior.
+  if (!m_publicationAction) {
+    watch::PublicationFacts facts;
+    facts.requestStarted = m_requestStarted;
+    facts.attempts = m_uploadAttempts;
+    facts.everyAttemptAnswered = m_uploadAttempts > 0 && m_answeredAttempts == m_uploadAttempts;
+    facts.succeeded = success;
+    facts.restartWithSending = false;
+    const auto disposition = watch::publicationDisposition(facts);
+    if (disposition != watch::PublicationDisposition::Processed) {
+      // A released or unconfirmed publication never checkpoints as processed.
+      settlePublication(path, disposition);
+      return;
+    }
+  }
   if (!success || !m_store.loadError().isEmpty()) {
     settle(path, success, error, success ? m_store.loadError() : QString{});
     return;
@@ -158,7 +300,14 @@ void WatchFolderService::complete(const QString &path, bool success, const QStri
     m_checkpointing = false;
     const QPointer<WatchFolderService> guard(this);
     settle(path, success, error, saved);
-    if (guard) emit checkpointSettled();
+    if (!guard) return;
+    emit checkpointSettled();
+    // CORE-025: a settlement queued behind this checkpoint still has to run.
+    if (guard && m_pendingSettlement) {
+      const auto pending = m_pendingSettlement;
+      m_pendingSettlement = {};
+      pending();
+    }
   });
 }
 void WatchFolderService::setCheckpointHook(std::function<void()> hook) { m_checkpointHook = std::move(hook); }
@@ -276,15 +425,22 @@ void WatchFolderService::rescan() {
       report(path + ":watcher", "watch-notification-unavailable; periodic scanning remains active");
       if (!guard || !m_running || generation != m_discoveryGeneration) return;
     }
-    if (m_pendingPath.isEmpty()) for (const auto &candidate : ready) {
+    if (m_pendingPath.isEmpty() && !m_checkpointing && !m_settlementQueued) for (const auto &candidate : ready) {
       const auto &key = candidate.key;
       if (key.isEmpty() || m_store.processed(key) || m_attempted.contains(key)) continue;
+      // CORE-025 P2: a publication left over from an earlier process is
+      // unconfirmed and is never uploaded again automatically under this key.
+      if (m_store.publicationPending(key)) continue;
       // The worker's observation cannot authorize a file replaced before dispatch.
       if (watch::fingerprint(candidate.path) != key) continue;
       m_pendingPath = candidate.path; m_pendingKey = key; m_attempted.insert(key);
-      if (candidate.rule.action == watch::Action::Upload)
-        m_uploads.uploadFromWatchFolder(candidate.path, ruleSnapshot(candidate.rule));
-      else startFileWork(candidate.path, key, candidate.rule);
+      m_publicationSucceeded = false; m_publicationAcknowledged = false; m_publicationUnknown = false;
+      m_publicationAction = candidate.rule.action == watch::Action::Upload;
+      m_requestStarted = false; m_uploadAttempts = 0; m_answeredAttempts = 0;
+      if (candidate.rule.action == watch::Action::Upload) {
+        // CORE-025 P2: the send intent is durably saved before any dispatch.
+        beginPublication(candidate.path, key, ruleSnapshot(candidate.rule));
+      } else startFileWork(candidate.path, key, candidate.rule);
       break;
     }
     if (guard && m_rescanRequested) rescan();

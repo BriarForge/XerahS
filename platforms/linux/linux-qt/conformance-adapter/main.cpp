@@ -15,6 +15,7 @@
 #include "NewImageSource.h"
 #include <QBuffer>
 #include "naming/FilenameGenerator.h"
+#include "watch/WatchFolders.h"
 
 #include <QCoreApplication>
 #include <QFile>
@@ -873,6 +874,45 @@ QJsonObject runEditorSettings(const QString &operation, const QJsonObject &input
 
 }  // namespace
 
+// CORE-025: the adapter only translates JSON into production calls. The
+// disposition and retention rules live in the production helpers and are not
+// reimplemented here.
+QJsonObject runCorePlatform(const QString &operation, const QJsonObject &input) {
+  if (operation == u"watch-publication-disposition") {
+    xerahs::watch::PublicationFacts facts;
+    facts.requestStarted = input.value(u"request_started").toBool();
+    facts.attempts = input.value(u"attempts").toInt();
+    facts.everyAttemptAnswered = input.value(u"http_response_on_every_attempt").toBool();
+    facts.succeeded = input.value(u"succeeded").toBool();
+    facts.restartWithSending = input.value(u"restart_with_sending").toBool();
+    const auto disposition = xerahs::watch::publicationDisposition(facts);
+    QJsonObject result;
+    result.insert(QStringLiteral("disposition"), xerahs::watch::publicationDispositionName(disposition));
+    return result;
+  }
+  if (operation == u"watch-retain") {
+    QStringList keys;
+    for (const auto &value : input.value(u"keys").toArray()) keys.append(value.toString());
+    QList<xerahs::watch::RetentionFacts> facts;
+    QSet<QString> sending;
+    for (const auto &value : input.value(u"sending_keys").toArray()) sending.insert(value.toString());
+    for (const auto &value : input.value(u"files").toArray()) {
+      const auto object = value.toObject();
+      xerahs::watch::RetentionFacts fact;
+      fact.key = object.value(u"key").toString();
+      fact.parentExists = object.value(u"parent_exists").toBool();
+      fact.fingerprint = object.value(u"fingerprint").toString();
+      fact.sending = sending.contains(fact.key);
+      facts.append(fact);
+    }
+    QJsonArray kept;
+    for (const auto &key : xerahs::watch::retainedKeys(keys, facts)) kept.append(key);
+    QJsonObject result;
+    result.insert(QStringLiteral("kept"), kept);
+    return result;
+  }
+  return adapterError(QStringLiteral("unsupported operation: ") + operation);
+}
 int main(int argc, char *argv[]) {
   QCoreApplication app(argc, argv);
   QFile in;
@@ -913,6 +953,10 @@ int main(int argc, char *argv[]) {
   }
   if (capability == u"POST-CAPTURE-ACTIONS-001") {
     writeJson(runPostCaptureActions(operation, input));
+    return 0;
+  }
+  if (capability == u"CORE-PLATFORM-001") {
+    writeJson(runCorePlatform(operation, input));
     return 0;
   }
   writeJson(adapterError(QStringLiteral("unsupported capability: ") + capability));

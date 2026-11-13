@@ -40,7 +40,8 @@ UploadExecutor::UploadExecutor(QNetworkAccessManager *manager, QObject *parent, 
     : QObject(parent), m_manager(manager), m_timeoutMs(timeoutMs) {
   m_timer.setSingleShot(true);
   connect(&m_timer, &QTimer::timeout, this, [this] {
-    UploadOutcome out; out.code = QStringLiteral("timeout"); attemptFinished(out, true);
+    // A timeout ends the attempt without an HTTP status: not answered.
+    UploadOutcome out; out.code = QStringLiteral("timeout"); attemptFinished(out, true, false);
   });
   m_retryTimer.setSingleShot(true);
   connect(&m_retryTimer, &QTimer::timeout, this, &UploadExecutor::sendAttempt);
@@ -50,7 +51,7 @@ UploadExecutor::~UploadExecutor() {
 }
 void UploadExecutor::start(const PreparedUploadRequest &request) {
   if (m_active || m_finishing) return;
-  m_active = true; m_request = request; m_attempts = 0;
+  m_active = true; m_request = request; m_attempts = 0; m_answeredAttempts = 0;
   sendAttempt();
 }
 void UploadExecutor::sendAttempt() {
@@ -88,7 +89,8 @@ void UploadExecutor::sendAttempt() {
   connect(m_reply, &QNetworkReply::uploadProgress, this, &UploadExecutor::progress);
   connect(m_reply, &QNetworkReply::readyRead, this, &UploadExecutor::drain);
   connect(m_reply, &QObject::destroyed, this, [this] {
-    if (m_active) { UploadOutcome out; out.code = QStringLiteral("network-error"); attemptFinished(out, false); }
+    // The reply died without a status: not answered.
+    if (m_active) { UploadOutcome out; out.code = QStringLiteral("network-error"); attemptFinished(out, false, false); }
   });
   connect(m_reply, &QNetworkReply::finished, this, [this, generation] {
     if (!m_active || !m_reply || generation != m_generation) return;
@@ -97,10 +99,13 @@ void UploadExecutor::sendAttempt() {
     if (!guard || !m_active || !m_reply || generation != m_generation) return;
     const int status = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (m_reply->error() != QNetworkReply::NoError && (status == 0 || (status >= 200 && status < 400))) {
+      // A transport failure without a usable status is not answered.
       UploadOutcome out; out.code = QStringLiteral("network-error"); out.errorMessage = m_reply->errorString();
-      attemptFinished(out, transientNetworkError(m_reply->error())); return;
+      attemptFinished(out, transientNetworkError(m_reply->error()), false); return;
     }
-    attemptFinished(parseUploadResponse(m_request.destination, status, m_reply->rawHeaderPairs(), m_body, m_request.fileName), status >= 500 && status <= 599);
+    // The attempt reached a status line: answered, whatever that status is.
+    attemptFinished(parseUploadResponse(m_request.destination, status, m_reply->rawHeaderPairs(), m_body, m_request.fileName),
+                    status >= 500 && status <= 599, true);
   });
   m_timer.start(qMax(1, m_timeoutMs));
   emit progress(0, request.body.size());
@@ -133,8 +138,10 @@ void UploadExecutor::releaseReply() {
   auto reply = m_reply; m_reply.clear();
   if (reply) { reply->disconnect(this); if (!reply->isFinished()) reply->abort(); if (reply) reply->deleteLater(); }
 }
-void UploadExecutor::attemptFinished(UploadOutcome out, bool transient) {
+void UploadExecutor::attemptFinished(UploadOutcome out, bool transient, bool answered) {
   if (!m_active) return;
+  // CORE-025: count the attempt as answered only when it ended with a status.
+  if (answered) ++m_answeredAttempts;
   if (!transient || !retrySafe() || m_attempts >= kMaximumUploadAttempts) { complete(out); return; }
   const QPointer<UploadExecutor> guard(this);
   const auto generation = m_generation;
@@ -152,6 +159,7 @@ void UploadExecutor::complete(UploadOutcome out) {
   m_finishing = true; m_retryTimer.stop(); releaseReply();
   if (!guard) return;
   out.attempts = m_attempts;
+  out.answeredAttempts = m_answeredAttempts;
   for (const auto &secret : m_request.sensitiveValues) {
     out.errorMessage.replace(secret, QStringLiteral("[redacted]"));
     out.errorMessage.replace(QString::fromLatin1(QUrl::toPercentEncoding(secret)), QStringLiteral("[redacted]"));
