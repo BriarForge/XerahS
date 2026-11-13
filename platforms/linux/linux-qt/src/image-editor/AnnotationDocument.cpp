@@ -517,10 +517,10 @@ ParseResult parseDocument(const QJsonObject &payload) {
   }
 
   Findings findings;
-  // Unsafe-content / traversal rejections are remembered (first encountered wins) and reported
-  // after the ES-029 priority 2 size failure, so a too-large document is never masked by them.
-  QString security;
-  const auto flagSecurity = [&security](const QString &code) { if (security.isEmpty()) security = code; };
+  const auto flagSecurity = [&result, &findings](const QString &reason) {
+    findings.invalid = true;
+    if (!result.reason) result.reason = reason;
+  };
   if (!isInteger(version) || version.toDouble() != 1) findings.invalid = true;
 
   AnnotationDocument document;
@@ -532,7 +532,7 @@ ParseResult parseDocument(const QJsonObject &payload) {
     findings.invalid = true;
   }
   document.imagePath = payload.value(u"imagePath").toString();
-  if (traversal(document.imagePath)) flagSecurity(QStringLiteral("document-path-traversal"));
+  if (traversal(document.imagePath)) flagSecurity(QStringLiteral("path-traversal"));
   document.imageHash = payload.value(u"imageHash").toString();
   static const QRegularExpression hashPattern(QStringLiteral("^(|sha256:[0-9a-f]{64})$"));
   if (!hashPattern.match(document.imageHash).hasMatch()) findings.invalid = true;
@@ -562,7 +562,7 @@ ParseResult parseDocument(const QJsonObject &payload) {
   } else {
     const QJsonObject images = embedded.toObject();
     for (auto it = images.begin(); it != images.end(); ++it) {
-      if (traversal(it.key())) flagSecurity(QStringLiteral("document-path-traversal"));
+      if (traversal(it.key())) flagSecurity(QStringLiteral("path-traversal"));
       if (auto png = decodePng(it.value(), findings)) document.embeddedImages.emplace_back(it.key(), *png);
     }
   }
@@ -576,15 +576,15 @@ ParseResult parseDocument(const QJsonObject &payload) {
     auto parsed = parseAnnotationList(annotations.toArray());
     result.report = parsed.report;
     if (parsed.annotations) document.annotations = std::move(*parsed.annotations);
-    else if (parsed.diagnostic != diagnostic::documentInvalid) flagSecurity(parsed.diagnostic);
+    else if (parsed.reason) flagSecurity(*parsed.reason);
     else findings.invalid = true;
   }
 
   for (auto it = payload.begin(); it != payload.end(); ++it) {
     if (!kKnownDocumentKeys.contains(it.key()) || it.key() == QStringLiteral("extensions")) {
-      if (unsafePathContent(QJsonObject{{it.key(), it.value()}})) { flagSecurity(QStringLiteral("document-path-traversal")); continue; }
+      if (unsafePathContent(QJsonObject{{it.key(), it.value()}})) { flagSecurity(QStringLiteral("path-traversal")); continue; }
       if (compatibility::unsafeUnknown(it.key()) || unsafeDocumentExtra(QJsonObject{{it.key(), it.value()}})) {
-        flagSecurity(QStringLiteral("document-unsafe-content")); continue;
+        flagSecurity(QStringLiteral("unsafe-content")); continue;
       }
       document.extra.insert(it.key(), it.value());
     }
@@ -592,7 +592,6 @@ ParseResult parseDocument(const QJsonObject &payload) {
 
   // ES-029 priority 2 and 3.
   if (findings.tooLarge) result.error = diagnostic::documentTooLarge;
-  else if (!security.isEmpty()) result.error = security;
   else if (findings.invalid) result.error = diagnostic::documentInvalid;
   else result.document = std::move(document);
   if (result.error) result.report.add(ImportDisposition::Rejected);
@@ -647,12 +646,12 @@ AnnotationListResult parseAnnotationList(const QJsonArray &items) {
     if (unsafePathContent(extra) || (known && traversal(known->content.imageKey))) {
       report.add(ImportDisposition::Rejected);
       locate(item, ImportDisposition::Rejected, "path-traversal");
-      return {std::nullopt, QStringLiteral("document-path-traversal"), report};
+      return {std::nullopt, diagnostic::documentInvalid, report, QStringLiteral("path-traversal")};
     }
     if (compatibility::containsUnsafeUnknown(extra)) {
       report.add(ImportDisposition::Rejected);
       locate(item, ImportDisposition::Rejected, "unsafe-content");
-      return {std::nullopt, QStringLiteral("document-unsafe-content"), report};
+      return {std::nullopt, diagnostic::documentInvalid, report, QStringLiteral("unsafe-content")};
     }
     if (!known) { locate(item, ImportDisposition::Quarantined, "unsupported-type"); report.add(ImportDisposition::Quarantined); } // inert UnsupportedAnnotation, never rendered/executed
     else {
@@ -769,6 +768,15 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
   return annotations;
 }
 
+ParseResult documentJsonFailure(const QString &code) {
+  ParseResult result;
+  result.error = code == u"too-large" || code == u"too-deep" || code == u"too-many-elements"
+      ? diagnostic::documentTooLarge : diagnostic::documentInvalid;
+  if (code != u"invalid-json" && code != u"too-large" && !code.isEmpty()) result.reason = code;
+  result.report.add(ImportDisposition::Rejected);
+  return result;
+}
+
 ParseResult readXann(const QByteArray &gzip, qint64 maxJsonBytes) {
   ParseResult result;
   const auto reject = [&](const QString &code) { result.error = code; result.report.add(ImportDisposition::Rejected); return result; };
@@ -802,11 +810,7 @@ ParseResult readXann(const QByteArray &gzip, qint64 maxJsonBytes) {
   inflateEnd(&stream);
   if (status != Z_STREAM_END || remaining != 0) return reject(diagnostic::documentInvalid);
   const auto decoded = compatibility::readJson(json, {maxJsonBytes, 64, 1000000});
-  if (!decoded.ok()) {
-    if (decoded.code == u"invalid-json") return reject(diagnostic::documentInvalid);
-    if (decoded.code == u"too-large") return reject(diagnostic::documentTooLarge);
-    return reject(QStringLiteral("document-") + decoded.code);
-  }
+  if (!decoded.ok()) return documentJsonFailure(decoded.code);
   if (!decoded.document.isObject()) return reject(diagnostic::documentInvalid);
   return parseDocument(decoded.document.object());
 }

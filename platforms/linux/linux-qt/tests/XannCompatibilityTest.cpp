@@ -47,7 +47,7 @@ private slots:
     QCOMPARE(serializeDocument(*parsed.document).value("vendor"), input.value("vendor"));
     QCOMPARE(serializeDocument(*parsed.document).value("annotations").toArray()[1], annotations[1]);
     input.insert("consentGranted", true); const auto rejected = load(input);
-    QVERIFY(!rejected.document); QCOMPARE(rejected.error.value_or(""), QString("document-unsafe-content")); QVERIFY(rejected.report.count(ImportDisposition::Rejected) > 0);
+    QVERIFY(!rejected.document); QCOMPARE(rejected.error.value_or(""), QString("document-invalid")); QCOMPARE(rejected.reason.value_or(""), QString("unsafe-content")); QVERIFY(rejected.report.count(ImportDisposition::Rejected) > 0); QVERIFY(rejected.report.count(ImportDisposition::Rejected) > 0);
   }
   void failingAnnotationIsIdentifiedByIndexAndIdWithoutPayload() {
     const QString badId = "11111111-1111-4111-8111-111111111111";
@@ -105,9 +105,9 @@ private slots:
     const auto written = writeXann(*result.document); QVERIFY(written); const auto back = readXann(*written); QVERIFY(back.document);
     QCOMPARE(back.document->extra.value("effectPresetOperations"), input.value("effectPresetOperations"));
     receipt.insert("password", "private-value"); input.insert("effectPresetOperations", QJsonArray{receipt});
-    QCOMPARE(load(input).error.value_or(""), QString("document-unsafe-content"));
+    QCOMPARE(load(input).error.value_or(""), QString("document-invalid")); QCOMPARE(load(input).reason.value_or(""), QString("unsafe-content")); QVERIFY(load(input).report.count(ImportDisposition::Rejected) > 0);
     input = fixture(); input.insert("vendor", tag);
-    QCOMPARE(load(input).error.value_or(""), QString("document-unsafe-content"));
+    QCOMPARE(load(input).error.value_or(""), QString("document-invalid")); QCOMPARE(load(input).reason.value_or(""), QString("unsafe-content")); QVERIFY(load(input).report.count(ImportDisposition::Rejected) > 0);
   }
   void unsafeUnknownsRejectWithoutEcho_data() {
     QTest::addColumn<QString>("key");
@@ -115,24 +115,24 @@ private slots:
   }
   void unsafeUnknownsRejectWithoutEcho() {
     QFETCH(QString, key); auto input = fixture(); input.insert("vendor", QJsonObject{{key, "sensitive-local-value"}});
-    const auto result = load(input); QVERIFY(!result.document); QCOMPARE(result.error.value_or(""), QString("document-unsafe-content")); QVERIFY(!result.report.summary().contains("sensitive"));
+    const auto result = load(input); QVERIFY(!result.document); QCOMPARE(result.error.value_or(""), QString("document-invalid")); QCOMPARE(result.reason.value_or(""), QString("unsafe-content")); QVERIFY(result.report.count(ImportDisposition::Rejected) > 0); QVERIFY(!result.report.summary().contains("sensitive"));
     auto shapeInput = fixture(); auto annotations = shapeInput.value("annotations").toArray(); auto shape = annotations[0].toObject(); shape.insert(key, "sensitive-local-value"); annotations[0] = shape; shapeInput.insert("annotations", annotations);
-    const auto shapeResult = load(shapeInput); QVERIFY(!shapeResult.document); QCOMPARE(shapeResult.error.value_or(""), QString("document-unsafe-content"));
+    const auto shapeResult = load(shapeInput); QVERIFY(!shapeResult.document); QCOMPARE(shapeResult.error.value_or(""), QString("document-invalid")); QCOMPARE(shapeResult.reason.value_or(""), QString("unsafe-content")); QVERIFY(shapeResult.report.count(ImportDisposition::Rejected) > 0);
     auto exportable = *load(fixture()).document; exportable.extra.insert("vendor", QJsonObject{{key, "sensitive-local-value"}});
     QVERIFY(!writeXann(exportable));  // COMPCAT-006: unsafe content never leaves through export
   }
   void adversarialJsonIsRejected_data() {
-    QTest::addColumn<QByteArray>("json"); QTest::addColumn<QString>("code");
-    QTest::newRow("malformed") << QByteArray("{not-json}") << QString("document-invalid");
-    QTest::newRow("duplicate-key") << QByteArray("{\"version\":1,\"version\":1}") << QString("document-duplicate-key");
-    QTest::newRow("escaped-duplicate-key") << QByteArray("{\"version\":1,\"ver\\u0073ion\":1}") << QString("document-duplicate-key");
-    QTest::newRow("invalid-utf8") << QByteArray("{\"label\":\"\xff\"}") << QString("document-invalid-encoding");
-    QTest::newRow("unpaired-surrogate") << QByteArray("{\"label\":\"\\ud800\"}") << QString("document-invalid-encoding");
-    QTest::newRow("deeply-nested") << (QByteArray(65, '[') + '0' + QByteArray(65, ']')) << QString("document-too-deep");
+    QTest::addColumn<QByteArray>("json"); QTest::addColumn<QString>("code"); QTest::addColumn<QString>("reason");
+    QTest::newRow("malformed") << QByteArray("{not-json}") << QString("document-invalid") << QString();
+    QTest::newRow("duplicate-key") << QByteArray("{\"version\":1,\"version\":1}") << QString("document-invalid") << QString("duplicate-key");
+    QTest::newRow("escaped-duplicate-key") << QByteArray("{\"version\":1,\"ver\\u0073ion\":1}") << QString("document-invalid") << QString("duplicate-key");
+    QTest::newRow("invalid-utf8") << QByteArray("{\"label\":\"\xff\"}") << QString("document-invalid") << QString("invalid-encoding");
+    QTest::newRow("unpaired-surrogate") << QByteArray("{\"label\":\"\\ud800\"}") << QString("document-invalid") << QString("invalid-encoding");
+    QTest::newRow("deeply-nested") << (QByteArray(65, '[') + '0' + QByteArray(65, ']')) << QString("document-too-large") << QString("too-deep");
   }
   void adversarialJsonIsRejected() {
-    QFETCH(QByteArray, json); QFETCH(QString, code); const auto result = readXann(gzip(json));
-    QVERIFY(!result.document); QCOMPARE(result.error.value_or(""), code); QCOMPARE(result.report.count(ImportDisposition::Rejected), qsizetype(1));
+    QFETCH(QByteArray, json); QFETCH(QString, code); QFETCH(QString, reason); const auto result = readXann(gzip(json));
+    QVERIFY(!result.document); QCOMPARE(result.error.value_or(""), code); QCOMPARE(result.reason.value_or(""), reason); QCOMPARE(result.report.count(ImportDisposition::Rejected), qsizetype(1));
   }
   void boundedGzipRejectsTruncationTrailingMembersExpansionAndSize() {
     const auto valid = gzip(QJsonDocument(fixture()).toJson()); QVERIFY(!valid.isEmpty());
@@ -147,14 +147,14 @@ private slots:
   void lexicalElementBudgetIsEnforcedBeforeDocumentConstruction() {
     const auto bytes = QByteArray("[") + QByteArray("0,").repeated(1000000) + "0]";
     const auto result = readXann(gzip(bytes, Z_NO_COMPRESSION));
-    QVERIFY(!result.document); QCOMPARE(result.error.value_or(""), QString("document-too-many-elements"));
+    QVERIFY(!result.document); QCOMPARE(result.error.value_or(""), QString("document-too-large")); QCOMPARE(result.reason.value_or(""), QString("too-many-elements")); QVERIFY(result.report.count(ImportDisposition::Rejected) > 0);
   }
   void pathTraversalAndCyclicReferencesReject() {
     for (const auto &path : {QString("../private/image.png"), QString("folder/../image.png"), QString("folder\\..\\image.png")}) {
-      auto payload = fixture(); payload.insert("imagePath", path); const auto result = load(payload); QVERIFY(!result.document); QCOMPARE(result.error.value_or(""), QString("document-path-traversal"));
-      payload = fixture(); payload.insert("extensions", QJsonObject{{"assetPath", path}}); QCOMPARE(load(payload).error.value_or(""), QString("document-path-traversal"));
+      auto payload = fixture(); payload.insert("imagePath", path); const auto result = load(payload); QVERIFY(!result.document); QCOMPARE(result.error.value_or(""), QString("document-invalid")); QCOMPARE(result.reason.value_or(""), QString("path-traversal")); QVERIFY(result.report.count(ImportDisposition::Rejected) > 0);
+      payload = fixture(); payload.insert("extensions", QJsonObject{{"assetPath", path}}); QCOMPARE(load(payload).error.value_or(""), QString("document-invalid")); QCOMPARE(load(payload).reason.value_or(""), QString("path-traversal")); QVERIFY(load(payload).report.count(ImportDisposition::Rejected) > 0);
     }
-    auto payload = fixture(); payload.insert("extensions", QJsonObject{{"$ref", "#"}}); QCOMPARE(load(payload).error.value_or(""), QString("document-unsafe-content"));
+    auto payload = fixture(); payload.insert("extensions", QJsonObject{{"$ref", "#"}}); QCOMPARE(load(payload).error.value_or(""), QString("document-invalid")); QCOMPARE(load(payload).reason.value_or(""), QString("unsafe-content")); QVERIFY(load(payload).report.count(ImportDisposition::Rejected) > 0);
   }
   void oversizedCanvasOutranksUnsafeContentAndTraversal() {
     // ES-029: document-too-large precedes every other document failure; no pixel buffer is allocated.
@@ -170,7 +170,50 @@ private slots:
     auto version = both; version.insert("version", 2);
     QCOMPARE(load(version).error.value_or(""), QString("document-version-unsupported"));
     auto traversalOnly = fixture(); traversalOnly.insert("imagePath", "../private/image.png");
-    QCOMPARE(load(traversalOnly).error.value_or(""), QString("document-path-traversal"));
+    QCOMPARE(load(traversalOnly).error.value_or(""), QString("document-invalid")); QCOMPARE(load(traversalOnly).reason.value_or(""), QString("path-traversal")); QVERIFY(load(traversalOnly).report.count(ImportDisposition::Rejected) > 0);
+  }
+  void futureJsonBoundaryCodeCannotEscapeTheDiagnosticSet() {
+    const auto result = documentJsonFailure(QStringLiteral("future-reader-limit"));
+    QVERIFY(!result.document); QCOMPARE(result.error.value_or(""), diagnostic::documentInvalid);
+    QCOMPARE(result.reason.value_or(""), QString("future-reader-limit"));
+    QCOMPARE(result.report.count(ImportDisposition::Rejected), qsizetype(1));
+  }
+  void everyRejectionUsesAnEs029Diagnostic() {
+    const QString marker = "secret-payload-value";
+    const auto check = [&](const ParseResult &result) {
+      QVERIFY(!result.document); QVERIFY(result.error);
+      QVERIFY(*result.error == diagnostic::documentInvalid || *result.error == diagnostic::documentTooLarge ||
+              *result.error == diagnostic::documentVersionUnsupported);
+      QVERIFY(result.report.count(ImportDisposition::Rejected) > 0);
+      QVERIFY(!result.reason.value_or("").contains(marker));
+      QVERIFY(!result.reason.value_or("").contains("sensitive"));
+      QVERIFY(!result.report.detailedSummary().contains(marker));
+    };
+    auto traversal = fixture(); traversal.insert("imagePath", "../" + marker);
+    auto unsafe = fixture(); unsafe.insert("vendor", QJsonObject{{"password", marker}});
+    auto cyclic = fixture(); cyclic.insert("extensions", QJsonObject{{"$ref", "#"}});
+    auto annotationPath = fixture(); auto shapes = annotationPath.value("annotations").toArray();
+    auto shape = shapes[0].toObject(); shape.insert("assetPath", "../" + marker); shapes[0] = shape; annotationPath.insert("annotations", shapes);
+    auto annotationUnsafe = fixture(); shape = annotationUnsafe.value("annotations").toArray()[0].toObject();
+    shape.insert("script", marker); annotationUnsafe.insert("annotations", QJsonArray{shape});
+    auto duplicate = fixture(); shapes = duplicate.value("annotations").toArray(); shapes.append(shapes[0]); duplicate.insert("annotations", shapes);
+    auto size = traversal; size.insert("canvasWidth", 20000); size.insert("canvasHeight", 20000);
+    auto version = size; version.insert("version", 2);
+    auto missing = fixture(); missing.remove("sourceImagePngBase64");
+    for (const auto &payload : {traversal, unsafe, cyclic, annotationPath, annotationUnsafe, duplicate, size, version, missing}) {
+      check(parseDocument(payload)); check(load(payload));
+    }
+    // Lexical failures have no trustworthy decoded object for parseDocument.
+    const std::vector<QByteArray> lexical = {"{not-json}", "{\"version\":1,\"version\":1}",
+      "{\"version\":2,\"version\":1}", "{\"version\":1,\"ver\\u0073ion\":1}",
+      QByteArray("{\"label\":\"\xff\"}"), "{\"label\":\"\\ud800\"}",
+      QByteArray(65, '[') + '0' + QByteArray(65, ']'),
+      QByteArray("[") + QByteArray("0,").repeated(1000000) + "0]"};
+    for (const auto &json : lexical) check(readXann(gzip(json, Z_NO_COMPRESSION)));
+    const auto valid = gzip(QJsonDocument(fixture()).toJson());
+    for (const auto &bytes : {QByteArray(), valid.left(valid.size() - 2), valid + valid, valid + QByteArray("junk")}) check(readXann(bytes));
+    check(readXann(valid, 32));
+    check(readXann(gzip(QByteArray(16 * 1024 * 1024, 'a'))));
   }
   void portableExportReportsBasenameAndPreservesSafeFields() {
     auto input = fixture(); input.insert("imagePath", "C:\\private\\images\\cafe\u0301.png"); input.insert("vendor", QJsonObject{{"label", "opaque\u0301"}});

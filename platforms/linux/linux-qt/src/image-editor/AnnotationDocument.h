@@ -274,7 +274,7 @@ struct AnnotationDocument {
   QJsonObject extra;                       // ES-015: unknown top-level properties
 };
 
-// ES-029 diagnostics.
+// ES-029 public diagnostics form a closed set; specific rejection reasons are separate.
 namespace diagnostic {
 inline const QString sourceUnsupported = QStringLiteral("source-unsupported");
 inline const QString sourceCorrupt = QStringLiteral("source-corrupt");
@@ -298,6 +298,7 @@ struct ParseResult {
   std::optional<AnnotationDocument> document;
   std::optional<QString> error;
   compatibility::ImportReport report;
+  std::optional<QString> reason = std::nullopt;  // value-free reader code, never document content
 };
 
 // ES-015, ES-017, ES-028, ES-029: validates a decoded payload. Image
@@ -308,6 +309,7 @@ struct AnnotationListResult {
   std::optional<std::vector<Annotation>> annotations;
   QString diagnostic;
   compatibility::ImportReport report;
+  std::optional<QString> reason = std::nullopt;
 };
 // The document and object-transfer boundaries use the same field validation
 // and canonical serialization; unknown types remain inert document data.
@@ -316,6 +318,8 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &);
 
 // ES-013: gzip-wrapped UTF-8 JSON. readXann enforces the decompressed limit
 // while inflating.
+// Map a trusted JSON-boundary failure code to ES-029, retaining its value-free reason.
+ParseResult documentJsonFailure(const QString &code);
 ParseResult readXann(const QByteArray &gzip, qint64 maxJsonBytes = kMaxDecompressedJsonBytes);
 std::optional<QByteArray> writeXann(const AnnotationDocument &document, compatibility::ExportReport *report = nullptr);
 
