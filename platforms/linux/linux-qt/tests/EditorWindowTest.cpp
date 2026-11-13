@@ -3,6 +3,8 @@
 #include "EditorWindow.h"
 #include "EditorRecoveryQueue.h"
 #include <QSemaphore>
+#include <QJsonDocument>
+#include <zlib.h>
 #include <QThread>
 #include <QScopeGuard>
 #include <atomic>
@@ -96,6 +98,16 @@ QImage fixture() {
   for (int y = 0; y < image.height(); ++y) for (int x = 0; x < image.width(); ++x)
     image.setPixel(x, y, qRgba(x * 3, y * 5, 100, 255));
   return image;
+}
+QByteArray compressedDocumentFixture(const QJsonObject &document) {
+  const auto plain = QJsonDocument(document).toJson(QJsonDocument::Compact);
+  z_stream stream{};
+  if (deflateInit2(&stream, Z_BEST_COMPRESSION, Z_DEFLATED, 16 + MAX_WBITS, 8, Z_DEFAULT_STRATEGY) != Z_OK) return {};
+  QByteArray bytes(qsizetype(deflateBound(&stream, uLong(plain.size()))), '\0');
+  stream.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(plain.constData())); stream.avail_in = uInt(plain.size());
+  stream.next_out = reinterpret_cast<Bytef *>(bytes.data()); stream.avail_out = uInt(bytes.size());
+  const int status = deflate(&stream, Z_FINISH); bytes.resize(qsizetype(stream.total_out)); deflateEnd(&stream);
+  return status == Z_STREAM_END ? bytes : QByteArray{};
 }
 void acceptDimensions(int width, int height, int left = 0, int top = 0) {
   QTimer::singleShot(0, [=] {
@@ -268,6 +280,41 @@ class EditorWindowTest : public QObject {
   QTemporaryDir dialogPreferences;
   std::unique_ptr<QTemporaryDir> recoveryState;
 private slots:
+  void rejectedSidecarUsesLocalizedDiagnosticAndSeparateReason_data() {
+    QTest::addColumn<bool>("replacement");
+    QTest::newRow("standalone-open") << false;
+    QTest::newRow("replace-current-image") << true;
+  }
+  void rejectedSidecarUsesLocalizedDiagnosticAndSeparateReason() {
+    QFETCH(bool, replacement);
+    QTemporaryDir dir; QVERIFY(dir.isValid()); const auto path = dir.filePath("capture.png");
+    QVERIFY(fixture().save(path)); const auto rasterBefore = storedBytes(path);
+    const auto initial = loadSource(path); QVERIFY(initial.document);
+    std::unique_ptr<EditorWindow> current;
+    if (replacement) { current.reset(EditorWindow::open(path)); QVERIFY(current); }
+    auto document = serializeDocument(*initial.document); document.insert("imagePath", "../secret-payload-value.png");
+    const auto encoded = compressedDocumentFixture(document); QVERIFY(!encoded.isEmpty());
+    QFile sidecar(path + ".xann"); QVERIFY(sidecar.open(QIODevice::WriteOnly)); QCOMPARE(sidecar.write(encoded), encoded.size()); sidecar.close();
+    QString shown; bool plainText = false;
+    QTimer driver; connect(&driver, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+      if (!box || box->windowTitle() != EditorWindow::tr("Cannot open image")) return;
+      shown = box->text(); plainText = box->textFormat() == Qt::PlainText; box->accept();
+    }); driver.start(2);
+    if (replacement) QVERIFY(!current->openImage(path));
+    else { std::unique_ptr<EditorWindow> opened(EditorWindow::open(path)); QVERIFY(!opened); }
+    driver.stop();
+    const auto failed = loadSource(path); QVERIFY(!failed.document); QVERIFY(failed.importReport);
+    QCOMPARE(failed.diagnostic, diagnostic::documentInvalid);
+    const auto expected = QStringLiteral("capture.png\n\n") +
+        EditorWindow::tr("The annotation file or its embedded source is damaged and cannot be opened safely.") +
+        QStringLiteral("\n\n") + EditorWindow::tr("Rejected document: %1").arg("path-traversal") +
+        QStringLiteral("\n\n") + failed.importReport->detailedSummary();
+    QCOMPARE(shown, expected); QVERIFY(plainText);
+    QCOMPARE(failed.reason.value_or(""), QString("path-traversal"));
+    QVERIFY(!shown.contains("document-path-traversal")); QVERIFY(!shown.contains("secret-payload-value"));
+    QCOMPARE(storedBytes(path), rasterBefore); QCOMPARE(storedBytes(path + ".xann"), encoded);
+  }
   void xannImportReportAppearsOnOpenAndReplacement() {
     QTemporaryDir dir; const auto path = dir.filePath("report.png"); QVERIFY(fixture().save(path));
     QVERIFY(initializeNativeEditorPreferences(dir.filePath("preferences.json")).isEmpty());

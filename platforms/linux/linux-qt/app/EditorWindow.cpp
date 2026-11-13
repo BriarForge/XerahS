@@ -99,6 +99,13 @@ QString describe(const QString &diagnostic) {
   return diagnostic;
 }
 
+QString sourceFailureMessage(const LoadedSource &source) {
+  QString detail = describe(source.diagnostic);
+  if (source.reason) detail += QStringLiteral("\n\n") + EditorWindow::tr("Rejected document: %1").arg(*source.reason);
+  if (source.importReport) detail += QStringLiteral("\n\n") + source.importReport->detailedSummary();
+  return detail;
+}
+
 }  // namespace
 
 EditorWindow::~EditorWindow() {
@@ -125,8 +132,7 @@ EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
     const auto target = absoluteImagePath(path); auto source = openSource(target, owner, hooks);
     if ((parent && !owner) || source.diagnostic == u"canvas-cancelled") return false;
     if (!source.document) {
-      QString detail = describe(source.diagnostic);
-      if (source.importReport) detail += QStringLiteral("\n\n") + source.importReport->detailedSummary();
+      const auto detail = sourceFailureMessage(source);
       editorWarning(owner, EditorWindow::tr("Cannot open image"), QStringLiteral("%1\n\n%2").arg(QFileInfo(path).fileName(), detail)); return false;
     }
     try { window = new EditorWindow(target, std::move(source.image), std::move(*source.document), EditorSession::InitialPersistence::Saved, std::move(source.displayImage)); }
@@ -934,8 +940,8 @@ bool EditorWindow::openImage(const QString &path) {
   const auto usable = [&] {
     if (source.diagnostic == u"canvas-cancelled") return false;
     if (source.document) return true;
-    withOutputBusy([guard, target, diagnostic = source.diagnostic, report = source.importReport] {
-      if (guard) editorWarning(guard, EditorWindow::tr("Cannot open image"), QStringLiteral("%1\n\n%2").arg(QFileInfo(target).fileName(), describe(diagnostic) + (report ? "\n\n" + report->detailedSummary() : QString())));
+    withOutputBusy([guard, target, detail = sourceFailureMessage(source)] {
+      if (guard) editorWarning(guard, EditorWindow::tr("Cannot open image"), QStringLiteral("%1\n\n%2").arg(QFileInfo(target).fileName(), detail));
       return false; });
     return false;
   };

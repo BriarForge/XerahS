@@ -28,6 +28,13 @@ LoadedSource fail(const QString &diagnostic) {
   return result;
 }
 
+LoadedSource fail(const ParseResult &parsed) {
+  auto result = fail(parsed.error.value_or(diagnostic::documentInvalid));
+  result.reason = parsed.reason;
+  result.importReport = parsed.report;
+  return result;
+}
+
 bool cancelled(const RenderControl &control) { return control.cancelled && control.cancelled(); }
 void progress(const RenderControl &control, int value) { if (control.progress) control.progress(value); }
 QImage displayCopy(const QImage &image) {
@@ -68,7 +75,7 @@ LoadedSource prepareCapturedSource(const QImage &image, const RenderControl &con
     progress(control, 90);
     if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
     const auto parsed = parseDocument(serializeDocument(document));
-    if (!parsed.document) return fail(parsed.error.value_or(diagnostic::documentInvalid));
+    if (!parsed.document) return fail(parsed);
     progress(control, 100);
     if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
     LoadedSource result; result.document = std::move(document); result.image = std::move(source); result.displayImage = display;
@@ -132,7 +139,7 @@ static LoadedSource loadSourceImpl(const QString &path, const RenderControl &con
     progress(control, 75);
     if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
     // ES-015: a failed sidecar must never become a writable bare-raster session.
-    if (!parsed.document) { auto failed = fail(parsed.error.value_or(diagnostic::documentInvalid)); failed.importReport = parsed.report; return failed; }
+    if (!parsed.document) return fail(parsed);
     result.importReport = parsed.report;
     QImage embedded;
     if (!embedded.loadFromData(parsed.document->sourceImagePng, "PNG")) return fail(diagnostic::documentInvalid);
@@ -210,7 +217,7 @@ LoadedSource prepareCapturedDocument(const AnnotationDocument &document, const R
   if (cancelled(control)) return fail("canvas-cancelled");
   if (document.sourceImagePng.size() > kMaxEncodedImageBytes) return fail(diagnostic::documentTooLarge);
   const auto parsed = parseDocument(serializeDocument(document));
-  if (!parsed.document) return fail(parsed.error.value_or(diagnostic::documentInvalid));
+  if (!parsed.document) return fail(parsed);
   auto source = prepareCapturedSource(QImage::fromData(document.sourceImagePng, "PNG"), control);
   if (!source.document) return source;
   if (parsed.document->canvasWidth != source.image.width() || parsed.document->canvasHeight != source.image.height()) return fail(diagnostic::documentInvalid);
