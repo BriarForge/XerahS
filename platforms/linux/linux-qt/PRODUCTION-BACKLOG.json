@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "date": "2026-11-11",
-  "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+  "date": "2026-11-14",
+  "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
   "contract_version": "0.3.1",
   "scope": "All 16 manifest capabilities reviewed for Linux applicability; 325 desktop requirements classified and 20 mobile-only requirements explicitly outside Linux scope. Counts measure candidate behavior, not completion percentage or release acceptance.",
   "classification_rules": {
@@ -18,8 +18,8 @@
     "blocked": 34,
     "implemented": 174,
     "not-applicable": 1,
-    "not-started": 6,
-    "partial": 110
+    "not-started": 5,
+    "partial": 111
   },
   "capabilities": [
     {
@@ -44,8 +44,8 @@
       "counts": {
         "blocked": 1,
         "implemented": 19,
-        "not-started": 2,
-        "partial": 5
+        "not-started": 1,
+        "partial": 6
       },
       "trace": "traceability/REGION-CAPTURE-001.json"
     },
@@ -244,6 +244,13 @@
       "previous": "partial",
       "current": "implemented",
       "reason": "SQLite reader holds a read-only transaction and bounded backup snapshot, validates integrity and ordinary-table schema, disables extensions/views/triggers, bounds bytes/rows/time and emits typed transaction failures; WAL/concurrent writer and malicious schema tests exercise this native behavior."
+    },
+    {
+      "requirement": "RC-013",
+      "from": "not-started",
+      "to": "partial",
+      "reason": "Default-off, profile-local cursor inclusion now uses an owned compositor frame before the overlay. Native controller/crop/PNG integration verifies saved cursor pixels exactly once, frozen preferences, unsupported/mismatched refusal, cancellation, stale completion and owner-loss fencing. Mixed-scale/rotated/multi-output and every supported desktop remain unqualified; partial, not absent or fully implemented.",
+      "revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
     }
   ],
   "review_limitations": [
@@ -786,8 +793,8 @@
       ]
     }
   ],
-  "audit_method": "All 16 manifest capabilities / 345 IDs reviewed against current production and meaningful named automated test bodies. 325 desktop rows classified; 20 mobile-only requirements explicitly outside Linux scope.",
-  "reviewed_at": "2026-11-11T15:27:15.305729+00:00",
+  "audit_method": "All 16 capabilities and 345 IDs revalidated. Existing unchanged source/test behavior was compared to frozen reviewed evidence, changed production paths and meaningful test bodies inspected, and exact current hashes/method lines repinned. 325 desktop rows remain conservative candidate classifications; 20 MOB rows remain outside desktop scope.",
+  "reviewed_at": "2026-11-14",
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
     "date": "2026-10-28",
@@ -1505,129 +1512,968 @@
         }
       ],
       "findings": null
+    },
+    {
+      "schema_version": 2,
+      "date": "2026-11-11",
+      "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+      "contract_version": "0.3.1",
+      "scope": "All 16 manifest capabilities reviewed for Linux applicability; 325 desktop requirements classified and 20 mobile-only requirements explicitly outside Linux scope. Counts measure candidate behavior, not completion percentage or release acceptance.",
+      "classification_rules": {
+        "implemented": "Candidate Linux behavior has automated production-path evidence; does not approve release, parity or human qualification.",
+        "partial": "Some production behavior/evidence exists; full normative Linux requirement remains incomplete.",
+        "not-started": "No native user flow found for the requirement; related generic helpers are insufficient.",
+        "blocked": "Work requires the named human decision; underlying implementation status remains visible in the trace.",
+        "not-applicable": "Explicitly outside Linux desktop scope, not a platform waiver."
+      },
+      "requirement_count": 325,
+      "capability_count": 16,
+      "desktop_capability_count": 15,
+      "counts": {
+        "blocked": 34,
+        "implemented": 174,
+        "not-applicable": 1,
+        "not-started": 6,
+        "partial": 110
+      },
+      "capabilities": [
+        {
+          "capability": "FILENAME-GENERATION-001",
+          "requirements": 27,
+          "counts": {
+            "implemented": 27
+          },
+          "trace": "traceability/FILENAME-GENERATION-001.json"
+        },
+        {
+          "capability": "POST-CAPTURE-ACTIONS-001",
+          "requirements": 24,
+          "counts": {
+            "implemented": 24
+          },
+          "trace": "traceability/POST-CAPTURE-ACTIONS-001.json"
+        },
+        {
+          "capability": "REGION-CAPTURE-001",
+          "requirements": 27,
+          "counts": {
+            "blocked": 1,
+            "implemented": 19,
+            "not-started": 2,
+            "partial": 5
+          },
+          "trace": "traceability/REGION-CAPTURE-001.json"
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirements": 30,
+          "counts": {
+            "blocked": 3,
+            "implemented": 24,
+            "partial": 3
+          },
+          "trace": "traceability/EDITOR-SESSION-001.json"
+        },
+        {
+          "capability": "EDITOR-ANNOTATIONS-001",
+          "requirements": 20,
+          "counts": {
+            "blocked": 1,
+            "implemented": 16,
+            "partial": 3
+          },
+          "trace": "traceability/EDITOR-ANNOTATIONS-001.json"
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 1,
+            "implemented": 7,
+            "partial": 10
+          },
+          "trace": "traceability/EDITOR-EFFECTS-001.json"
+        },
+        {
+          "capability": "EDITOR-CANVAS-001",
+          "requirements": 17,
+          "counts": {
+            "blocked": 1,
+            "implemented": 14,
+            "partial": 2
+          },
+          "trace": "traceability/EDITOR-CANVAS-001.json"
+        },
+        {
+          "capability": "EDITOR-OUTPUT-ACTIONS-001",
+          "requirements": 16,
+          "counts": {
+            "implemented": 9,
+            "partial": 7
+          },
+          "trace": "traceability/EDITOR-OUTPUT-ACTIONS-001.json"
+        },
+        {
+          "capability": "EDITOR-SETTINGS-001",
+          "requirements": 16,
+          "counts": {
+            "blocked": 1,
+            "implemented": 8,
+            "partial": 7
+          },
+          "trace": "traceability/EDITOR-SETTINGS-001.json"
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirements": 19,
+          "counts": {
+            "blocked": 5,
+            "implemented": 7,
+            "partial": 7
+          },
+          "trace": "traceability/EDITOR-UTILITIES-001.json"
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirements": 20,
+          "counts": {
+            "blocked": 5,
+            "implemented": 2,
+            "partial": 13
+          },
+          "trace": "traceability/SETTINGS-CATALOG-001.json"
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 1,
+            "implemented": 4,
+            "not-started": 1,
+            "partial": 12
+          },
+          "trace": "traceability/WORKFLOW-CATALOG-001.json"
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 4,
+            "implemented": 3,
+            "not-started": 1,
+            "partial": 10
+          },
+          "trace": "traceability/INTERFACE-CATALOG-001.json"
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirements": 37,
+          "counts": {
+            "blocked": 7,
+            "implemented": 8,
+            "not-applicable": 1,
+            "not-started": 2,
+            "partial": 19
+          },
+          "trace": "traceability/CORE-PLATFORM-001.json"
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 4,
+            "implemented": 2,
+            "partial": 12
+          },
+          "trace": "traceability/COMPATIBILITY-CATALOG-001.json"
+        }
+      ],
+      "outside_linux_scope": [
+        {
+          "capability": "MOBILE-PLATFORM-001",
+          "classification": "not-applicable",
+          "reason": "SPEC Scope and relationship to desktop declares Android and iOS only. No mobile completion is claimed.",
+          "requirements": [
+            "MOB-001",
+            "MOB-002",
+            "MOB-003",
+            "MOB-004",
+            "MOB-005",
+            "MOB-006",
+            "MOB-007",
+            "MOB-008",
+            "MOB-009",
+            "MOB-010",
+            "MOB-011",
+            "MOB-012",
+            "MOB-013",
+            "MOB-014",
+            "MOB-015",
+            "MOB-016",
+            "MOB-017",
+            "MOB-018",
+            "MOB-019",
+            "MOB-020"
+          ]
+        }
+      ],
+      "classification_changes": [
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-029",
+          "previous": "partial",
+          "current": "implemented",
+          "reason": "Maintainer-approved EDITOR-SESSION-001 0.2.1 keeps the nine ES-029 diagnostics closed and carries value-free rejection reasons separately. parseDocument and parseAnnotationList map traversal and unsafe content to document-invalid; readXann maps malformed/duplicate-key/encoding failures to document-invalid and lexical depth/element/size limits to document-too-large. Unknown future JSON-boundary failures fall back to document-invalid, never a constructed public code. Validation, per-record rejection findings and persisted XANN bytes remain unchanged. Version then size then invalid precedence is covered by native tests and four new vectors. LoadedSource carries the reason; standalone Open and replacement show a localized diagnostic, a separate Rejected document reason and the import report, preserving raster/sidecar bytes and omitting payload values. Both Qt 6.12 and Qt 6.4.2 pass XannCompatibilityTest, EditorSessionTest, EditorSourceTest, all three EditorWindowTest partitions and all 23 conformance vectors. Prior-reader closure, old mappings and omitted native reason tests fail before the fix. This is an implemented Linux candidate; maintainer review accepted the code, contract, evidence and classification on 2026-11-13, conditional on correcting the current trace question (now resolved) and passing the rebuilt full integration gate. Target/parity/release qualification remains separate."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-004",
+          "previous": "implemented",
+          "current": "blocked",
+          "reason": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirement": "WFCAT-002",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Supported capture, recording and upload/watch operations now use WorkflowExecution with stable IDs, start/origin/settings, ordered results and terminal projection. FileUploadController still continues to network transfer when execution admit/start or read-file-step persistence fails; one traceable durable execution is therefore not guaranteed at that boundary."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirement": "WFCAT-004",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Shared file-operation failure taxonomy distinguishes validation, permission, unavailable, transient/permanent, partial and cancelled states. Watch storage failures stop new effects and retain completed output honestly. File upload still crosses admission/start/step storage failure before transfer, so durable workflow reporting at all side-effect boundaries remains incomplete."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-025",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Canonical authorized roots, readiness filtering, per-file duplicate checkpoints and owned cancellable copy/move/upload exist. However rescan recursively enumerates and stats the authorized tree on the GUI thread before checking pending work; no bounded/cancellable discovery path qualifies clean Stop for large or slow trees."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-010",
+          "previous": "partial",
+          "current": "implemented",
+          "reason": "SQLite reader holds a read-only transaction and bounded backup snapshot, validates integrity and ordinary-table schema, disables extensions/views/triggers, bounds bytes/rows/time and emits typed transaction failures; WAL/concurrent writer and malicious schema tests exercise this native behavior."
+        }
+      ],
+      "review_limitations": [
+        "Candidate Linux behavior only; physical target and cross-platform qualification and human acceptance remain separate.",
+        "Scheduler model/dependency/threshold/security/release gates remain explicit even where upstream code or approval documentation exists.",
+        "Source-extracted defects without a current runtime repro are identified as source findings, not demonstrated failures.",
+        "No native behavior, contract, expected test results, dependency or approval changed in this audit."
+      ],
+      "waiting_on_mike": [
+        {
+          "capability": "REGION-CAPTURE-001",
+          "requirement": "RC-027",
+          "question": "Product decision required: approve authoritative pre-acquisition physical topology source. Native code now validates against packed QScreen bounds, but that does not settle the recorded mapping-authority question."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-014",
+          "question": "Known compatible default-sidecar removal is tested, but empty save with legacy fallback remains explicitly refused pending product-approved non-resurrection/removal policy."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-020",
+          "question": "Explicit output authority and private temporary storage exist; approved configured editor temp/recovery retention and secure-delete limits are still an unanswered policy gate."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-030",
+          "question": "Default and fallback path handling exists, but required baseline runtime observation and legacy fallback empty-save policy remain unapproved."
+        },
+        {
+          "capability": "EDITOR-ANNOTATIONS-001",
+          "requirement": "EA-009",
+          "question": "Reference-derived alphabetic/Roman and reset code exists, but the loop's exact mapping/start/reset questions remain unresolved; tests do not approve product semantics."
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "requirement": "EE-015",
+          "question": "Static mapping, safe inert unknown-ID/parameter round-trip and unsupported-step isolation are implemented and tested, but human security review of .sxie import remains an explicit scheduler gate. Native fixtures do not waive that gate."
+        },
+        {
+          "capability": "EDITOR-CANVAS-001",
+          "requirement": "EC-013",
+          "question": "No complete background composition surface/model exists; deterministic smart-padding/background and retention policy remain explicit unanswered product decisions."
+        },
+        {
+          "capability": "EDITOR-SETTINGS-001",
+          "requirement": "ESET-001",
+          "question": "Full accepted per-field contract names/defaults/migration/privacy/dispositions/downstream effects remain absent; reference defaults are not product approval."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-004",
+          "question": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-009",
+          "question": "No approved local model/provenance/tensor/device/setup policy authorizes background removal."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-010",
+          "question": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-011",
+          "question": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-019",
+          "question": "Konami shader preserve/correct/omit remains an explicit product-owner accessibility/performance/security/discoverability/maintenance decision."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-001",
+          "question": "Complete settings-ledger semantic/default/migration/privacy/downstream/platform acceptance is still absent; native field declarations cannot approve it."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-007",
+          "question": "Native credential-store code exists; scheduler-mandated human Secret Service security review remains pending."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-008",
+          "question": "An explicit verified legacy plaintext-secret migration/removal flow and secure-store approval are still required; ordinary settings import does not migrate secrets."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-017",
+          "question": "Update/plugin/executable trust, provenance, sandbox and activation policy remain human authority gates; imported configuration cannot approve execution."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-020",
+          "question": "Full approved settings-ledger dispositions, all value families/upgrades/downgrades and all three adapters are not accepted; native boundary coverage does not activate this package."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirement": "WFCAT-018",
+          "question": "Activation requires full action-family matrix and accepted tests on all supported platform adapters, including human permission/security/accessibility gates; native Linux tests alone are insufficient."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-011",
+          "question": "Human-approved MCP schema/authority/side-effect/progress/cancellation policy is pending; no native MCP implementation qualifies this row."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-012",
+          "question": "MCP/agent human-consent and least-authority security posture require product-owner approval; no agent-origin execution is authorized by imported text."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-013",
+          "question": "Human-approved MCP granted-scope, metadata-only discovery and returned-data lifetime policy are pending."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-018",
+          "question": "Full cross-entry/schema/authority/physical screen-reader/localization/provider/all-platform activation matrix and acceptance remain pending."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-011",
+          "question": "Human product owner must approve signed release provenance/update channel/install/rollback policy; no approved update implementation exists."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-013",
+          "question": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-015",
+          "question": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-022",
+          "question": "Approved isolated plugin host/signing/permissions/secret mediation security posture is a human decision; trusted-process plugin execution must not be added."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-028",
+          "question": "Unsigned native archive/deb/rpm install and AUR candidate tooling exists. Signing, release provenance, replacement migration/update/rollback and supported target acceptance remain explicitly human-blocked by the scheduler."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-030",
+          "question": "Human security/privacy/accessibility/licensing/compatibility/parity activation acceptance on all supported platforms is pending."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-036",
+          "question": "Human accepted Linux dispositions and identical vector results on every supported edition target distribution remain pending."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-008",
+          "question": "Complete legacy-secret consent, verification, native secure migration and recoverable plaintext removal await approved human credential/security policy."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-012",
+          "question": "Plugin-host package provenance, manifest authority, isolation and explicit installation policy are not approved or implemented."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-013",
+          "question": "Editable XANN/preset unknown preservation exists, but complete legacy geometry/effect/font/asset compatibility and scheduler-mandated human SXIE import security review remain pending."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-014",
+          "question": "MCP operation/schema and current-consent authority are not approved; imported automation text cannot grant execution authority."
+        }
+      ],
+      "verification_blockers": [
+        "Full local native build/test and final push-gate results are recorded in shared loop state after successful push.",
+        "Shared normative vectors remain absent for nine desktop packages; native tests do not supply independent cross-platform expected values.",
+        "Native physical security/privacy/accessibility/licensing/parity and release acceptance remain outstanding."
+      ],
+      "incremental_updates": [
+        {
+          "requirements": [
+            "CORE-023",
+            "WFCAT-002",
+            "WFCAT-017",
+            "SETCAT-015"
+          ],
+          "outcome": "Native workflow execution metadata review and confirmed unchanged-record removal are implemented and tested. Full retention and remaining capability behavior remain partial.",
+          "evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
+        },
+        {
+          "requirements": [
+            "EO-003",
+            "EO-004",
+            "EO-005",
+            "EO-006",
+            "EO-014",
+            "EO-015",
+            "EO-016"
+          ],
+          "outcome": "Native Save As offers PNG/JPEG/WebP with explicit quality, JPEG matte and extension validation. Actual worker encoding, source-preserving sidecars, format-aware repair and cancellation-boundary refusal are tested. Full codec/profile/target/fault and human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "RC-007",
+            "RC-010",
+            "RC-011",
+            "SETCAT-003",
+            "SETCAT-005",
+            "SETCAT-009",
+            "SETCAT-010",
+            "SETCAT-012"
+          ],
+          "outcome": "Native profile preferences expose quick confirmation and snapping with normative enabled defaults, field validation and Apply/Cancel/reset. Options freeze before portal acquisition; explicit confirmation enables existing keyboard adjustments. Interactive handles/presets, remaining fields and native target/human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+            "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "RC-010",
+            "RC-023",
+            "RC-019"
+          ],
+          "outcome": "Selected region corner handles are interactive with logical-coordinate hit-testing, persistent drag cursors, grab offset, Core positive-size/desktop clamps, resize announcements and explicit Enter confirmation. All corners at 1x/2x native scale and cancellation/actual output are tested. Optional presets and native target/accessibility qualification remain partial. RC-027 recapture requires an approved physical mapping source before pixel acquisition; no speculative recapture was added.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+            "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "RC-017",
+            "RC-027"
+          ],
+          "outcome": "Native successful region screenshots persist version-1 geometry only through OwnedWork and PrivateJsonFile before actions. Existing malformed/newer/stale/unsafe records remain intact; compatible unknown fields round-trip. Metadata failures retain normal image outputs and stay visible even when workflow processing admission also fails. Storage and actual controller ordering/teardown/cancellation tests pass. Native recapture remains blocked on pre-acquisition physical topology authority; physical mapping/identity, crash and target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/LastRegionStoreTest.cpp",
+            "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008"
+          ],
+          "outcome": "Native speech-balloon edit dialog provides asynchronous explicit commit/cancel for multiline text, font size and tail enable/tip coordinates. Existing points persist without a schema change. Tail-only edits commit once and undo/redo correctly; shared Core validation rejects invalid or overflowing mapped geometry. Regression evidence covers ignored tail changes, missing history admission for tip-only edits, and a real tiny-balloon renderer clamp assertion. State/selection/document and owner teardown tests pass. Font family/weight/italic/alignment/text color, creation/default breadth and physical qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008"
+          ],
+          "outcome": "Text and speech balloons expose horizontal alignment in a shared asynchronous native text dialog. An optional per-object enum persists with legacy rendering retained when absent. Core rejects invalid creation/edit/import values, while unrelated annotation types preserve the same property opaquely. UI/history/reload and actual renderer glyph-placement tests cover both types. Font family, bold/italic, text colors, creation/default breadth and human target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008"
+          ],
+          "outcome": "Native Text and SpeechBalloon Bold/Italic controls apply optional booleans as one undoable object edit. Legacy native styling remains unchanged when absent. Core persistence refuses invalid text field types and retains opaque same-named values on unrelated families. UI/history/reload and renderer glyph tests cover both types. Font family, explicit text color, creation/default breadth and human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008"
+          ],
+          "outcome": "Native Text and SpeechBalloon text-color entry supports explicit #AARRGGBB and empty/default restoration independently of border/fill. Optional Core color persists canonically with alpha, including transparent zero; absence retains exact legacy rendering. Invalid entry/import cannot partially mutate the document. Tests cover native Apply/Cancel, no-op history, color-only undo/redo/reload, opaque fields on other types and actual alpha composition. Font family, creation/default breadth and target/human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008"
+          ],
+          "outcome": "Native Text and SpeechBalloon font-family selection preserves unavailable saved names, renders them with the unchanged native fallback, and permits explicit installed replacements or default restoration as one history edit. Optional family strings persist without touching older documents. Core validates shape string/resource boundaries and retains opaque fields on other families. Native UI/history/reload, independent Qt glyph comparison and missing-font fallback tests cover both types. Reproduced/fixed QComboBox entry truncation from 100000 to 32767 characters. Creation/default breadth and target/human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008",
+            "EA-014",
+            "EA-017"
+          ],
+          "outcome": "Native Text and SpeechBalloon creation now opens full formatting controls asynchronously before any document mutation. Apply creates once from pointer-down geometry/style/state/selection; Cancel and empty entry create nothing. Shared completion fences document replacement, stale/disabled/dead owners and duplicate/deferred callbacks. Tests cover creation formatting, frozen defaults, undo/redo/reload, cancellation, focus transfer and teardown. Reproduced/fixed focus loss cancelling modal creation and old completed-dialog destruction clearing later modal pending state. Saved-default authority, remaining style breadth and human target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-009",
+            "EA-017"
+          ],
+          "outcome": "Selected Step numbers now edit asynchronously across the existing v1 0..1000000000 range, preserving previously clamped large values. Shared persisted/create/edit numeric bounds refuse invalid mutations. Text and Step reuse one guarded dialog completion path, retaining creation focus/cancellation behavior. Native tests cover boundaries, Apply/Cancel/no-op, history/reload, stale and dead owners, duplicate completion and deferred cleanup. Reproduced native 1000000 clamping and invalid create/edit admission before fixes. Alphabetic/Roman mappings and reset semantics are blocked pending product decisions; tail, defaults and full qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-011",
+            "EA-017"
+          ],
+          "outcome": "Blur/Pixelate/Magnify/Spotlight native strength editing now uses owned asynchronous fractional input through shared guarded completion. Eight regressions reproduced integer rounding and zero/default materialization on unchanged Apply. The dialog preserves exact saved values when unchanged, including compatible values outside current native editing ranges; explicit edits retain those existing ranges and commit once. Native tests cover precision, Cancel/history/reload, stale/dead owners and deferred cleanup. Renderer behavior, persistence schema and default policy remain unchanged; full option and target qualification remains partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008",
+            "EA-011",
+            "EA-017",
+            "EA-019",
+            "EA-020"
+          ],
+          "outcome": "Creation now refuses font-size and strength values rejected by the existing reader/edit boundaries before any object, state, selection or history mutation. Reproduced 35 invalid admissions before fixing; zero, fractions and maximum boundaries retain exact values through history and reload. No schema, renderer, default or contract range changes. Other options/resource and target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008",
+            "EA-017",
+            "EA-019"
+          ],
+          "outcome": "Native text/balloon font-size input supports doubles with 17 decimal places in the existing 1..2000 editing range. Comparing against the initialized displayed value preserves exact saved fractions and zero/default on no-op Apply, including compatible values below the native minimum. Reproduced two native .125-to-1 regressions; tests cover fractional/high-precision edits, Cancel/no-op, one history step, undo/redo/reload and source preservation. No renderer, schema, saved-default or reader-range changes. Remaining text border/fill and target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008",
+            "EA-017",
+            "EA-019"
+          ],
+          "outcome": "Native Text/SpeechBalloon have optional per-object alpha-preserving fill input during creation and selected editing. Absent values retain exact legacy fill/fallback rendering; explicit transparent zero stays distinct and clearing restores legacy. Strict parsing/canonical writing applies only to these families, keeping same-named opaque fields on other and unknown types. Native UI, creation/history/reload and independent opaque/half/zero-alpha rendering tests cover the real path. Two missing-control failures and six ignored-fill pixel failures were reproduced before implementation. Border and full target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-016",
+            "EA-017"
+          ],
+          "outcome": "Asset-free annotation selections can copy/cut from image-bearing documents without publishing unselected embedded images. A shared private-v1 clipboard guard refuses incoming and outgoing Image/Emoji/Cursor references, including absent-pixel offers; local duplication keeps assets and one history step. Seven Core baseline failures reproduced the incorrect document-wide block and dangling references. Native clipboard/cut/undo/save/reopen tests retain actual unselected PNG assets. Transport shape/version, resource bounds and validation precedence are unchanged; full asset-bearing clipboard transport remains partial. The headless GUI fixture publishes actual Qt MIME data with an explicitly acknowledged test port; production ownership/unknown-delivery guards are unchanged, and physical ownership qualification remains open.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008",
+            "EA-017",
+            "EA-019"
+          ],
+          "outcome": "Native SpeechBalloon creation/editing now supports an independent optional #AARRGGBB border override, including transparent zero; absence/clearing preserves the original stroke-color rule. Body and tail share the existing outline geometry. Five baseline failures reproduced the missing native control, ignored opaque/half/zero-alpha outline pixels and invalid import admission. EditorCanvasTest covers Apply/Cancel/no-op/invalid input, one history step, undo/redo/reload, immutable source, retained text/fill/tail fields, canonical clipboard round-trip, actual creation and independent source-over export pixels. The field is typed only for SpeechBalloon; Text/other/unknown families retain same-named opaque data. Regular Text border geometry, other tool options and physical/human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "PCA-006",
+            "PCA-019"
+          ],
+          "outcome": "CaptureActions replaces its buffer-only temporary.file with a real owner-private PNG consumed by path and removed by default engine cleanup or executor teardown. Saved-file precedence, success/failure/cancel cleanup and independent action continuation have native tests.",
+          "evidence": [
+            "tests/CaptureUploadTest.cpp",
+            "app/CaptureActions.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EO-001",
+            "EO-007",
+            "EO-009",
+            "EO-014",
+            "EO-015",
+            "EO-016"
+          ],
+          "outcome": "The editor now has native Pin to Screen and Upload Image actions. Upload confirms a frozen configured destination, exposes progress/cancellation, keeps the document on failures and displays a selectable/copyable result URL. Pin remains partial pending approved service/desktop qualification.",
+          "evidence": [
+            "tests/EditorPinTest.cpp",
+            "tests/EditorUploadTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EU-001",
+            "EU-004",
+            "EU-015",
+            "EU-016",
+            "EU-017",
+            "WFCAT-011"
+          ],
+          "outcome": "User-approved local ZXing QR scanning and Tesseract English OCR are reachable through native Image File/Screen/Region tool windows, with explicit Copy and owned cancellation/session cleanup. Dependency-absent and missing-model failures are explicit.",
+          "evidence": [
+            "DEPENDENCIES.md",
+            "tests/QrRecognitionTest.cpp",
+            "tests/OcrRecognitionTest.cpp",
+            "tests/ImageRecognitionDialogTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "PCA-002",
+            "PCA-013",
+            "PCA-014",
+            "PCA-015",
+            "WFCAT-011"
+          ],
+          "outcome": "Saved capture workflows now run local OCR/QR and explicit OCR clipboard through existing ordered worker/GUI pipeline. Empty OCR leaves clipboard unchanged; recognition values are omitted from durable receipts and journals. Retained metadata does not authorize recognition retry.",
+          "evidence": [
+            "tests/CaptureRecognitionTest.cpp",
+            "app/CaptureActions.cpp",
+            "app/CapturePipeline.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "PCA-009",
+            "PCA-014",
+            "PCA-023",
+            "WFCAT-002",
+            "WFCAT-005",
+            "WFCAT-006",
+            "WFCAT-016"
+          ],
+          "outcome": "Concurrent quick-task implementation 94ae69d retained during rebase. Additional private-bus PortalScreenshotTest evidence exercises a configured quick-task workflow through the real CaptureController: acquired region pixels reach the native chooser, run-only Save replaces the configured clipboard choice, an actual PNG is published, the effective plan is journaled, and borrowed source bytes plus the original workflow snapshot remain unchanged. This complements the concurrently landed native selector implementation; physical desktop qualification remains open.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
+            "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+            "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-13",
+          "requirements": [
+            "WFCAT-002"
+          ],
+          "outcome": "FileUploadController stops before HTTP if execution admission, start or read-file persistence fails. executionStorageFailurePreventsUpload reproduced one POST per failed write before the fix and zero afterward. Existing acknowledged-upload terminal-storage failure behavior is retained. The earlier source-extracted finding is resolved for this boundary; the historical audit is retained and the requirement stays partial pending complete qualification.",
+          "evidence": [
+            "platforms/linux/linux-qt/app/FileUploadController.cpp",
+            "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-13",
+          "requirements": [
+            "CORE-004",
+            "CORE-025"
+          ],
+          "outcome": "Recursive watch discovery now runs on one owned worker; repeated scan requests coalesce. Held-enumeration evidence proves GUI event delivery, cancellation, changed rule/capture-folder rejection, safe owner destruction and rediscovery of retained sources. Existing readiness, exclusions, duplicate checkpoints and copy/move/upload result tests wait for completed observations without weakening their assertions. The earlier synchronous-discovery finding is resolved for enumeration; watcher registration, final candidate identity checks, checkpoint I/O and unknown-publication restart policy remain separate.",
+          "evidence": [
+            "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-13",
+          "requirements": [
+            "ES-018",
+            "CORE-027"
+          ],
+          "outcome": "Candidate recovery cleanup preserves protected records, refuses new recovery at protected capacity and still allows updates above capacity. Cleanup follows successful publication. Restore now adopts its selected id and expected snapshot, leaving all seven other deferred files unchanged in the eight-record crash-leftover regression. Failed/changed takeover preserves bytes and the editor retains its own optimistic-write snapshot for future updates/removal. Maintainer accepted protected-capacity refusal and narrowing the existing count bound, requested the now-fixed takeover defect, and approved corrected candidate 8bfd4a9 subject to the full integration gate. A known snapshot currently blocks recreation of an externally removed recovery file; safe recreation remains a follow-up with explicit-save guidance meanwhile. Configured retention, PID namespaces and worker-owned recovery I/O remain pending.",
+          "evidence": [
+            "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
+            "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-13",
+          "requirements": [
+            "CORE-004",
+            "ES-018",
+            "CORE-027"
+          ],
+          "outcome": "Editor recovery serialization, storage, removal, pruning and restart listing now run through one process-owned FIFO on OwnedWork. Autosaves return immediately and coalesce queued writes by record; Save/Discard removes pending writes and orders removal after any running write. Close and explicit writes wait through a Qt event loop, and shutdown drains the queue. Window destruction leaves started writes to finish without delivering into the dead window. Native held-worker tests cover GUI timers, a second canvas edit reaching the latest snapshot, Save/Discard cleanup, owner destruction, two editors and corrupt-file startup listing. Existing takeover and lifecycle rules remain unchanged.  Maintainer review found signal-triggered QApplication::exit can interrupt nested close waits. The application now drains recovery again after exec returns, preserving explicit Discard even during SIGTERM/SIGINT. Subprocess tests first failed with a surviving recovery file for both signals when that drain was omitted; both pass with the real termination handler and post-loop drain. Claude Opus maintainer approved composed candidate 74ec3a9..2caab22 on 2026-11-13, subject to the rebuilt full 181-target integration gate before push.",
+          "evidence": [
+            "platforms/linux/linux-qt/app/EditorRecoveryQueue.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorExitTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-13",
+          "requirements": [
+            "ES-029"
+          ],
+          "outcome": "Maintainer-approved EDITOR-SESSION-001 0.2.1 keeps the nine ES-029 diagnostics closed and carries value-free rejection reasons separately. parseDocument and parseAnnotationList map traversal and unsafe content to document-invalid; readXann maps malformed/duplicate-key/encoding failures to document-invalid and lexical depth/element/size limits to document-too-large. Unknown future JSON-boundary failures fall back to document-invalid, never a constructed public code. Validation, per-record rejection findings and persisted XANN bytes remain unchanged. Version then size then invalid precedence is covered by native tests and four new vectors. LoadedSource carries the reason; standalone Open and replacement show a localized diagnostic, a separate Rejected document reason and the import report, preserving raster/sidecar bytes and omitting payload values. Both Qt 6.12 and Qt 6.4.2 pass XannCompatibilityTest, EditorSessionTest, EditorSourceTest, all three EditorWindowTest partitions and all 23 conformance vectors. Prior-reader closure, old mappings and omitted native reason tests fail before the fix. This is an implemented Linux candidate; maintainer review accepted the code, contract, evidence and classification on 2026-11-13, conditional on correcting the current trace question (now resolved) and passing the rebuilt full integration gate. Target/parity/release qualification remains separate.",
+          "evidence": [
+            "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.h",
+            "platforms/linux/linux-qt/app/EditorSource.cpp",
+            "platforms/linux/linux-qt/app/EditorWindow.cpp",
+            "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+            "product-contract/capabilities/EDITOR-SESSION-001/test-vectors.json"
+          ]
+        }
+      ],
+      "audit_method": "All 16 manifest capabilities / 345 IDs reviewed against current production and meaningful named automated test bodies. 325 desktop rows classified; 20 mobile-only requirements explicitly outside Linux scope.",
+      "reviewed_at": "2026-11-11T15:27:15.305729+00:00",
+      "findings": [
+        {
+          "capability": "FILENAME-GENERATION-001",
+          "finding": "Reviewed all filename requirements against current FilenameGenerator.cpp, native CaptureSave and its counter tests, and conformance adapter/vector path. No classification changes: 24 implemented candidates, 3 partial for the unresolved greater-than-256-line random-file sampling rule. Counter reservation persists before native publication; interrupted publication and collision fixtures exercise non-reuse."
+        },
+        {
+          "capability": "REGION-CAPTURE-001",
+          "finding": {
+            "kind": "blocked-product-decision",
+            "requirement": "RC-003/004/012/022/027",
+            "detail": "ScreenTopology still packs columns/rows from logical origins. Core geometry tests do not authorize compositor physical mapping or settle pre-acquisition topology authority."
+          }
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "finding": {
+            "kind": "actionable",
+            "priority": 1,
+            "summary": "Protect recovery files belonging to newer versions/live owners from blind count pruning before extending recovery. Scratch current EditorRecovery.cpp repro seeds private version2file oldest, writes8version1records, and observes deletion.",
+            "source": "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp:87",
+            "repro": "/tmp/audit37-recovery-prune.cpp",
+            "observed": "future recovery preserved: false; exit1"
+          }
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "finding": {
+            "kind": "actionable",
+            "priority": 2,
+            "summary": "Move recovery serialize/write/list/remove through OwnedWork; writeRecoveryNow is called directly from a GUI timer, while offerRecovery synchronously scans and uses nested QMessageBox exec. Preserve already-working separate recovery/disclosure outcome.",
+            "source": "platforms/linux/linux-qt/app/EditorWindow.cpp:1689"
+          }
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "finding": {
+            "kind": "resolved",
+            "summary": "ES-029 diagnostic/reason boundary resolved by maintainer-approved capability 0.2.1, native reader/UI mappings and conformance vectors; candidate verified at e8bc3a9. Maintainer accepted the implementation and evidence on 2026-11-13; the specified current-trace finding correction is applied. Full integration gate pending."
+          }
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "finding": {
+            "kind": "partial",
+            "summary": "CPU precision repair is concrete independent native evidence for eight default effects, not acceptance of all232selected algorithms/963parameter boundaries. Keep missing model and human SXIE review gates."
+          }
+        },
+        {
+          "capability": "EDITOR-OUTPUT-ACTIONS-001",
+          "finding": {
+            "kind": "partial",
+            "summary": "Actual encoder /dev/full ENOSPC proof exists; do not describe all disk-full failures as only mocked, and do not claim publication ENOSPC or full EO016 completion."
+          }
+        },
+        {
+          "capability": "EDITOR-SETTINGS-001",
+          "finding": "Full Step-style/default approval remains unresolved despite native source implementing reference-derived mappings."
+        },
+        {
+          "capability": "EDITOR-SETTINGS-001",
+          "finding": "Numeric native fields are validated; their source maxima do not approve the entire ledger."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "finding": "EU-004 remains scheduler-blocked even though upstream dependency documentation and code/test evidence now say approved; this is an instruction/approval reconciliation question for Mike."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "finding": "Local QR save and icon output include synchronous native GUI file work; a small follow-up can route blocking output through existing OwnedWork without inventing utility breadth."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "finding": "Converter test optional runtime codec skips are not full hardware qualification."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "finding": "Reserved hotkey defaults now have named explicit refusal/replacement tests; gesture families beyond keyboard remain partial."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "finding": "Settings stores and import/transfer tests are substantial; missing complete accepted field semantics must not be filled from source initializers."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "finding": {
+            "kind": "source-extracted-gap",
+            "requirement": "WFCAT-002",
+            "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
+            "lines": "142-160",
+            "detail": "Failed admit/start or read-file step persistence only changes a flag; UploadExecutor starts unconditionally. Not runtime-confirmed by this audit. Next regression should inject execution writer failures before HTTP transfer."
+          }
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "finding": {
+            "kind": "implemented-progress",
+            "requirement": "WFCAT-002",
+            "detail": "Do not redo shared upload/watch execution fields: current successful/failure fixtures inspect records/history/dialog and notification. Remaining storage fence is narrower."
+          }
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "finding": {
+            "kind": "source-extracted-gap",
+            "requirement": "CORE-004/025",
+            "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "lines": "161-210",
+            "detail": "Rescan recursively walks/stat-enumerates before pending-path check on the GUI callback. Owned copy/move fixes did not move discovery. No live latency measurement asserted."
+          }
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "finding": "Do not rebuild history JSON/XML/SQLite import: all are implemented as explicitly reviewed immutable snapshots in a separate private archive with restart/undo/recovery."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "finding": "COMPCAT-010 now has direct meaningful evidence for every SQLite-specific clause. COMPCAT-002/018 retain missing runtime/golden/cross-platform activation qualification."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "finding": "Distinct snapshots preserve repeated records intentionally because unversioned JSON/XML lack task IDs; exact snapshot retry is idempotent. A broader stable-task merge/migration policy still needs specification."
+        }
+      ],
+      "raw_trace_counts": {
+        "implemented": 174,
+        "not-applicable": 1,
+        "not-started": 19,
+        "partial": 131
+      },
+      "full_audit_counts": {
+        "blocked": 34,
+        "implemented": 169,
+        "not-applicable": 1,
+        "not-started": 6,
+        "partial": 115
+      },
+      "integration_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+      "incremental_classification_updates": [
+        {
+          "requirement": "EO-014",
+          "previous": "partial",
+          "current": "implemented",
+          "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+        },
+        {
+          "requirement": "FN-009",
+          "previous": "partial",
+          "current": "implemented",
+          "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+        },
+        {
+          "requirement": "FN-021",
+          "previous": "partial",
+          "current": "implemented",
+          "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+        },
+        {
+          "requirement": "FN-026",
+          "previous": "partial",
+          "current": "implemented",
+          "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+        },
+        {
+          "requirement": "ES-029",
+          "previous": "partial",
+          "current": "implemented",
+          "source_revision": "e8bc3a9"
+        }
+      ],
+      "integration_note": "Ten upstream commits integrated after the full audit: approved wide random-file sampling resolves FN-009/021/026; explicit editor host contracts close EO-014. Other source/test updates and evidence remain preserved. The frozen full audit is still pinned to d25064e. ES-029 capability 0.2.1 adds the fifth completion beyond the frozen 169-row implemented audit, bringing current candidate implementations to 174; frozen audit counts remain historical."
     }
   ],
   "findings": [
     {
-      "capability": "FILENAME-GENERATION-001",
-      "finding": "Reviewed all filename requirements against current FilenameGenerator.cpp, native CaptureSave and its counter tests, and conformance adapter/vector path. No classification changes: 24 implemented candidates, 3 partial for the unresolved greater-than-256-line random-file sampling rule. Counter reservation persists before native publication; interrupted publication and collision fixtures exercise non-reuse."
+      "id": "recovery-continuations",
+      "classification": "partial",
+      "source": "app/EditorRecoveryQueue.cpp:75 and :83; app/EditorWindow.cpp:1760",
+      "finding": "Worker I/O exists, but recovery wait/waitIdle and modal restart/close prompts still nest event loops. Replace these with owner-fenced continuations; no latency claim is made."
     },
     {
-      "capability": "REGION-CAPTURE-001",
-      "finding": {
-        "kind": "blocked-product-decision",
-        "requirement": "RC-003/004/012/022/027",
-        "detail": "ScreenTopology still packs columns/rows from logical origins. Core geometry tests do not authorize compositor physical mapping or settle pre-acquisition topology authority."
-      }
-    },
-    {
-      "capability": "EDITOR-SESSION-001",
-      "finding": {
-        "kind": "actionable",
-        "priority": 1,
-        "summary": "Protect recovery files belonging to newer versions/live owners from blind count pruning before extending recovery. Scratch current EditorRecovery.cpp repro seeds private version2file oldest, writes8version1records, and observes deletion.",
-        "source": "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp:87",
-        "repro": "/tmp/audit37-recovery-prune.cpp",
-        "observed": "future recovery preserved: false; exit1"
-      }
-    },
-    {
-      "capability": "EDITOR-SESSION-001",
-      "finding": {
-        "kind": "actionable",
-        "priority": 2,
-        "summary": "Move recovery serialize/write/list/remove through OwnedWork; writeRecoveryNow is called directly from a GUI timer, while offerRecovery synchronously scans and uses nested QMessageBox exec. Preserve already-working separate recovery/disclosure outcome.",
-        "source": "platforms/linux/linux-qt/app/EditorWindow.cpp:1689"
-      }
-    },
-    {
-      "capability": "EDITOR-SESSION-001",
-      "finding": {
-        "kind": "resolved",
-        "summary": "ES-029 diagnostic/reason boundary resolved by maintainer-approved capability 0.2.1, native reader/UI mappings and conformance vectors; candidate verified at e8bc3a9. Maintainer accepted the implementation and evidence on 2026-11-13; the specified current-trace finding correction is applied. Full integration gate pending."
-      }
-    },
-    {
-      "capability": "EDITOR-EFFECTS-001",
-      "finding": {
-        "kind": "partial",
-        "summary": "CPU precision repair is concrete independent native evidence for eight default effects, not acceptance of all232selected algorithms/963parameter boundaries. Keep missing model and human SXIE review gates."
-      }
-    },
-    {
-      "capability": "EDITOR-OUTPUT-ACTIONS-001",
-      "finding": {
-        "kind": "partial",
-        "summary": "Actual encoder /dev/full ENOSPC proof exists; do not describe all disk-full failures as only mocked, and do not claim publication ENOSPC or full EO016 completion."
-      }
-    },
-    {
-      "capability": "EDITOR-SETTINGS-001",
-      "finding": "Full Step-style/default approval remains unresolved despite native source implementing reference-derived mappings."
-    },
-    {
-      "capability": "EDITOR-SETTINGS-001",
-      "finding": "Numeric native fields are validated; their source maxima do not approve the entire ledger."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "finding": "EU-004 remains scheduler-blocked even though upstream dependency documentation and code/test evidence now say approved; this is an instruction/approval reconciliation question for Mike."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "finding": "Local QR save and icon output include synchronous native GUI file work; a small follow-up can route blocking output through existing OwnedWork without inventing utility breadth."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "finding": "Converter test optional runtime codec skips are not full hardware qualification."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "finding": "Reserved hotkey defaults now have named explicit refusal/replacement tests; gesture families beyond keyboard remain partial."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
-      "finding": "Settings stores and import/transfer tests are substantial; missing complete accepted field semantics must not be filled from source initializers."
-    },
-    {
-      "capability": "WORKFLOW-CATALOG-001",
-      "finding": {
-        "kind": "source-extracted-gap",
-        "requirement": "WFCAT-002",
-        "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-        "lines": "142-160",
-        "detail": "Failed admit/start or read-file step persistence only changes a flag; UploadExecutor starts unconditionally. Not runtime-confirmed by this audit. Next regression should inject execution writer failures before HTTP transfer."
-      }
-    },
-    {
-      "capability": "WORKFLOW-CATALOG-001",
-      "finding": {
-        "kind": "implemented-progress",
-        "requirement": "WFCAT-002",
-        "detail": "Do not redo shared upload/watch execution fields: current successful/failure fixtures inspect records/history/dialog and notification. Remaining storage fence is narrower."
-      }
-    },
-    {
-      "capability": "CORE-PLATFORM-001",
-      "finding": {
-        "kind": "source-extracted-gap",
-        "requirement": "CORE-004/025",
-        "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-        "lines": "161-210",
-        "detail": "Rescan recursively walks/stat-enumerates before pending-path check on the GUI callback. Owned copy/move fixes did not move discovery. No live latency measurement asserted."
-      }
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "finding": "Do not rebuild history JSON/XML/SQLite import: all are implemented as explicitly reviewed immutable snapshots in a separate private archive with restart/undo/recovery."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "finding": "COMPCAT-010 now has direct meaningful evidence for every SQLite-specific clause. COMPCAT-002/018 retain missing runtime/golden/cross-platform activation qualification."
-    },
-    {
-      "capability": "COMPATIBILITY-CATALOG-001",
-      "finding": "Distinct snapshots preserve repeated records intentionally because unversioned JSON/XML lack task IDs; exact snapshot retry is idempotent. A broader stable-task merge/migration policy still needs specification."
+      "id": "remaining-storage-boundaries",
+      "classification": "partial",
+      "source": "app/FileUploadController.cpp:145; app/WatchFolderService.cpp:143,243,251",
+      "finding": "Upload execution persistence and watch checkpoint/watcher/final identity work retain synchronous GUI boundaries; recursive discovery and recovery serialization/storage already use OwnedWork."
     }
   ],
   "raw_trace_counts": {
@@ -1638,12 +2484,12 @@
   },
   "full_audit_counts": {
     "blocked": 34,
-    "implemented": 169,
+    "implemented": 174,
     "not-applicable": 1,
-    "not-started": 6,
-    "partial": 115
+    "not-started": 5,
+    "partial": 111
   },
-  "integration_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+  "integration_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
   "incremental_classification_updates": [
     {
       "requirement": "EO-014",
@@ -1676,5 +2522,5 @@
       "source_revision": "e8bc3a9"
     }
   ],
-  "integration_note": "Ten upstream commits integrated after the full audit: approved wide random-file sampling resolves FN-009/021/026; explicit editor host contracts close EO-014. Other source/test updates and evidence remain preserved. The frozen full audit is still pinned to d25064e. ES-029 capability 0.2.1 adds the fifth completion beyond the frozen 169-row implemented audit, bringing current candidate implementations to 174; frozen audit counts remain historical."
+  "integration_note": "Current review incorporates recovery preservation/takeover/owned I/O, upload admission and unknown-publication/replay handling, owned watch discovery, profile-local cursor inclusion, and the maintainer-approved ES-029 diagnostic/reason boundary. Historical findings are retained in audit_history, not represented as current missing features. Integration at fdc728fb6c33dc0a7685205e77dfdcfd37217db6 preserves landed recovery recreation and its store/native regression proof. It removes that completed item from the current backlog; maintainer/independent acceptance of that implementation remains separately recorded upstream."
 }

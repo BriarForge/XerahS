@@ -35,7 +35,7 @@
         "classification": "implemented",
         "spec_line": 15,
         "coverage": "Shared action factory and canvas expose all 20 stable tools, with exact contract matrix and editor menu tests.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -51,7 +51,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -67,7 +67,9 @@
             "method": "editorWindowMenuListsEveryContractedToolOnce",
             "line": 209
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "All 20 tool modes are exposed through NativeAnnotationTools, EditorCanvas and the editor's Image > Annotation Tools menu; the capture annotation surface omits only the Crop and CutOut canvas operations by design. Audit 2026-11-03: The 20 IDs of product-contract annotation-tools.json are read at test time and cross-checked against the real native surface: annotationToolActions yields exactly those 20 IDs (no extra), each triggers a distinct canvas tool whose drawable document type equals the contract document_type (Select/Crop/CutOut have none), the contract's 17 drawable types equal shapeTypes(), the editor window lists each ID once in Image > Annotation Tools with no tool outside the contract, and the capture surface drops only Crop and CutOut (AnnotationToolMatrixTest::contractToolsAreTheCanvasToolsAndNoneIsExtra, ::editorWindowMenuListsEveryContractedToolOnce). Remaining items above are qualification, not implementation status."
     },
@@ -88,7 +90,7 @@
         "classification": "implemented",
         "spec_line": 19,
         "coverage": "Actual tool controls expose checked state, options and instructions; per-tool native tests verify stay-active behavior.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -104,7 +106,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -114,7 +116,9 @@
             "method": "everyToolShowsStateOptionsInstructionsAndKeepsItselfActive",
             "line": 263
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Active tool and pointer/keyboard instructions exist. Each tool also states its applicable options (EditorCanvas::toolOptions) and, like the reference SwitchToSelectionToolAfterDrawing=false default, stays active after a completed object. Audit 2026-11-03: Data-driven over all 20 contracted tools: selecting each checks exactly its action and exposes, in the canvas and label accessible description, the tooltip and the action status tip, its options sentence, pointer gesture, Escape/arrow keyboard guidance and 'stays active'; drawing two objects in a row (dialogs completed for Text, SpeechBalloon, Image and Emoji) leaves the same tool checked and active, Crop/CutOut request two operations and Select creates nothing (AnnotationToolMatrixTest::everyToolShowsStateOptionsInstructionsAndKeepsItselfActive). Return-to-Select is not offered, matching the reference default. Remaining items above are qualification, not implementation status."
     },
@@ -135,7 +139,7 @@
         "classification": "implemented",
         "spec_line": 22,
         "coverage": "Guarded selection mutations protect hidden/locked objects; native matrix covers paths/assets move, resize and rotation.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -151,7 +155,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -167,7 +171,9 @@
             "method": "directSelectionCommandsCannotMutateHiddenLockedOrOpaqueProtectedObjects",
             "line": 260
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Select hit testing, single/additive selection, hidden/locked protection, movement, resizing and rotation are shared by all box-bounded shapes; Line, Arrow and Freehand are hit by stroke proximity like the reference XerahS (EditorCanvas::topmostAt, strokeDistance). Audit 2026-11-03: Line, Arrow, Freehand, Image, Emoji and Cursor are each selected, moved, resized by a handle and rotated in one undo step per edit; empty bounding-box space far from a stroke is not a hit, the displayed (rotated) stroke is; hidden objects are not hit and locked ones are selectable but unchanged by drag, rotate, move and delete (AnnotationToolMatrixTest::lineArrowFreehandAndAssetsSelectMoveResizeRotateAndProtect; rectangle and ellipse paths remain covered by EditorCanvasTest and EditorSessionTest). Remaining items above are qualification, not implementation status."
     },
@@ -188,7 +194,7 @@
         "classification": "implemented",
         "spec_line": 25,
         "coverage": "Per-tool native tests cover reverse normalization, explicit outside-canvas policy, zero-area rules and atomic creation.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -204,7 +210,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -220,7 +226,9 @@
             "method": "zeroAreaAndClickGesturesFollowEachToolsRule",
             "line": 535
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Core creation validates bounds and finite values, normalizes reverse drags and commits one undoable operation per gesture; the per-tool out-of-canvas, zero-area and click policy is documented in app/ANNOTATION-TOOLS.md. Audit 2026-11-03: For each of the 17 drawing tools: a reverse drag extending past the canvas is stored normalized and unclipped as one history step and exports at the canvas size; an object entirely outside exports no change (Spotlight dims the canvas); vertical zero-width drags and clicks follow the documented per-tool rule, rejected cases give annotation-geometry-invalid with no history or dirty state; NaN, infinite, overflowing, empty and single-point gestures are rejected for every shape type at gesture and session level (AnnotationToolMatrixTest::creationAllowsOutOfCanvasAndNormalizesReverseDrags, ::exportClipsAnObjectEntirelyOutsideTheCanvas, ::zeroAreaAndClickGesturesFollowEachToolsRule, ::malformedGesturesAreRejectedForEveryShapeType). Remaining items above are qualification, not implementation status."
     },
@@ -241,7 +249,7 @@
         "classification": "implemented",
         "spec_line": 28,
         "coverage": "Typed rectangle/ellipse decorations persist and render border, corner and shadow fields with style, geometry and ordering.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -257,7 +265,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -273,7 +281,9 @@
             "method": "shadowRendersOffsetPixelsIdenticallyOnCanvasPaintAndExport",
             "line": 224
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Rectangle and Ellipse preserve bounds, stroke, fill, border style (solid/dash/dot/dashDot/dashDotDot), thickness, Rectangle-only corner radius, shadow, opacity, rotation, visibility and z-order through bounded XANN read/write (unknown fields kept, legacy documents load at defaults), one shared paintShape path for canvas and export, a one-undo-step native edit dialog, session creation defaults, and copy/paste/duplicate. Persisted names, camelCase enum spellings and defaults follow the reference XerahS .xann format for compatibility (COMPCAT): ShareX/XerahS ShareX.ImageEditor Core/Annotations/Base/Annotation.cs, Shapes/RectangleAnnotation.cs, BorderStyle.cs and Core/Persistence/XannProjectFileService.cs. Shadow-from-painted-alpha and document-axis offset semantics were decided by Aoife under Mike's similar-apps rule. Ranges are this build's bounded validation. Separate pending clarification EA-005-LINUX-2026-10-14 (Ellipse stroke-geometry golden pixels, shared schema/fixtures) does not block field preservation. New creation-default fields are session-scoped, not persisted preferences."
     },
@@ -294,7 +304,7 @@
         "classification": "implemented",
         "spec_line": 31,
         "coverage": "Ordered endpoints and curve anchors are typed; line/arrow styles render and survive native edits, transforms and persistence.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -310,7 +320,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -326,7 +336,9 @@
             "method": "scenarioReverseArrowDragKeepsTheHeadAtTheDragEnd",
             "line": 703
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Line and Arrow preserve ordered endpoints (direction), optional curved control geometry, border style (solid/dash/dot/dashDot/dashDotDot), thickness, arrow style (classic/modern/double/basic/line), shadow and opacity through bounded XANN read/write (unknown fields kept, older documents load at defaults and re-serialize byte-identically), one shared paintShape path for canvas and export, one-undo-step native edit dialog, session creation defaults, copy/paste/duplicate, move and resize. Decisions: (1) borderStyle, shadow* reuse the EA-005 names, values and defaults, which follow the reference XerahS Annotation.cs/LineAnnotation.cs/BorderStyle.cs; the reference Arrow has no borderStyle, so Arrow also accepts it (dashes the shaft, head stays solid) because EA-006 lists border style for both. (2) Arrow style is persisted as `style` with camelCase values classic/modern/double/basic/line, read case-insensitively, as in reference ArrowAnnotation.cs/ArrowStyle.cs; head geometry and size multipliers (2.0 classic/double, 3.0 modern, 1.75 basic/line, length 3x) follow the reference, so head size is derived from thickness and has no field; Modern is straight and drops the curve, as in the reference CurvedSegmentHelper. (3) The reference stores the curve as `curvePoint` {x,y} in document pixels plus `curvePointActivated` (a point the quadratic passes through at its middle). Here it is the optional third entry of the fractional `points`, so move/resize/flip and the shared all-annotation transform carry it with the endpoints; reference curvePoint/curvePointActivated are accepted on read and converted. Writes use points[2]. Lines or arrows with more than 3 points remain legacy polylines. Curve anchor fractions are bounded to +-1e6. (4) Shadow, ranges and the 1px minimum box follow EA-005. Open: no on-canvas curve drag handle yet (curve is edited in the properties dialog); golden pixels for arrow heads are not contract-defined."
     },
@@ -346,7 +358,7 @@
         "classification": "implemented",
         "spec_line": 34,
         "coverage": "Documented simplification keeps path order/corners and bounded tolerance; tests compare zoom/export stroke pixels.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -362,7 +374,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -378,7 +390,9 @@
             "method": "freehandStrokeIsIdenticalAtEveryZoomAndExportScale",
             "line": 218
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Freehand stores ordered fractional path points. Gesture commit simplifies once with RDP at 0.5 document px, retaining corners over 30 degrees (src/image-editor/FreehandPath.h, documented in src/image-editor/README.md); first/last samples and order are preserved. Canvas and exporter share paintShape with a non-cosmetic round-cap/round-join pen in document units; tests compare coverage at 0.5x/2x/3x and against the export render. XANN round-trip and one-step undo are covered. The contract requires a documented tolerance without fixing its value; the 0.5 px tolerance, 30 degree corner threshold and 4 px corner reach are the documented Linux values. Cross-platform agreement on these values belongs to parity review, not this implementation status. Simplification is iterative, so long strokes cannot exhaust the stack."
     },
@@ -398,7 +412,7 @@
         "classification": "partial",
         "spec_line": 37,
         "coverage": "Native Text/SpeechBalloon creation/edit offers commit/cancel, multiline/font/size/bold/italic/alignment/text/fill/balloon-border/tail with frozen style/history tests. Regular Text uses glyph-outline candidate code, but the exact Text-border geometry/thickness question is still unapproved in shared loop state; no reference mapping is accepted as product authority.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -414,7 +428,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -430,7 +444,9 @@
             "method": "textBorderRendersAnOutlineBehindTheLettersAndStaysInertElsewhere",
             "line": 778
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Text and SpeechBalloon now share the native asynchronous Apply/Cancel dialog for creation and selected-object editing. Multiline text, family/size, bold/italic, horizontal alignment, independent alpha-preserving text color and balloon-tail controls commit once through EditorSession. Creation freezes pointer-down geometry/style/state/selection and the document generation; empty text or Cancel creates nothing. Tests cover full formatted creation, reload/history, frozen defaults, stale state/selection/replacement, disabled/dead owners, Escape/tool/source cancellation, duplicate Apply and deferred dialog teardown. Regressions reproduce and fix modal focus cancelling the draft and completed text-dialog destruction clearing a later modal operation. Existing optional fields retain legacy rendering and missing font names. Full text-border/fill breadth, saved preferences and physical visual/accessibility/target qualification remain partial. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial. Native Text/SpeechBalloon font-size controls now accept fractional values within the existing 1..2000 editing range. Unchanged Apply preserves the exact saved fraction or zero/default, including compatible values below the native minimum. Two native failures reproduced 0.125 becoming 1 before the fix. Tests cover both families, precision, Cancel/no-op, duplicate Apply, one history operation, undo/redo, reload and immutable source. Rendering and persistence ranges are unchanged. Native Text/SpeechBalloon creation and editing now offer an independent optional #AARRGGBB fill override, including fully transparent zero. Absence retains the exact legacy style/fallback rule; clearing restores it. UI/parse failures leave content/history intact; fill-only changes are one undoable mutation. Native creation, Apply/Cancel/no-op, canonical color, zero-alpha presence, undo/redo/reload, independent opaque/half/zero-alpha pixels and opaque unknown fields on other families are tested. Text-border and broader tool/native/physical qualification remain partial. Native SpeechBalloon creation/editing now supports an independent optional #AARRGGBB border override, including transparent zero; absence/clearing preserves the original stroke-color rule. Body and tail share the existing outline geometry. Five baseline failures reproduced the missing native control, ignored opaque/half/zero-alpha outline pixels and invalid import admission. EditorCanvasTest covers Apply/Cancel/no-op/invalid input, one history step, undo/redo/reload, immutable source, retained text/fill/tail fields, canonical clipboard round-trip, actual creation and independent source-over export pixels. The field is typed only for SpeechBalloon; Text/other/unknown families retain same-named opaque data. Regular Text border geometry, other tool options and physical/human qualification remain partial. Audit 2026-11-03: Regular Text border is now implemented following the reference OutlinedTextControl, the only reference Text border semantics (the Text tool's TextBorderColor becomes the annotation StrokeColor and TextThickness its StrokeWidth): the letters are outlined with the border colour at the annotation's stroke width, painted behind the text colour with round joins; a transparent colour or zero width draws nothing. It is the optional #AARRGGBB field textBorderColor in the document (Text only; other families keep a same-named field as opaque data; absence retains the legacy no-outline rendering), edited natively in the Text dialog next to text colour and fill as one undoable mutation, and it round-trips through the canonical clipboard. Proving tests, EditorCanvasTest unless noted: native text entry, commit/cancel and multiline textCreationCommitsFormattedSnapshotOnce and textCreationRefusesStaleOrCancelledOwners; family and size fontFamiliesCommitAndPreserveMissingNames and fractionalFontSizeCommitsOnceAndReloads; bold/italic textFontStylesCommitCancelAndReload; alignment textAlignmentDialogCommitsOnceAndKeepsOldDocuments; text colour textColorsCommitCancelValidateAndReload; fill textFillColorControlsKeepAlphaAndHistory and textFillColorsRenderIndependentAlpha; balloon border balloonBorderColorControlsKeepAlphaAndHistory and balloonBorderColorsRenderIndependentAlpha; balloon tail balloonTailCommitCancelHistoryAndPersistence; Text border textBorderControlKeepsAlphaHistoryAndPersistence (native edit, validation, one history step, reload, transfer) and textBorderRendersAnOutlineBehindTheLettersAndStaysInertElsewhere (outline pixels behind the text colour, alpha, transparent, malformed import, other families)."
     },
@@ -452,7 +468,7 @@
         "classification": "blocked",
         "spec_line": 40,
         "coverage": "Reference-derived alphabetic/Roman and reset code exists, but the loop's exact mapping/start/reset questions remain unresolved; tests do not approve product semantics.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -468,7 +484,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -484,7 +500,9 @@
             "method": "stepStartAndResetAffectOnlyFutureAllocation",
             "line": 318
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Step preserves numeric values and existing highest-number allocation. Native selected-number editing is now an owned asynchronous Apply/Cancel dialog over the existing version-1 0..1000000000 range, without clamping stored values to the old UI maximum of 1000000. Shared parsing/create/edit bounds reject invalid numeric values before mutation. Step and Text share document/state/selection/serial/lifetime completion guards. Tests cover zero, one, values above the old UI ceiling and the version-1 maximum; no-op/Cancel, one-step history, undo/redo/reload, stale/disabled/dead owners and deferred-dialog cleanup. Regressions reproduced native clamping and invalid create/edit admission. Alphabetic/Roman mappings and explicit sequence reset need product decisions; start/reset/tail controls, saved preferences and full qualification remain partial. Audit 2026-11-03: Alphabetic (upper/lower), Roman (upper/lower), explicit start number and reset are implemented per the reference XerahS source, which Mike's standing rule makes the tie-breaker where the contract is silent: StepType.cs StepTypeFormatter (alphabetic is bijective base 26: 1=A, 26=Z, 27=AA, case per style; values <= 0 print as plain decimal; Roman is standard subtractive with M repeated above 3999, so 4000=MMMM), MainViewModel.ToolOptions (start number 1..10, default 1, out-of-range clamps) and MainViewModel.RecalculateNumberCounter (next = max(highest+1, start)). Reset retires the Steps that exist so the next allocation is the start number again; existing Steps keep their values and styles; reset and start are editing-session state (no history entry, as in the reference counter) and are not persisted. The style is persisted per object as stepType (reference camelCase names numeric/uppercaseLetter/lowercaseLetter/uppercaseRoman/lowercaseRoman, omitted when numeric, case-insensitive on read, unknown names reject the document) and the ESET-008 StepType preference (PascalCase) is active: stepStyleImplemented accepts the five names, new Steps take the saved style, unknown names stay inert. Native: Drawing Defaults offers the five styles; Edit > Step Start Number... and Reset Step Numbering; the Edit Step dialog changes number and style in one undoable operation; long labels shrink to stay inside the circle. Proving tests: AnnotationShapesTest::stepStylesMapValuesLikeTheReference (0, -5, 1, 4, 9, 26, 27, 52, 702, 703, 1994, 3999, 4000), ::stepStyleNamesFollowTheReferenceSpelling, ::stepStyleRoundTripsPerObjectAndRejectsUnknownNames, ::stepStartAndResetAffectOnlyFutureAllocation, ::stepValuesStayStableAcrossDeleteReorderUndoRedoAndReload, ::stepStyleIsOneUndoableContentEditAndPaintsTheFormattedLabel; EditorCanvasTest::stepCreationUsesSavedStyleStartAndResetAndEditChangesOnlyTheSelectedStep; EditorPreferencesTest::everyReferenceStepStyleIsImplementedAndReachesCreationDefaults; NativeEditorPreferencesTest::missingSavedFontFallsBackWithoutRewritingUntilExplicitReplacement (unknown style stays inert). Remaining gap (an extra beyond the product answers, so the row stays partial): the bullet also requires Step tail state; Step has no tail (reference NumberAnnotation TailPoint/TailPointInitialized/TailEnabled) in the document, renderer or native controls. Audit 2026-11-04: Step tail state implemented per the reference NumberAnnotation (TailPoint/TailPointInitialized/TailEnabled). Decision: points[0] is the tail tip as a fraction of the step's box (as for the speech balloon, so move, resize, flip, rotate, cut-out and copy carry it); no point means no tail, which is the reference state before a tail point is set and the creation default (reference creates steps without a tail point); a present point is TailEnabled+initialized, so the reference enabled-but-uninitialized and disabled-but-initialized states collapse (rationale: one persisted field, no hidden state). The tail is the two tangents from the tip to the circle, drawn as one silhouette with the circle (reference TryGetTailPolygon); a tip on or inside the circle draws none. Default tip when enabling in the dialog is (1.5, 1.5), the reference default handle one radius beyond the bottom-right corner. Edit Step offers Show tail with tip X/Y in the same Apply as number and style, so one undo step. Invalid tips (non-finite, more than one point, unmappable) are refused at creation, edit and parse. Not implemented, recorded: reference TailStyle Arrow (shared with the balloon, in neither EA-008 nor EA-009 text), a drag handle for the tip (the balloon is also dialog-only), and the StepTail preference. Proving tests: AnnotationShapesTest::stepTailRendersPersistsAndIsOneUndoableEdit and ::stepTailRejectsInvalidTipsWithoutChangingHistoryOrDocuments; EditorCanvasTest::stepTailIsEditedThroughTheStepDialogInOneUndoStep; with the existing numeric/alphabetic/Roman, start, reset and stability tests every EA-009 clause now has a named test.",
       "blocked_reason": "Reference-derived alphabetic/Roman and reset code exists, but the loop's exact mapping/start/reset questions remain unresolved; tests do not approve product semantics."
@@ -505,7 +523,7 @@
         "classification": "implemented",
         "spec_line": 43,
         "coverage": "Image/Emoji/Cursor pixels and metadata are embedded, bounded before decode, alpha/aspect preserved, and source-independent on reload.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -521,7 +539,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -543,7 +561,9 @@
             "method": "emojiAndCursorMetadataRoundTripValidateAndStayWithTheirType",
             "line": 534
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Image/Emoji/Cursor embed validated PNG assets with alpha and survive source removal in native shape tests. Complete metadata/aspect/resource/compatibility matrix remains. Audit 2026-11-03: Emoji and Cursor (and Image) assets are now proven for alpha, aspect ratio, unsafe or oversized input and resize, all in AnnotationShapesTest: emojiAndCursorAssetsPreserveAlpha (translucent and fully transparent pixels render source-over; PNG bytes survive the .xann round trip untouched), emojiAndCursorAssetsKeepAspectRatioAtEverySize (wide, tall and square assets are letterboxed, never stretched), resizeKeepsEmojiAndCursorAssetsAndTheirAspectRatio (resize keeps key and bytes, is one undoable step and re-letterboxes), oversizedOrUnsafeEmojiAndCursorAssetsAreRejectedBeforeDecode (new assets must pass validEmbeddedPng: signature, IHDR, 1..100000 dimensions, at most 64M pixels, IEND; a refusal annotation-asset-invalid changes nothing; imports over the document limits are document-too-large before decode; the renderer refuses over-limit decodes and paints a placeholder), cursorToolCreatesAnAlphaAssetOnTheCanvas, with embeddedAssetsRenderWithTheirAspectRatioOrAPlaceholder (Image) and the existing source-removal tests. Remaining gap (an extra, so the row stays partial): the bullet requires the selected pixels and metadata; the reference persists Emoji UnicodeSequence/DisplayName and Cursor CursorType (and Image ImagePath), but this build stores only the rendered PNG and its key, offers one native cursor image and does not record which emoji was chosen. Audit 2026-11-04: asset metadata now persists as optional camelCase fields of the reference XANN format: Emoji unicodeSequence (hex code points, lowercase, space separated as the reference catalog writes them; read with space or hyphen) and displayName (reference catalog name), Cursor cursorType (the 28 reference CursorType members, camelCase on write, case-insensitive on read). The emoji picker records the chosen emoji's sequence and, for the 24 offered emoji, its catalog name (a typed emoji records the sequence only); the cursor tool records the pointer type it drew (this build draws one pointer, recorded Default). Absent fields stay absent (legacy files unchanged); an unusable value rejects the document like stepType; on other types the same names stay preserved unknown fields; creation refuses metadata on the wrong type; copy, paste and duplicate keep it. Decision recorded for review: Image has no extra metadata beyond its embedded PNG; the reference ImagePath is a private local file path and persisting it in a shareable document is a privacy policy question, so it is not written. Proving tests: AnnotationShapesTest::emojiAndCursorMetadataRoundTripValidateAndStayWithTheirType, ::emojiPickerAndCursorToolRecordTheirMetadata, plus the existing alpha, aspect, oversize, resize and source-removal tests."
     },
@@ -564,7 +584,7 @@
         "classification": "implemented",
         "spec_line": 46,
         "coverage": "Region effect geometry/ellipse/blur fields are typed and rendered from immutable source; source-only blur and moved Pixelate scenarios are tested.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -580,7 +600,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -596,7 +616,9 @@
             "method": "scenarioOverlappingPixelateMovesWithoutAccumulatingItsOwnPixels",
             "line": 756
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Highlight, Blur, Pixelate, Magnify and Spotlight apply only inside their declared geometry and read only the immutable source image (ShapePainter.cpp effectRegion/paintRegion/paintHighlight/paintMagnify/paintSpotlight; canvas preview and exporter share paintShape). Options follow the reference XANN format (camelCase, defaults omitted on write, unknown fields preserved, bounded validation): `isEllipse` (bool, default false = rectangle) on all five types, Spotlight `blurAmount` (0..1000, default 0) blurring the dimmed area, plus the existing `strength`. Rationale per field: isEllipse = reference BaseEffectAnnotation/SpotlightAnnotation.IsEllipse and ImageEditorOptions.MagnifierEllipse/SpotlightEllipse; blurAmount = reference SpotlightAnnotation.BlurAmount / ImageEditorOptions.SpotlightBlur (reference default 0); Blur has no blur-type option in the reference so none is invented; Highlight/Blur/Pixelate use IsEllipse as in the reference (Highlight has no strength). Persisted strength keeps this build's `strength` name on write. Reference compatibility (read-only aliases, used only when `strength` is absent, consumed so they are not preserved beside `strength`): Blur/Pixelate/Magnify `amount` (0..1000) is read as `strength`, and Spotlight `darkenOpacity` (reference byte 0..255) is read as `strength` percent = darkenOpacity/2.55 (Spotlight strength is the dim percentage, alpha = percent*2.55; 0 maps to 0.01 because strength 0 means the default); out-of-range or non-numeric aliases are rejected like `strength`; an unrelated `amount` on Spotlight/Highlight and an `amount` beside an explicit `strength` stay verbatim. EffectRegionTest::referenceAmountAndDarkenOpacityAreReadAsStrengthAliasesAndWrittenAsStrength covers it. Behaviour changes: Spotlight is now rectangular unless isEllipse is set (reference default; it was always elliptical before), and Magnify no longer draws a stroke border outside its region. A rotated region samples the source under the rotated outline (previously the unrotated box was rotated). Effects replace pixels inside the region from the source, so overlapping effects never see each other's output; Spotlight's dim is an overlay and its blur samples the source. Native: the existing strength dialog gains an Elliptical region checkbox (Highlight: a Rectangle/Ellipse choice) and, for Spotlight, a blur spin box; one Apply is one history operation; unchanged Apply records nothing. Ellipse hit-testing excludes the corners. EffectRegionTest covers rect/ellipse x rotated masks for all five effects, edge clipping incl. 1e9 extents and off-canvas regions, blur position independence, overlap/reorder against the immutable source, repaint independence from canvas contents, canvas==export pixels, byte determinism, XANN round-trip incl. a hand-written reference-style document, invalid option rejection, and native edit/cancel/undo/redo/reload. Independent human visual qualification on target distributions is a release-level activity and is not part of this clause set."
     },
@@ -617,7 +639,7 @@
         "classification": "implemented",
         "spec_line": 50,
         "coverage": "SmartEraser uses a documented surrounding-ring mean with edge clipping and immutable-source/history tests.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -633,7 +655,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -649,7 +671,9 @@
             "method": "smartEraserResultIsPreservedByHistoryAndNeverEditsTheSource",
             "line": 625
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Smart Eraser uses a documented deterministic fill (mean colour of the one-pixel ring, algorithm in app/ANNOTATION-TOOLS.md), is not presented as content-aware, and keeps its result through source-preserving history. Audit 2026-11-03: A non-uniform ring, ring clipping at each canvas edge, the empty-ring white fallback, determinism and independence from earlier annotations, and undo/redo preserving identical pixels and the source PNG are checked against an independent model of the documented algorithm; the tool text says 'not content-aware' (AnnotationToolMatrixTest::smartEraserFillsWithTheMeanOfANonUniformRing, ::smartEraserClipsItsRingAtTheCanvasEdges, ::smartEraserIsDeterministicAndReadsOnlyTheSource, ::smartEraserResultIsPreservedByHistoryAndNeverEditsTheSource). Remaining items above are qualification, not implementation status."
     },
@@ -670,7 +694,7 @@
         "classification": "implemented",
         "spec_line": 53,
         "coverage": "Crop/CutOut share retained-region and deterministic integer-span transforms for pixels/annotations, with native dirty/history tests.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -686,7 +710,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -702,7 +726,9 @@
             "method": "cropAndCutOutAreOneNativeHistoryOperationWithDirtyState",
             "line": 729
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Crop and Cut Out have atomic source/annotation transforms and tests. Cut Out follows the reference annotation rule (removed inside the strip, shortened when spanning, moved back when after), recorded in src/image-editor/CANVAS-POLICY.md. Audit 2026-11-03: Cut Out is verified on both axes with exact pixel movement for a reverse drag, annotations before, wholly inside, after, spanning the strip end, starting inside it, ending inside it, a line with path points kept at document positions, and rotated objects, with stable IDs and order, atomic refusal of empty, whole-canvas, NaN and unsupported-annotation cases (AnnotationToolMatrixTest::cutOutMovesPixelsAndAnnotationsByTheDocumentedRule); the native editor applies Crop and Cut Out (columns and rows) from the pointer as single undoable, dirty-tracked operations that save clean (::cropAndCutOutAreOneNativeHistoryOperationWithDirtyState); Crop's explicit retained region and annotation translation remain covered by EditorWindowTest ownedCropUsesNativeBoundsHistoryAndPersistence. Remaining items above are qualification, not implementation status."
     },
@@ -723,7 +749,7 @@
         "classification": "implemented",
         "spec_line": 56,
         "coverage": "All-tool defaults snapshot at creation and selected-style mutations use session history; later defaults leave existing objects untouched.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -739,7 +765,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -755,7 +781,9 @@
             "method": "guardedColorEditsCommitOneGroupAndUpdateFutureDefaults",
             "line": 230
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Creation copies style/content; explicit shape content edits participate in undo. Complete persisted tool defaults and all style fields remain. Text/balloon creation now freezes pointer-down style through the asynchronous content dialog, even when creation defaults change before release/Apply; it commits the draft once with explicit formatting. Saved defaults and other tool/style breadth remain partial. Audit 2026-11-03: gap re-checked, row stays partial. Existing: the global Drawing Defaults (stroke, fill, thickness, Text/Balloon/Step content) are persisted in the preference store and snapshotted by each new object (EditorWindowTest::savedDefaultsAffectOnlyNewAnnotationsAcrossOpenEditorsAndRestart); the decoration defaults (border style, corner radius, shadow, arrow style) are session-only (Edit > Shape Style Defaults). Not closed: per-tool persisted defaults, i.e. a separate saved default per tool as in the reference ImageEditorOptions (BorderStyle, ArrowStyle, Shadow*, per-tool colours and thickness). That needs new ESET-006 preference keys with validation, migration and policy text in PREFERENCES-POLICY.md, the dialog and tests, so it overlaps ESET-006 and is not a small change to the existing store. Audit 2026-11-04: defaults now persist (ESET-006), so the clause is proven for every drawable tool through the production path in AnnotationToolMatrixTest::everyToolsNewObjectSnapshotsSavedDefaultsAndLaterChangesNeverTouchExistingObjects, a 17-row test (one per document type) that saves defaults, opens a real editor window, draws the tool with the real pointer and dialogs, and checks the object's style, decoration (Rectangle only corner radius, Arrow only arrow style, others normalised), emphasis strength/ellipse/blur, cursor type, emoji metadata and text/balloon/step sizes; then saves different defaults and proves the existing object is byte-identical with its history untouched; a second object takes the new defaults; selecting the first and using the stroke command is one undo step that changes only that object, undo restores the document exactly and redo reapplies. It also proves the last tool is remembered for creation tools only. Per-tool colour/thickness defaults of the reference remain under ESET-006, but EA-014 itself states only that a new object snapshots the defaults that exist and that style edits are undoable mutations."
     },
@@ -775,7 +803,7 @@
         "classification": "implemented",
         "spec_line": 59,
         "coverage": "Four ordering commands preserve selected-group relative order and payload through exact undo/redo; no-op/protected admission is tested.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -791,7 +819,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -807,7 +835,9 @@
             "method": "orderingNoopAndRefusalKeepCheckpointAndRedo",
             "line": 170
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Core and native ordering share stable IDs and deterministic group order tests. Full new-tool and accessible command qualification remains. Audit 2026-11-03 (Aoife, at 69db212): All four ordering commands are deterministic for single, grouped and opaque-only selections with relative order preserved, one history step, undo/redo, and persisted array order plus rendered pixels (EditorSessionTest, EditorCanvasTest, EditorWindowTest). Remaining items above are qualification, not implementation status."
     },
@@ -827,7 +857,7 @@
         "classification": "implemented",
         "spec_line": 62,
         "coverage": "Versioned asset-bearing clipboard envelopes preserve all drawable types/pixels, remap IDs/keys and validate before insertion.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -843,7 +873,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -865,7 +895,9 @@
             "method": "untrustedAssetPayloadsAreRejectedBeforeAnyInsertion",
             "line": 178
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Typed clipboard transfer and UUID replacement are tested for represented objects. Complete embedded-asset transfer and untrusted payload coverage for every newly added tool remains. Asset-free clipboard selections now work when the source document also contains unselected embedded images. Clipboard projection excludes those images and source/private document metadata. The version-1 offer/read boundaries both refuse selected Image/Emoji/Cursor references because they carry no pixels; in-document duplication retains assets. Seven failing Core baselines cover over-broad refusal and dangling offers/reads. Native Copy/Cut/undo/save/reopen and Core privacy/field/asset/history tests cover the changed behavior. Actual asset-bearing cross-document clipboard transfer remains partial. The headless GUI fixture publishes actual Qt MIME data with an explicitly acknowledged test port; production ownership/unknown-delivery guards are unchanged, and physical ownership qualification remains open. Audit 2026-11-03: Copy and Cut now offer, and Paste reads, asset-bearing objects. An asset-bearing clipboard payload is version 2: the annotations plus an assets object carrying the base64 PNG of exactly the referenced Image/Emoji/Cursor keys (asset-free copies stay version 1; unselected assets are never included). Bounds: per-asset PNG at most 8 MiB, at most 32 assets, whole payload at most 16 MiB, annotation part at most 4 MiB; strict base64, PNG header checks (signature, IHDR, 1..100000 dimensions, at most 64M pixels, IEND) before any decode, canonical compact JSON only, no unreferenced or missing assets. On insertion each asset is re-validated and reuses an identical existing asset or joins the document under a fresh key (a clashing key never overwrites existing pixels); the objects get new stable IDs and the visible offset, and the whole paste is one undo. Duplicate keeps using the document's own assets. Proving tests: AnnotationTransferTest::assetBearingCopyPasteCarriesPixelsToAnotherDocumentWithNewIdentitiesAndKeys (image, emoji, cursor; cross-document and same-document, which is the contract scenario 'Pasted annotation receives a new identity'), ::everyDrawableTypeSurvivesCopyAndPasteWithItsFieldsAndAssets (all 17 types), ::untrustedAssetPayloadsAreRejectedBeforeAnyInsertion (17 malformed, oversized, tampered or inconsistent payloads), ::assetsThatBypassThePasteParserAreStillRevalidatedByTheSession, ::offersRefuseMissingInvalidAndOversizedSelectedAssets, ::cutOfAssetObjectsIsOfferedAndRemovesOnlyTheObjects, ::invalidClipboardPayloadsAndLimitsFailBeforeAnyInsertion; EditorWindowTest::nativeDuplicationPreservesEmbeddedAssetsAndAssetCopyPasteCarriesPixelsAcrossWindows (native menus, two editor windows, tampered paste refused, cut and undo, saved PNG plus sidecar reload) and ::pastedObjectsHaveVisibleViewportOffsetEvenWhenZoomedOut. Physical clipboard ownership qualification stays outside this classification."
     },
@@ -886,7 +918,7 @@
         "classification": "implemented",
         "spec_line": 65,
         "coverage": "All listed annotation and canvas mutations enter one history step with exact dirty/checkpoint transitions.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -902,7 +934,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -912,7 +944,9 @@
             "method": "everyListedMutationIsOneHistoryOperationWithExactDirtyState",
             "line": 783
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Creation/content/geometry/ordering/clear/cut-out use EditorSession history. Complete field/tool coverage remains alongside missing style and content capabilities. Formatted text/balloon creation now adds exactly one history operation on Apply, supports undo/redo and reload, and adds none for empty input, Cancel, stale or dead owners. Creation and selected editing share fenced dialog completion. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial. Native Text/SpeechBalloon font-size controls now accept fractional values within the existing 1..2000 editing range. Unchanged Apply preserves the exact saved fraction or zero/default, including compatible values below the native minimum. Two native failures reproduced 0.125 becoming 1 before the fix. Tests cover both families, precision, Cancel/no-op, duplicate Apply, one history operation, undo/redo, reload and immutable source. Rendering and persistence ranges are unchanged. Native Text/SpeechBalloon creation and editing now offer an independent optional #AARRGGBB fill override, including fully transparent zero. Absence retains the exact legacy style/fallback rule; clearing restores it. UI/parse failures leave content/history intact; fill-only changes are one undoable mutation. Native creation, Apply/Cancel/no-op, canonical color, zero-alpha presence, undo/redo/reload, independent opaque/half/zero-alpha pixels and opaque unknown fields on other families are tested. Text-border and broader tool/native/physical qualification remain partial. Asset-free clipboard selections now work when the source document also contains unselected embedded images. Clipboard projection excludes those images and source/private document metadata. The version-1 offer/read boundaries both refuse selected Image/Emoji/Cursor references because they carry no pixels; in-document duplication retains assets. Seven failing Core baselines cover over-broad refusal and dangling offers/reads. Native Copy/Cut/undo/save/reopen and Core privacy/field/asset/history tests cover the changed behavior. Actual asset-bearing cross-document clipboard transfer remains partial. The headless GUI fixture publishes actual Qt MIME data with an explicitly acknowledged test port; production ownership/unknown-delivery guards are unchanged, and physical ownership qualification remains open. Native SpeechBalloon creation/editing now supports an independent optional #AARRGGBB border override, including transparent zero; absence/clearing preserves the original stroke-color rule. Body and tail share the existing outline geometry. Five baseline failures reproduced the missing native control, ignored opaque/half/zero-alpha outline pixels and invalid import admission. EditorCanvasTest covers Apply/Cancel/no-op/invalid input, one history step, undo/redo/reload, immutable source, retained text/fill/tail fields, canonical clipboard round-trip, actual creation and independent source-over export pixels. The field is typed only for SpeechBalloon; Text/other/unknown families retain same-named opaque data. Regular Text border geometry, other tool options and physical/human qualification remain partial. Audit 2026-11-03: Each mutation the requirement lists is checked for exact history and dirty-state behaviour on a saved document: create, text edit, properties edit, move, resize, rotate, stroke colour, fill colour, thickness, opacity, bring to front, send to back, delete, duplicate, paste, cut, crop, cut-out columns and cut-out rows each add exactly one history operation, make the document dirty, return to clean on undo, dirty on redo, clean once saved and dirty again on undo past the save; selection changes and creation defaults leave it clean; a rejected creation leaves history, redo and dirty state untouched (AnnotationToolMatrixTest::everyListedMutationIsOneHistoryOperationWithExactDirtyState). Native crop and cut-out dirty state with undo, redo and save is in ::cropAndCutOutAreOneNativeHistoryOperationWithDirtyState; native Copy, Cut, Paste, Duplicate and ordering dirty/history are in EditorWindowTest and EditorSessionTest. Remaining items above are qualification, not implementation status."
     },
@@ -933,7 +967,7 @@
         "classification": "partial",
         "spec_line": 68,
         "coverage": "Every tool has a named accessible native action and Escape-cancellable livegesture; recent grayscale tests strengthen selection/handle/focus contrast across palette and zoom. Complete every-option keyboard/reader/high-contrast and redaction cue evidence remains incomplete. Existing matrix tests establish substantial native coverage without accepting all-control qualification.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -949,7 +983,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -971,7 +1005,9 @@
             "method": "canvasFocusCueSurvivesGrayscale",
             "line": 911
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native keyboard selection, gestures, tool actions and accessibility interfaces have fixtures; selection, handle and focus cues are luminance/pattern cues (app/ANNOTATION-TOOLS.md). Screen-reader, high contrast and text scaling need live qualification. Audit 2026-11-03: Rendered frames are converted to grayscale and compared with the same frame unselected: the selection outline shows as a dash pattern with at least 20 contrasting columns and 6 transitions, all eight handles show white fill and dark outline against mid-gray, for rectangle, ellipse, line, arrow, freehand, text, step, image, blur, pixelate, smart eraser, highlight, magnify and spotlight objects; the canvas focus frame changes the grayscale edge; every one of the 20 tools is a named, checkable accessible control and Escape cancels a live gesture of each drawing, Crop and CutOut tool with no history, dirt, dialog or signal (AnnotationToolMatrixTest::selectionAndHandleCuesSurviveGrayscale, ::canvasFocusCueSurvivesGrayscale, ::everyToolHasAnAccessibleControlAndEscapeCancelsItsLiveGesture). Remaining items above are qualification, not implementation status."
     },
@@ -991,7 +1027,7 @@
         "classification": "implemented",
         "spec_line": 71,
         "coverage": "All represented shape fields/assets round-trip with stable IDs/order; unsupported annotation raw data remains inert and serializable.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -1007,7 +1043,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -1023,7 +1059,9 @@
             "method": "everyShapeTypeRoundTripsThroughXann",
             "line": 791
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Known represented annotations retain stable IDs/order, optional text family/style/alignment/color/tail/fractional sizes and strengths, assets and opaque compatible fields through candidate XANN tests. Unknown types remain inert. Complete all-tool/legacy field and cross-platform runtime compatibility remains partial. Native Text/SpeechBalloon creation and editing now offer an independent optional #AARRGGBB fill override, including fully transparent zero. Absence retains the exact legacy style/fallback rule; clearing restores it. UI/parse failures leave content/history intact; fill-only changes are one undoable mutation. Native creation, Apply/Cancel/no-op, canonical color, zero-alpha presence, undo/redo/reload, independent opaque/half/zero-alpha pixels and opaque unknown fields on other families are tested. Text-border and broader tool/native/physical qualification remain partial. Native SpeechBalloon creation/editing now supports an independent optional #AARRGGBB border override, including transparent zero; absence/clearing preserves the original stroke-color rule. Body and tail share the existing outline geometry. Five baseline failures reproduced the missing native control, ignored opaque/half/zero-alpha outline pixels and invalid import admission. EditorCanvasTest covers Apply/Cancel/no-op/invalid input, one history step, undo/redo/reload, immutable source, retained text/fill/tail fields, canonical clipboard round-trip, actual creation and independent source-over export pixels. The field is typed only for SpeechBalloon; Text/other/unknown families retain same-named opaque data. Regular Text border geometry, other tool options and physical/human qualification remain partial. Audit 2026-11-03: AnnotationShapesTest::allSeventeenShapeTypesRoundTripEveryFieldThroughXann builds one object of each of the 17 drawable types with every applicable field away from its default (colours with alpha, width, rotation, opacity, visibility, border style, corner radius, shadow, arrow style, curve and freehand points, text content with family/size/bold/italic/alignment/text/fill/border colours, balloon tail and border, step value and style, effect strength/ellipse/blur amount, asset keys), per-object unknown fields, document-level unknown fields, four embedded assets and a future-widget object with a script-like payload. It compares every field, stable IDs and order through the JSON document, the gzip .xann bytes and a second generation, and keeps the unknown type verbatim and inert through rendering and object transfer. The 9-type everyShapeTypeRoundTripsThroughXann stays. Embedded assets reload keyed (member order is key order). Step tail state is not a supported field yet (see EA-009)."
     },
@@ -1044,7 +1082,7 @@
         "classification": "partial",
         "spec_line": 74,
         "coverage": "Native scenarios, resource/admission and no-network tests exist; no published shared vectors or complete cross-platform/target qualification establishes the entire package.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvas.cpp",
@@ -1060,7 +1098,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
+            "sha256": "06d8c93075f574112cd52f15811675c261ae864337cb56c55ce48c2fa43b157a"
           }
         ],
         "test_anchors": [
@@ -1082,7 +1120,9 @@
             "method": "malformedGesturesAreRejectedForEveryShapeType",
             "line": 556
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Finite/resource/history/rendering fixtures exist. This package has no published vectors; full malformed-input, native visual and supported-platform conformance remain. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial. Audit 2026-11-03: The package publishes no vectors; each of its five SCENARIOS.feature scenarios is covered. 'Every contracted tool is reachable': AnnotationToolMatrixTest::contractToolsAreTheCanvasToolsAndNoneIsExtra and ::editorWindowMenuListsEveryContractedToolOnce. 'A reverse arrow drag preserves direction': AnnotationShapesTest::scenarioReverseArrowDragKeepsTheHeadAtTheDragEnd (drag 500,400 to 100,150 through the canvas; head at 100,150 in the document and in exported pixels; one undo). 'Cancelling text input makes no mutation': ::scenarioCancellingTextInputCreatesNothingAndKeepsHistory (Cancel and Escape). 'Effect annotation samples immutable source': ::scenarioOverlappingPixelateMovesWithoutAccumulatingItsOwnPixels (an overlapping move preview and the commit equal a fresh render from the source, export is idempotent, undo restores the original export) with EditorCanvasTest::groupMovePreviewAndCommitUseFrozenSourcePixels. 'Pasted annotation receives a new identity': the EA-016 tests. Other clauses: finite coordinates and resource limits (AnnotationShapesTest::invalidCreationContentPreservesSession and ::malformedShapeContentIsRejected, AnnotationTransferTest::invalidClipboardPayloadsAndLimitsFailBeforeAnyInsertion and ::untrustedAssetPayloadsAreRejectedBeforeAnyInsertion, EditorSessionTest::embeddedImagesAreCheckedBeforeDecode); typed failures without partial mutation (the same tests plus the guarded-edit tests of EditorSessionTest); no telemetry or upload: AnnotationShapesTest::annotationWorkNeverLoadsTheNetworkStack runs create, duplicate, copy, paste, save and render in process and asserts no network library is mapped (a linkage guard; uploads belong to other capabilities).",
       "verification_environment": {
@@ -1098,11 +1138,11 @@
   },
   "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-    "checked_at": "2026-11-11T15:27:15.305729+00:00",
+    "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+    "checked_at": "2026-11-14",
     "specification": "product-contract/capabilities/EDITOR-ANNOTATIONS-001/SPEC.md",
     "specification_sha256": "72234dc75845d4833361883626acd220516a84e05c98bf8c37078e2d48de5e0b",
-    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
     "reviewed_requirement_count": 20,
     "counts": {
       "blocked": 1,
@@ -1575,6 +1615,86 @@
         },
         "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
       }
+    },
+    {
+      "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+      "checked_at": "2026-11-11T15:27:15.305729+00:00",
+      "specification": "product-contract/capabilities/EDITOR-ANNOTATIONS-001/SPEC.md",
+      "specification_sha256": "72234dc75845d4833361883626acd220516a84e05c98bf8c37078e2d48de5e0b",
+      "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+      "reviewed_requirement_count": 20,
+      "counts": {
+        "blocked": 1,
+        "implemented": 16,
+        "partial": 3
+      },
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ShapePainter.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp": [
+          "allSeventeenShapeTypesRoundTripEveryFieldThroughXann",
+          "annotationWorkNeverLoadsTheNetworkStack",
+          "blurSamplesTheSourceRatherThanEarlierAnnotations",
+          "emojiAndCursorAssetsKeepAspectRatioAtEverySize",
+          "emojiAndCursorMetadataRoundTripValidateAndStayWithTheirType",
+          "everyShapeTypeRoundTripsThroughXann",
+          "freehandSimplificationNeverExceedsToleranceOnCurves",
+          "freehandStrokeIsIdenticalAtEveryZoomAndExportScale",
+          "malformedShapeContentIsRejected",
+          "oversizedOrUnsafeEmojiAndCursorAssetsAreRejectedBeforeDecode",
+          "scenarioOverlappingPixelateMovesWithoutAccumulatingItsOwnPixels",
+          "scenarioReverseArrowDragKeepsTheHeadAtTheDragEnd",
+          "stepStartAndResetAffectOnlyFutureAllocation",
+          "stepStylesMapValuesLikeTheReference"
+        ],
+        "platforms/linux/linux-qt/tests/AnnotationToolMatrixTest.cpp": [
+          "canvasFocusCueSurvivesGrayscale",
+          "contractToolsAreTheCanvasToolsAndNoneIsExtra",
+          "creationAllowsOutOfCanvasAndNormalizesReverseDrags",
+          "cropAndCutOutAreOneNativeHistoryOperationWithDirtyState",
+          "cutOutMovesPixelsAndAnnotationsByTheDocumentedRule",
+          "editorWindowMenuListsEveryContractedToolOnce",
+          "everyListedMutationIsOneHistoryOperationWithExactDirtyState",
+          "everyToolHasAnAccessibleControlAndEscapeCancelsItsLiveGesture",
+          "everyToolShowsStateOptionsInstructionsAndKeepsItselfActive",
+          "everyToolsNewObjectSnapshotsSavedDefaultsAndLaterChangesNeverTouchExistingObjects",
+          "lineArrowFreehandAndAssetsSelectMoveResizeRotateAndProtect",
+          "malformedGesturesAreRejectedForEveryShapeType",
+          "selectionAndHandleCuesSurviveGrayscale",
+          "smartEraserFillsWithTheMeanOfANonUniformRing",
+          "smartEraserResultIsPreservedByHistoryAndNeverEditsTheSource",
+          "zeroAreaAndClickGesturesFollowEachToolsRule"
+        ],
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp": [
+          "assetBearingCopyPasteCarriesPixelsToAnotherDocumentWithNewIdentitiesAndKeys",
+          "directSelectionCommandsCannotMutateHiddenLockedOrOpaqueProtectedObjects",
+          "everyDrawableTypeSurvivesCopyAndPasteWithItsFieldsAndAssets",
+          "untrustedAssetPayloadsAreRejectedBeforeAnyInsertion"
+        ],
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp": [
+          "textBorderRendersAnOutlineBehindTheLettersAndStaysInertElsewhere",
+          "textCreationCommitsFormattedSnapshotOnce"
+        ],
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp": [
+          "guardedColorEditsCommitOneGroupAndUpdateFutureDefaults",
+          "guardedOrderingPreservesGroupPayloadAndHistory",
+          "orderingNoopAndRefusalKeepCheckpointAndRedo"
+        ],
+        "platforms/linux/linux-qt/tests/LineArrowStyleTest.cpp": [
+          "nativeEditIsOneUndoStepAndReloadPreservesFields"
+        ],
+        "platforms/linux/linux-qt/tests/ShapeStyleTest.cpp": [
+          "orderVisibilityAndGeometrySurviveAlongsideDecoration",
+          "shadowRendersOffsetPixelsIdenticallyOnCanvasPaintAndExport"
+        ]
+      },
+      "findings": [],
+      "remaining_scope": "EA-008, EA-009, EA-018, EA-020",
+      "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
     }
   ]
 }

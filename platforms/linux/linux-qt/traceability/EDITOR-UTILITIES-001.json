@@ -87,7 +87,7 @@
         "classification": "partial",
         "spec_line": 9,
         "coverage": "Most catalog utilities are command-reachable with missing-host failures; approved model-backed background removal/dispositions and complete catalog reachability remain absent.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
           "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
@@ -106,7 +106,9 @@
             "method": "unavailableOrThrowingCaptureHostKeepsColourAndCanRetry",
             "line": 44
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Seven of eight utility catalog entries are reachable; background removal remains missing. New Scan QR codes and Recognize text (OCR) commands use the shared native recognition dialog. QR scanning has Image File, Screen and Region inputs; OCR uses installed local English data. Missing recognition libraries/models are explained. This does not qualify the full utility catalog or supported-desktop matrix."
     },
@@ -131,7 +133,7 @@
         "classification": "implemented",
         "spec_line": 12,
         "coverage": "Native portal consent feeds frozen screenshot sampling with magnification, canonical coordinates/colors, keyboard cancel and explicit copy; failure/owner-teardown paths preserve prior values.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
           "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
@@ -162,7 +164,9 @@
             "method": "screenshotEscapeAndParentCloseKeepPreviousColourAndDisposePixels",
             "line": 105
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The production picker now uses the Screenshot portal, then an owned frozen-image sampler. The sampler shows a 15x nearest-pixel neighbourhood, zero-based screenshot pixel coordinates, hex/RGB/HSV (HSB), pointer and one/ten-pixel keyboard sampling, a visible focus marker, explicit Use sampled colour and Escape/Cancel. The parent presents all eight catalogue formats (Hex, HexAlpha, Rgb, Rgba, Hsb, Hsl, Cmyk, Decimal) and coordinates; only explicit Copy controls write the clipboard. Cancel/Close preserves the previous colour and disposes screenshot pixels. Coordinates explicitly refer to screenshot pixels so no desktop/DPI transform is guessed. ColorPickerDialogTest names screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly, screenshotEscapeAndParentCloseKeepPreviousColourAndDisposePixels, and screenshotPointerSamplingUsesSnapshotPixelsUnderScaledPreview pass alongside existing canonical-format/copy tests. PortalScreenshotTest adds screenshotColorPickerUsesPermissionPortalAndExplicitSampling and screenshotColorPickerCancelsPendingPermissionWithoutSampling against the existing fake Screenshot portal; those require the private D-Bus socket outside this sandbox. Keep partial until these portal integration cases pass and capture-permission review is recorded. Rationale: a frozen consented screenshot supplies actual sample pixels and coordinates that PickColor cannot return; no captured content is copied, saved or uploaded implicitly."
     },
@@ -182,7 +186,7 @@
         "classification": "implemented",
         "spec_line": 15,
         "coverage": "QR generation rejects empty/oversized input and invalid output sizes, deterministically previews and explicitly copies/atomically saves/uploads through host controls with typed failures.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
@@ -208,7 +212,9 @@
             "method": "uploadPortReceivesExistingPng",
             "line": 96
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The encoder validates its input and produces typed failures: empty content and over-long content are refused, an invalid output size is refused, and the Reed-Solomon divisor, remainder, format information bits, version bits and capacity table are checked against hand-computed and published vectors. The render is deterministic, and the scannability oracle decodes the rendered PNG with zbarimg across every error-correction level and several versions, including UTF-8 content and capacity boundaries. The window supports explicit Copy to the clipboard, Save to a PNG written atomically through a temporary sibling, and Upload through a host-supplied port that receives an existing PNG path; the uploaded PNG lives in the dialog's own temporary directory and is removed with the dialog. A missing upload port leaves the action unavailable rather than failing."
     },
@@ -231,7 +237,7 @@
         "classification": "blocked",
         "spec_line": 18,
         "coverage": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
           "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
@@ -255,7 +261,9 @@
             "method": "nativeRegionChooserScansOnlyTheChosenRectangle",
             "line": 63
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "dependency_approval": "platforms/linux/linux-qt/DEPENDENCIES.md",
       "previous_note": "Native Scan QR codes supports Image File, Screen and Region. File input uses the native picker and bounded raster loader; screen capture reuses the desktop permission transport; region selection uses the actual native retained-image crop dialog. Local ZXing returns zero, one or multiple decoded values, including Unicode and repeated values, without changing source pixels or uploading. Native decoder and actual dialog/crop tests cover file integrity, explicit Copy, permission failure, cancellation, source bounds and late-result/close behavior. zxing-cpp 3.1.1 approval is recorded in DEPENDENCIES.md; supported-target and required human qualification remain separate.",
@@ -284,7 +292,7 @@
         "classification": "implemented",
         "spec_line": 21,
         "coverage": "All six hash algorithms stream bounded chunks, expose progress/cancel, default SHA-256 and compare every digest digit without first-mismatch return.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/tools/FileHash.cpp",
@@ -314,7 +322,9 @@
             "method": "cancelAnswersAnInFlightReadWithoutADigest",
             "line": 256
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The hash checker offers CRC32, MD5, SHA-1, SHA-256, SHA-384 and SHA-512 and selects SHA-256 by default. Files are read in 1 MiB chunks, so a digest does not grow the reader's memory, and the known digests of an empty and a non-empty file are checked against published values and a large file matches a one-shot hash. Progress reports the bytes hashed and the file size, with an indeterminate bar when the size is unknown, and cancellation is polled at every chunk boundary so a cancelled read reports cancelled instead of a partial digest. digestMatches compares every digit and does not stop at the first difference, so the result does not depend on where two values parted; the length check is safe because the length follows from the algorithm."
     },
@@ -333,7 +343,7 @@
         "classification": "implemented",
         "spec_line": 25,
         "coverage": "Native hash results identify file/algorithm and visibly label MD5/SHA-1 unsuitable for security verification.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
@@ -351,7 +361,9 @@
             "method": "weakAlgorithmsAreLabelledUnsuitableForSecurity",
             "line": 133
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "A result names its algorithm and the file it came from, and the digest is presented as lowercase hexadecimal. hashAlgorithmIsWeak marks CRC32, MD5 and SHA-1 as unsuitable for security verification, and the hash checker labels a weak choice as unsuitable for security; nothing recommends MD5 or SHA-1 for an authenticity decision."
     },
@@ -370,7 +382,7 @@
         "classification": "implemented",
         "spec_line": 28,
         "coverage": "Icon utility validates image/sizes, offers six sizes and palette8/truecolor32 modes, preserves applicable alpha and writes reader-accepted ICO only with selected entries.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/IconWriter.cpp",
@@ -400,7 +412,9 @@
             "method": "savingWritesAnIconTheReaderAccepts",
             "line": 140
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The converter validates the source image and refuses an invalid or oversized one with a visible error. It offers the six contract sizes 16, 32, 48, 64, 128 and 256 and both an 8-bit palette and a 32-bit true-color mode, and Save stays disabled until at least one size is checked. The container writer produces a structurally valid .ico: the header and every directory entry are well formed, a true-color entry keeps its alpha and a palette entry carries the expected header and mask, and the written file is read back and accepted by Qt's own 32-bit container reader. A cancelled save writes nothing, and a missing size list, an invalid size, an invalid image and a write failure each have their own stable code."
     },
@@ -420,7 +434,7 @@
         "classification": "implemented",
         "spec_line": 32,
         "coverage": "Comparison owns independent validated inputs, reports incompatibility and offers accessible keyboard/pointer divider without output mutation; independent pixel assertions exercise composition.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/image-editor/ImageComparison.cpp",
@@ -444,7 +458,9 @@
             "method": "nativeControlsAreAccessibleAndKeyboardAndDragShareTheDivider",
             "line": 97
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Two independent validated images are loaded; a top-left comparison uses independently expected pixels and a centred alignment uses native sizes with odd padding, and invalid inputs and an over-large union fail before any allocation. Size and format incompatibility is reported rather than silently accepted. The before/after divider is exposed through native accessibility and is operable by keyboard and by drag, the divider endpoints preserve alpha and show exactly one source, and unsupported visible objects and a cancelled rendering leave both inputs untouched. Neither image is modified, saved or uploaded, and the comparison owns its rendered snapshot."
     },
@@ -466,14 +482,16 @@
         "spec_line": 35,
         "blocker": "Approve the local background-removal model, provenance and device policy.",
         "coverage": "No approved local model/provenance/tensor/device/setup policy authorizes background removal.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
             "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
           }
         ],
-        "test_anchors": []
+        "test_anchors": [],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Background removal is not implemented. There is no native background-removal window, no local model selection, no Auto, CPU or GPU device policy, no model provenance or tensor-shape validation, and no model, device, setup or inference status. The utility-catalog entry is still inventoried, but no approved platform disposition or local model has been chosen, so the requirement awaits a product decision on an approved local model. Background removal remains Required.",
       "blocked_reason": "No approved local model/provenance/tensor/device/setup policy authorizes background removal."
@@ -496,14 +514,16 @@
         "spec_line": 38,
         "blocker": "Approve the model licence/integrity/download policy before setup is implemented.",
         "coverage": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
             "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
           }
         ],
-        "test_anchors": []
+        "test_anchors": [],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Background removal is not implemented, so there is no model directory access, optional download, license, integrity, size or network behaviour to disclose, and no silent download or execution of a model from an untrusted location occurs because no model is loaded at all. The disclosure and trust requirement remains Required.",
       "blocked_reason": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists."
@@ -526,14 +546,16 @@
         "spec_line": 41,
         "blocker": "Approve the local background-removal model before inference/output work.",
         "coverage": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
             "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
           }
         ],
-        "test_anchors": []
+        "test_anchors": [],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Background removal is not implemented, so there is no background-removal preview or save, no source-dimension or colour preservation to verify, no defined alpha output, no cancellation, and no distinction between model, device, memory, inference and output failures. Background removal remains Required.",
       "blocked_reason": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract."
@@ -557,7 +579,7 @@
         "classification": "implemented",
         "spec_line": 44,
         "coverage": "Native converter exposes the exact fifteen contract codec IDs and applicable bitrate/output/folder/progress/cancel controls; requests reach every applicable codec.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
@@ -581,7 +603,9 @@
             "method": "bitrateControlReachesEveryApplicableCodecRequest",
             "line": 52
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The native converter exposes all 15 catalog codecs with compatible containers, input and output folder/name, applicable bitrate, progress, cancellation and explicit optional Show in folder. VideoConverterDialogTest iterates every codec and proves enabled bitrate values reach the conversion request, animated-image codecs disable and omit bitrate, and queued worker progress updates the visible control. VideoConversionTest checks catalog identity; existing dialog and integration tests cover success, cancellation and output. Without GStreamer the same registered command remains visible, disabled, and explains the required GStreamer core, base and pbutils components; ToolsFeatureUnavailableTest compiles and exercises that actual build branch independently of installed libraries. Rationale: retain the existing encoder-default bitrate and explicit Show in folder behavior, avoiding automatic folder opening."
     },
@@ -603,7 +627,7 @@
         "classification": "partial",
         "spec_line": 47,
         "coverage": "Structured GStreamer plans avoid shell interpolation and gate unavailable factories with hardware guidance; native atomic conversion covers installed codecs, not the complete hardware/driver failure matrix.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
@@ -627,7 +651,9 @@
             "method": "convertsAndPublishesAtomically",
             "line": 51
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "codecAvailability never substitutes another codec: an unusable codec carries an actionable reason and the dialog lists it as disabled, so a hardware codec is shown only when it is usable. Command arguments are structured rather than built as a string: the pipeline description is path-free and names only src, dec, mux and sink, and the runner sets the filesrc and filesink location as a structured property, so a path cannot be injected into a command line. Output is written atomically to a hidden partial sibling next to the target and renamed only on success. The encoded argument is the structured properties of the plan, which is checked for the audio encoder and its dropped-audio diagnostic."
     },
@@ -647,7 +673,7 @@
         "classification": "partial",
         "spec_line": 50,
         "coverage": "Native plan validates input/container/codec/output conflicts and actual converter publishes atomically/removes cancelled partials; full codec/input/resource/output fault matrix remains incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
@@ -677,7 +703,9 @@
             "method": "refusesExistingOutput",
             "line": 67
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "planConversion validates the container, codec and input combination and every invalid pair is rejected before a pipeline is built. The output rules never allow the input to be its own output and refuse an existing file unless overwrite is explicitly opted in, and suggestOutputPath reserves a non-conflicting name beside the input. The input file is preserved. A cancelled conversion removes the incomplete output, and the host result distinguishes Success, Cancelled and Failed through a dedicated outcome plus a stable error code. An existing output is refused rather than overwritten by default."
     },
@@ -702,7 +730,7 @@
         "classification": "partial",
         "spec_line": 54,
         "coverage": "Current utility operations keep input local and explicit output boundaries, but complete catalog retention/diagnostic/privacy contracts including blocked services remain unqualified.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
           "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
@@ -735,7 +763,9 @@
             "method": "screenshotEscapeAndParentCloseKeepPreviousColourAndDisposePixels",
             "line": 105
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Utility inputs stay on the device. The hash checker reads the file and keeps only its digest; the colour picker keeps a recent-colour list inside the dialog; the image comparison owns a rendered snapshot and does not modify, save or upload either input. The one outward path is the QR Upload action, which is an explicit user action handing a PNG path to the host's own file-upload port, and the uploaded PNG lives in the dialog's temporary directory and is removed with the dialog. Diagnostics are stable codes without paths or content. QR scanning and OCR perform local decoding only, keep recognized data in an owned utility session and change the clipboard only through explicit Copy. They never enter capture save/upload/history workflows. Closing disposes the session; late workers and capture callbacks cannot republish values."
     },
@@ -763,7 +793,7 @@
         "classification": "partial",
         "spec_line": 58,
         "coverage": "Native named/accessibility controls and busy/error/keyboard/close behaviors are tested; full physical reader/focus/high-contrast/permission surfaces across all utilities/platforms remain incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp"
         ],
@@ -797,7 +827,9 @@
             "method": "nativeControlsAreAccessibleAndKeyboardAndDragShareTheDivider",
             "line": 97
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The utility windows use native Qt controls with accessible names, visible focus and keyboard traversal: the image comparison exposes an accessible divider operable by keyboard and drag, the QR controls are named for accessibility, and the video converter's failure state carries a stable code with accessible names. Busy and error states are descriptive rather than silent, Cancel and close have defined semantics, file selection uses the native file dialog and capture uses the native desktop portal. The automated high-contrast palette audit below covers current utility windows; physical high-contrast and cross-platform accessibility qualification remain Required. Recognition adds named native File/Screen/Region/Copy/Cancel/Close controls, selectable plain-text results and distinct no-result/failure/busy states. Native input tests exercise the actual crop controls and session close; physical assistive-technology and full utility qualification remain Required. NativeSurfaceAccessibilityTest::nativeSurfaces adds 20 named data rows for shell, settings, capture/pipeline/workflow history, workflows, destinations, watch folders, editor, effects, presets, colour picker/sampler, hash, icon, QR generation/scanning, OCR, comparison and video conversion under a high-contrast QPalette, 1.5x native font and disabled native UI motion effects. It checks native names, root purpose descriptions, focus state, complete Tab traversal plus native radio-group arrows, wrapped-label height, work-area recovery, palette distinction and Escape/close for idle dialogs. NativeAccessibility keeps busy/error text in accessible descriptions, retains wrapped labels at their required height and reuses adaptive scroll/focus recovery without rewriting native preferences. Effects parameter rows now have explicit reading order through sliders and edits. busyAndErrorTextUpdatesAccessibleDescriptions covers actual shell and hash states. Keep partial: physical visible-focus/screen-reader review, busy/error/cancel variants on every secondary GUI surface and complete supported-platform qualification remain Required; the 20-surface automated audit is not a blanket all-GUI approval."
     },
@@ -827,7 +859,7 @@
         "classification": "partial",
         "spec_line": 61,
         "coverage": "Current hash/comparison/capture/conversion workers cancel and fence late owners with deterministic cleanup; full model/catalog/device/session lifecycle remains incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
           "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
@@ -860,7 +892,9 @@
             "method": "cancelAndCloseWhileBusy",
             "line": 115
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "QR/OCR windows cancel owned load/recognition work and portal requests on Cancel/Close, delete private sessions on close, ignore stale completions and retain prior results on cancelled replacement. ZXing owns its decode call; Tesseract uses an owned engine/text buffer and cancellation/progress monitor, including missing-model cleanup. Native close/late-result tests pass. Background-model sessions and full utility/hardware qualification remain incomplete."
     },
@@ -883,7 +917,7 @@
         "classification": "partial",
         "spec_line": 64,
         "coverage": "Substantial native/core algorithm/catalog/codec/input/cancel/failure tests exist; complete every-item/hardware/permission/resource/output matrix and shared adapters remain incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
@@ -907,7 +941,9 @@
             "method": "failureShowsStableCodeAndAccessibleNames",
             "line": 125
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The implemented utilities have native coverage of their commands, algorithms, codecs, input modes, success, cancellation, corrupt input, permission denial, a missing host, unusable hardware, resource limits and output failures: the portal denial and missing-portal cases, the hash cancellation and unreadable file, the icon validation and write failure, the comparison invalid input and cancelled rendering, the video codec availability and partial-output removal. The catalog item background-remover has no implementation (QR scanning's File, Screen and Region inputs are implemented and covered by the QR/OCR recognition tests) and therefore no conformance coverage, no published test-vectors.json exists for this capability, and there is no cross-platform conformance corpus for the utility suite. Full catalog coverage and shared conformance remain Required."
     },
@@ -929,14 +965,16 @@
         "spec_line": 67,
         "blocker": "Decide preserve, correct or omit for the inventoried Konami shader after the mandated review.",
         "coverage": "Konami shader preserve/correct/omit remains an explicit product-owner accessibility/performance/security/discoverability/maintenance decision.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
             "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
           }
         ],
-        "test_anchors": []
+        "test_anchors": [],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The Konami-code shader animation remains inventoried in the contract utility catalog with disposition product-owner-decision-required, and no native Konami shader, overlay or easter egg exists in the linux-qt tree, so it has not become required product behaviour before the owner decision. The preserve, correct or omit decision itself has not been recorded after accessibility, performance, security, discoverability and maintenance review. The owner decision remains Required.",
       "blocked_reason": "Konami shader preserve/correct/omit remains an explicit product-owner accessibility/performance/security/discoverability/maintenance decision."
@@ -944,11 +982,11 @@
   },
   "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-    "checked_at": "2026-11-11T15:27:15.305729+00:00",
+    "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+    "checked_at": "2026-11-14",
     "specification": "product-contract/capabilities/EDITOR-UTILITIES-001/SPEC.md",
     "specification_sha256": "ff0422d32898e8d68ad72be95509eafa334084d1570446bd276b72cd712bcaab",
-    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
     "reviewed_requirement_count": 19,
     "counts": {
       "blocked": 5,
@@ -1226,6 +1264,97 @@
         },
         "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
       }
+    },
+    {
+      "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+      "checked_at": "2026-11-11T15:27:15.305729+00:00",
+      "specification": "product-contract/capabilities/EDITOR-UTILITIES-001/SPEC.md",
+      "specification_sha256": "ff0422d32898e8d68ad72be95509eafa334084d1570446bd276b72cd712bcaab",
+      "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+      "reviewed_requirement_count": 19,
+      "counts": {
+        "blocked": 5,
+        "implemented": 7,
+        "partial": 7
+      },
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
+        "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
+        "platforms/linux/linux-qt/app/IconConverterDialog.cpp",
+        "platforms/linux/linux-qt/app/IconWriter.cpp",
+        "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
+        "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
+        "platforms/linux/linux-qt/app/NativeAccessibility.h",
+        "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
+        "platforms/linux/linux-qt/app/QrRecognition.cpp",
+        "platforms/linux/linux-qt/app/ScreenColorSampler.cpp",
+        "platforms/linux/linux-qt/app/VideoConverter.cpp",
+        "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
+        "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ImageComparison.cpp",
+        "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+        "platforms/linux/linux-qt/src/tools/FileHash.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp": [
+          "screenshotEscapeAndParentCloseKeepPreviousColourAndDisposePixels",
+          "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
+          "unavailableOrThrowingCaptureHostKeepsColourAndCanRetry"
+        ],
+        "platforms/linux/linux-qt/tests/FileHashTest.cpp": [
+          "knownDigestsOfAbc",
+          "largeFileMatchesOneShotHash"
+        ],
+        "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp": [
+          "cancelAnswersAnInFlightReadWithoutADigest",
+          "closingWhileHashingStopsTheRead",
+          "weakAlgorithmsAreLabelledUnsuitableForSecurity"
+        ],
+        "platforms/linux/linux-qt/tests/IconConverterDialogTest.cpp": [
+          "savingWritesAnIconTheReaderAccepts"
+        ],
+        "platforms/linux/linux-qt/tests/IconWriterTest.cpp": [
+          "headerAndEntriesAreWellFormed",
+          "trueColorEntriesKeepAlpha"
+        ],
+        "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp": [
+          "nativeControlsAreAccessibleAndKeyboardAndDragShareTheDivider"
+        ],
+        "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp": [
+          "dividerEndpointsPreserveAlphaAndShowExactlyOneSource"
+        ],
+        "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp": [
+          "nativeRegionChooserScansOnlyTheChosenRectangle"
+        ],
+        "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp": [
+          "previewIsDeterministic",
+          "saveWritesPngAtomically",
+          "uploadFilesAreRemovedWithDialog",
+          "uploadPortReceivesExistingPng"
+        ],
+        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp": [
+          "catalogueMatchesContract",
+          "everyInvalidPairRejected",
+          "unavailableAndHardware"
+        ],
+        "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp": [
+          "bitrateControlReachesEveryApplicableCodecRequest",
+          "cancelAndCloseWhileBusy",
+          "failureShowsStableCodeAndAccessibleNames"
+        ],
+        "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp": [
+          "cancelRemovesPartial",
+          "convertsAndPublishesAtomically",
+          "refusesExistingOutput"
+        ]
+      },
+      "findings": [
+        "EU-004 remains scheduler-blocked even though upstream dependency documentation and code/test evidence now say approved; this is an instruction/approval reconciliation question for Mike.",
+        "Local QR save and icon output include synchronous native GUI file work; a small follow-up can route blocking output through existing OwnedWork without inventing utility breadth.",
+        "Converter test optional runtime codec skips are not full hardware qualification."
+      ],
+      "remaining_scope": "EU-001, EU-004, EU-009, EU-010, EU-011, EU-013, EU-014, EU-015, EU-016, EU-017, EU-018, EU-019",
+      "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
     }
   ]
 }

@@ -33,12 +33,12 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 17,
-        "coverage": "Typed missing/valid/invalid/unknown/deprecated/newer states, independent repair, read-only future envelopes and field-only diagnostics are exercised through native storage.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "coverage": "Typed missing/valid/invalid/unknown/deprecated/newer states, independent repair, read-only future envelopes and field-only diagnostics are exercised through native storage. Damaged version-1 current values can preview only a compatible good previous record without writing; foreign/newer/unsafe previous state is refused and explicit save preserves the last good previous record.",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -46,17 +46,31 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "fieldStatesDistinguishAbsentValidInvalidUnknownDeprecatedAndNewer",
-            "line": 455
+            "line": 489
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+            "method": "damagedCurrentRecordRecoversCompatiblePreviousWithoutWriting",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
+            "line": 599
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+            "method": "damagedCurrentRecordDoesNotRecoverForeignNewerOrUnsafePrevious",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
+            "line": 646
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Valid fields and compatible unknown keys survive individual repairs with field-specific diagnostics. Future versions are read-only. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes. Audit 2026-11-03: SettingsRead.fields classifies every stored field as Missing, Valid, Invalid, Unknown, Deprecated or NewerVersion (mirrors EditorPreferences PreferenceFieldState plus Deprecated; hotkeys.<id> entries are classified individually). fieldStatesDistinguishAbsentValidInvalidUnknownDeprecatedAndNewer proves each class, that one invalid field or binding never discards unrelated valid, unknown or deprecated fields, and that diagnostics name fields only and never repeat a stored (secret-like) value; storeReportsMissingFileAndNewerVersionFieldStates proves a missing file reports Missing, a future envelope reports NewerVersion read-only and untouched, and a malformed version is Invalid. Deprecated keys come from deprecatedSettingKeys() (empty today because no earlier build wrote a retired application setting; the list is injectable and tested). Existing repairsAreFieldSpecific and the region/scrolling/audio repair tests cover per-field repair."
     },
@@ -74,12 +88,12 @@
       "audit": {
         "classification": "partial",
         "spec_line": 21,
-        "coverage": "Private atomic replacement, conflict protection, locale-independent bytes and one previous snapshot are tested. The complete approved retention/crash-power-loss qualification remains open. A readable version-1 envelope with a damaged non-object current values record now previews a compatible previous record without rewriting the file. Apply explicitly saves that preview and retains the last good previous record; Cancel leaves the original bytes intact. Unknown safe fields and concurrent-write conflict protection remain intact; recovered start-at-login data does not activate autostart. Torn-file/power-loss and retention qualification remain open.",
-        "reviewed_at_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "coverage": "Private atomic replacement, conflict protection, locale-independent bytes and one previous snapshot are tested. The complete approved retention/crash-power-loss qualification remains open. A readable version-1 envelope with a damaged non-object current values record now previews a compatible previous record without rewriting the file. Apply explicitly saves that preview and retains the last good previous record; Cancel leaves the original bytes intact. Unknown safe fields and concurrent-write conflict protection remain intact; recovered start-at-login data does not activate autostart. Torn-file/power-loss and retention qualification remain open. Current tests also refuse foreign, newer or unsafe previous records without writing.",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "bf99bacde4df5fd18f75a66d4ee92066ec716989d71d3c918069d660b5d5922b"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -87,17 +101,31 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "59b58c5d5bfc5463997fe8488176beeac5036d3b2779991b073c659ad11cb442"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "361b50b71b9684fc3a2fae576edeebd6b52b9f0650e8c2dbea8ed0c917e1c65b",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "atomicStoreUnknownAndFailures",
-            "line": 438
+            "line": 472
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+            "method": "damagedCurrentRecordRecoversCompatiblePreviousWithoutWriting",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
+            "line": 599
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+            "method": "damagedCurrentRecordDoesNotRecoverForeignNewerOrUnsafePrevious",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
+            "line": 646
           }
-        ]
+        ],
+        "revalidated_from_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "QSaveFile atomic replacement with locking and stale-writer detection. The same versioned envelope retains previous values and compatible unknown fields. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Audit 2026-11-03: Atomic QSaveFile replacement, lock, stale-writer refusal, previous-version and unknown-field survival remain proven by atomicStoreUnknownAndFailures. saveEncodingIsLocaleIndependentUtf8 saves under a non-C Qt default locale (Arabic-Egypt, plus a comma-decimal C locale when installed) and proves BOM-free valid UTF-8 JSON with '.' decimals, no digit grouping or localized digits, and exact reload. Retention rule (decided here, pending product-owner approval of a formal retention policy): exactly one previous version (retainedPreviousVersions = 1) lives in the same atomic file as 'previous', never chained, with no dated copies or side files; ApplicationSettingsStore::previousValues() exposes it for recovery. retentionKeepsExactlyOnePreviousVersionInTheSameAtomicFile proves it over four saves, a restart and a restore-by-save. Reference check: ShareX SettingsBase keeps one optional .bak via File.Replace plus an optional dated weekly archive; the single always-on previous version matches the .bak behaviour, and weekly archives are treated as export/backup (SETCAT-019), not ordinary save.",
       "incremental_note": {
@@ -118,11 +146,11 @@
         "classification": "partial",
         "spec_line": 25,
         "coverage": "All currently declared field families have a malformed/boundary matrix, but the full ledger and approved per-field repair semantics are incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -130,17 +158,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "valueMatrixCoversEveryDeclaredFieldFamily",
-            "line": 565
+            "line": 673
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Bounded typed profile fields repair independently. Filename validation reuses FilenameGenerator through previewCaptureOutput, without counter or random-file authority. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes. Audit 2026-11-03: valueMatrixCoversEveryDeclaredFieldFamily has a row for every key in settingFields() (it fails if a field is added without one) and proves min/max/mid boundary values accepted, and below/above range, fractional, string, bool, null, array, object, NaN/Infinity (stored as null by JSON), extreme magnitudes rejected for every bool and integer field (seconds, milliseconds, minutes, pixels, counts); enum values (exact set, case, whitespace, wrong type, NUL, oversize) for the three enum fields including the monitor source; absolute POSIX path rules (relative, dot segments, ~, Windows drive and UNC, control characters, NUL, over 32768 characters, wrong type) for saveFolder; filename pattern rules (empty, secret-reading token, over 4096, NUL, wrong type) for filenamePattern; and device ID length/NUL/type for both audio devices. Each bad value is repaired to the default with exactly one field-specific diagnostic, leaves every other field byte-equal, is refused by save() and is repaired identically when read from disk. hotkeyMatrixRepairsEachBindingWithoutDiscardingOthers covers valid and normalized triggers, invalid/foreign/oversize/reserved/non-string triggers, an over-limit binding collection, exactly-at-limit collection and cross-action collisions. Gap found and fixed: a filename pattern containing NUL or other control characters was accepted; repairSettings now rejects it. Not applicable to this settings object (no field exists, so no vector): colors, free-form geometry rectangles, URLs; scrolling-capture bands/heights are range-checked integers and hotkeys is the only dictionary. Workflow output patterns (CaptureWorkflows previewCaptureOutput) still accept control characters; that is the WORKFLOW rows' surface, reported not changed."
     },
@@ -157,11 +187,11 @@
         "classification": "partial",
         "spec_line": 30,
         "coverage": "Current paths/action IDs/devices use semantic strings with representation tests; the entire monitor/font/timezone/provider/native-value catalogue is not implemented.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -169,17 +199,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "storedValuesUsePortableRepresentationsAndNoNativeValuesLeak",
-            "line": 652
+            "line": 760
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Stable action IDs, portable modifier/key names, and Linux paths. The native adapter translates XDG accelerator syntax; current desktop descriptions stay transient. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Audit 2026-11-03: storedValuesUsePortableRepresentationsAndNoNativeValuesLeak proves: hotkeys are stored only as stable action IDs with normalized portable modifier/key names (Ctrl, Alt, Shift, Meta order) while XDG accelerators, Qt key codes, Super/Win/Cmd spellings, lowercase and numeric codes are refused and numeric/native IDs are not stable action IDs; paths are absolute POSIX paths and Windows drive, UNC, file: and ~ spellings are refused; monitors are stored only as the semantic source name 'monitor'/'active-window' (the settings object holds no monitor index, output name or handle); audio devices are saved by the opaque device ID string the enumerator reports (never a list index) through the real dialog Apply; the saved file holds only declared portable keys, and desktop-bound trigger text, XDG accelerator syntax and window/output/display handle names never appear in it. The native adapter's translation to XDG syntax stays in app/PortalWorkflowShortcuts.cpp and is transient. Not applicable to this object (no field exists): URLs, time zones, languages, fonts, codecs; free-form monitor IDs and handles are not stored."
     },
@@ -196,11 +228,11 @@
         "classification": "partial",
         "spec_line": 44,
         "coverage": "Profile/workflow output precedence is explicit and tested through UI/CLI; full task/provider/device/MCP precedence across all preferences is absent.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -208,17 +240,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "scopeAndPrecedenceAreDeclaredInspectableAndSharedByUiAndCli",
-            "line": 693
+            "line": 801
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Application fields declare profile scope. Saved workflow output takes precedence; unsaved seed definitions and blank workflow folders inherit application defaults. Capture output is resolved before execution. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes. Audit 2026-11-03: settingFields() declares a scope per field (all profile) from the settingScopes() vocabulary (global, profile, workflow, task, provider, device, window); saveFolder and filenamePattern also declare overriddenBy=workflow. precedenceOrder(key) makes the order inspectable (workflow, profile, default) and describeOutputPrecedence() reports which source supplied a resolved output field. scopeAndPrecedenceAreDeclaredInspectableAndSharedByUiAndCli proves every combination of explicit/blank workflow folder and saved/seeded definition resolves exactly as declared and is stable on re-resolution. UI and CLI are identical because the CLI reads no settings: --run-workflow carries only a workflow UUID to the running primary, which resolves it through the same effectiveWorkflow()/withApplicationDefaults() as hotkey, tray, menu and onboarding captures; the test asserts (source-structure check, not a runtime CLI run) that CaptureFeature has a single workflows->resolve() inside effectiveWorkflow, that RunWorkflow and the default-workflow resolver both use it, that main.cpp's pre-GUI argument path never touches settings or output fields, and that only CaptureFeature and OnboardingFeature call withApplicationDefaults. No MCP surface exists in the Linux candidate; the activation protocol is the only automation entry and is the same path. Compare the existing outputDefaultsAndWorkflowPrecedence for values."
     },
@@ -235,11 +269,11 @@
         "classification": "partial",
         "spec_line": 48,
         "coverage": "Native reset/transfer/reference migration support preview/cancel/atomic recovery and unrelated-scope preservation; the full reset/import/migration catalogue is incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -247,17 +281,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "fullResetOnlyRewritesSettingsAndKeepsHistoryCredentialsPresetsWorkflowsAndFiles",
-            "line": 761
+            "line": 869
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "General/Capture/Hotkeys resets preview affected profile fields and values before draft mutation. Cancel discards unapplied drafts; Apply/OK persists. Unrelated sections and user files remain intact. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes. Audit 2026-11-03: Settings Reset is now proven for all four sections. recordingSectionResetPreviewsCancelsAndApplies shows the Recording section preview lists only its device fields and the kept-scope sentence, Cancel leaves the draft and file untouched, Reset changes only the draft and Apply persists it with unknown and other-section fields intact. New 'Reset all sections...' (resetAll/resetAllPreview) previews every affected field with its scope and states that history, credentials, presets, workflows and user files are not changed; fullResetOnlyRewritesSettingsAndKeepsHistoryCredentialsPresetsWorkflowsAndFiles proves Cancel persists nothing, Apply rewrites only settings.json (the previous profile stays recoverable via previousValues), unknown fields survive, and sibling history/credential/preset/workflow stand-in files and a user capture file are byte- and mtime-identical. Honest limit: the siblings are file stand-ins because the reset path holds no handle to those stores; real stores are not exercised here. Row left partial because the clause also covers import and migration operations: the sxcu destination import, effects preset import and workflow upgrade migration exist in other dialogs and were not audited here for preview/cancel/scope preservation, and ApplicationSettings has no import or legacy-migration operation yet (SETCAT-008/019)."
     },
@@ -274,11 +310,11 @@
         "classification": "partial",
         "spec_line": 52,
         "coverage": "Stable IDs, reserved gesture refusal, named conflicts and explicit keyboard-reachable replacement are tested; non-keyboard gestures and complete desktop-specific reserved policy remain open.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -286,17 +322,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "conflictNamesOwnerAndNeverReplacesUnlessExplicit",
-            "line": 374
+            "line": 408
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Built-in action IDs and workflow UUIDs share syntax/reserved-gesture/collision validation. Conflicts return the other action without replacing it. Accessible Hotkeys UI displays preferred versus desktop-bound triggers and requests desktop setup. Desktop/user decides final bindings. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Audit 2026-11-03: Stable action IDs, portable trigger syntax, reserved-gesture and collision validation, and non-replacing conflict results remain proven by portableBindings, collisionsAcrossWorkflowAndBuiltin, repairsAreFieldSpecific and dialogCancelAndConflict. hotkeysAreOperableByKeyboardAlone drives the Hotkeys page with key events only: Left/Right on the tab bar reach the page, Tab enters the action list, Up/Down choose an action, Enter moves to its trigger, typing and Enter assign it without the dialog treating Enter as OK, Shift+Tab returns to the list, a colliding trigger surfaces the hotkey-conflict result naming the other action with the instruction to change or clear it and replaces nothing, the first Escape cancels the pending edit, and the second Escape closes the dialog persisting nothing. Gap fixed: Enter in the trigger field previously fell through to the dialog default button and only the mouse-driven Set button assigned; the page now owns Enter and Escape for those two controls. Gestures other than keyboard triggers do not exist in this candidate."
     },
@@ -317,11 +355,11 @@
         "classification": "blocked",
         "spec_line": 9,
         "coverage": "Complete settings-ledger semantic/default/migration/privacy/downstream/platform acceptance is still absent; native field declarations cannot approve it.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -329,17 +367,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "valueMatrixCoversEveryDeclaredFieldFamily",
-            "line": 565
+            "line": 673
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Explicit metadata exists for the current application/editor fields; full semantic/default/migration/privacy/downstream dispositions for all 922 ledger rows remain unapproved.",
       "blocked_reason": "Complete settings-ledger semantic/default/migration/privacy/downstream/platform acceptance is still absent; native field declarations cannot approve it."
@@ -361,11 +401,11 @@
         "classification": "partial",
         "spec_line": 14,
         "coverage": "Current field outcomes and boundaries have native tests; complete ledger defaults are not established by initializer/reference declarations.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -373,17 +413,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "valueMatrixCoversEveryDeclaredFieldFamily",
-            "line": 565
+            "line": 673
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Current selected defaults have domain/native fixtures. Source initializers are not acceptance; complete per-row normative defaults and platform evidence remain."
     },
@@ -405,11 +447,11 @@
         "spec_line": 34,
         "remaining_human_decision": "Secret Service human security review remains pending.",
         "coverage": "Native credential-store code exists; scheduler-mandated human Secret Service security review remains pending.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -417,17 +459,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "savedOrImportedSettingsCannotGrantConsentConfirmationOrCredentialAuthority",
-            "line": 848
+            "line": 956
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Uploader secrets are referenced through CredentialStore/Secret Service, with fake-service and redaction tests. Full settings/provider secret coverage and human security review remain.",
       "blocked_reason": "Native credential-store code exists; scheduler-mandated human Secret Service security review remains pending."
@@ -441,11 +485,11 @@
         "classification": "blocked",
         "spec_line": 40,
         "coverage": "An explicit verified legacy plaintext-secret migration/removal flow and secure-store approval are still required; ordinary settings import does not migrate secrets.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -453,17 +497,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "savedOrImportedSettingsCannotGrantConsentConfirmationOrCredentialAuthority",
-            "line": 848
+            "line": 956
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Explicit audited legacy plaintext-secret migration, verification and recoverable source handling are absent; do not import live secrets automatically.",
       "evidence": [
@@ -488,12 +534,12 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 56,
-        "coverage": "Settings remain data and imports cannot grant consent, credential authority, OS permission or destructive confirmation; native fixtures prove unsafe authority-looking input fails closed.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "coverage": "Settings remain data and imports cannot grant consent, credential authority, OS permission or destructive confirmation; native fixtures prove unsafe authority-looking input fails closed. Current transfer evidence explicitly omits the local compositor cursor-capture opt-in and refuses imported authority changes; omitted values retain the local choice.",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -501,17 +547,29 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "savedOrImportedSettingsCannotGrantConsentConfirmationOrCredentialAuthority",
-            "line": 848
+            "line": 956
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ConfigurationTransferTest.cpp",
+            "method": "compositorCaptureOptInStaysLocalDuringTransfer",
+            "sha256": "dfd425ebd0b742ea5e615e725465727f5ea8e11904ff2c147d606b1409ded0df",
+            "line": 25
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Current capture, upload, onboarding and settings flows preserve permission/consent boundaries with fixtures. All remaining catalogue families and human review remain. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes. Audit 2026-11-03: savedOrImportedSettingsCannotGrantConsentConfirmationOrCredentialAuthority proves for the application settings object: no declared field name carries consent, permission, credential, token, secret, authorization, bypass or trust meaning; a settings file forged with portal consent, restore token, skip/auto confirmation, destructive-confirmation, upload authorization, credentials, tokens, cookies, trusted executables and forged hotkey action IDs loads without diagnostics, keeps those keys only as Unknown inert data, and every consumer (regionSessionSettings, hotkeys, withApplicationDefaults for seeded and saved workflows) returns exactly what clean settings return, so actions, capture source, chooseActions and output are unchanged; forged action IDs never become bindings; reset and Apply keep the keys inert without turning them into fields; diagnostics never echo values; the settings window has no control that grants or removes consent, confirmation or credentials. Consent itself lives in the portal/OS interaction and no setting reaches it. Remaining under this row: forged-authority vectors for the other settings families (editor convenience preferences, watch folders, destination catalog, workflow definitions) are covered only by their existing tests, which were not re-audited here; unknown keys that contain secret-like values are preserved verbatim in settings.json, which SETCAT-007 must decide; human review of security-sensitive consent behaviour remains required."
     },
@@ -534,7 +592,7 @@
         "classification": "partial",
         "spec_line": 59,
         "coverage": "Editor and transient placement recover current bounds without portable native handles; all retained windows under physical display removal/scaling/work-area changes are not qualified.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/NativeWindowPlacementTest.cpp",
           "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp"
@@ -545,7 +603,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -553,17 +611,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "storedValuesUsePortableRepresentationsAndNoNativeValuesLeak",
-            "line": 652
+            "line": 760
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Only the editor currently remembers geometry (ESET-005); shell, Settings, capture history, pipeline history and workflow execution history deliberately reopen fresh and serialize no window state. NativeWindowPlacement applies the existing logical-pixel placement model on show, screen removal/addition, work-area and DPI changes, and reveals focused controls in native scroll areas. Capture history actions scroll rather than forcing an oversized window. NativeWindowPlacementTest::transientSurfaces (five named data rows) proves display removal, logical scale/work-area recovery, focus/control reachability, close, fresh reopening and no persistence writes; editorSnapshotHasOnlyPortablePlacementFields proves the snapshot allowlist excludes native handles and transient/minimized state. NativeEditorWindowStateTest covers persisted editor restore, live recovery, maximize/minimize, opt-out and write failure. No tool dialog currently persists geometry; Qt-owned file dialogs remain native desktop state. Existing ESET-005 recovery semantics are reused; no new placement or retention policy."
     },
@@ -588,7 +648,7 @@
         "classification": "partial",
         "spec_line": 63,
         "coverage": "Current workflow/destination/watch/recent collections isolate bad neighbors, retain compatible opaque records and preserve order; accounts/external-program/filter/full preset collection coverage is absent.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/StoreCollectionRecoveryTest.cpp",
           "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
@@ -599,7 +659,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -607,15 +667,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "fieldStatesDistinguishAbsentValidInvalidUnknownDeprecatedAndNewer",
-            "line": 455
+            "line": 489
           },
           {
             "path": "platforms/linux/linux-qt/tests/StoreCollectionRecoveryTest.cpp",
@@ -623,7 +683,9 @@
             "method": "corruptObjectItemsAreSetAsideValueFreeAndNeighboursKeepOrder",
             "line": 103
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Current native settings collections are workflows, destinations, watch rules/filter globs and editor recent paths. StoreCollectionRecoveryTest covers item isolation, first-valid-ID/source-order duplicate policy, durable quarantine with no duplicate resurrection, missing default repair, missing watch-folder retention/disable/restore, stable IDs across reload/save, and bounded destination/watch collections. Strict workflow admission and its existing 64-item limit remain unchanged (CaptureWorkflowsTest); recent paths retain their normalized platform-aware identity, most-recent-first ordering, duplicate and configured maximum policies (EditorPreferencesTest, RecentImagesTest), retaining healthy paths when another item is corrupt. Watch rules now retain UUIDs (legacy paths derive a stable UUID before the first save), with 64 rules and 128 globs per rule; destinations are limited to 256 entries as well as the existing byte limits. No independently persisted accounts, preset library, external-program list or general filter list currently exists: credentials are destination-ID scoped, presets are individual bounded files rather than a collection store, and globs live inside their watch rule. Rationale: reference InstanceManager uses persistent instance identity and first-match lookup; preserve existing source order and strict authoring rejection while quarantining later duplicates to meet contract isolation. Missing resources retain metadata and expose repair/removal rather than running a substituted workflow. Effect recent/favorite collections use stable built-in effect IDs, source-order deduplication, bounded recent/unknown-ID lists and the existing 64 KiB store bound; EffectsDialogTest::unknownIdsStayInertAndRoundTripWhileRecentsAreBounded and storeRoundTripUnknownAndConflict cover inactive missing resources and round-trip isolation. Open product question for Aoife/Mike: confirm or replace the authored native count caps (256 destinations, 64 watch rules, 128 globs per rule); the reference instance lookup establishes identity/order but does not approve those numeric limits. Existing byte bounds remain unchanged. Keep partial until the caps and the blocked native integration evidence are accepted; tests establish candidate behavior, not a new normative policy."
     },
@@ -648,11 +710,11 @@
         "spec_line": 67,
         "coverage": "Represented private recents/history have explicit removal and diagnostic bundle exclusion, but every private collection and approved retention behavior remains incomplete.",
         "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -660,17 +722,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "fullResetOnlyRewritesSettingsAndKeepsHistoryCredentialsPresetsWorkflowsAndFiles",
-            "line": 761
+            "line": 869
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Opt-in recent files are removable and private history exists. Execution retention management, complete settings-derived private data retention and diagnostic export policy remain. Native Workflow execution history now lists bounded, redacted observations through one registry command shared by window/tray/capture menu. Explicit default-Cancel confirmation removes only the selected unchanged metadata record using the existing private descriptor store; files, pipeline results, credentials and clipboard are untouched. Storage runs through OwnedWork, capture defers refresh and prevents pending removal, and owner teardown abandons late reads. Corrupt/newer/stale records are preserved. Automated native tests cover actual removal/cancellation/conflict, unconfirmed status, worker ownership, failed/throwing ports and freeing the 1024-record admission limit. Full retention policy, history/resource scope, configured limits, supported-target and human qualification remain Required."
     },
@@ -695,7 +759,7 @@
         "classification": "partial",
         "spec_line": 71,
         "coverage": "Current destinations separate secret references, validate endpoints and require explicit network activity; full provider/scope catalogue and human credential qualification remain open.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/DestinationConnectionTestTest.cpp"
         ],
@@ -705,7 +769,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -713,17 +777,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "savedOrImportedSettingsCannotGrantConsentConfirmationOrCredentialAuthority",
-            "line": 848
+            "line": 956
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Supported native providers are versioned custom HTTP destinations. Shared configuration retains scoped keyring references; SecretServiceCredentialStore owns credentials. Ordinary catalog viewing/validation is local. The destinations UI now offers explicit Test connection and Cancel test: owned preparation resolves only the selected destination ID scope, and a content-free HEAD probe disables redirects, cookie load/save and authentication reuse. Filename-dependent endpoints are refused; success explicitly means HEAD reachability, not upload authorization. Escape/Close/cancel and owner destruction retire pending work or abort the reply, with timeout and value-free stable diagnostics. DestinationConnectionTestTest uses an injected counting network manager to prove zero requests on load/view/validation, click-only HEAD with no body, scoped credentials, invalid endpoint/refusal, success/HTTP/network/redirect/unsupported failures, cancellation before preparation and during transfer, timeout, owner teardown and redaction. No OAuth provider/authorization flow is currently supported. Rationale: reference CustomUploaderEditorViewModel.TestUploaderAsync is preview-only; the requested explicit HEAD probe supplies connection reachability without publishing sample/capture content. Human credential/security review remains Required before release. Final consent review found that viewing previously used an interactive secret lookup. Viewing now calls metadata-only availability (SearchItems, no session, Unlock, Prompt or GetSecrets), and connection preparation uses lookupWithoutPrompt so a locked keyring fails without leaving an authorization prompt. The injected credential counter proves viewing performs zero secret reads and the probe uses only non-prompting scoped reads. SecretServiceCredentialStoreTest::availabilityAndProbeReadsNeverUnlockOrPrompt adds real transport evidence, but its private D-Bus test must pass outside the sandbox before promoting these security-sensitive rows. Keep partial pending that evidence and credential/security review."
     },
@@ -736,11 +802,11 @@
         "classification": "blocked",
         "spec_line": 75,
         "coverage": "Update/plugin/executable trust, provenance, sandbox and activation policy remain human authority gates; imported configuration cannot approve execution.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -748,17 +814,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "savedOrImportedSettingsCannotGrantConsentConfirmationOrCredentialAuthority",
-            "line": 848
+            "line": 956
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Signed updates, approved isolated plugins and complete executable-path/import policy are absent.",
       "evidence": [
@@ -785,7 +853,7 @@
         "classification": "partial",
         "spec_line": 79,
         "coverage": "Native theme/accessibility choices are inherited and unsupported system choices disclosed, but complete accepted degraded/equivalent and physical accessibility qualification is absent.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorAppearanceTest.cpp",
           "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
@@ -796,7 +864,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -804,17 +872,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "nativeAccessibilityFallbackIsVisibleAndDoesNotPersistDesktopChoices",
             "line": 91
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native accessibility/notification/input choices remain desktop-owned. Settings and Editor Appearance now visibly explain the degraded reduced-contrast substitution and the native Qt palette/motion fallback when portal hints are unavailable; the note has accessible text and is not persisted as a desktop preference. EditorAppearanceTest::unavailableAndReducedContrastHintsRetainNativeChoicesWithoutPersistence covers absent/unsupported hints, high contrast and reduced motion without rewriting saved choices; ApplicationSettingsTest::nativeAccessibilityFallbackIsVisibleAndDoesNotPersistDesktopChoices covers the visible note and Cancel without writes. Existing appearance/notification tests remain. The reduced-contrast degraded disposition is authored for product-owner review, not self-approved; full native input/notification and physical desktop accessibility qualification remain Required."
     },
@@ -827,11 +897,11 @@
         "classification": "partial",
         "spec_line": 83,
         "coverage": "Versioned isolated configuration transfer covers application/editor/workflow/destination stores with category previews and atomic recovery; complete supported portable format/migration catalogue remains partial.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -839,17 +909,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "configurationControlsPreviewCancelConfirmAndOwnerTeardown",
             "line": 61
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "evidence": [
         "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
@@ -879,11 +951,11 @@
         "classification": "blocked",
         "spec_line": 86,
         "coverage": "Full approved settings-ledger dispositions, all value families/upgrades/downgrades and all three adapters are not accepted; native boundary coverage does not activate this package.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+            "sha256": "be396625f4a516f79e039127422f8731cb8222efff879652203f746967429bd0"
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
@@ -891,17 +963,19 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "cfb9376d6c2743ec41df1ec636f3dfb636024c278da891cf67e92b2cf11f1bbf"
+            "sha256": "477726e63bf0f42ba34390ac6ef759140a214b95d4be8ff16119f4cb397a4e08"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "aadf8eba9d044fce5b992b43458fb0ca5af0e5437e3eef918f9cf25f072813bf",
+            "sha256": "b77028cd5cf864bc116a378aa71b56791e98e86b28adeb74f9f370c920924485",
             "method": "valueMatrixCoversEveryDeclaredFieldFamily",
-            "line": 565
+            "line": 673
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Existing field/storage/boundary/redaction tests cover subsets. Generated acceptance for all linked settings rows, all value families and supported-platform conformance remains.",
       "blocked_reason": "Full approved settings-ledger dispositions, all value families/upgrades/downgrades and all three adapters are not accepted; native boundary coverage does not activate this package."
@@ -909,11 +983,11 @@
   },
   "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-    "checked_at": "2026-11-11T15:27:15.305729+00:00",
+    "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+    "checked_at": "2026-11-14",
     "specification": "product-contract/capabilities/SETTINGS-CATALOG-001/SPEC.md",
     "specification_sha256": "28d5ff722894fc1cae76fd852dad303a52e3790c349141471b3c5c56f2a22e79",
-    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
     "reviewed_requirement_count": 20,
     "counts": {
       "blocked": 5,
@@ -1086,6 +1160,47 @@
         },
         "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
       }
+    },
+    {
+      "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+      "checked_at": "2026-11-11T15:27:15.305729+00:00",
+      "specification": "product-contract/capabilities/SETTINGS-CATALOG-001/SPEC.md",
+      "specification_sha256": "28d5ff722894fc1cae76fd852dad303a52e3790c349141471b3c5c56f2a22e79",
+      "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+      "reviewed_requirement_count": 20,
+      "counts": {
+        "blocked": 5,
+        "implemented": 2,
+        "partial": 13
+      },
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+        "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
+        "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp": [
+          "atomicStoreUnknownAndFailures",
+          "configurationControlsPreviewCancelConfirmAndOwnerTeardown",
+          "conflictNamesOwnerAndNeverReplacesUnlessExplicit",
+          "fieldStatesDistinguishAbsentValidInvalidUnknownDeprecatedAndNewer",
+          "fullResetOnlyRewritesSettingsAndKeepsHistoryCredentialsPresetsWorkflowsAndFiles",
+          "nativeAccessibilityFallbackIsVisibleAndDoesNotPersistDesktopChoices",
+          "savedOrImportedSettingsCannotGrantConsentConfirmationOrCredentialAuthority",
+          "scopeAndPrecedenceAreDeclaredInspectableAndSharedByUiAndCli",
+          "storedValuesUsePortableRepresentationsAndNoNativeValuesLeak",
+          "valueMatrixCoversEveryDeclaredFieldFamily"
+        ],
+        "platforms/linux/linux-qt/tests/StoreCollectionRecoveryTest.cpp": [
+          "corruptObjectItemsAreSetAsideValueFreeAndNeighboursKeepOrder"
+        ]
+      },
+      "findings": [
+        "Reserved hotkey defaults now have named explicit refusal/replacement tests; gesture families beyond keyboard remain partial.",
+        "Settings stores and import/transfer tests are substantial; missing complete accepted field semantics must not be filled from source initializers."
+      ],
+      "remaining_scope": "SETCAT-001, SETCAT-002, SETCAT-004, SETCAT-005, SETCAT-006, SETCAT-007, SETCAT-008, SETCAT-009, SETCAT-010, SETCAT-011, SETCAT-013, SETCAT-014, SETCAT-015, SETCAT-016, SETCAT-017, SETCAT-018, SETCAT-019, SETCAT-020",
+      "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
     }
   ],
   "upstream_incremental_reviews": [

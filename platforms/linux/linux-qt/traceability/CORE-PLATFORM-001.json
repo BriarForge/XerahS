@@ -95,29 +95,31 @@
         "classification": "not-started",
         "spec_line": 9,
         "coverage": "Complete ledger-level approved outcomes, authority/privacy model and three-platform accepted dispositions are not established.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Full linked ledger outcomes, authority, accessibility, privacy, persistence and all supported-platform acceptance remain Required.",
       "evidence": [
@@ -145,29 +147,31 @@
         "classification": "partial",
         "spec_line": 14,
         "coverage": "Identity and XDG native paths exist; explicit reference-settings migration with recoverable backup and full unsupported/failure handling is not complete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "XerahS/com.xerahs.app identity is retained. General-page Import from XerahS (previous app) is explicit, starts at XDG_CONFIG_HOME/xerahs (fallback ~/.config/xerahs), previews supported application/workflow/legacy custom-uploader conversion and creates a recoverable native backup before writes. Reference files are read-only, bounded and symlink-refused; SecretsStore and history databases are never opened. Restore previous settings remains available until confirmed dismissal. Synthetic source-shaped fixtures at reference revision 27b89b57771a4c6fb84191382a64926d8b5efec7 cover confirm/failure/retry/restore. Unsupported provider/editor/history/custom-path conversion, actual runtime-observation fixtures and human privacy/parity review remain Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior."
     },
@@ -185,29 +189,31 @@
         "classification": "partial",
         "spec_line": 19,
         "coverage": "Shared domain adapters/diagnostic categories exist; all platform/equivalent/degraded dispositions have not been accepted.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Core conformance seams and stable native capture/activation errors exist. Shared result/error coverage, approved degraded modes and cross-platform parity remain Required."
     },
@@ -263,40 +269,48 @@
       "audit": {
         "classification": "partial",
         "spec_line": 22,
-        "coverage": "OwnedWork capture/editor/upload/recording and watch copy/move preserve outputs with progress/cancellation tests. Universal blocking-operation ownership is incomplete: WatchFolderService::rescan still walks/stats whole authorized trees synchronously, delaying GUI Stop; additional recovery/storage paths remain to audit independently.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "coverage": "Capture/editor/upload/recording and watch copy/move use OwnedWork. Recursive watch discovery and recovery serialization/storage/list/removal now also run on owned workers, with held-worker cancellation/owner tests. Universal ownership remains partial: recovery close/restart/shutdown nest event loops and upload execution/checkpoint storage still runs in GUI callbacks. Synchronous watcher registration and final file identity checks remain.",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
+            "sha256": "e3c8ac7741c8b860b56f89b8ae27d9218fa4a8951570cb0990bc69c31e068de0"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+            "sha256": "b40a4747273405f77e64109a8f4f4f701dffd8b7aefca387207e012fe6c156da",
             "method": "slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed",
-            "line": 593
+            "line": 680
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "method": "discoveryDoesNotBlockTheGui",
+            "sha256": "b40a4747273405f77e64109a8f4f4f701dffd8b7aefca387207e012fe6c156da",
+            "line": 105
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native Screenshot acquisition, worker pixel composition, post-capture PNG saving/action dispatch and editor loading have cancellation/failure evidence. Known composition progress is determinate; codec/action stages expose accessible indeterminate activity. Cancellation during an uninterruptible action retains its real outcome and prevents later actions; unclaimed obsolete requests cannot mutate the clipboard. Native receipts retain working media and completed files in memory. Full action/workflow/recording/upload/utility coverage, durable recovery, configured privacy policy and physical accessibility/performance qualification remain Required. Native recovery can edit retained confirmed pixels after failed output and independently discard the current receipt by explicit confirmation without removing completed outputs. Native per-run selection has a responsive GUI with a cancellable worker wait; cancelled/empty choices keep pixels without outputs, and accepted work uses the same pipeline. Native file output includes responsive asynchronous D-Bus acknowledgement, bounded unknown-delivery interruption and cancellation evidence. Native Save As has an asynchronous cancellable Qt picker and worker PNG encoding with cancellation checks at safe publication boundaries; independent actions continue after picker-only cancellation, and true files/pixels remain retained. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Native editor Save/Save As now render an immutable owned snapshot on a worker with named phase progress and cooperative Cancel; pre-publication cancellation preserves files, post-PNG cancellation retains partial facts, and owner destruction releases without joining or late GUI access. Actual worker/GUI/source fixtures are indexed in EDITOR-SAVE.md. Full resource/shutdown/durable recovery/target/human qualification remains Required. Native editor Copy now prepares an immutable owned image/PNG on a worker and publishes only on the GUI with responsive cancellation and busy admission shared with Save. Cancellation/owner loss before publication cannot change the clipboard; late cancellation retains actual facts. Worker/native GUI and teardown fixtures are indexed in EDITOR-COPY.md; full resource/shutdown/physical/human qualification remains Required. Native Print Image now uses owned worker snapshots, explicit page/scale/orientation/colour preview and native printer confirmation, cancellable worker submission and honest submitted/unknown outcomes. Confirmed known-failure retry preserves document/history/Redo/files/preferences/clipboard; missing services and owner/reentrant boundaries are tested. Candidate EO-001/008/014/015/016 evidence is indexed in EDITOR-PRINT.md and EDITOR-PRINT-EVIDENCE.json. Full physical printer/target/colour/shutdown/a11y/privacy/security and human qualification remain Required. Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required.",
       "incremental_note": {
@@ -327,29 +341,31 @@
         "classification": "partial",
         "spec_line": 25,
         "coverage": "Existing upload/delete/provider dialogs enforce explicit native choices; complete least-authority/human review for credential/plugin/MCP/sensitive-content scope remains open.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native portal consent and kernel-credential activation checks have isolated tests. Least-authority coverage for all sensitive operations and human security/privacy review remain Required. Shared retained-capture Retry confirms one attempt against an unchanged source, reports real outcomes/activity and keeps cancellation reachable through the command window and tray; lifecycle fixtures cover stale approval, initial cancellation and synchronous controller destruction. Per-run Save/Copy selection explicitly authorizes current-run outputs only; cancellation before mutation and unchanged defaults are covered by private-bus/native fixtures. Native file consumers validate an in-memory publication binding and require explicit per-run output selection or linked retry. URI/path dispatch races and complete security/privacy/native qualification remain human review work. Save As explicitly chooses a new PNG path and refuses replacement in the picker and atomic worker publication. Failed Save As retry asks again while preserving earlier file authority. Complete replacement/format/path policy and human security/privacy review remain Required. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required."
     },
@@ -381,19 +397,19 @@
         "classification": "implemented",
         "spec_line": 31,
         "coverage": "Real-process per-profile lock/socket election, authenticated activation and failure handling are automated; concurrent repeated launches do not create a second primary.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
@@ -403,7 +419,9 @@
             "method": "simultaneousProcessesElectOnlyOneOwner",
             "line": 83
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native launch uses a private runtime directory, lifetime flock and authenticated bounded local IPC. Real-process tests cover simultaneous launch, busy/rejection, crash recovery, corrupt/lost acknowledgements, unsafe paths and actual application forwarding before preference initialization. Default-profile production behavior is implemented; complete profile integration, target-matrix/security/compatibility review, published shared scenarios/vectors and accepted parity remain Required. Workflow-ID activation now forwards through the authenticated primary before secondary preference initialization. Primary admission freezes a validated saved definition; missing/unavailable workflows and busy/modal conflicts are refused. Existing ownership, duplicate receipts and no-resend unknown-delivery policy remain. Native admitted region captures now persist a separate request/execution ID before acquisition, preserve early outcomes, link the real pipeline in both private observations and namespaced reports, and expose redacted headless lookup. Unfinished observations stay unconfirmed. Native descriptor storage is shared without changing existing PCA format or authority. Full application/catalogue/retention and target/human qualification remain Required. Audit 2026-11-03 (Aoife, at 69db212): One owner per profile is elected even for simultaneous processes; repeated launches forward validated requests to the existing owner; malformed, busy, untrusted and crashed-owner cases fail actionably without corrupting runtime state (NativeInstanceTest). Remaining items above are qualification, not implementation status."
     },
@@ -462,29 +480,31 @@
         "classification": "partial",
         "spec_line": 35,
         "coverage": "Registry unifies tray/window/hotkey actions and availability. Native command palette now searches every registered surface, updates action state live, and invokes the shared QAction only after releasing modality; Ctrl+Shift+P, tray, File menu and main-window button open the same palette. Disabled/hidden/deleted actions and destroyed owners cannot dispatch. Real-shell keyboard and stale-region refusal paths pass. Native desktop notifications remain informational with no actions; complete notification-operation surface qualification remains open.",
-        "reviewed_at_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "03309b3c0a5647d392bd14d06b18e3ce78aeda0908e181694b2ee27db67e9f5b"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "2a4af2a6d35e1c2db64c117b5da0821e94eb953e351387eff9d9bf31efcff12d"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "45e51ef2f9337cb059fd298d6d288d9b32f5d9d3f8a1aa9086eac2f51a212de5",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 81
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "A native command window reuses actual tray actions and current capture availability, supports keyboard/accessible activation and preserves true capture results. Default repeated launch shows/restores the window. Region/Open activation shares the production dispatcher. Full main UI, workflow catalogue, global hotkeys, command palette, all surface availability and physical assistive-technology qualification remain Required. Shared tray/main-window recovery actions expose real current availability and immutable capture-to-editor handoff, plus explicit guarded discard of the in-memory result; private native keyboard/callback/confirmation tests cover these commands. Capture region and choose actions shares a tray/main/menu QAction and existing busy/modal admission; its actual Qt chooser exposes available output choices and visible disabled catalogue rows. The same per-run chooser exposes file/path clipboard and reveal with prerequisite/location-sharing text; shared retry confirmation names the true selected outputs. The shared per-run chooser now enables Save As; actual native picker and shared Retry keyboard fixtures verify transient ownership, folder navigation, Escape and retained-pixel publication. Full native focus/accessibility qualification remains Required. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. The native editor now exposes named Save progress, disabled output/document controls, honest completion/failure and a fixed-menu explicit default-Cancel annotation repair command. The Qt Widgets PNG picker retains overwrite confirmation; non-PNG destinations are visibly refused before encoding. Native keyboard/assistive-technology and complete output catalogue qualification remain Required. Editor Edit menu and protected Ctrl+C now expose native Copy Image, explicit default-Cancel prepared-snapshot retry, known/unknown delivery, and disabled missing-service explanation. Local text/modal/popup/busy precedence remains in use; the 39th native toolbar command is hidden in the unchanged default layout and supports customization without auto-repeat. Actual input/GUI fixtures are indexed in EDITOR-COPY.md; complete command metadata and physical accessibility/target qualification remain Required. Native Print Image now uses owned worker snapshots, explicit page/scale/orientation/colour preview and native printer confirmation, cancellable worker submission and honest submitted/unknown outcomes. Confirmed known-failure retry preserves document/history/Redo/files/preferences/clipboard; missing services and owner/reentrant boundaries are tested. Candidate EO-001/008/014/015/016 evidence is indexed in EDITOR-PRINT.md and EDITOR-PRINT-EVIDENCE.json. Full physical printer/target/colour/shutdown/a11y/privacy/security and human qualification remain Required. Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required. Saved workflow Run selected and explicit-ID CLI now share the dispatcher/controller. The workflow manager exposes a read-only UUID. Choose-actions dispatch releases its reserved operation rather than leaving future captures busy. Global shortcuts and physical desktop qualification remain Required. Session global shortcuts now share native Enable/Configure/Disable actions in the tray/window/Capture menu. Desktop-accepted saved UUIDs enter the same workflow dispatcher/controller, with busy/modal/pending-setup refusal and held-key suppression. Persisted opt-in, complete catalogue, physical desktop/focus/assistive-technology and human qualification remain Required. Built-in captures and saved workflows share one portal session and bind plan. Built-in activations route to shell QActions; busy/modal/disabled requests visibly refuse without queuing. Native Settings is reachable through tray/Preferences with live tray/notification defaults and XDG autostart. Human desktop/accessibility qualification remains Required.",
       "incremental_note": {
@@ -504,19 +524,19 @@
         "classification": "implemented",
         "spec_line": 38,
         "coverage": "Resumable/skippable native onboarding persists progress, explains consent/telemetry/default effects and preserves local capture when optional integrations are declined.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
@@ -526,7 +546,9 @@
             "method": "decliningEverythingLeavesDefaultCaptureWorking",
             "line": 289
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Resumable first-run wizard, optional page skipping, finish-later, private progress, corrupt/newer preservation, explicit hotkeys/uploads and test-capture denial are implemented and covered by OnboardingTest. Full native permission/consent/accessibility/target review remains. Audit 2026-11-03 (Aoife, at 69db212): Onboarding resumes and finishes later, skips only optional pages, names every control accessibly, states permission, credential, import, telemetry and default-workflow consequences, and declining everything keeps default capture working (OnboardingTest). Remaining items above are qualification, not implementation status."
     },
@@ -560,19 +582,19 @@
         "classification": "partial",
         "spec_line": 42,
         "coverage": "Native theme/accent/reduced-motion preferences and live translated draft bindings preserve edited values and provide fallback/expansion tests. Complete every-surface/native contrast, text scaling, topology/font and supported-desktop localization qualification remains partial.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
@@ -594,7 +616,9 @@
             "method": "nativeSurfaces",
             "line": 137
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native editor preference and desktop appearance tests exist. Full application theming, localization, runtime expansion, high contrast and reduced-motion qualification remain Required. Application-level text expansion and fallback are now tested on the translatable QR window: a pseudo-locale that lengthens every tr() string by 40% neither clips buttons or labels nor exceeds the screen, and a string missing from the translation falls back to its source text (LocalizationExpansionTest). Remaining gaps, not closed: most application windows (command window, preferences, capture/recording dialogs) use QStringLiteral and are not translatable yet, no UI-language preference exists to prove the stored preference survives a fallback, and high contrast, reduced motion and full theming qualification remain Required. Audit 2026-11-03: LocalizationExpansionTest proves 40% expansion without clipping and missing-translation fallback for the QR window only; status stays partial because most windows are not yet translatable. Update 2026-11-04: the Preferences dialog's user-visible text, tooltips and accessible names now go through QCoreApplication::translate (context SettingsDialog); LocalizationExpansionTest::preferencesDialogTextIsTranslatable proves pseudo-locale coverage. Other windows still use untranslated literals."
     },
@@ -632,7 +656,7 @@
         "classification": "implemented",
         "spec_line": 45,
         "coverage": "Native notification delivery carries a fresh correlation and operation label, reports true success or attention, excludes private previews/actions, respects native refusal without retry and retains detailed shell result. Candidate native behavior is tested; physical notification policy acceptance remains separate.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/NativeNotifications.cpp",
@@ -662,7 +686,9 @@
             "method": "refusalDoesNotRetryBypassPolicyOrCreateAnAction",
             "line": 60
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Capture results reach the native tray and persist as plain accessible operation text in the command window. Full native policy, private-preview protection, result correlation and authority-limited actions remain Required. Reveal notifications distinguish acknowledged requests from uncertain delivery; actual visual desktop/notification qualification remains Required. Save As acknowledgement uses its actual saved artifact and task facts even when ordinary Save also succeeded; both files remain in the private result report. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Native admitted region captures now persist a separate request/execution ID before acquisition, preserve early outcomes, link the real pipeline in both private observations and namespaced reports, and expose redacted headless lookup. Unfinished observations stay unconfirmed. Native descriptor storage is shared without changing existing PCA format or authority. Full application/catalogue/retention and target/human qualification remain Required. Private previews: the new privateNotifications setting (off by default, same default as the reference app, which always shows full text) reduces every desktop notification to the operation title and the true result or stable failure code, with paths, URLs and recognised text kept in the XerahS window (NotificationPolicyTest; all tray notifications go through postTrayMessage). Stale actions: reveal and copy on a capture that was deleted or moved away fail with a stable code, make no file-manager call and leave the clipboard untouched (CaptureFileOutputTest). Not closed: tray notifications carry no actions yet, there is no per-notification correlation to the originating operation beyond its title, native notification policy (do-not-disturb, per-app permission) is not read, and no Preferences control exposes privateNotifications yet. Audit 2026-11-03: NotificationPolicyTest proves private previews carry no private content and still report the true result; CaptureFileOutputTest proves actions on deleted or moved targets fail safely. Status stays partial for the gaps named above."
     },
@@ -679,29 +705,31 @@
         "spec_line": 48,
         "blocker": "Provide an approved release trust/signature/channel policy before update implementation.",
         "coverage": "Human product owner must approve signed release provenance/update channel/install/rollback policy; no approved update implementation exists.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Explicit/policy-scheduled signed update checks, channel/version display and install recovery remain Required.",
       "evidence": [
@@ -726,29 +754,31 @@
         "classification": "partial",
         "spec_line": 54,
         "coverage": "Private atomic current/previous settings and previewed reset exist; full profile isolation/import/export/reference migration obligations remain incomplete. A readable version-1 envelope with a damaged non-object current values record now previews a compatible previous record without rewriting the file. Apply explicitly saves that preview and retains the last good previous record; Cancel leaves the original bytes intact. Unknown safe fields and concurrent-write conflict protection remain intact; recovered start-at-login data does not activate autostart. Torn-file/power-loss and retention qualification remain open.",
-        "reviewed_at_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "03309b3c0a5647d392bd14d06b18e3ce78aeda0908e181694b2ee27db67e9f5b"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "2a4af2a6d35e1c2db64c117b5da0821e94eb953e351387eff9d9bf31efcff12d"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "45e51ef2f9337cb059fd298d6d288d9b32f5d9d3f8a1aa9086eac2f51a212de5",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 81
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "An isolated private atomic editor preference store has recovery/unknown-field tests. All SETTINGS-CATALOG rows, shared profile/schema lifecycle and previewed import/migration/reset/export remain Required.",
       "incremental_note": {
@@ -773,29 +803,31 @@
         "spec_line": 57,
         "remaining_human_decision": "Secret Service credential-store human security review remains pending.",
         "coverage": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "SecretServiceCredentialStore and uploads::CredentialStore provide private keyring references, explicit connection/storage and fake-service tests. Human security review, complete revocation/failure/legacy migration and native keyring qualification remain.",
       "blocked_reason": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only."
@@ -815,30 +847,72 @@
       "audit": {
         "classification": "partial",
         "spec_line": 64,
-        "coverage": "Full-screen/monitor/active-window entry points and errors are tested, but screenshot cursor/delay and authoritative mixed-scale physical mapping remain incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "coverage": "Full-screen/monitor/active-window entry points and default-off cursor inclusion through a validated single-output compositor frame have native automated evidence. Authoritative mixed-scale/rotated physical mapping and complete supported-target capture qualification remain partial.",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+            "sha256": "760ddb6e1512732504a7b3a187bac2a840d7398c7cf00a46d5c7b55585f1e771"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
+            "method": "defaultProfileOmitsTheCursorAndUsesTheScreenshotFactory",
+            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
+            "line": 156
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
+            "method": "optInUsesTheWorkerBeforeTheOverlayAndSavesTheStampOnce",
+            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
+            "line": 183
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
+            "method": "frozenProfileSettingsSurviveChangesUntilTheNextCapture",
+            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
+            "line": 281
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
+            "method": "unsupportedAndMismatchedSourcesRefuseWithoutPortalOrFiles",
+            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
+            "line": 233
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
+            "method": "cancelAndStaleCompletionCannotPublishIntoANewerCapture",
+            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
+            "line": 335
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
+            "method": "ownerLossCannotPublishIntoANewerCapture",
+            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
+            "line": 379
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Region/full-screen/monitor/active-window commands now use shared capture admission and frozen output. Window discovery and portal/controller tests exist. Native per-monitor mixed-scale/HDR/cursor target qualification remains. Audit 2026-11-04: Shared screenshot paths now freeze the approved Qt topology before acquisition and reject bitmap dimension mismatch with capture-topology-mismatch. RegionCaptureNativeTest proves fake mixed-scale region and validated last-region capture through native production workers/outputs; full-screen/monitor/active-window retain their existing ports. CORE-014 stays partial for its remaining complete source/platform scope. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome."
     },
@@ -860,29 +934,31 @@
         "spec_line": 68,
         "remaining_human_decision": "What approved scroll-alignment threshold replaces kScrollAlignmentThreshold?",
         "coverage": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native scrolling selection, bounded capture/stitch, cancellation/partial outcome and settings exist with ScrollCapture/ScrollStitch tests. kScrollAlignmentThreshold is a placeholder; product-owner threshold approval and live compositor qualification remain.",
       "blocked_reason": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist."
@@ -908,19 +984,19 @@
         "classification": "partial",
         "spec_line": 72,
         "coverage": "Explicit finite automatic capture schedules, non-overlap, stop controls, storage/lock conditions and stale lock-query fencing are implemented. Full permission/privacy-condition/native target matrix is incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
@@ -936,7 +1012,9 @@
             "method": "lowStorageRefusesToStartAndStopsARunningCapture",
             "line": 116
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Explicit delayed and bounded automatic scheduling, settings persistence, stop controls and no-overlap tests exist. Full lock/storage/permission/privacy conditions and desktop qualification remain. Screen lock and storage conditions: automatic capture now pauses while the screen is locked (the tick is skipped and counted, the run resumes after unlock and still ends at its bound) and a run is refused at start, or stopped, when free space in the capture folder drops below 512 MiB with a stable storage-low notification. Lock state comes from an injectable ScreenLockState fed by org.freedesktop.ScreenSaver and org.gnome.ScreenSaver ActiveChanged on the session bus and org.freedesktop.login1 Session Lock/Unlock signals plus LockedHint on the system bus. Rationale: the reference app has neither check and Flameshot/Greenshot have no auto capture, so lock-pauses and a 512 MiB floor are the documented Linux policy. Not closed: capture permission loss during a run and privacy conditions have no tests, and real compositor lock signals are only exercised on a private bus. Audit 2026-11-03: CaptureConditionsTest proves the lock pause/resume, storage refuse/stop, precedence and the D-Bus signal adapter on a private bus; ScheduledCaptureTest still proves the no-overlap and bound behavior. Status stays partial for permission and privacy conditions.",
       "incremental_note": {
@@ -953,19 +1031,19 @@
         "classification": "implemented",
         "spec_line": 76,
         "coverage": "Video/GIF request model and native recorder implement target/cursor/timing/quality, codec/container output and validated pause/stop/abort/recoverable failure; real GStreamer finite-file tests inspect tracks.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
@@ -975,7 +1053,9 @@
             "method": "finiteVideo",
             "line": 40
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/RecordingTest.cpp",
@@ -1008,19 +1088,19 @@
         "classification": "partial",
         "spec_line": 79,
         "coverage": "Explicit per-run system/microphone consent and selected-device enumeration, changed-input consent fencing, GIF no-audio and recoverable encoder behavior are tested. Physical native audio permission/mixing/synchronization and accepted degraded modes remain incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
@@ -1036,7 +1116,9 @@
             "method": "consentCannotAuthorizeAChangedInputAndGifNeverOpensAudio",
             "line": 66
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Region/screen recording supports selected system/microphone devices and GStreamer audio graphs with domain/integration tests. Complete consent/device-loss/synchronization/audio hardware and target qualification remain. Audit of clauses: explicit system and microphone selection, a missing selected device producing no audio track at all (no partial mix) and a one-or-two input mix per container are tested (RecordingTest::explicitAudioSelection, finiteVideo audio-mix cases); the always-visible indicator states Audio recording or No audio (RecordingTest::captureIndicator). Not closed: platform permission and consent for the microphone are not exercised, audio and video synchronisation is not measured, loss of a device during recording is not tested, and the finiteVideo audio-mix cases are skipped on hosts without the GStreamer audio elements. Audit 2026-11-03: RecordingTest::explicitAudioSelection and captureIndicator prove explicit selection, no-track-when-missing and the active-capture indicator. Status stays partial for permission, synchronisation and mid-recording device loss."
     },
@@ -1054,29 +1136,31 @@
         "classification": "partial",
         "spec_line": 86,
         "coverage": "Native video converter exposes formats/quality/progress/cancel and atomic output; complete media utility/metadata/dependency/temporary recovery inventory remains incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Video conversion, hashing, icon conversion and image utilities have real native pipelines and tests. Full video-editing/media catalogue, codecs/metadata/recovery and target qualification remain."
     },
@@ -1102,12 +1186,12 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 90,
-        "coverage": "Prepared requests validate file and destination before transfer; CredentialStore references, fixed redaction, bounded safe retry/idempotency, progress and cancellation distinguish local preparation from remote response. Upload execution-storage fencing remains a separate WFCAT-002 gap.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "coverage": "Prepared requests validate file and destination before transfer; CredentialStore references, redaction, bounded safe retry/idempotency, progress and cancellation distinguish local preparation from remote response. Execution admission/start/read-step storage failures now stop before HTTP. Non-idempotent bodies cannot rewind through Qt automatic replay; unknown remote publication stays interrupted. This is candidate behavior, not release/security acceptance.",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
+            "sha256": "2139c5e333166b4100579200008929dd14675ae28cae7dd6d18908d1a69adae0"
           },
           {
             "path": "platforms/linux/linux-qt/src/uploads/UploadRequest.cpp",
@@ -1115,7 +1199,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp",
-            "sha256": "b931309588ae9c940262ded172f79b7ebbdaccadcdef7b49d9fc3993c168f595"
+            "sha256": "9449b505d59df156573b5aa7574daa8b3d85b8aa5c4dcf8da0d01ac2e8380bbc"
           }
         ],
         "test_anchors": [
@@ -1133,17 +1217,37 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp",
-            "sha256": "d91b7c51eb0b5c1e2a0b1156ce8078eeeee6d20689a8633b154ef40a16148bcc",
+            "sha256": "669dd1b06aa35aa89bf46318ceacc2f4d0a5ee7f598dd507756d2cd18f748943",
             "method": "safeRetriesKeepPreparedBytesKeyAndOneRemoteObject",
-            "line": 119
+            "line": 120
           },
           {
             "path": "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp",
-            "sha256": "d91b7c51eb0b5c1e2a0b1156ce8078eeeee6d20689a8633b154ef40a16148bcc",
+            "sha256": "669dd1b06aa35aa89bf46318ceacc2f4d0a5ee7f598dd507756d2cd18f748943",
             "method": "exhaustedRetriesAreBoundedAndBackoffIncreases",
-            "line": 153
+            "line": 155
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
+            "method": "executionStorageFailurePreventsUpload",
+            "sha256": "7a594ff6cd2b12b0257a61e96eb7e57f3fc945b8817323a693df56aca3bb8b92",
+            "line": 464
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp",
+            "method": "closedBeforeStatusDoesNotReplayUnsafeBody",
+            "sha256": "669dd1b06aa35aa89bf46318ceacc2f4d0a5ee7f598dd507756d2cd18f748943",
+            "line": 319
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
+            "method": "sentRequestWithoutAResponseIsInterruptedNotAFailure",
+            "sha256": "7a594ff6cd2b12b0257a61e96eb7e57f3fc945b8817323a693df56aca3bb8b92",
+            "line": 906
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Capture/file/watch-folder uploads use validated destinations, credential references and cancellable executors; hostile response tests prevent truncated URL success. Full retry/idempotency, privacy and native qualification remain."
     },
@@ -1166,29 +1270,31 @@
         "classification": "partial",
         "spec_line": 94,
         "coverage": "Versioned custom destination schemas and static template/response validation exist; complete first-party capabilities/authentication/size/rate/deletion inventories remain incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Custom HTTP destinations, SXCU import, Secret Service configuration and URL/deletion results are implemented and tested. Complete first-party catalogue, field/rate/authentication semantics and human review remain."
     },
@@ -1205,29 +1311,31 @@
         "spec_line": 98,
         "blocker": "Approve the isolated plugin-host authority/provenance design before implementation.",
         "coverage": "Approved isolated plugin host/signing/permissions/secret mediation security posture is a human decision; trusted-process plugin execution must not be added.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Human-approved isolated plugin hosting, provenance/permissions/IPC/secrets/crash/revocation/audit remain Required.",
       "evidence": [
@@ -1265,7 +1373,7 @@
         "spec_line": 105,
         "coverage": "Native capture/file-upload history has stable task IDs, missing-file tolerance, workflow metadata deletion, bounded search (case-insensitive, query capped at 256 chars, 200-item pages, search field and Load more in the history window) and deterministic keyset pagination (newest first, ties by task ID, stable while records are added). Unparseable/truncated records are renamed to <id>.json.corrupt (backup preserved, never overwritten), good neighbours and newer-version records are untouched, and the window shows a value-free count. Retention limits (the 1024-record admission cap is back-pressure, not an approved policy), private-preview policy, shared persisted compatibility, quarantine-file pruning and supported-target/human qualification remain Required product decisions; status stays partial. Codex queue evidence (2026-11-05): Audit 2026-11-05: C06 keeps the existing private journal format and makes every parsed operation visible, including failed saves, cancelled transfers, interrupted/unknown actions and successful uploads without a saved file. Validated terminal_observation supplies the true outcome independently of pipeline completion; no media, file binding or retry authority is reconstructed. CaptureHistoryWindowTest::resultsWithoutFilesRemainVisibleInspectableAndForgettable covers actual stored UUID/outcome search, result-only rows, disabled file actions, upload-only URL copying, Details, default-Cancel removal, unchanged bytes on Cancel and explicit metadata-only forgetting for all four outcome rows. nativePagingAndSearchBoundResultOnlyRowsAndKeepSelection proves real Load More, newest-first UUIDs, the existing 200-row page bound, selection retention and search resetting the page. searchAndPagingAreBounded covers date/path/source filtering. itemsKeepOnlyFilesTheirRunCreatedNewestFirst preserves exact per-run file provenance while now retaining the additional fileless result. windowShowsThumbnailsMissingFilesAndFileActions/uploadOnlyRowsRetainUrlsAndProtectSourceFiles prove previews, missing-file tolerance and separate upload source protection; forgetRemovesTheRecordAndKeepsTheFile and PipelineHistoryDialogTest::forgetRequiresConfirmationAndExactUnchangedSnapshotWhileKeepingTheFile prove explicit/stale-safe metadata removal without deleting outputs. unreadableRecordsStayPreservedAndVisibleAcrossSearchAndPreviewUpdates proves malformed neighbouring records are preserved byte-for-byte, a stable value-free recovery warning survives preview/search rebuilds, and the technical Result records route stays reachable. PipelineHistoryDialogTest::interruptedRecordShowsUnknownActionAndDoesNotInventFailedUpload/reviewIsKeyboardReachableAndImmutableWithPrivateDetailsHidden cover unknown outcomes and guarded details. FileUploadTest::existingFileReceiptsSurviveRestart and WatchFolderServiceTest::uploadsOnceThroughDefaultDestinationAcrossRestart retain real native upload history. Remaining: approved configurable retention limits/policy and full corrupt-store rebuild/quarantine recovery, complete private-preview qualification and supported-target/human privacy/security/accessibility acceptance. Existing manual retention and storage admission limits are unchanged; no automatic cleanup, new limit, journal migration or destructive recovery is invented. Status remains partial. History search now matches visible source labels, local row date/time, published result URLs and upload failure text; last-region has a readable label. The private deletion URL and thumbnail URL are excluded from the searchable projection, and Edit reopens the selected capture after filtering. Native bounded paging and query limits remain unchanged.",
         "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
-        "reviewed_at_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
@@ -1273,7 +1381,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/NativePipelineJournal.cpp",
-            "sha256": "6a3d0064bfac8ae6ad5aef45aad954e808099d905de29ff5cad248bd44bb824b"
+            "sha256": "3dd16fb7da6d0cb22eda6744b9307c0f1e052ef96266ffcc51f0d3dab186a17e"
           }
         ],
         "test_anchors": [
@@ -1295,7 +1403,9 @@
             "method": "resultsWithoutFilesRemainVisibleInspectableAndForgettable",
             "line": 133
           }
-        ]
+        ],
+        "revalidated_from_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native capture result history now loads multiple private versioned journal records on a worker, exposes actual completed/cancelled/interrupted outcomes and unknown pending actions, reviews immutable canonical snapshots and forgets only explicitly confirmed unchanged metadata. Real-process restart and native keyboard/stale-confirmation/file-preservation fixtures cover save/image-clipboard recovery. Full task/media history, pixel reconstruction, shared persisted compatibility, search/pagination/retention/privacy policy, missing-file/corruption recovery, all actions, target matrix and human approvals remain Required. Linked native retry journals preserve original/previous identities, attempt number and actual file creator facts. Real-process restart fixtures preserve terminal original records and unknown interrupted retry outcomes; the native reviewer distinguishes preserved successes from actions executed in the current attempt. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Native Workflow execution history now lists bounded, redacted observations through one registry command shared by window/tray/capture menu. Explicit default-Cancel confirmation removes only the selected unchanged metadata record using the existing private descriptor store; files, pipeline results, credentials and clipboard are untouched. Storage runs through OwnedWork, capture defers refresh and prevents pending removal, and owner teardown abandons late reads. Corrupt/newer/stale records are preserved. Automated native tests cover actual removal/cancellation/conflict, unconfirmed status, worker ownership, failed/throwing ports and freeing the 1024-record admission limit. Full retention policy, history/resource scope, configured limits, supported-target and human qualification remain Required.",
       "incremental_note": {
@@ -1329,29 +1439,31 @@
         "classification": "partial",
         "spec_line": 109,
         "coverage": "GUI/CLI/hotkeys and watch folders have shared seams; MCP/assistant authority and complete cross-entry result/correlation/concurrency scope remain incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The private native launch protocol has version/UUID correlation, kernel peer authentication, bounded intake/concurrency, redacted failures and limited receipt replay. This candidate is not an approved shared CLI/MCP API. Full shared operations, progress/cancellation, consent, assistant/shell/watch-folder coverage and human review remain Required. Native --run-workflow accepts a full UUID; --json returns a versioned admission/delivery acknowledgement, not terminal workflow success or pipeline identity. --non-interactive refuses graphical operations before GUI/election/preferences/portal. Discovery, wait/cancel/progress/result linkage and approved shared CLI/MCP semantics remain Required. An explicit GlobalShortcuts portal session offers only supported saved UUID/name pairs. Unique-owner/session/request correlation, accepted-subset checks, no preferred keys, explicit disable/cancel/reconfigure, bounded deadlines and fail-closed owner/session loss are native candidate behavior. This adds no consent bypass, shell key grabs or compositor writes; all broader automation and human review remain Required. --list-workflows now exposes a versioned read-only saved-definition query through QtCore before GUI, instance election or desktop-service connections; --non-interactive permits it and plain help is headless. Runtime readiness/consent/busy state is explicitly not queried. The activation protocol and execution authority are unchanged; task/result correlation and full shared CLI/MCP coverage remain Required."
     },
@@ -1369,38 +1481,46 @@
       "audit": {
         "classification": "partial",
         "spec_line": 113,
-        "coverage": "Canonical authorized roots, readiness filtering, per-file duplicate checkpoints and owned cancellable copy/move/upload exist. However rescan recursively enumerates and stats the authorized tree on the GUI thread before checking pending work; no bounded/cancellable discovery path qualifies clean Stop for large or slow trees.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "coverage": "Canonical authorized roots, readiness filtering, per-file duplicate checkpoints and owned cancellable copy/move/upload exist. Recursive discovery/stat now uses OwnedWork and discards obsolete/cancelled results after Stop, rule/capture-folder changes or owner loss. Watcher registration, final dispatch fingerprint and checkpoint persistence remain synchronous GUI boundaries; full retention/target qualification stays partial.",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
+            "sha256": "e3c8ac7741c8b860b56f89b8ae27d9218fa4a8951570cb0990bc69c31e068de0"
           },
           {
             "path": "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
-            "sha256": "c9584f42e1f6b426026a301152e0dc78f067c58b47030db55e14e414680b082d"
+            "sha256": "8d6198247d707482a48bb832510fe5d95b37df5c1be18b5968997fa46fc39bf5"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+            "sha256": "b40a4747273405f77e64109a8f4f4f701dffd8b7aefca387207e012fe6c156da",
             "method": "uploadsOnceThroughDefaultDestinationAcrossRestart",
-            "line": 458
+            "line": 545
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+            "sha256": "b40a4747273405f77e64109a8f4f4f701dffd8b7aefca387207e012fe6c156da",
             "method": "slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed",
-            "line": 593
+            "line": 680
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+            "sha256": "b40a4747273405f77e64109a8f4f4f701dffd8b7aefca387207e012fe6c156da",
             "method": "storageFailuresNeverSilentlyCompleteFileWork",
-            "line": 162
+            "line": 240
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "method": "discoveryDoesNotBlockTheGui",
+            "sha256": "b40a4747273405f77e64109a8f4f4f701dffd8b7aefca387207e012fe6c156da",
+            "line": 105
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "WatchFolders/WatchFolderService validate canonical roots, reject loops, debounce readiness and persist duplicate checkpoints with native tests. Full restart/permission/storage/lock/long-run and target qualification remain. Per-file failure is isolated: an unreadable file is reported once, stays unchecked-in in the store and does not block the next file (failingFileDoesNotBlockTheNext). Stopping mid-upload leaves the file in place and unprocessed; a bug is fixed where the cancelled attempt stayed in the attempted set, so the same service never rediscovered the file after start() (stoppingMidUploadLeavesTheFileDiscoverable). Long-run, lock and storage-pressure behavior and target qualification remain Required. Audit 2026-11-03: Roots, loops and traversal (WatchFoldersTest canonicalizesRootsAndRefusesLoops, WatchFolderServiceTest recursiveScanExcludesCapturesHiddenTemporaryAndSymlinkLoops), readiness (stabilityUsesInjectedClockAndRestartsAfterChanges), duplicate policy and checkpoints across restart (stableNewFileCopiesOrMoves, uploadsOnceThroughDefaultDestinationAcrossRestart), per-file failure isolation (failingFileDoesNotBlockTheNext) and clean stop without losing work (stoppingMidUploadLeavesTheFileDiscoverable)."
     },
@@ -1413,29 +1533,31 @@
         "classification": "not-started",
         "spec_line": 116,
         "coverage": "No approved assistant provider/data-flow and human-reviewed sensitive-action implementation exists.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Assistant provider/data flow minimization, explicit capture/history authority and sensitive/destructive review remain Required.",
       "evidence": [
@@ -1500,7 +1622,7 @@
         "classification": "partial",
         "spec_line": 123,
         "coverage": "Session-bounded code/severity/correlation diagnostics and explicit previewed owner-private export exist without values, private payloads or silent target overwrite. Full retention/recovery policy across stores and outputs remains incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/diagnostics/DiagnosticBundle.cpp",
@@ -1524,7 +1646,9 @@
             "method": "reviewedSnapshotWritesPrivatelyWithoutOverwritingAnyExistingTarget",
             "line": 98
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native capture/activation publish stable value-free errors; activation failures have actionable text and unknown delivery never becomes success or a second instance. Full structured severity/correlation/retention/export/configuration/output recovery remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Editor save failures now disclose the local destination, PNG format and recoverability with stable raster-save-failed/sidecar-save-failed diagnostics and plain path text, never private exception payloads. Partial receipt retry retains the acknowledged PNG and rejects changed bindings. Completion exceptions do not retract acknowledged artifacts. Native fixtures and remaining path-race/durability/review limits are indexed in EDITOR-SAVE.md. Copy maps returned private diagnostics to stable codes, distinguishes ownership/offer uncertainty and callback exception from known failure, retains document state and authorizes no retry from unknown delivery. Native MIME replacement, UI failure/replay and owner-lifetime evidence is indexed in EDITOR-COPY.md; full diagnostics/recovery/target/human qualification remains Required. Native Print Image now uses owned worker snapshots, explicit page/scale/orientation/colour preview and native printer confirmation, cancellable worker submission and honest submitted/unknown outcomes. Confirmed known-failure retry preserves document/history/Redo/files/preferences/clipboard; missing services and owner/reentrant boundaries are tested. Candidate EO-001/008/014/015/016 evidence is indexed in EDITOR-PRINT.md and EDITOR-PRINT-EVIDENCE.json. Full physical printer/target/colour/shutdown/a11y/privacy/security and human qualification remain Required. Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required. CLI diagnostics are value-free, with valid opaque activation/workflow UUIDs only in JSON. Unknown/invalid input is not echoed; rejected/unknown delivery never becomes capture success. Full terminal workflow correlation and shared diagnostics remain Required. Shortcut service refusal/cancellation/unavailability/timeout/invalid data and owner/session loss publish fixed actionable native messages. Accepted binding descriptions appear as plain text without claiming capture/output success. Physical notifications/diagnostic completeness and human qualification remain Required. Workflow discovery returns allowlisted fixed errors without argument/storage payloads. Query output contains only IDs, names, supported/unsupported capture classification, default/source and definition support; folders, patterns, actions and unknown extensions/labels are excluded. Unsafe/corrupt/newer/changed storage yields no partial catalogue. Complete diagnostics/privacy and human qualification remain Required.",
       "incremental_outcomes": [
@@ -1570,29 +1694,31 @@
         "spec_line": 127,
         "remaining_human_decision": "Release signing, provenance and packaging approval require Mike.",
         "coverage": "Unsigned native archive/deb/rpm install and AUR candidate tooling exists. Signing, release provenance, replacement migration/update/rollback and supported target acceptance remain explicitly human-blocked by the scheduler.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Desktop identity and dynamic Qt build exist. Signed/provenance-verified tar/deb/rpm/AUR packages, license obligations, clean install/replacement/update/rollback/uninstall qualification remain Required.",
       "blocked_reason": "Unsigned native archive/deb/rpm install and AUR candidate tooling exists. Signing, release provenance, replacement migration/update/rollback and supported target acceptance remain explicitly human-blocked by the scheduler.",
@@ -1610,29 +1736,31 @@
         "classification": "not-applicable",
         "spec_line": 132,
         "coverage": "Not applicable to Linux desktop: this requirement governs the separate Android/iOS mobile scope; parent should record not-applicable outside desktop classification.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "MOBILE-PLATFORM-001 declares Android/iOS scope; native mobile implementation is outside this Linux desktop target. Mobile and cross-platform acceptance gates remain open; no desktop requirement is waived.",
       "evidence": [
@@ -1656,29 +1784,31 @@
         "spec_line": 137,
         "remaining_human_decision": "Human security/privacy/accessibility/licensing/compatibility and supported-target acceptance remain pending.",
         "coverage": "Human security/privacy/accessibility/licensing/compatibility/parity activation acceptance on all supported platforms is pending.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Deterministic native/domain tests and six capabilities' published vectors run in baseline CI. CORE has no published test-vectors.json. All linked-row/platform acceptance and human security/privacy/accessibility/licensing/compatibility/parity reviews remain Required. Exact Ubuntu/Qt 6.4.2 CI 40099542917 now compiles the drawing compatibility helper but exposed three upload test QDragEnterEvent constructions using QPointF. They now use the minimum-Qt QPoint signature with unchanged coordinates, cases and deadlines; a text-only drag rejection case adds input-boundary coverage. Full corrected-revision baseline verification remains required.",
       "blocked_reason": "Human security/privacy/accessibility/licensing/compatibility/parity activation acceptance on all supported platforms is pending."
@@ -1692,7 +1822,7 @@
         "classification": "implemented",
         "spec_line": 141,
         "coverage": "Repository NuGet freshness scanner enforces required manifests/record freshness; no repository-owned NuGet manifests currently exist, so native Linux carries no stale package pin.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "tools/nuget-freshness/check.py",
@@ -1712,7 +1842,9 @@
             "method": "test_stale_record_fails",
             "line": 56
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "evidence": [
         "tools/nuget-freshness/check.py",
@@ -1729,7 +1861,7 @@
         "classification": "implemented",
         "spec_line": 148,
         "coverage": "NuGet check-record schema validates source/version/verification/retention evidence and dates; no repository-owned NuGet package currently requires an adoption record.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "tools/nuget-freshness/check.py",
@@ -1749,7 +1881,9 @@
             "method": "test_retention_below_latest_needs_complete_bounded_block",
             "line": 68
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "evidence": [
         "tools/nuget-freshness/check.py",
@@ -1770,29 +1904,31 @@
         "classification": "partial",
         "spec_line": 158,
         "coverage": "linux-qt reference implementation exists; every supported distro/desktop target has not received complete requirement acceptance.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "linux-qt is implemented as the supported reference candidate application. Every applicable requirement on every declared target remains Required; no scope reduction or edition promotion is claimed."
     },
@@ -1809,7 +1945,7 @@
         "classification": "implemented",
         "spec_line": 164,
         "coverage": "EditionProfilesTest loads the approved linux-editions.json and asserts every edition profile declares a unique id, a valid status, non-empty targets (distribution and versions), desktops, display server, toolkit value with a D-LIN decision record, all five mechanisms (capture, global shortcuts, notifications, tray, credentials) and non-empty packaging formats; it also checks the linux-qt profile against the native app (Qt 6 Widgets and C++17 build, QApplication, Screenshot and ScreenCast portal, GlobalShortcuts portal, Secret Service client, QSystemTrayIcon tray and notification door). Tray/notification protocol names are the profile's declaration realised through Qt's QSystemTrayIcon, wh...",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json",
@@ -1829,7 +1965,9 @@
             "method": "linuxQtMechanismsMatchTheNativeApplication",
             "line": 60
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The approved linux-editions.json declares supported linux-qt and candidate editions. Actual qualification of all declared mechanisms and targets remains Required."
     },
@@ -1848,29 +1986,31 @@
         "classification": "partial",
         "spec_line": 168,
         "coverage": "Native identity and versioned XDG stores use shared formats; installation replacement across editions/distros and fully interchangeable persisted data are not qualified.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Desktop and runtime identity are shared com.xerahs.app. The current isolated native editor candidate store is edition-specific; approved shared persisted schemas/XDG formats, edition switching/replacement and explicit migration qualification remain Required."
     },
@@ -1889,29 +2029,31 @@
         "classification": "blocked",
         "spec_line": 173,
         "coverage": "Human accepted Linux dispositions and identical vector results on every supported edition target distribution remain pending.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Current published vectors run for linux-qt on Ubuntu baseline CI and the local toolchain. Every declared target distribution/native environment, accepted row disposition and complete shared conformance/parity remain Required. Exact Ubuntu/Qt 6.4.2 CI 40099542917 now compiles the drawing compatibility helper but exposed three upload test QDragEnterEvent constructions using QPointF. They now use the minimum-Qt QPoint signature with unchanged coordinates, cases and deadlines; a text-only drag rejection case adds input-boundary coverage. Full corrected-revision baseline verification remains required.",
       "blocked_reason": "Human accepted Linux dispositions and identical vector results on every supported edition target distribution remain pending."
@@ -1931,29 +2073,31 @@
         "classification": "partial",
         "spec_line": 179,
         "coverage": "Qt/portal native conventions/theme/shortcuts integration exists; full GNOME/Plasma/wlroots conventions matrix and promotion acceptance are not established.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "a5cc45634091166b7089dd1318b46374c429749ccec91b3bae107d45e953ea7e"
+            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "1544ec9dad06cc62d04fa18f5051dae11ac8eef1bf04227e28859a81e16efe48"
+            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "dce39657e6c62100c908d25580e0296d3c64357bac4b882e88eac3bb108eb80d"
+            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "304ca891b15f850cb17185d6d31ecf80af0ae5c0e6440c83228c657ea12d1b27",
+            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 38
+            "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native Qt Widgets actions/keyboard/accessibility, portal capture and editor desktop appearance exist. Full convention/a11y/theming/notification/shortcut/configuration integration on GNOME/Plasma/wlroots remains Required. Candidate editions are not self-promoted."
     }
@@ -1974,11 +2118,11 @@
   },
   "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-    "checked_at": "2026-11-11T15:27:15.305729+00:00",
+    "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+    "checked_at": "2026-11-14",
     "specification": "product-contract/capabilities/CORE-PLATFORM-001/SPEC.md",
     "specification_sha256": "cf9c8a8355542c11a58695f51acc3ad6aade53aff41d1a6b195d854d1f4a1959",
-    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
     "reviewed_requirement_count": 37,
     "counts": {
       "blocked": 7,
@@ -2304,6 +2448,118 @@
         },
         "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
       }
+    },
+    {
+      "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+      "checked_at": "2026-11-11T15:27:15.305729+00:00",
+      "specification": "product-contract/capabilities/CORE-PLATFORM-001/SPEC.md",
+      "specification_sha256": "cf9c8a8355542c11a58695f51acc3ad6aade53aff41d1a6b195d854d1f4a1959",
+      "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+      "reviewed_requirement_count": 37,
+      "counts": {
+        "blocked": 7,
+        "implemented": 8,
+        "not-applicable": 1,
+        "not-started": 2,
+        "partial": 19
+      },
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/AppContext.cpp",
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+        "platforms/linux/linux-qt/app/DiagnosticsDialog.cpp",
+        "platforms/linux/linux-qt/app/FileUploadController.cpp",
+        "platforms/linux/linux-qt/app/NativeNotifications.cpp",
+        "platforms/linux/linux-qt/app/NativePipelineJournal.cpp",
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
+        "platforms/linux/linux-qt/app/main.cpp",
+        "platforms/linux/linux-qt/src/diagnostics/DiagnosticBundle.cpp",
+        "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp",
+        "platforms/linux/linux-qt/src/uploads/UploadRequest.cpp",
+        "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+        "product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json",
+        "tools/nuget-freshness/check.py"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/CaptureConditionsTest.cpp": [
+          "lateInitialSnapshotCannotUndoANewerNativeLockSignal",
+          "lowStorageRefusesToStartAndStopsARunningCapture"
+        ],
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp": [
+          "corruptAndTruncatedRecordsAreSetAsideWithBackupAndGoodRecordsSurvive",
+          "keysetPaginationIsStableWhileRecordsAreAdded",
+          "resultsWithoutFilesRemainVisibleInspectableAndForgettable"
+        ],
+        "platforms/linux/linux-qt/tests/DiagnosticBundleTest.cpp": [
+          "actualPipelineFailuresKeepOnlyStableCodeSeverityAndTaskCorrelation",
+          "reviewedSnapshotWritesPrivatelyWithoutOverwritingAnyExistingTarget"
+        ],
+        "platforms/linux/linux-qt/tests/EditionProfilesTest.cpp": [
+          "everyEditionDeclaresEveryRequiredField",
+          "linuxQtMechanismsMatchTheNativeApplication"
+        ],
+        "platforms/linux/linux-qt/tests/LocalizationExpansionTest.cpp": [
+          "captureChooserAndAutomaticDraftRetranslateWhileOpen",
+          "liveBindingsPreserveValuesAndFollowReparentingAndTranslationFallback"
+        ],
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp": [
+          "simultaneousProcessesElectOnlyOneOwner"
+        ],
+        "platforms/linux/linux-qt/tests/NativeNotificationsTest.cpp": [
+          "nativeDeliveryContainsOperationResultAndCorrelationWithoutPrivatePreviewsOrActions",
+          "refusalDoesNotRetryBypassPolicyOrCreateAnAction"
+        ],
+        "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp": [
+          "nativeSurfaces"
+        ],
+        "platforms/linux/linux-qt/tests/OnboardingTest.cpp": [
+          "decliningEverythingLeavesDefaultCaptureWorking"
+        ],
+        "platforms/linux/linux-qt/tests/OperationResultsTest.cpp": [
+          "nativeNotificationEntryKeepsCorrelatedTrueDetailsInTheShell"
+        ],
+        "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp": [
+          "finiteVideo"
+        ],
+        "platforms/linux/linux-qt/tests/RecordingTest.cpp": [
+          "consentCannotAuthorizeAChangedInputAndGifNeverOpensAudio",
+          "explicitAudioSelection"
+        ],
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp": [
+          "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation"
+        ],
+        "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp": [
+          "exhaustedRetriesAreBoundedAndBackoffIncreases",
+          "safeRetriesKeepPreparedBytesKeyAndOneRemoteObject"
+        ],
+        "platforms/linux/linux-qt/tests/UploadRequestTest.cpp": [
+          "failuresAndLimits",
+          "methodsAndValidation"
+        ],
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp": [
+          "slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed",
+          "storageFailuresNeverSilentlyCompleteFileWork",
+          "uploadsOnceThroughDefaultDestinationAcrossRestart"
+        ],
+        "tools/nuget-freshness/test_check.py": [
+          "test_fresh_complete_record_passes",
+          "test_no_manifests_passes",
+          "test_retention_below_latest_needs_complete_bounded_block",
+          "test_stale_record_fails"
+        ]
+      },
+      "findings": [
+        {
+          "kind": "source-extracted-gap",
+          "requirement": "CORE-004/025",
+          "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+          "lines": "161-210",
+          "detail": "Rescan recursively walks/stat-enumerates before pending-path check on the GUI callback. Owned copy/move fixes did not move discovery. No live latency measurement asserted."
+        }
+      ],
+      "remaining_scope": "CORE-001, CORE-002, CORE-003, CORE-004, CORE-005, CORE-007, CORE-009, CORE-011, CORE-012, CORE-013, CORE-014, CORE-015, CORE-016, CORE-018, CORE-019, CORE-021, CORE-022, CORE-023, CORE-024, CORE-025, CORE-026, CORE-027, CORE-028, CORE-029, CORE-030, CORE-033, CORE-035, CORE-036, CORE-037",
+      "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
     }
   ],
   "upstream_incremental_reviews": [

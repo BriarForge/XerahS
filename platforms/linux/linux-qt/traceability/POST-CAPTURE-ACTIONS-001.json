@@ -70,7 +70,7 @@
         "classification": "implemented",
         "spec_line": 30,
         "coverage": "The shared engine records selected actions in catalogue order with explicit terminal lifecycle results; canonical receipt and selection tests exercise real native pipelines.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -98,7 +98,9 @@
             "method": "actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads",
             "line": 139
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
@@ -119,7 +121,7 @@
           "catalogue-order-not-selection-order"
         ],
         "coverage": "Catalogue-order scheduling is implemented independently of selection order; native selection, save, clipboard, consent, upload and deletion use the same engine.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
         ],
@@ -150,7 +152,9 @@
             "method": "actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads",
             "line": 139
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "note": "Catalogue-order scheduling is implemented independently of selection order; native selection, save, clipboard, consent, upload and deletion use the same engine.",
       "evidence": [
@@ -185,7 +189,7 @@
           "failed-transformation-keeps-last-valid-media"
         ],
         "coverage": "Transformation replacement and last-valid-media preservation are implemented; annotation and task-copy partial-fact tests preserve successful render identity.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -207,7 +211,9 @@
             "method": "taskCopyPartialFactsRetainSuccessfulTransformation",
             "line": 69
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The engine tracks the working media by the last successful transformation; ActionExecutor owns the media and must not touch it on failure. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Capture source-history now retires Cancel/Escape/close/deleted progress jobs immediately, isolates late jobs, and restores through the existing Core state/exact-selection/adjacent-target guard plus native generation. Exact source/profile/alpha/fields/assets/selection/composed source-region, owner teardown, stale refusal, failure/retry and actual capture PNG/.xann save retry evidence is indexed in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required; policies, vectors and labels are unchanged."
     },
@@ -242,7 +248,7 @@
           "url-clipboard-depends-on-upload"
         ],
         "coverage": "Artifact resolution skips dependants and continues independent actions; native failed-save tests still dispatch clipboard.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -264,7 +270,9 @@
             "method": "saveFailureStillDispatchesTheIndependentClipboardOnTheGuiThread",
             "line": 178
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native file/path clipboard and reveal consume the resolved save.file or save-as.file, preferring Save. Failed Save can fall back to successful Save As; picker cancellation skips only Save As while independent image clipboard continues. Missing both aliases produces dependency-skipped file consumers. Failure preserves both successful files and retained media. Native counter-commit failure after PNG publication now records the real file and stable failure code, preserves working media and independent image clipboard, skips dependent file consumers and companion publication, and disables automatic retry with an explicit recovery explanation. CaptureSaveTest, CapturePipelineTest and PortalScreenshotTest cover changed/newer/corrupt storage, durable terminal results and partial workflow/UI reporting."
     },
@@ -292,7 +300,7 @@
           "clipboard-failure-continues"
         ],
         "coverage": "Native clipboard, output and upload failure paths preserve working media and durable file receipts.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -314,7 +322,9 @@
             "method": "clipboardExceptionKeepsCompletedSaveAndWorkingMediaWithRedactedFailure",
             "line": 192
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native pipeline receipts retain confirmed working media and completed save artifacts after output failure/cancellation. Shared tray/main-window recovery actions open an immutable snapshot as a new unsaved editor document without consuming or rereading the saved capture. Explicit Discard/Cancel confirmation clears only the expected current in-memory receipt; saved files, clipboard contents and existing editor snapshots are preserved. Busy state, missing opener, stale approval, callback exception/reentrancy and owner destruction have private native UI/controller tests; editor tests prove exact source ownership/profile/alpha, empty durable path, cancelled Save and explicit new-file persistence. Only the latest receipt is retained in memory. Complete history/restart recovery, retention policy, remaining actions and physical/human qualification remain Required. Actual file/path clipboard and asynchronous file-manager output now preserve saved bytes and retained pixels after rejection, changed identity, missing service and unknown delivery. Native Save As retains both completed files and immutable pixels after picker cancellation, publication rejection or later output failure; shared retry preserves earlier creator/bytes."
     },
@@ -334,7 +344,7 @@
           "upload-without-save-uses-temporary-file"
         ],
         "coverage": "Upload consumes saved paths first; owned private temporary PNG creation and cleanup are tested without replacing saved outputs.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp"
         ],
@@ -366,7 +376,9 @@
             "method": "temporaryFileCleanupAndIsolation",
             "line": 172
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp"
@@ -400,7 +412,7 @@
         "classification": "implemented",
         "spec_line": 51,
         "coverage": "Native save receipts retain absolute path, MIME, size and naming context; failures retain media and independent output eligibility.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -428,7 +440,9 @@
             "method": "actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads",
             "line": 139
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "CaptureSaveTest::publishesCompletePrivatePngAndRecordsActualArtifactAndContext proves absolute native path, image/png media type, actual byte length and filename context. CapturePipelineTest::failedCounterReservationKeepsMediaAndPublishesNoFile passes directly for both plain and companion intent, proving working-media preservation and clipboard after failed reservation. CaptureUploadTest::transfer(save-failed) now exercises production Save, native clipboard and permitted upload fallback with managed private temporary pixels, permissions, HTTP payload and cleanup assertions. Aoife ran capture-upload outside the sandbox (2026-11-03): after injecting the clipboard port (offscreen QPA never reports clipboard ownership), transfer(save-failed) passes, proving clipboard and permitted upload fallbacks receive the working media after a failed save. Existing managed temporary fallback semantics follow PCA-006/PCA-019 unchanged."
     },
@@ -464,7 +478,7 @@
           "catalogue-order-not-selection-order"
         ],
         "coverage": "Native annotation completes before persistence and returns the editable document and rendered pixels; companion failure is separately recorded.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -492,7 +506,9 @@
             "method": "partialFailureRetriesOnlyTheCompanionWithoutRepeatingConsumers",
             "line": 82
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Cropped working pixels/documents survive known failed-save retry without rerunning annotation/crop. Native actual publication/reopen and global cancellation/destruction fixtures are indexed in CAPTURE-CROP.md. Full tool/field/resource/privacy/security/a11y/compatibility/parity/native/human/release qualification remains Required. Capture source-history now retires Cancel/Escape/close/deleted progress jobs immediately, isolates late jobs, and restores through the existing Core state/exact-selection/adjacent-target guard plus native generation. Exact source/profile/alpha/fields/assets/selection/composed source-region, owner teardown, stale refusal, failure/retry and actual capture PNG/.xann save retry evidence is indexed in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required; policies, vectors and labels are unchanged. Audit 2026-11-04: clauses: annotation settles before save and successful editor pixels become working media \u2014 CaptureAnnotationTest::actualCanvasApplyFeedsSaveAndClipboardAndOffersEditablePersistence (actual canvas, no file before Apply, matching saved/clipboard pixels) and escapeCancelsTaskBeforeIndependentOutputs (cancel prevents outputs); compatible editable persistence \u2014 the same Apply test saves/reopens PNG/.xann and CapturePairedSaveTest::actualCanvasExplicitIntentSavesBothCompatiblePairs; visible raster failure \u2014 CapturePairedSaveTest::failedRasterNeverWritesCompanionOrAcknowledgesAFilePrerequisite; visible companion failure and repair \u2014 partialFailureRetriesOnlyTheCompanionWithoutRepeatingConsumers. All named tests passed offscreen. Scope is the numbered requirement, not unrelated annotation-tool breadth or physical qualification."
     },
@@ -518,7 +534,7 @@
         "classification": "implemented",
         "spec_line": 58,
         "coverage": "Actual quick/after-capture choosers replace this run only; Escape, close and owner destruction cancel before output and saved workflow bytes remain unchanged.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -540,7 +556,9 @@
             "method": "keyboardCancellationAndClosePreservePixelsWithoutOutputs",
             "line": 83
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native quick-task-menu and after-capture-window now use the same asynchronous selector, engine and canonical result/journal model. Catalogue filtering prevents selector loops; a later chooser inherits the effective plan. Native saved workflow restart, Save/Copy/empty choices, cancellation/lifetime, effective journal and linked retry are covered by ActionSelectionTest and NativeCaptureWorkflowsTest. The per-run chooser does not change the saved profile. Capture workflows now explicitly creates/edits named region profiles, saves a default atomically and preserves it across restart. Run selected and the existing capture command resolve a saved profile; unsupported actions remain unavailable before acquisition. Full quick-task/action families, other entry points and native/human qualification remain Required. Explicit saved-profile editing now includes save folder/pattern and deterministic preview with failed-draft correction; chooser-only changes remain per-run. Additional private-bus PortalScreenshotTest evidence exercises a configured quick-task workflow through the real CaptureController: acquired region pixels reach the native chooser, run-only Save replaces the configured clipboard choice, an actual PNG is published, the effective plan is journaled, and borrowed source bytes plus the original workflow snapshot remain unchanged. This complements the concurrently landed native selector implementation; physical desktop qualification remains open. Audit 2026-11-03 (Aoife, at ef77af6): The native quick-task chooser changes only the current run's action set (journaled effective plan, saved workflow unchanged). Escape/close/cancel/destroy cancel before any mutation. Permanent workflow changes happen only through an explicit Save in the workflow editor. Remaining items above are qualification, not implementation status."
     },
@@ -585,7 +603,7 @@
           "cancel-during-uninterruptible-action"
         ],
         "coverage": "Cancellation admission and between-action checks prevent new work while preserving actual outcomes of uninterruptible publication.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -607,7 +625,9 @@
             "method": "cancelDuringUninterruptibleNativeSavePreservesItsFileAndStopsClipboard",
             "line": 162
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The same Qt Core engine runs native actions on a worker with a reachable cancellation token. Escape and Cancel Capture request cancellation while saving; an uninterruptible save may finish, records cancellation_arrived_during, and later clipboard work is cancelled. A claimed native clipboard call retains its actual outcome even if cancellation arrives during it; unclaimed calls cannot publish late. Native tests cover before-start, save/clipboard races, GUI responsiveness, destruction and actual overlay Escape. Full action catalogue and supported native matrix qualification remain Required. Native retry uses the same token and actual first-availability/owner-destruction fencing. Window Escape cancels capture/retry while modal dialogs retain Escape; retry cancellation preserves existing file/media and its durable lineage. Asynchronous native selection waits are cancellable on the worker; GUI close/destruction and admission cancellation cannot authorize late selected actions. File-output GUI claims use the same cancellable worker bridge. Unclaimed cancellation prevents mutation; a claimed ShowItems request waits for its real acknowledgement, records cancellation arrival and stops later actions. Lost acknowledgement interrupts rather than fabricating failure. Save As waits cancellably for an asynchronous native picker and checks the token before encoding, after encoding and immediately before publication. Global cancellation and owner destruction release the worker; picker-only cancellation permits independent actions. Uninterruptible completion keeps its true outcome/cancellation arrival. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Capture source-history now retires Cancel/Escape/close/deleted progress jobs immediately, isolates late jobs, and restores through the existing Core state/exact-selection/adjacent-target guard plus native generation. Exact source/profile/alpha/fields/assets/selection/composed source-region, owner teardown, stale refusal, failure/retry and actual capture PNG/.xann save retry evidence is indexed in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required; policies, vectors and labels are unchanged."
     },
@@ -646,7 +666,7 @@
         "classification": "implemented",
         "spec_line": 65,
         "coverage": "Explicit retry plans target failed/dependency-skipped work, retain immutable original settings and link append-only results without repeating successful save/selection.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -668,7 +688,9 @@
             "method": "retriesOnlyFailedClipboardAndKeepsTheExistingFileAndAppendOnlyLineage",
             "line": 81
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The Qt Core planner admits known failed or dependency-skipped Save/Save As/image/file/path clipboard/reveal actions in catalogue order, excludes successful/cancelled/other skipped actions and rejects unsupported or interrupted/unknown outcomes. File consumers require an acknowledged original Save/Save As or an originally selected failed save prerequisite; it never adds an unselected prerequisite or repeats successful non-idempotent work. Shared Retry confirms one attempt against the unchanged retained pixel receipt and frozen settings; failed Save As asks for a new path. Both file aliases retain earlier bytes and creator facts; a newly successful Save then receives consumer precedence. Results/journals append original/previous IDs, bounded attempt and preserved-success provenance. Native/private-bus and process-kill tests cover actual PNG/picker/output retry, cancellation, stale confirmation, owner destruction and storage failure. Remaining catalogue/prerequisite retry, uploads, cancelled-work resumption, restart media, shared schema/vectors and native/human qualification remain Required. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Rejected missing/forged/outside/overflow/size-mismatched crop proofs report value-free document-invalid, preserve working capture and allow independent original-pixel outputs. Native preview/history failures retain their previous source and history, indexed in CAPTURE-CROP.md. Full tool/field/resource/privacy/security/a11y/compatibility/parity/native/human/release qualification remains Required. Capture source-history now retires Cancel/Escape/close/deleted progress jobs immediately, isolates late jobs, and restores through the existing Core state/exact-selection/adjacent-target guard plus native generation. Exact source/profile/alpha/fields/assets/selection/composed source-region, owner teardown, stale refusal, failure/retry and actual capture PNG/.xann save retry evidence is indexed in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required; policies, vectors and labels are unchanged. Native counter-commit failure after PNG publication now records the real file and stable failure code, preserves working media and independent image clipboard, skips dependent file consumers and companion publication, and disables automatic retry with an explicit recovery explanation. CaptureSaveTest, CapturePipelineTest and PortalScreenshotTest cover changed/newer/corrupt storage, durable terminal results and partial workflow/UI reporting. Audit 2026-11-04: clauses: only failed/dependency-skipped actions plus prerequisites \u2014 PipelineRetryTest::retriesOnlyFailedOrDependencySkippedNativeActionsInCatalogueOrder and fileConsumersReuseKnownSaveOrRetryOnlyItsOriginallyFailedPrerequisite; preserve successful non-idempotent actions and link original \u2014 successfulUploadIsPreservedWhenOnlyRevealNeedsRetry (successful upload never selected, original/previous link survives serialization), repeatedFailureKeepsTheRootAndLinksTheImmediatePrecedingAttempt, CapturePipelineTest::retriesOnlyFailedClipboardAndKeepsTheExistingFileAndAppendOnlyLineage; survive restart \u2014 PipelineJournalTest::killedLinkedRetryKeepsTheOriginalRecordAndUnknownNewOutcome. All named tests pass. Unsupported retry families explicitly return retry-action-unavailable, never replay successful work. Rationale: this requirement constrains offered retries; it does not require automatic replay of every failed action family."
     },
@@ -708,7 +730,7 @@
         "classification": "implemented",
         "spec_line": 68,
         "coverage": "Write-ahead native journals and killed-process fixtures retain pending external outcomes as interrupted/unknown rather than inventing upload failure.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -730,7 +752,9 @@
             "method": "interruptedNetworkOutcomeIsUnknownRatherThanInventedFailure",
             "line": 183
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The actual native save/image-clipboard pipeline now uses a Qt Core write-ahead recorder and private atomic Linux journal. Save intent and unconfirmed publication paths precede native mutation; completed actions and canonical file facts are acknowledged afterwards. Reopened history retains completed/cancelled results and distinguishes interrupted unknown actions without retrying or inventing upload failure. Real-process kill/reopen, cancellation, storage failure, privacy/path and native review/forget fixtures verify this candidate seam. Full artifact/media recovery, retry authority, configured retention, crash-temporary cleanup, shared persisted compatibility, native target matrix and human review remain Required. Retry intent persists its new linked identity and inherited file facts before effects. Real-process tests kill linked save/clipboard attempts and recover an unchanged terminal original alongside an interrupted unknown new action. Effective per-run selections now reach the write-ahead recorder before output intent; real-process recovery preserves a successful selector and unknown chosen save without inventing deselected actions. File consumers use existing write-ahead intent. Live unknown reveal delivery stops the Core engine as interrupted without inventing an action result, leaving pending intent intact. Real-process killed file-clipboard recovery retains the acknowledged PNG and pending unknown action. Native file bindings stay in memory and are never reconstructed from restart metadata. Native Save As persists its exact pending candidate before publication; canonical journals retain both acknowledged aliases. Real-process kills of Save-As-only and Save-then-Save-As preserve earlier success and unknown pending Save As. No journal is created merely while a Save-As-only picker awaits a path. This native parser extension still requires shared persisted upgrade compatibility qualification. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Cropped dimensions/working pixels and editable documents are retained for actual PNG/companion publication and linked retry. Source lineage stays private/in-memory and is absent from shared documents/reports; evidence is indexed in CAPTURE-CROP.md. Full tool/field/resource/privacy/security/a11y/compatibility/parity/native/human/release qualification remains Required. Native counter-commit failure after PNG publication now records the real file and stable failure code, preserves working media and independent image clipboard, skips dependent file consumers and companion publication, and disables automatic retry with an explicit recovery explanation. CaptureSaveTest, CapturePipelineTest and PortalScreenshotTest cover changed/newer/corrupt storage, durable terminal results and partial workflow/UI reporting. Audit 2026-11-04: clauses: durable result survives restart \u2014 PipelineJournalTest::successfulNativeSaveAndClipboardFailureSurviveAReopenedStore; interrupted differs from failed and unknown upload never becomes failed \u2014 interruptedNetworkOutcomeIsUnknownRatherThanInventedFailure; linked retry restart retention \u2014 killedLinkedRetryKeepsTheOriginalRecordAndUnknownNewOutcome (save and clipboard), which actually kills child workers and reopens private records. These four cases passed offscreen. EXTRACTED: JournaledExecutor calls recorder.before before every external action, including upload; restart parser retains pending upload as unknown_action with pipeline_state interrupted and no invented upload result. Media reconstruction/retry after restart is outside this row's result-survival clause."
     },
@@ -750,7 +774,7 @@
         "classification": "implemented",
         "spec_line": 72,
         "coverage": "Canonical receipts and journal paths exclude pixels/clipboard/recognized text/credentials; stable fixed diagnostic codes and redaction fixtures cover existing actions.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
         ],
@@ -775,7 +799,9 @@
             "method": "actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads",
             "line": 139
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The engine emits stable diagnostic codes. Native capture-save encoding, publication and hook exceptions return value-free codes; private file paths and filename context remain artifact data rather than ordinary diagnostics. Complete native action privacy/diagnostic and human review coverage remain Required. The result-report serializer accepts no raster bytes, clipboard payload, recognized text or credential data; private artifact path/context appear only in user-requested review details with a privacy notice. Private native fixtures verify exception redaction and unchanged clipboard/files. Durable records accept only typed result/file metadata, exclude media and private exception payloads, and use private native storage; recovery reveals paths/context only through optional report details. Journal/private storage fixtures and candidate human-review limits are recorded in app/JOURNAL-RECOVERY.md. Native admitted region captures now persist a separate request/execution ID before acquisition, preserve early outcomes, link the real pipeline in both private observations and namespaced reports, and expose redacted headless lookup. Unfinished observations stay unconfirmed. Native descriptor storage is shared without changing existing PCA format or authority. Full application/catalogue/retention and target/human qualification remain Required. Native saved capture actions now execute local ocr/ocr-clipboard/qr-scan through the shared recognition service and GUI result bridge. Text stays executor/window-owned and is excluded from canonical receipts and journals. Explicit OCR clipboard with no text is a successful ocr-no-text no-op, preserving prior clipboard contents. Failed OCR skips its dependent clipboard; cancellation stops later actions. CaptureRecognitionTest covers real decoders, saved pixels, result/copy thread ownership, privacy and no-text behavior. Full catalogue/target qualification remains partial. Audit 2026-11-04: clauses: secrets/clipboard/recognized text/uploader credentials absent from ordinary diagnostics and stable user-safe error codes \u2014 CaptureRecognitionTest::pipelinePrivacySweepRedactsAllOrdinaryResultSurfaces passes through native CapturePipeline with real OCR text, throwing clipboard ports, a credential-bearing upload request that fails preparation before network, private journal and WorkflowExecution history. The sweep searches raw journal/history bytes, public execution lookup, terminal notification observation, progress, qInstallMessageHandler logs and actual PipelineResultDialog labels/tables/report details for all three sentinels; none appear. Every failed action has a stable code; clipboard exception payloads collapse to action-failed. Recognition presentation is the explicit owned user-requested result, not ordinary diagnostics. Offscreen result: 3 passed, 0 failed, 0 skipped including setup/cleanup. Network response-body privacy also remains covered by CaptureUploadTest::transfer; its socket-dependent CTest cannot start in this sandbox."
     },
@@ -805,7 +831,7 @@
         "classification": "implemented",
         "spec_line": 75,
         "coverage": "Native quick-task and configured workflow paths share CapturePipeline, action execution and journal result recording; portal-to-PNG verification exercises the connected path.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
         ],
@@ -826,11 +852,13 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
+            "sha256": "e66126e6d807b5bbc4c4c87bc3593cbc49fa88b3726217129ba019485440c1a6",
             "method": "quickTaskWorkflowCapturesThroughPortalThenChoosesAndSavesCurrentRunOnly",
-            "line": 786
+            "line": 796
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native quick-task-menu and after-capture-window now use the same asynchronous selector, engine and canonical result/journal model. Catalogue filtering prevents selector loops; a later chooser inherits the effective plan. Native saved workflow restart, Save/Copy/empty choices, cancellation/lifetime, effective journal and linked retry are covered by ActionSelectionTest and NativeCaptureWorkflowsTest. Native saved capture actions now execute local ocr/ocr-clipboard/qr-scan through the shared recognition service and GUI result bridge. Text stays executor/window-owned and is excluded from canonical receipts and journals. Explicit OCR clipboard with no text is a successful ocr-no-text no-op, preserving prior clipboard contents. Failed OCR skips its dependent clipboard; cancellation stops later actions. CaptureRecognitionTest covers real decoders, saved pixels, result/copy thread ownership, privacy and no-text behavior. Full catalogue/target qualification remains partial. Additional private-bus PortalScreenshotTest evidence exercises a configured quick-task workflow through the real CaptureController: acquired region pixels reach the native chooser, run-only Save replaces the configured clipboard choice, an actual PNG is published, the effective plan is journaled, and borrowed source bytes plus the original workflow snapshot remain unchanged. This complements the concurrently landed native selector implementation; physical desktop qualification remains open. Audit 2026-11-04: clauses: quick actions share configured action engine and result model, with no untracked shortcut path \u2014 ActionSelectionTest::replacementRunsOnlyChosenNativeActionsAndJournalsTheEffectivePlan runs both quick-task and after-capture selectors through CapturePipeline, verifies actual save/clipboard outcomes and exact canonical journal results; explicitRetryPreservesSelectorSuccessWithoutOpeningItAgain verifies the same linked retry model and no duplicated save/selector. All 10 selected data cases passed offscreen (12 total including init/cleanup). EXTRACTED: CapturePipeline worker constructs PostCapturePipeline for both selectors; CaptureActions dispatches both to its shared selection bridge."
     },
@@ -860,7 +888,7 @@
         "classification": "implemented",
         "spec_line": 77,
         "coverage": "Task-owned cancellation/media/settings/counters/temp files are isolated under interleaved concurrent pipeline tests.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
         ],
@@ -885,7 +913,9 @@
             "method": "interleavedPipelinesIsolateSnapshotsCountersTemporaryFilesAndTaskResults",
             "line": 263
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Concurrent retained-media/counter tests exist, but complete temporary-file lifecycle and every native action family are not covered. Native saved capture actions now execute local ocr/ocr-clipboard/qr-scan through the shared recognition service and GUI result bridge. Text stays executor/window-owned and is excluded from canonical receipts and journals. Explicit OCR clipboard with no text is a successful ocr-no-text no-op, preserving prior clipboard contents. Failed OCR skips its dependent clipboard; cancellation stops later actions. CaptureRecognitionTest covers real decoders, saved pixels, result/copy thread ownership, privacy and no-text behavior. Full catalogue/target qualification remains partial. Audit 2026-11-04: clauses: working media, settings snapshots, cancellation, counters, temporary files, and task-ID results map to CapturePipelineTest::interleavedPipelinesIsolateSnapshotsCountersTemporaryFilesAndTaskResults (managed-temporary-files and persisted-profile-counters). Two live native pipelines are held at interleaved upload boundaries; cancelling one leaves the other's PNG, pending action, settings, counter profile and durable result untouched. Caller mutations after admission cannot change either snapshot. Both data rows passed via the native offscreen test binary; CTest capture-pipeline cannot start its private D-Bus daemon in the workspace-write sandbox."
     },
@@ -923,7 +953,7 @@
         "classification": "implemented",
         "spec_line": 79,
         "coverage": "Core canonical fields and native metadata extensions are tested against contract shape; native receipts do not publish private payloads.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -951,7 +981,9 @@
             "method": "actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads",
             "line": 139
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The application native receipt and thin adapter now call one Qt Core production canonical serializer. The four published result fields and applicable action/dependency/cancellation fields remain intact; actual task identity, UTC execution times and native saved-file path/type/integer byte-length/naming context are under extensions.com.xerahs.app version 1. Native shared tray/main-window review shows an immutable read-only report without retry, file, clipboard or receipt mutations. Published vectors and independent Core/native/privacy/UI fixtures cover this seam. Canonical serialization also feeds a separate versioned write-ahead journal and native restart history for save/image-clipboard. This does not accept full recovery, retry authority, the remaining artifact catalogue, shared persisted compatibility or human/native matrix gates; those remain Required. Optional retry linkage/preserved-success provenance and file creator IDs remain namespaced; native linked result review does not invent current execution results for past successes. Native canonical file_artifacts now includes both actual Save aliases and preserved creator IDs without serializing live native bindings or truncating the result to its preferred single-file member. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Configured results and private restart journals now retain allowlisted profile ID/name/type/actions/chooser metadata under the native capture_workflow extension. Unknown profile extensions are excluded; empty/clipboard-only configured runs also retain terminal records. This is native-only metadata, not shared workflow interchange acceptance. Native result/history workflow metadata now includes known output directory/pattern only, with nested unknown payloads excluded. Native admitted region captures now persist a separate request/execution ID before acquisition, preserve early outcomes, link the real pipeline in both private observations and namespaced reports, and expose redacted headless lookup. Unfinished observations stay unconfirmed. Native descriptor storage is shared without changing existing PCA format or authority. Full application/catalogue/retention and target/human qualification remain Required."
     },
@@ -971,7 +1003,7 @@
           "before-upload-declined"
         ],
         "coverage": "Production catalogue matches stable contract action IDs/legacy flags and uses catalogue position for execution and replacement filtering.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -999,7 +1031,9 @@
             "method": "actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads",
             "line": 139
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "The compiled catalogue is checked against actions.json by platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp.",
       "evidence": [
@@ -1043,7 +1077,7 @@
           "url-clipboard-depends-on-upload"
         ],
         "coverage": "The engine resolves saved-file precedence and temporary inputs, skips missing prerequisites with canonical artifact IDs and records consumed input_artifact.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1065,7 +1099,9 @@
             "method": "partialRasterAcknowledgementSatisfiesConsumersButNeverGrantsDeletion",
             "line": 80
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Explicit native retry supplies inherited save.file and save-as.file availability without invented successful results. The engine resolves Save first, then Save As, including fallback after failed Save and new precedence after its successful retry. Actual native consumers validate their resolved private owned regular file against the in-memory publication identity on worker and GUI dispatch. Restart metadata cannot supply that authority. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required."
     },
@@ -1087,7 +1123,7 @@
           "save-failure-fallbacks"
         ],
         "coverage": "Managed private temporary files are used only without saved artifacts, recorded as upload inputs and cleaned after use; disallow-temporary skips without capture loss.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp"
         ],
@@ -1113,7 +1149,9 @@
             "method": "temporaryFileCleanupAndIsolation",
             "line": 172
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp"
@@ -1134,7 +1172,7 @@
           "before-upload-declined"
         ],
         "coverage": "The native before-upload result distinguishes decline from pipeline cancellation; upload alone is skipped and later independent pin/save outcomes survive.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1156,7 +1194,9 @@
             "method": "confirmation",
             "line": 80
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/CaptureBeforeUploadTest.cpp",
@@ -1195,7 +1235,7 @@
           "delete-after-successful-upload"
         ],
         "coverage": "Core prerequisite/provenance guard and descriptor-bound native staging permit removal only for the pipeline-created file after successful consumers; inherited/changed paths are refused.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1223,7 +1263,9 @@
             "method": "inheritedFileNeverGrantsDelete",
             "line": 231
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Explicitly selected native Delete uses the shared engine creation/dependency guard and live current-attempt raster identity. It stages in a private same-filesystem directory under a durably journaled intent, verifies the moved inode, and unlinks only the bound owned file. Replacements are restored without overwrite or retained at a private path until explicit user recovery/removal, as approved by Mike. Restart history exposes recovery paths without authorizing cleanup and protects pending/retained records from Forget. Inherited/retry files cannot authorize deletion. Saved-file precedence, Save As fallback, failed consumers/uploads, mutation/symlink/hardlink/ancestor refusal, cancellation, process termination, unknown acknowledgements and retained sidecars have native fixtures."
     },
@@ -1248,7 +1290,7 @@
           "cancel-during-uninterruptible-action"
         ],
         "coverage": "Canonical final state and final_working_media are determined by whether cancellation prevented remaining work and the last successful transformation.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1276,7 +1318,9 @@
             "method": "actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads",
             "line": 139
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "",
       "note": "Canonical final state and final_working_media are determined by whether cancellation prevented remaining work and the last successful transformation.",
@@ -1310,7 +1354,7 @@
           "legacy-flags-map-to-actions"
         ],
         "coverage": "Both native selectors filter earlier/self entries and persist the effective replacement plan; legacy selection aliases are normalized by the shared catalogue.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1338,7 +1382,9 @@
             "method": "actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads",
             "line": 139
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native quick-task-menu and after-capture-window now use the same asynchronous selector, engine and canonical result/journal model. Catalogue filtering prevents selector loops; a later chooser inherits the effective plan. Native saved workflow restart, Save/Copy/empty choices, cancellation/lifetime, effective journal and linked retry are covered by ActionSelectionTest and NativeCaptureWorkflowsTest. The actual native per-run chooser normalizes executor-available Save/Copy choices through the Qt Core catalogue and the same replacement engine used by published vectors. A Core hook publishes the effective full plan before recording the selector and beginning later actions, so journals and recovered results contain only chosen remaining work. Native PNG/clipboard/empty, cancellation, retry and real-process kill/reopen fixtures verify this seam. Legacy import and full configured/quick-task/catalogue UI/shared/native/human qualification remain Required. Additional private-bus PortalScreenshotTest evidence exercises a configured quick-task workflow through the real CaptureController: acquired region pixels reach the native chooser, run-only Save replaces the configured clipboard choice, an actual PNG is published, the effective plan is journaled, and borrowed source bytes plus the original workflow snapshot remain unchanged. This complements the concurrently landed native selector implementation; physical desktop qualification remains open."
     },
@@ -1363,7 +1409,7 @@
           "url-clipboard-depends-on-upload"
         ],
         "coverage": "URL-only native clipboard follows successful upload, uses upload.result as prerequisite and preserves successful upload when clipboard publication fails.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
@@ -1385,18 +1431,20 @@
             "method": "urlClipboard",
             "line": 210
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native URL clipboard runs after upload with the exact result URL. CaptureUploadTest covers success, skipped dependency after failed upload, and clipboard failure preserving upload; actual GUI-thread dispatch is asserted."
     }
   },
   "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-    "checked_at": "2026-11-11T15:27:15.305729+00:00",
+    "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+    "checked_at": "2026-11-14",
     "specification": "product-contract/capabilities/POST-CAPTURE-ACTIONS-001/SPEC.md",
     "specification_sha256": "a2cbe819f3fcac6817fef6df2922eebe73cf73846833be12e2529c8871c4fdf8",
-    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
     "reviewed_requirement_count": 24,
     "counts": {
       "implemented": 24
@@ -1644,6 +1692,65 @@
         },
         "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
       }
+    },
+    {
+      "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+      "checked_at": "2026-11-11T15:27:15.305729+00:00",
+      "specification": "product-contract/capabilities/POST-CAPTURE-ACTIONS-001/SPEC.md",
+      "specification_sha256": "a2cbe819f3fcac6817fef6df2922eebe73cf73846833be12e2529c8871c4fdf8",
+      "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+      "reviewed_requirement_count": 24,
+      "counts": {
+        "implemented": 24
+      },
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/CaptureActions.cpp",
+        "platforms/linux/linux-qt/app/CapturePipeline.cpp",
+        "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp": [
+          "keyboardCancellationAndClosePreservePixelsWithoutOutputs"
+        ],
+        "platforms/linux/linux-qt/tests/CaptureBeforeUploadTest.cpp": [
+          "confirmation"
+        ],
+        "platforms/linux/linux-qt/tests/CaptureDeleteTest.cpp": [
+          "inheritedFileNeverGrantsDelete",
+          "pipeline"
+        ],
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp": [
+          "actualCanvasExplicitIntentSavesBothCompatiblePairs",
+          "partialFailureRetriesOnlyTheCompanionWithoutRepeatingConsumers"
+        ],
+        "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp": [
+          "actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads",
+          "cancelDuringUninterruptibleNativeSavePreservesItsFileAndStopsClipboard",
+          "clipboardExceptionKeepsCompletedSaveAndWorkingMediaWithRedactedFailure",
+          "interleavedPipelinesIsolateSnapshotsCountersTemporaryFilesAndTaskResults",
+          "retriesOnlyFailedClipboardAndKeepsTheExistingFileAndAppendOnlyLineage",
+          "saveFailureStillDispatchesTheIndependentClipboardOnTheGuiThread"
+        ],
+        "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp": [
+          "temporaryFileCleanupAndIsolation",
+          "transfer",
+          "urlClipboard"
+        ],
+        "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp": [
+          "interruptedNetworkOutcomeIsUnknownRatherThanInventedFailure"
+        ],
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp": [
+          "quickTaskWorkflowCapturesThroughPortalThenChoosesAndSavesCurrentRunOnly"
+        ],
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp": [
+          "catalogueMatchesContract",
+          "partialRasterAcknowledgementSatisfiesConsumersButNeverGrantsDeletion",
+          "taskCopyPartialFactsRetainSuccessfulTransformation"
+        ]
+      },
+      "findings": [],
+      "remaining_scope": "",
+      "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
     }
   ]
 }

@@ -47,7 +47,7 @@
         "classification": "partial",
         "spec_line": 9,
         "coverage": "Complete compatibility-ledger format/version/import/export/migration/security/platform policy acceptance remains absent; current native format readers do not establish every promise.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -55,7 +55,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -73,7 +73,9 @@
             "method": "safeExtensionsRoundTripThroughBothStores",
             "line": 78
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native document/current JSON, SXCU and SXIE slices exist. Full compatibility-ledger formats/versions and approved policies remain."
     },
@@ -104,7 +106,7 @@
         "classification": "partial",
         "spec_line": 13,
         "coverage": "Readers have representative source-shaped fixtures and native tests; complete pinned legacy runtime observations and approved fixtures for every claimed version remain missing.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -112,7 +114,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -130,7 +132,9 @@
             "method": "pinnedSourceFixtureKeepsAllFieldsAndMissingReferences",
             "line": 48
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Representative uploader/preset and document fixtures exist. Accepted runtime observations and every supported legacy version remain."
     },
@@ -172,7 +176,7 @@
         "classification": "implemented",
         "spec_line": 16,
         "coverage": "Supported XANN/settings/SXCU/preset/history readers construct isolated candidates; failures identify known keys or record ordinals/validated IDs without values, and native reviewed history import preserves other live state.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -180,7 +184,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -194,7 +198,7 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
             "method": "failingAnnotationIsIdentifiedByIndexAndIdWithoutPayload",
             "line": 52
           },
@@ -210,7 +214,9 @@
             "method": "nativeImportRefusesAnArchiveChangedSinceReviewThenReloadsAndRetries",
             "line": 190
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native profile imports parse into an isolated candidate, preview every affected store and publish only after confirmation under exact-byte fences. Second-store prepare/publish failures restore the first store byte-for-byte; process-interrupted publication recovers at startup. Reference conversion uses the same coordinator and preserves unrelated native records. Unsupported reference history, provider-plugin and credential migrations remain excluded and reported; broader compatibility-format acceptance remains Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior."
     },
@@ -250,7 +256,7 @@
         "classification": "partial",
         "spec_line": 20,
         "coverage": "Six disposition counts and value-free affected-record reports exist and unsafe critical SXCU input blocks acceptance; the entire compatibility format/record inventory is not covered.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -258,7 +264,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -282,7 +288,9 @@
             "method": "criticalMetadataCannotBeAccepted",
             "line": 33
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): Every importer that exists (XANN, SXCU, SXIE/XSIE, editor preferences, application settings) returns a typed retained/transformed/defaulted/quarantined/rejected/ignored report with counts only, never keys or values, and shows it in the native window that performs the import. Unsupported SXCU behavior blocks catalog admission; unknown annotations and preset steps stay inert and are counted quarantined. Tests: XannCompatibilityTest::reportsEachDispositionWithoutValues; SettingsCompatibilityTest::preferencesReportEveryDispositionWithoutValues and settingsReportRepairsAndTransforms; SxcuImportTest::reportsAndCanonicalRoundTrip and criticalMetadataCannotBeAccepted; SxiePresetTest::extensionsAndReportsAreInertAndValueFree and exportDialogWritesPrivateNativeJson; EditorWindowTest::xannImportReportAppearsOnOpenAndReplacement; ApplicationSettingsTest::regionPreferencesDialogApplyCancelAndReset; NativeEditorAppearanceTest::applyCancelAndResetAreAtomicAcrossNativeWindowsAndRestart; UploadDestinationsDialogTest::importsShowsSecretStatusAndKeepsValuesOutOfTheWindow. Legacy history/XML/SQLite/plugin importers are COMPCAT-009/010/012 and not part of this row's seam. Native, physical and human qualification remain with the owner."
     },
@@ -307,7 +315,7 @@
         "classification": "partial",
         "spec_line": 23,
         "coverage": "Compatible opaque fields survive current readers and suspicious authority/secret/path-shaped extensions fail closed; complete format/secret/critical classifications are not established by a name vocabulary.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -315,7 +323,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -339,7 +347,9 @@
             "method": "unsafeExtensionsBlockBothStoresWithoutMutatingOrReportingValues",
             "line": 108
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): Compatible unknown fields round-trip through XANN, preferences, application settings and SXIE/XSIE (XannCompatibilityTest::portableExportReportsBasenameAndPreservesSafeFields; SettingsCompatibilityTest::safeExtensionsRoundTripThroughBothStores; SxiePresetTest::extensionsAndReportsAreInertAndValueFree). Unknown executable, authority, credential, consent, native-handle, $ref/$type or required-feature content is rejected (XANN, preferences, settings, presets: XannCompatibilityTest::unsafeUnknownsRejectWithoutEcho; SettingsCompatibilityTest::unsafeExtensionsBlockBothStoresWithoutMutatingOrReportingValues and structurallyInvalidRecoverySnapshotsAreNotSilentlyDiscarded; SxiePresetTest::extensionsAndReportsAreInertAndValueFree) or placed in candidate-only SXCU quarantine that is inert, never persisted and blocks admission (SxcuImportTest::criticalMetadataCannotBeAccepted). Existing native preset receipt type tags stay inert (XannCompatibilityTest::nativePresetReceiptsRemainInertWithoutAllowingArbitraryTypeTags). Quarantine representation: XANN UnsupportedAnnotation.raw, unsupported preset steps, SxcuImportResult.quarantine. The name-based classifier is conservative and needs human security review before qualification."
     },
@@ -365,8 +375,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 26,
-        "coverage": "Native exports are versioned, atomic and report profile-local omissions; full catalogue portability/secret classification and cross-format exports remain incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "coverage": "Native exports are versioned, atomic and report profile-local omissions; full catalogue portability/secret classification and cross-format exports remain incomplete. Current transfer evidence explicitly omits the local compositor cursor-capture opt-in and refuses imported authority changes; omitted values retain the local choice.",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -374,7 +384,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -388,17 +398,25 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
             "method": "portableExportReportsBasenameAndPreservesSafeFields",
-            "line": 175
+            "line": 218
           },
           {
             "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
             "sha256": "3dd7e2375586c7aa7c253b999545b656fd830c32f6212a6a3504bfaf82472db4",
             "method": "editorPreferenceSaveReportsProfileLocalOmissions",
             "line": 98
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ConfigurationTransferTest.cpp",
+            "method": "compositorCaptureOptInStaysLocalDuringTransfer",
+            "sha256": "dfd425ebd0b742ea5e615e725465727f5ea8e11904ff2c147d606b1409ded0df",
+            "line": 25
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): XANN save reports target xann, version 1 and nonportable-image-path while writing a portable NFC basename atomically through the sidecar store (XannCompatibilityTest::portableExportReportsBasenameAndPreservesSafeFields; EditorSaveTest and CapturePairedSaveTest::actualCanvasExplicitIntentSavesBothCompatiblePairs assert the basename). XSIE export reports target/version and external-asset-not-embedded (SxiePresetTest::exportReportsUnresolvedExternalAssetAsNonPortable, exportDialogWritesPrivateNativeJson). Editor preference and application settings saves report format/version and profile-local-* omissions (SettingsCompatibilityTest::editorPreferenceSaveReportsProfileLocalOmissions, safeExtensionsRoundTripThroughBothStores). Unsafe content, secrets and native handles cannot be exported (unsafe-unknown export refusals in XannCompatibilityTest::unsafeUnknownsRejectWithoutEcho and SxiePresetTest). No SXCU/destination export UI exists and none was added; writeDestination is internal versioned catalog serialization with secrets held as references. Native, physical and human qualification remain with the owner."
     },
@@ -429,7 +447,7 @@
         "classification": "partial",
         "spec_line": 29,
         "coverage": "Native JSON stores have semantic IDs, versions, explicit validators and future read-only behavior; complete schema/upgrade/downgrade/path/enum/collection policy across all legacy application/uploader/workflow formats is incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -437,7 +455,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -455,7 +473,9 @@
             "method": "nativeStoreReadersShareTheLexicalBoundary",
             "line": 166
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native profile transfer now explicitly validates semantic UUID/action IDs, uploader method/body enums, references, paths, colours, geometry and bounded/duplicate collections, with named family tests. Workflow v1 upgrades explicitly to v2 without granting authority to an old output extension; unsupported bundle/store versions are rejected. Reference named-enum workflows and legacy custom uploaders convert into stable UUIDv5 identities. Native value-family tests pass; full reference-format, runtime-observed and cross-platform fixture qualification remains Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior."
     },
@@ -471,7 +491,7 @@
         "classification": "blocked",
         "spec_line": 33,
         "coverage": "Complete legacy-secret consent, verification, native secure migration and recoverable plaintext removal await approved human credential/security policy.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -479,7 +499,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -497,7 +517,9 @@
             "method": "importsCurrentUploaderAndExtractsSecrets",
             "line": 96
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "No explicit verified legacy plaintext-secret migration is implemented. Secret Service storage exists; human security review is pending.",
       "evidence": [
@@ -516,7 +538,7 @@
         "classification": "partial",
         "spec_line": 37,
         "coverage": "Native JSON/XML/SQLite reviewed imports preserve exact source bytes, representable IDs/timestamps/URLs/tags/local references and quarantine neighbors, then support restart/undo/recovery. Full semantic operation-state/privacy mapping and all legacy identity/version rules are not established.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -524,7 +546,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -566,7 +588,9 @@
             "method": "realReadonlySnapshotKeepsExactIdsUnicodeTagsNullsAndSourceBytes",
             "line": 30
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Native capture history exists; legacy JSON/XML/SQLite history migration with neighboring-record quarantine is absent.",
       "evidence": [
@@ -600,7 +624,7 @@
         "classification": "implemented",
         "spec_line": 41,
         "coverage": "SQLite reader holds a read-only transaction and bounded backup snapshot, validates integrity and ordinary-table schema, disables extensions/views/triggers, bounds bytes/rows/time and emits typed transaction failures; WAL/concurrent writer and malicious schema tests exercise this native behavior.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -608,7 +632,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -650,7 +674,9 @@
             "method": "missingCorruptWrongSchemaBusyAndCancellationAreValueFreeFailures",
             "line": 73
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "No untrusted legacy SQLite snapshot/schema/integrity import is implemented.",
       "evidence": [
@@ -679,7 +705,7 @@
         "classification": "partial",
         "spec_line": 44,
         "coverage": "SXCU uses data-only parsing, isolated secret extraction and explicit native review before catalog mutation; full legacy template/regex/body/script/network authority compatibility and human qualification remain incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -687,7 +713,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -711,7 +737,9 @@
             "method": "importsCurrentUploaderAndExtractsSecrets",
             "line": 96
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "SXCU imports are parsed as data, validated, secrets separated, and popular-provider/adversarial fixtures exist. Full executable/network authority and human security qualification remain."
     },
@@ -727,7 +755,7 @@
         "classification": "blocked",
         "spec_line": 48,
         "coverage": "Plugin-host package provenance, manifest authority, isolation and explicit installation policy are not approved or implemented.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -735,7 +763,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -746,7 +774,9 @@
             "sha256": "dac89b879c080e5d246f72793bf4e29cc0a6d763f07d8d9c2332e57f287d24a7"
           }
         ],
-        "test_anchors": []
+        "test_anchors": [],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "No approved isolated plugin package inspection/installation/host is implemented.",
       "evidence": [
@@ -780,7 +810,7 @@
         "spec_line": 52,
         "remaining_human_decision": "SXIE import security review and accepted legacy/cross-platform format fixtures remain pending.",
         "coverage": "Editable XANN/preset unknown preservation exists, but complete legacy geometry/effect/font/asset compatibility and scheduler-mandated human SXIE import security review remain pending.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -788,7 +818,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -802,7 +832,7 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
             "method": "reportsEachDispositionWithoutValues",
             "line": 34
           },
@@ -812,7 +842,9 @@
             "method": "failingStepIsLocatedByIndexWithoutPayload",
             "line": 113
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "XANN shapes/assets and SXIE/preset import have native fixtures and unknown preservation. Complete field compatibility, resources, all selected legacy effects and accepted observations remain.",
       "blocked_reason": "Editable XANN/preset unknown preservation exists, but complete legacy geometry/effect/font/asset compatibility and scheduler-mandated human SXIE import security review remain pending."
@@ -826,7 +858,7 @@
         "classification": "blocked",
         "spec_line": 57,
         "coverage": "MCP operation/schema and current-consent authority are not approved; imported automation text cannot grant execution authority.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -834,7 +866,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -845,7 +877,9 @@
             "sha256": "dac89b879c080e5d246f72793bf4e29cc0a6d763f07d8d9c2332e57f287d24a7"
           }
         ],
-        "test_anchors": []
+        "test_anchors": [],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "No MCP automation JSON import/schema/consent boundary is implemented.",
       "evidence": [
@@ -889,7 +923,7 @@
         "classification": "partial",
         "spec_line": 61,
         "coverage": "Current JSON/gzip/ZIP/XML/SQLite inputs have duplicate-key/UTF-8/depth/size/element/traversal and schema guards with adversarial tests; entire legacy-format resource/fault catalogue is not qualified.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -897,7 +931,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -911,7 +945,7 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
             "method": "adversarialJsonIsRejected",
             "line": 133
           },
@@ -927,7 +961,9 @@
             "method": "malformedOrExecutableXmlNeverProducesAUsablePreview",
             "line": 44
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): Shared JsonBoundary preflight (strict UTF-8 incl. surrogates, decoded duplicate keys, depth, bytes, lexical elements) fronts XANN, SXCU, SXIE Config.json/XSIE, editor preferences, application settings, PrivateJsonFile and the workflow, destination and journal readers. Tests: JsonBoundaryTest::adversarial and lexicalStringsAndBounds; XannCompatibilityTest::adversarialJsonIsRejected, boundedGzipRejectsTruncationTrailingMembersExpansionAndSize, lexicalElementBudgetIsEnforcedBeforeDocumentConstruction and pathTraversalAndCyclicReferencesReject; SxcuImportTest::boundaryMatrix and criticalMetadataCannotBeAccepted; SxiePresetTest::jsonBoundaryMatrix plus the existing bounded ZIP tests and path-traversal rows; SettingsCompatibilityTest::readerAdversarialMatrix, embeddedPathsAreRefusedWithoutOpeningThem and nativeStoreReadersShareTheLexicalBoundary. Rejections use stable value-free codes, no reader touches the network, and imported references are never followed ($ref is refused as unsafe data, so cycles cannot be dereferenced). The editor recent-image list is exempt from the '..' rule by design (absolute opened-file identities keep kernel meaning through symlinks and are never read when parsed). Native, physical and human qualification remain with the owner."
     },
@@ -953,7 +989,7 @@
         "classification": "partial",
         "spec_line": 65,
         "coverage": "Current locale/newline/NFC and original timestamp preservation have local tests; all-platform canonical fixtures and timezone-less legacy interpretations remain incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -961,7 +997,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -981,11 +1017,13 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
+            "sha256": "10fa30e0b575274cef24f3efe8a453326e08f25dc35d95bc10948aa0b9c036cc",
             "method": "localesNewlinesAndUnicodeVariantsKeepTheSameMeaning",
-            "line": 185
+            "line": 228
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): src/storage/COMPATIBILITY.md fixes the canonical rules: UTC ISO-8601 with milliseconds and Z on write, '.' decimals, case-sensitive native IDs/enums with documented case-insensitive legacy aliases, portable basenames, LF output (CRLF input accepted) and NFC for display names and font families. Fixtures load identically under German/Arabic/Turkish locales, LF/CRLF and composed/decomposed Unicode (JsonBoundaryTest::localeAndNewlineVariants; XannCompatibilityTest::localesNewlinesAndUnicodeVariantsKeepTheSameMeaning; SettingsCompatibilityTest::localeNewlineAndFontNormalizationFixtures; SxcuImportTest::reportsAndCanonicalRoundTrip; SxiePresetTest::canonicalPresetLocaleNewlineAndUnicode); non-portable data is dispositioned by export omission codes (COMPCAT-006 tests). Decision (Mike's rule: follow the reference app): timezone-less legacy XANN timestamps keep local interpretation, as .NET does for an unspecified-kind DateTime, and are rewritten as UTC on the next save. Windows and macOS runtime fixtures are not run here; they and human qualification remain with the owner."
     },
@@ -998,7 +1036,7 @@
         "classification": "partial",
         "spec_line": 69,
         "coverage": "Reference migration detects completion and keeps backups, and native history exact-snapshot retries/undo/recovery are idempotent; all accounts/workflows/history/annotation/remote migration families and accepted rollback policies remain incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -1006,7 +1044,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -1024,7 +1062,9 @@
             "method": "exactRetriesAndDistinctSnapshotsKeepEveryRecordAndUndoPreservesOthers",
             "line": 34
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "evidence": [
         "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
@@ -1085,7 +1125,7 @@
         "classification": "partial",
         "spec_line": 73,
         "coverage": "Local malformed/unknown/current round-trip and native reviewed history migration tests exist; every legacy version, golden runtime observation and shared cross-platform activation corpus remains incomplete.",
-        "reviewed_at_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
@@ -1093,7 +1133,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
-            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+            "sha256": "adfda6463e77bd895aa65dd382c5cab08257a208194b51fce50a2a9586cb926d"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
@@ -1117,18 +1157,20 @@
             "method": "safeExtensionsRoundTripThroughBothStores",
             "line": 78
           }
-        ]
+        ],
+        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
       },
       "previous_note": "Local representative fixtures exist for implemented subsets. Complete approved legacy golden/runtime/cross-platform migration evidence remains."
     }
   },
   "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-    "checked_at": "2026-11-11T15:27:15.305729+00:00",
+    "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+    "checked_at": "2026-11-14",
     "specification": "product-contract/capabilities/COMPATIBILITY-CATALOG-001/SPEC.md",
     "specification_sha256": "69b281b1066aebb4fefe3c6f51da1e1d848e2185332a6a71c67ab00da48571fc",
-    "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+    "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
     "reviewed_requirement_count": 18,
     "counts": {
       "blocked": 4,
@@ -1718,6 +1760,79 @@
         },
         "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
       }
+    },
+    {
+      "source_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
+      "checked_at": "2026-11-11T15:27:15.305729+00:00",
+      "specification": "product-contract/capabilities/COMPATIBILITY-CATALOG-001/SPEC.md",
+      "specification_sha256": "69b281b1066aebb4fefe3c6f51da1e1d848e2185332a6a71c67ab00da48571fc",
+      "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+      "reviewed_requirement_count": 18,
+      "counts": {
+        "blocked": 4,
+        "implemented": 2,
+        "partial": 12
+      },
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/LegacyHistorySqlite.cpp",
+        "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+        "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+        "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.cpp",
+        "platforms/linux/linux-qt/src/history/LegacyHistoryXml.cpp",
+        "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
+        "platforms/linux/linux-qt/src/storage/Compatibility.h"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp": [
+          "exactRetriesAndDistinctSnapshotsKeepEveryRecordAndUndoPreservesOthers"
+        ],
+        "platforms/linux/linux-qt/tests/LegacyHistorySqliteTest.cpp": [
+          "missingCorruptWrongSchemaBusyAndCancellationAreValueFreeFailures",
+          "realReadonlySnapshotKeepsExactIdsUnicodeTagsNullsAndSourceBytes",
+          "sourceTriggerNeverRunsAndHistoryViewOrGeneratedSchemaIsRejected",
+          "walAndConcurrentWriterCannotChangeTheReviewedTransaction"
+        ],
+        "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp": [
+          "nativeImportRefusesAnArchiveChangedSinceReviewThenReloadsAndRetries",
+          "nativeXmlAndSqliteImportRestartUndoAndRecovery",
+          "pinnedSourceFixtureKeepsAllFieldsAndMissingReferences"
+        ],
+        "platforms/linux/linux-qt/tests/LegacyHistoryXmlTest.cpp": [
+          "invalidAndUnsafeRecordsDoNotDropTheirValidNeighbours",
+          "malformedOrExecutableXmlNeverProducesAUsablePreview"
+        ],
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp": [
+          "editorPreferenceSaveReportsProfileLocalOmissions",
+          "invalidSettingIsLocatedByKeyWithoutItsValue",
+          "localeNewlineAndFontNormalizationFixtures",
+          "nativeStoreReadersShareTheLexicalBoundary",
+          "preferencesReportEveryDispositionWithoutValues",
+          "readerAdversarialMatrix",
+          "safeExtensionsRoundTripThroughBothStores",
+          "unsafeExtensionsBlockBothStoresWithoutMutatingOrReportingValues"
+        ],
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp": [
+          "criticalMetadataCannotBeAccepted",
+          "importsCurrentUploaderAndExtractsSecrets"
+        ],
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp": [
+          "failingStepIsLocatedByIndexWithoutPayload"
+        ],
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp": [
+          "adversarialJsonIsRejected",
+          "failingAnnotationIsIdentifiedByIndexAndIdWithoutPayload",
+          "localesNewlinesAndUnicodeVariantsKeepTheSameMeaning",
+          "portableExportReportsBasenameAndPreservesSafeFields",
+          "reportsEachDispositionWithoutValues"
+        ]
+      },
+      "findings": [
+        "Do not rebuild history JSON/XML/SQLite import: all are implemented as explicitly reviewed immutable snapshots in a separate private archive with restart/undo/recovery.",
+        "COMPCAT-010 now has direct meaningful evidence for every SQLite-specific clause. COMPCAT-002/018 retain missing runtime/golden/cross-platform activation qualification.",
+        "Distinct snapshots preserve repeated records intentionally because unversioned JSON/XML lack task IDs; exact snapshot retry is idempotent. A broader stable-task merge/migration policy still needs specification."
+      ],
+      "remaining_scope": "COMPCAT-001, COMPCAT-002, COMPCAT-004, COMPCAT-005, COMPCAT-006, COMPCAT-007, COMPCAT-008, COMPCAT-009, COMPCAT-011, COMPCAT-012, COMPCAT-013, COMPCAT-014, COMPCAT-015, COMPCAT-016, COMPCAT-017, COMPCAT-018",
+      "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
     }
   ]
 }
