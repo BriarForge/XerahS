@@ -152,3 +152,7 @@ write. This preserves publication holds across unmount/remount.
 An answered watch-upload failure remains attempted for the life of the process,
 including Stop/Start before settlement finishes. A new service can retry that
 released failure. Work stopped before sending remains retryable on Start.
+
+CORE-025 is implemented on Linux; activation blocked by CORE025-FU-IDENTITY.
+Cross-boot btrfs identity stability and possible removable-media identity reuse
+remain mandatory activation qualification, with maintainer review by 2026-12-14.

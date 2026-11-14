@@ -2,7 +2,7 @@
 
 Revalidated 2026-11-14 at `fdc728fb6c33dc0a7685205e77dfdcfd37217db6` against all 16 manifest capabilities and 345 requirement IDs. The previous source audit and later integration records remain in each trace map’s audit history. Unchanged source and test bodies were compared to their frozen revisions; changed behavior and test assertions were reviewed against the current contract. The frozen revalidation pinned 1,815 production/test anchors across 205 files; later completions add revision-specific hashes and named test locations. Anchors are **EXTRACTED** source evidence; graph links and file presence do not establish behavior.
 
-The 325 desktop requirements classify as **177 tested candidate implementations, 110 partial, 5 not started, 32 blocked and 1 outside desktop scope**. The 20 MOB requirements remain outside Linux desktop scope. These classifications do not approve parity, release or supported-target qualification.
+The 325 desktop requirements classify as **178 tested candidate implementations, 109 partial, 5 not started, 32 blocked and 1 outside desktop scope**. The 20 MOB requirements remain outside Linux desktop scope. These classifications do not approve parity, release or supported-target qualification.
 
 [Trace maps](traceability/) and the [machine inventory](PRODUCTION-BACKLOG.json) retain dispositions, vectors, previous audits and the current classifications. Blocked rows receive no implemented credit.
 
@@ -23,7 +23,7 @@ The 325 desktop requirements classify as **177 tested candidate implementations,
 | SETTINGS-CATALOG-001 | 20 | 2 | 13 | 0 | 5 | 0 |
 | WORKFLOW-CATALOG-001 | 18 | 4 | 12 | 1 | 1 | 0 |
 | INTERFACE-CATALOG-001 | 18 | 3 | 10 | 1 | 4 | 0 |
-| CORE-PLATFORM-001 | 37 | 8 | 19 | 2 | 7 | 1 |
+| CORE-PLATFORM-001 | 37 | 9 | 18 | 2 | 7 | 1 |
 | COMPATIBILITY-CATALOG-001 | 18 | 2 | 12 | 0 | 4 | 0 |
 
 ## Next work in build order
@@ -51,11 +51,11 @@ The scheduler still blocks remove_background, QR scanning/OCR dependencies, the 
 
 The full Debug offscreen suite and final push gate must pass on the integrated tree. Actual results are recorded in shared loop state after push. Contract lint, backlog/progress freshness and current anchor integrity are checked separately.
 
-## Watch-folder checkpoint candidate — 2026-11-14
+## Watch-folder checkpoint candidate — 2026-11-14 (superseded by final qualification below)
 
 Watch-folder processed checkpoints now freeze inputs on the GUI thread and serialize/re-read/atomically publish through OwnedWork. Completion is reported only after save or explicit checkpoint failure; no next file dispatches while pending. Stop does not cancel an already-earned checkpoint; owner destruction drops only adoption, retaining the worker write. The post-exec drain waits for completion, including signal exits; a conflicting writer or failed write blocks watching without adoption or retry. GUI-thread watcher registration remains accepted because QFileSystemWatcher owns its thread-bound inotify watches; the final one-file fingerprint remains accepted to refuse replacement immediately before dispatch. Rule persistence, execution-record writes, settings transfer/import/migration and other storage boundaries remain separate. The unknown-publication restart policy and checkpoint retention were resolved by the CORE-025 candidate; its corrected implementation remains partial pending review and qualification. Targeted Qt 6.12 / 6.4.2 suites pass, and the synchronous-path mutation fails the new responsiveness regression. Both original suites passed twenty repetitions on Qt 6.12 and Qt 6.4.2; Option B approved after test hardening; the full gate remains required before push. Coverage remains 177/324 pending qualification of the corrected CORE-025 candidate.
 
-## CORE-025 watch publication and retention candidate — 2026-11-14
+## CORE-025 watch publication and retention candidate — 2026-11-14 (superseded by final qualification below)
 
 Maintainer decisions A, B and C are implemented candidates. Accepted HTTP 2xx failures remain unconfirmed; parent device/inode identity protects processed and held keys across mount replacement; answered failures remain attempted across Stop/Start for the application process. All 31 CORE vectors and actual namespace retention proofs pass on Qt 6.12 and Qt 6.4.2. The process-session regression reproduces a second request when Stop precedes settlement on both Qt versions; the condition fixes it. Settlement before Stop remains green, a fresh service retries the released failure, and work stopped before dispatch remains retryable. Removing the condition reproduces the extra request. CORE-025 remains partial at 177/324 pending final full suites, maintainer and independent Sonnet reviews, and the rebased push gate. No other platform, activation, census closure or release is claimed.
 
@@ -77,3 +77,16 @@ CORE-025 remains partial pending review and final qualification of the corrected
 ## CORE-025 maintainer review corrections (2026-11-14)
 
 Maintainer review of 7aaa472 requested clean-quit and evidence corrections. Real subprocess rows reproduce unsent preparation and answered-failure journal callbacks leaving false holds before the fix (/tmp/xerahs-core025-clean-quit-red2.log). The drain now waits for the pending file settlement, not just a running checkpoint; it still returns when application exit interrupts a nested loop so main can drain after exec. The failed-intent test observes the server for 1.5 seconds, checks the exact write-failed notice, unchanged store/rules and persistent blocking. A mutant that dispatches after failed intent now fails with one received HTTP body (/tmp/xerahs-core025-failed-intent-mutation-red.log). A seven-file startup notice test fails before the count wording fix and passes after it. The real downgrade-reader and controller/service response-count evidence was already fixed in 4c67e89, whose full corrected Qt 6.4.2 suite passed 179/179; full gates must rerun after these drain changes. The HTTP 2xx unusable-result decision remains open. A private mount probe now proves the persistent-mountpoint retention gap: hold_before=1, parent_exists_unmounted=1, fingerprint_restored=1, hold_after=0 (/tmp/xerahs-core025-mount-retention-probe.log). Retention policy for that case and the definition of an answered-failure retry session require binding maintainer disposition before implementation or promotion. CORE-025 remains partial.
+
+## 2026-11-14 CORE-025 final qualification
+
+CORE-025 implemented on Linux after the final rebased host gate, full Qt 6.4.2 suite (179/179), explicit full namespace proofs on both Qt versions (10 passed, 0 failed, 0 skipped each), and freshly rebuilt adapters (31/31 CORE vectors each). Saved send intent precedes HTTP; missing acknowledgement or an accepted 2xx without a usable result is held unconfirmed across restart. Answered failures stay attempted across Stop/Start for the process lifetime and retry in a new service. Parent identity guards every checkpoint writer with frozen stat/fingerprint/stat observations and snapshot-fenced adoption. Native crash, clean-quit, mount replacement, legacy and failure journeys and discriminating mutations cover the policy. Aoife approved source 71ad37b; independent Viktor (Sonnet) review found no blocking code defect. Maintainer decision under ROOT-REVIEW-001 authorizes P7 scope clarification and this promotion after gates. Coverage is 178/324; activation blocked by CORE025-FU-IDENTITY. Other platforms, activation, census closure and release are not approved.
+
+CORE025-FU-IDENTITY (blocks activation qualification; owner: maintainer; review by 2026-12-14).
+(a) Proven: on the reference host, btrfs `/home` reports a different `st_dev` on each boot (observed 61/63/65/66 → 62). Recorded identities never match again, so entries are kept conservatively, as P7 requires, until the store reaches 16 MiB and fails closed with `watch-store-full`. This is safe but makes the feature degrade over time on btrfs.
+(b) Unproven: removable media may reuse device number + root inode, so different media could qualify an old parent and prune its holds. This would fail in the unsafe direction.
+Fixing either needs a separate maintainer decision on a stable filesystem identity (for example a filesystem UUID or subvolume identity) or on a fenced-refresh policy, with contract vectors. This slice adds no implementation for either. Activation and release stay blocked until both are resolved.
+
+The existing unbounded-drain follow-up also includes:
+
+Includes: the copy/move worker has no handler for an allocation exception, and `OwnedWork` drops completion, so a pending drain can wait forever. Completion must be guaranteed on every exit path, exceptions included.

@@ -15,7 +15,7 @@ and decisions waiting on Mike.
 
 | Capability | State | Evidence |
 |---|---|---|
-| `CORE-PLATFORM-001` | Native lifetime instance ownership, authenticated bounded activation and a keyboard-accessible command window; complete application foundation and release gates pending | Real-process/actual-application forwarding, failure/recovery, core dispatch and native action tests; no CORE vectors published yet; [traceability](traceability/CORE-PLATFORM-001.json) |
+| `CORE-PLATFORM-001` | Native lifetime instance ownership, authenticated bounded activation and a keyboard-accessible command window; complete application foundation and release gates pending | Real-process/actual-application forwarding, failure/recovery, core dispatch and native action tests; 31 CORE-025 vectors pass on both Qt baselines; activation blocked by CORE025-FU-IDENTITY; [traceability](traceability/CORE-PLATFORM-001.json) |
 | `FILENAME-GENERATION-001` | Core logic/conformance seam plus per-profile native pattern editing and deterministic preview; counter persistence and complete context/grants pending | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
 | `POST-CAPTURE-ACTIONS-001` | Production Core engine with native worker PNG publication, UI-thread clipboard dispatch, cancellation/activity and retained receipts; write-ahead journal and native restart history; linked native output/prerequisite retry, per-run chooser, file/path clipboard/ShowItems reveal and new-PNG Save As with both file artifacts; complete save variants/catalogue/prerequisite retry, media recovery and retention pending | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
 | `WORKFLOW-CATALOG-001` | Saved named region profiles with save folders/filename preview, default selection and GUI/tray/workflow-ID CLI and session global shortcuts; private admitted executions and headless result lookup; full catalogue and entry points pending | Native save/restart/controller/output tests; no published workflow vectors yet; [traceability](traceability/WORKFLOW-CATALOG-001.json) |
@@ -362,3 +362,7 @@ standalone generator links only QtGui. Tests verify both those plans and the
 product against the same exact hashes. All 200 historical effect hash entries
 remain recorded. Qt 6.4.2 and Qt 6.12 pass locally; whole-catalogue parameter,
 profile and cross-platform qualification remains incomplete.
+
+CORE-025 is implemented on Linux with durable watch upload intent, conservative
+publication holds and parent-identity retention. Activation remains blocked by
+CORE025-FU-IDENTITY; see [the backlog](PRODUCTION-BACKLOG.md).

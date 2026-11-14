@@ -159,3 +159,14 @@ Rebuild adapters, run the full suites, obtain maintainer line review and an
 independent Sonnet review of acceptedAttempts and the parents reader, then run
 the rebased push gate. Linux stays partial until qualified; other platforms
 are not waived. No activation, census closure or release is approved.
+
+## Activation qualification follow-up
+
+CORE025-FU-IDENTITY (blocks activation qualification; owner: maintainer; review by 2026-12-14).
+(a) Proven: on the reference host, btrfs `/home` reports a different `st_dev` on each boot (observed 61/63/65/66 → 62). Recorded identities never match again, so entries are kept conservatively, as P7 requires, until the store reaches 16 MiB and fails closed with `watch-store-full`. This is safe but makes the feature degrade over time on btrfs.
+(b) Unproven: removable media may reuse device number + root inode, so different media could qualify an old parent and prune its holds. This would fail in the unsafe direction.
+Fixing either needs a separate maintainer decision on a stable filesystem identity (for example a filesystem UUID or subvolume identity) or on a fenced-refresh policy, with contract vectors. This slice adds no implementation for either. Activation and release stay blocked until both are resolved.
+
+The existing unbounded-drain follow-up also includes:
+
+Includes: the copy/move worker has no handler for an allocation exception, and `OwnedWork` drops completion, so a pending drain can wait forever. Completion must be guaranteed on every exit path, exceptions included.

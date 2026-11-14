@@ -1468,12 +1468,12 @@
       "previous_note": "The private native launch protocol has version/UUID correlation, kernel peer authentication, bounded intake/concurrency, redacted failures and limited receipt replay. This candidate is not an approved shared CLI/MCP API. Full shared operations, progress/cancellation, consent, assistant/shell/watch-folder coverage and human review remain Required. Native --run-workflow accepts a full UUID; --json returns a versioned admission/delivery acknowledgement, not terminal workflow success or pipeline identity. --non-interactive refuses graphical operations before GUI/election/preferences/portal. Discovery, wait/cancel/progress/result linkage and approved shared CLI/MCP semantics remain Required. An explicit GlobalShortcuts portal session offers only supported saved UUID/name pairs. Unique-owner/session/request correlation, accepted-subset checks, no preferred keys, explicit disable/cancel/reconfigure, bounded deadlines and fail-closed owner/session loss are native candidate behavior. This adds no consent bypass, shell key grabs or compositor writes; all broader automation and human review remain Required. --list-workflows now exposes a versioned read-only saved-definition query through QtCore before GUI, instance election or desktop-service connections; --non-interactive permits it and plain help is headless. Runtime readiness/consent/busy state is explicitly not queried. The activation protocol and execution authority are unchanged; task/result correlation and full shared CLI/MCP coverage remain Required."
     },
     "CORE-025": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [
         "product-contract/capabilities/CORE-PLATFORM-001/test-vectors.json"
       ],
-      "note": "Maintainer decisions A, B and C are implemented candidates. Accepted HTTP 2xx failures remain unconfirmed; parent device/inode identity protects processed and held keys across mount replacement; answered failures remain attempted across Stop/Start for the application process. All 31 CORE vectors and actual namespace retention proofs pass on Qt 6.12 and Qt 6.4.2. The process-session regression reproduces a second request when Stop precedes settlement on both Qt versions; the condition fixes it. Settlement before Stop remains green, a fresh service retries the released failure, and work stopped before dispatch remains retryable. Removing the condition reproduces the extra request. CORE-025 remains partial at 177/324 pending final full suites, maintainer and independent Sonnet reviews, and the rebased push gate. No other platform, activation, census closure or release is claimed.",
+      "note": "CORE-025 implemented on Linux after the final rebased host gate, full Qt 6.4.2 suite (179/179), explicit full namespace proofs on both Qt versions (10 passed, 0 failed, 0 skipped each), and freshly rebuilt adapters (31/31 CORE vectors each). Saved send intent precedes HTTP; missing acknowledgement or an accepted 2xx without a usable result is held unconfirmed across restart. Answered failures stay attempted across Stop/Start for the process lifetime and retry in a new service. Parent identity guards every checkpoint writer with frozen stat/fingerprint/stat observations and snapshot-fenced adoption. Native crash, clean-quit, mount replacement, legacy and failure journeys and discriminating mutations cover the policy. Aoife approved source 71ad37b; independent Viktor (Sonnet) review found no blocking code defect. Maintainer decision under ROOT-REVIEW-001 authorizes P7 scope clarification and this promotion after gates. Coverage is 178/324; activation blocked by CORE025-FU-IDENTITY. Other platforms, activation, census closure and release are not approved.",
       "evidence": [
         "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
         "platforms/linux/linux-qt/src/watch/WatchFolders.h",
@@ -1489,6 +1489,158 @@
         "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp"
       ],
       "audit": {
+        "classification": "implemented",
+        "spec_line": 113,
+        "coverage": "CORE-025 implemented on Linux after the final rebased host gate, full Qt 6.4.2 suite (179/179), explicit full namespace proofs on both Qt versions (10 passed, 0 failed, 0 skipped each), and freshly rebuilt adapters (31/31 CORE vectors each). Saved send intent precedes HTTP; missing acknowledgement or an accepted 2xx without a usable result is held unconfirmed across restart. Answered failures stay attempted across Stop/Start for the process lifetime and retry in a new service. Parent identity guards every checkpoint writer with frozen stat/fingerprint/stat observations and snapshot-fenced adoption. Native crash, clean-quit, mount replacement, legacy and failure journeys and discriminating mutations cover the policy. Aoife approved source 71ad37b; independent Viktor (Sonnet) review found no blocking code defect. Maintainer decision under ROOT-REVIEW-001 authorizes P7 scope clarification and this promotion after gates. Coverage is 178/324; activation blocked by CORE025-FU-IDENTITY. Other platforms, activation, census closure and release are not approved.",
+        "reviewed_at_revision": "312e36b5dfba4a1b650753b77e4abdcb726a5918",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+            "sha256": "05ba25b8297ea2028fc39c0c854060b78e17b9d1e21db942f93948dfb3738a4f"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/watch/WatchFolders.h",
+            "sha256": "688e5713e4bcd81fa7fd76b7ed4738015712780506ca62a08e797d895d2de5e0"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp",
+            "sha256": "de7dfa263036ac703963e22b9009cae0091e64dc8c66ba25c24b8ff73aa399b6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/UploadResponse.h",
+            "sha256": "eb911fd0ab2174b0b67b541c859926d71609420100a9fb05c7efcf7a78bc2961"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "sha256": "071180c6b4de1d3f717ffd3b62832824b332a99921dbe76f99524dd304472dec"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
+            "sha256": "ac581825d4844f19af515bbc2e88506bcc1bed6a4b00d7068f91890985848fef"
+          },
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "sha256": "c64854349862f4eb715d9ebe6e22f45a73762cadcaab531f2a145ed544cb6586",
+            "method": "answeredFailureIsAttemptedForTheWholeProcessSession",
+            "line": 1071
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "sha256": "c64854349862f4eb715d9ebe6e22f45a73762cadcaab531f2a145ed544cb6586",
+            "method": "stopDuringIntentDoesNotDispatchAndDrainsRelease",
+            "line": 1034
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "sha256": "c64854349862f4eb715d9ebe6e22f45a73762cadcaab531f2a145ed544cb6586",
+            "method": "acceptedResponseWithoutUsableResultStaysHeld",
+            "line": 1119
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "sha256": "c64854349862f4eb715d9ebe6e22f45a73762cadcaab531f2a145ed544cb6586",
+            "method": "retryResponseCoverageSurvivesControllerAndRestart",
+            "line": 1167
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "sha256": "c64854349862f4eb715d9ebe6e22f45a73762cadcaab531f2a145ed544cb6586",
+            "method": "anUnsavableIntentSendsNothingAndBlocksWatching",
+            "line": 1247
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "sha256": "c64854349862f4eb715d9ebe6e22f45a73762cadcaab531f2a145ed544cb6586",
+            "method": "startupNoticeLimitsNamesAndFormatsTheRemainingCount",
+            "line": 1309
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp",
+            "sha256": "dabc93759ea38b1cad76c884cb4663b1ad1c64a0ca646b39d8cd24a142b87033",
+            "method": "aKilledProcessNeverUploadsTheFileAgain",
+            "line": 173
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp",
+            "sha256": "dabc93759ea38b1cad76c884cb4663b1ad1c64a0ca646b39d8cd24a142b87033",
+            "method": "aCleanQuitReleasesKnownUnsentOrAnsweredWork",
+            "line": 188
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp",
+            "sha256": "dabc93759ea38b1cad76c884cb4663b1ad1c64a0ca646b39d8cd24a142b87033",
+            "method": "parentIdentitySurvivesMountReplacement",
+            "line": 217
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp",
+            "sha256": "dabc93759ea38b1cad76c884cb4663b1ad1c64a0ca646b39d8cd24a142b87033",
+            "method": "legacyParentMetadataQualification",
+            "line": 299
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+            "sha256": "e6fb90b55675195daa6c7f4c93457acba5df9fadbac22481494b207c24e437b1",
+            "method": "legacyParentQualificationRequiresAnUnchangedFile",
+            "line": 112
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+            "sha256": "e6fb90b55675195daa6c7f4c93457acba5df9fadbac22481494b207c24e437b1",
+            "method": "malformedParentIdentitiesFailClosed",
+            "line": 151
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+            "sha256": "e6fb90b55675195daa6c7f4c93457acba5df9fadbac22481494b207c24e437b1",
+            "method": "opaqueLegacyKeysAreNotTreatedAsCurrentFingerprints",
+            "line": 161
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+            "sha256": "e6fb90b55675195daa6c7f4c93457acba5df9fadbac22481494b207c24e437b1",
+            "method": "parentIdentityStringsKeepFullPrecision",
+            "line": 170
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+            "sha256": "e6fb90b55675195daa6c7f4c93457acba5df9fadbac22481494b207c24e437b1",
+            "method": "replacingAParentNeverRefreshesItsRecordedIdentity",
+            "line": 182
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+            "sha256": "e6fb90b55675195daa6c7f4c93457acba5df9fadbac22481494b207c24e437b1",
+            "method": "retentionUsesTheActualFingerprint",
+            "line": 553
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp",
+            "sha256": "50743596f9bd564972e6e1be6df65fee6faffe345d9a00a86ac18e25b7d524cf",
+            "method": "aLostReplyThenAServerErrorIsNotFullyAnswered",
+            "line": 158
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp",
+            "sha256": "50743596f9bd564972e6e1be6df65fee6faffe345d9a00a86ac18e25b7d524cf",
+            "method": "acceptedAttemptCountsEvenWhenItsResultCannotBeParsed",
+            "line": 190
+          }
+        ],
+        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+      },
+      "previous_note": "WatchFolders/WatchFolderService validate canonical roots, reject loops, debounce readiness and persist duplicate checkpoints with native tests. Full restart/permission/storage/lock/long-run and target qualification remain. Per-file failure is isolated: an unreadable file is reported once, stays unchecked-in in the store and does not block the next file (failingFileDoesNotBlockTheNext). Stopping mid-upload leaves the file in place and unprocessed; a bug is fixed where the cancelled attempt stayed in the attempted set, so the same service never rediscovered the file after start() (stoppingMidUploadLeavesTheFileDiscoverable). Long-run, lock and storage-pressure behavior and target qualification remain Required. Audit 2026-11-03: Roots, loops and traversal (WatchFoldersTest canonicalizesRootsAndRefusesLoops, WatchFolderServiceTest recursiveScanExcludesCapturesHiddenTemporaryAndSymlinkLoops), readiness (stabilityUsesInjectedClockAndRestartsAfterChanges), duplicate policy and checkpoints across restart (stableNewFileCopiesOrMoves, uploadsOnceThroughDefaultDestinationAcrossRestart), per-file failure isolation (failingFileDoesNotBlockTheNext) and clean stop without losing work (stoppingMidUploadLeavesTheFileDiscoverable).",
+      "follow_ups": [
+        "CORE025-FU-IDENTITY (blocks activation qualification; owner: maintainer; review by 2026-12-14).\n(a) Proven: on the reference host, btrfs `/home` reports a different `st_dev` on each boot (observed 61/63/65/66 \u2192 62). Recorded identities never match again, so entries are kept conservatively, as P7 requires, until the store reaches 16 MiB and fails closed with `watch-store-full`. This is safe but makes the feature degrade over time on btrfs.\n(b) Unproven: removable media may reuse device number + root inode, so different media could qualify an old parent and prune its holds. This would fail in the unsafe direction.\nFixing either needs a separate maintainer decision on a stable filesystem identity (for example a filesystem UUID or subvolume identity) or on a fenced-refresh policy, with contract vectors. This slice adds no implementation for either. Activation and release stay blocked until both are resolved.",
+        "Includes: the copy/move worker has no handler for an allocation exception, and `OwnedWork` drops completion, so a pending drain can wait forever. Completion must be guaranteed on every exit path, exceptions included."
+      ],
+      "previous_audit": {
         "classification": "partial",
         "spec_line": 113,
         "coverage": "Canonical authorized roots, readiness filtering, per-file duplicate checkpoints and owned cancellable copy/move/upload exist. Recursive discovery/stat now uses OwnedWork and discards obsolete/cancelled results after Stop, rule/capture-folder changes or owner loss. Watcher registration, final dispatch fingerprint and checkpoint persistence remain synchronous GUI boundaries; full retention/target qualification stays partial.",
@@ -1531,8 +1683,7 @@
         ],
         "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
         "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
-      },
-      "previous_note": "WatchFolders/WatchFolderService validate canonical roots, reject loops, debounce readiness and persist duplicate checkpoints with native tests. Full restart/permission/storage/lock/long-run and target qualification remain. Per-file failure is isolated: an unreadable file is reported once, stays unchecked-in in the store and does not block the next file (failingFileDoesNotBlockTheNext). Stopping mid-upload leaves the file in place and unprocessed; a bug is fixed where the cancelled attempt stayed in the attempted set, so the same service never rediscovered the file after start() (stoppingMidUploadLeavesTheFileDiscoverable). Long-run, lock and storage-pressure behavior and target qualification remain Required. Audit 2026-11-03: Roots, loops and traversal (WatchFoldersTest canonicalizesRootsAndRefusesLoops, WatchFolderServiceTest recursiveScanExcludesCapturesHiddenTemporaryAndSymlinkLoops), readiness (stabilityUsesInjectedClockAndRestartsAfterChanges), duplicate policy and checkpoints across restart (stableNewFileCopiesOrMoves, uploadsOnceThroughDefaultDestinationAcrossRestart), per-file failure isolation (failingFileDoesNotBlockTheNext) and clean stop without losing work (stoppingMidUploadLeavesTheFileDiscoverable)."
+      }
     },
     "CORE-026": {
       "status": "not-started",
@@ -2114,7 +2265,7 @@
   },
   "qualification": {
     "status": "Required",
-    "shared_vectors": "No CORE-PLATFORM-001/test-vectors.json is published. Native tests are partial evidence, not shared conformance acceptance.",
+    "shared_vectors": "31 CORE-025 vectors pass through freshly rebuilt production adapters on Qt 6.12 and Qt 6.4.2. Other CORE requirements and target qualification remain incomplete; activation blocked by CORE025-FU-IDENTITY.",
     "reviews": [
       "security",
       "privacy",
@@ -2136,10 +2287,10 @@
     "reviewed_requirement_count": 37,
     "counts": {
       "blocked": 7,
-      "implemented": 8,
+      "implemented": 9,
       "not-applicable": 1,
       "not-started": 2,
-      "partial": 19
+      "partial": 18
     },
     "production_surfaces": [
       "platforms/linux/linux-qt/app/AppContext.cpp",
@@ -2236,7 +2387,7 @@
         "detail": "Rescan recursively walks/stat-enumerates before pending-path check on the GUI callback. Owned copy/move fixes did not move discovery. No live latency measurement asserted."
       }
     ],
-    "remaining_scope": "CORE-001, CORE-002, CORE-003, CORE-004, CORE-005, CORE-007, CORE-009, CORE-011, CORE-012, CORE-013, CORE-014, CORE-015, CORE-016, CORE-018, CORE-019, CORE-021, CORE-022, CORE-023, CORE-024, CORE-025, CORE-026, CORE-027, CORE-028, CORE-029, CORE-030, CORE-033, CORE-035, CORE-036, CORE-037",
+    "remaining_scope": "CORE-001, CORE-002, CORE-003, CORE-004, CORE-005, CORE-007, CORE-009, CORE-011, CORE-012, CORE-013, CORE-014, CORE-015, CORE-016, CORE-018, CORE-019, CORE-021, CORE-022, CORE-023, CORE-024, CORE-026, CORE-027, CORE-028, CORE-029, CORE-030, CORE-033, CORE-035, CORE-036, CORE-037",
     "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
   },
   "previous_audit": {
@@ -2465,6 +2616,118 @@
       "specification": "product-contract/capabilities/CORE-PLATFORM-001/SPEC.md",
       "specification_sha256": "cf9c8a8355542c11a58695f51acc3ad6aade53aff41d1a6b195d854d1f4a1959",
       "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+      "reviewed_requirement_count": 37,
+      "counts": {
+        "blocked": 7,
+        "implemented": 8,
+        "not-applicable": 1,
+        "not-started": 2,
+        "partial": 19
+      },
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/AppContext.cpp",
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+        "platforms/linux/linux-qt/app/DiagnosticsDialog.cpp",
+        "platforms/linux/linux-qt/app/FileUploadController.cpp",
+        "platforms/linux/linux-qt/app/NativeNotifications.cpp",
+        "platforms/linux/linux-qt/app/NativePipelineJournal.cpp",
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
+        "platforms/linux/linux-qt/app/main.cpp",
+        "platforms/linux/linux-qt/src/diagnostics/DiagnosticBundle.cpp",
+        "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp",
+        "platforms/linux/linux-qt/src/uploads/UploadRequest.cpp",
+        "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+        "product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json",
+        "tools/nuget-freshness/check.py"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/CaptureConditionsTest.cpp": [
+          "lateInitialSnapshotCannotUndoANewerNativeLockSignal",
+          "lowStorageRefusesToStartAndStopsARunningCapture"
+        ],
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp": [
+          "corruptAndTruncatedRecordsAreSetAsideWithBackupAndGoodRecordsSurvive",
+          "keysetPaginationIsStableWhileRecordsAreAdded",
+          "resultsWithoutFilesRemainVisibleInspectableAndForgettable"
+        ],
+        "platforms/linux/linux-qt/tests/DiagnosticBundleTest.cpp": [
+          "actualPipelineFailuresKeepOnlyStableCodeSeverityAndTaskCorrelation",
+          "reviewedSnapshotWritesPrivatelyWithoutOverwritingAnyExistingTarget"
+        ],
+        "platforms/linux/linux-qt/tests/EditionProfilesTest.cpp": [
+          "everyEditionDeclaresEveryRequiredField",
+          "linuxQtMechanismsMatchTheNativeApplication"
+        ],
+        "platforms/linux/linux-qt/tests/LocalizationExpansionTest.cpp": [
+          "captureChooserAndAutomaticDraftRetranslateWhileOpen",
+          "liveBindingsPreserveValuesAndFollowReparentingAndTranslationFallback"
+        ],
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp": [
+          "simultaneousProcessesElectOnlyOneOwner"
+        ],
+        "platforms/linux/linux-qt/tests/NativeNotificationsTest.cpp": [
+          "nativeDeliveryContainsOperationResultAndCorrelationWithoutPrivatePreviewsOrActions",
+          "refusalDoesNotRetryBypassPolicyOrCreateAnAction"
+        ],
+        "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp": [
+          "nativeSurfaces"
+        ],
+        "platforms/linux/linux-qt/tests/OnboardingTest.cpp": [
+          "decliningEverythingLeavesDefaultCaptureWorking"
+        ],
+        "platforms/linux/linux-qt/tests/OperationResultsTest.cpp": [
+          "nativeNotificationEntryKeepsCorrelatedTrueDetailsInTheShell"
+        ],
+        "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp": [
+          "finiteVideo"
+        ],
+        "platforms/linux/linux-qt/tests/RecordingTest.cpp": [
+          "consentCannotAuthorizeAChangedInputAndGifNeverOpensAudio",
+          "explicitAudioSelection"
+        ],
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp": [
+          "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation"
+        ],
+        "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp": [
+          "exhaustedRetriesAreBoundedAndBackoffIncreases",
+          "safeRetriesKeepPreparedBytesKeyAndOneRemoteObject"
+        ],
+        "platforms/linux/linux-qt/tests/UploadRequestTest.cpp": [
+          "failuresAndLimits",
+          "methodsAndValidation"
+        ],
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp": [
+          "slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed",
+          "storageFailuresNeverSilentlyCompleteFileWork",
+          "uploadsOnceThroughDefaultDestinationAcrossRestart"
+        ],
+        "tools/nuget-freshness/test_check.py": [
+          "test_fresh_complete_record_passes",
+          "test_no_manifests_passes",
+          "test_retention_below_latest_needs_complete_bounded_block",
+          "test_stale_record_fails"
+        ]
+      },
+      "findings": [
+        {
+          "kind": "source-extracted-gap",
+          "requirement": "CORE-004/025",
+          "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+          "lines": "161-210",
+          "detail": "Rescan recursively walks/stat-enumerates before pending-path check on the GUI callback. Owned copy/move fixes did not move discovery. No live latency measurement asserted."
+        }
+      ],
+      "remaining_scope": "CORE-001, CORE-002, CORE-003, CORE-004, CORE-005, CORE-007, CORE-009, CORE-011, CORE-012, CORE-013, CORE-014, CORE-015, CORE-016, CORE-018, CORE-019, CORE-021, CORE-022, CORE-023, CORE-024, CORE-025, CORE-026, CORE-027, CORE-028, CORE-029, CORE-030, CORE-033, CORE-035, CORE-036, CORE-037",
+      "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
+    },
+    {
+      "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+      "checked_at": "2026-11-14",
+      "specification": "product-contract/capabilities/CORE-PLATFORM-001/SPEC.md",
+      "specification_sha256": "cf9c8a8355542c11a58695f51acc3ad6aade53aff41d1a6b195d854d1f4a1959",
+      "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
       "reviewed_requirement_count": 37,
       "counts": {
         "blocked": 7,

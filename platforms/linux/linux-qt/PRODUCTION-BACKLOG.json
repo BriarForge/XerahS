@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 32,
-    "implemented": 177,
+    "implemented": 178,
     "not-applicable": 1,
     "not-started": 5,
-    "partial": 110
+    "partial": 109
   },
   "capabilities": [
     {
@@ -155,10 +155,10 @@
       "requirements": 37,
       "counts": {
         "blocked": 7,
-        "implemented": 8,
+        "implemented": 9,
         "not-applicable": 1,
         "not-started": 2,
-        "partial": 19
+        "partial": 18
       },
       "trace": "traceability/CORE-PLATFORM-001.json"
     },
@@ -279,6 +279,13 @@
       "previous": "partial",
       "current": "partial",
       "reason": "Maintainer decisions A, B and C are implemented candidates. Accepted HTTP 2xx failures remain unconfirmed; parent device/inode identity protects processed and held keys across mount replacement; answered failures remain attempted across Stop/Start for the application process. All 31 CORE vectors and actual namespace retention proofs pass on Qt 6.12 and Qt 6.4.2. The process-session regression reproduces a second request when Stop precedes settlement on both Qt versions; the condition fixes it. Settlement before Stop remains green, a fresh service retries the released failure, and work stopped before dispatch remains retryable. Removing the condition reproduces the extra request. CORE-025 remains partial at 177/324 pending final full suites, maintainer and independent Sonnet reviews, and the rebased push gate. No other platform, activation, census closure or release is claimed."
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-025",
+      "previous": "partial",
+      "current": "implemented",
+      "reason": "CORE-025 implemented on Linux after the final rebased host gate, full Qt 6.4.2 suite (179/179), explicit full namespace proofs on both Qt versions (10 passed, 0 failed, 0 skipped each), and freshly rebuilt adapters (31/31 CORE vectors each). Saved send intent precedes HTTP; missing acknowledgement or an accepted 2xx without a usable result is held unconfirmed across restart. Answered failures stay attempted across Stop/Start for the process lifetime and retry in a new service. Parent identity guards every checkpoint writer with frozen stat/fingerprint/stat observations and snapshot-fenced adoption. Native crash, clean-quit, mount replacement, legacy and failure journeys and discriminating mutations cover the policy. Aoife approved source 71ad37b; independent Viktor (Sonnet) review found no blocking code defect. Maintainer decision under ROOT-REVIEW-001 authorizes P7 scope clarification and this promotion after gates. Coverage is 178/324; activation blocked by CORE025-FU-IDENTITY. Other platforms, activation, census closure and release are not approved."
     }
   ],
   "review_limitations": [
@@ -928,6 +935,27 @@
       "evidence": [
         "platforms/linux/linux-qt/app/WatchFolderService.cpp",
         "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
+      ]
+    },
+    {
+      "date": "2026-11-14",
+      "requirements": [
+        "CORE-025"
+      ],
+      "outcome": "CORE-025 implemented on Linux after the final rebased host gate, full Qt 6.4.2 suite (179/179), explicit full namespace proofs on both Qt versions (10 passed, 0 failed, 0 skipped each), and freshly rebuilt adapters (31/31 CORE vectors each). Saved send intent precedes HTTP; missing acknowledgement or an accepted 2xx without a usable result is held unconfirmed across restart. Answered failures stay attempted across Stop/Start for the process lifetime and retry in a new service. Parent identity guards every checkpoint writer with frozen stat/fingerprint/stat observations and snapshot-fenced adoption. Native crash, clean-quit, mount replacement, legacy and failure journeys and discriminating mutations cover the policy. Aoife approved source 71ad37b; independent Viktor (Sonnet) review found no blocking code defect. Maintainer decision under ROOT-REVIEW-001 authorizes P7 scope clarification and this promotion after gates. Coverage is 178/324; activation blocked by CORE025-FU-IDENTITY. Other platforms, activation, census closure and release are not approved.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+        "platforms/linux/linux-qt/src/watch/WatchFolders.h",
+        "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp",
+        "platforms/linux/linux-qt/src/uploads/UploadResponse.h",
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/app/FileUploadController.cpp",
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchKillFixture.cpp",
+        "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp"
       ]
     }
   ],
@@ -2612,13 +2640,25 @@
       "classification": "partial",
       "source": "app/FileUploadController.cpp:145; app/WatchFolderService.cpp:143,243,251",
       "finding": "Upload execution persistence retains a synchronous GUI boundary. Watch checkpoint serialization/storage now uses OwnedWork; watcher registration and the final per-file fingerprint remain accepted GUI work because the watcher owns thread-bound inotify state and the fingerprint refuses last-moment replacements. Rule persistence and settings transfer/import/migration remain separate. Recursive discovery and recovery serialization/storage already use OwnedWork."
+    },
+    {
+      "id": "CORE025-FU-IDENTITY",
+      "classification": "activation-blocker",
+      "source": "src/watch/WatchFolders.cpp:70; CORE-PLATFORM-001 SPEC P7",
+      "finding": "CORE025-FU-IDENTITY (blocks activation qualification; owner: maintainer; review by 2026-12-14).\n(a) Proven: on the reference host, btrfs `/home` reports a different `st_dev` on each boot (observed 61/63/65/66 \u2192 62). Recorded identities never match again, so entries are kept conservatively, as P7 requires, until the store reaches 16 MiB and fails closed with `watch-store-full`. This is safe but makes the feature degrade over time on btrfs.\n(b) Unproven: removable media may reuse device number + root inode, so different media could qualify an old parent and prune its holds. This would fail in the unsafe direction.\nFixing either needs a separate maintainer decision on a stable filesystem identity (for example a filesystem UUID or subvolume identity) or on a fenced-refresh policy, with contract vectors. This slice adds no implementation for either. Activation and release stay blocked until both are resolved."
+    },
+    {
+      "id": "watch-unbounded-drain",
+      "classification": "follow-up",
+      "source": "app/WatchFolderService.cpp:115,297",
+      "finding": "Existing unbounded-drain follow-up. Includes: the copy/move worker has no handler for an allocation exception, and `OwnedWork` drops completion, so a pending drain can wait forever. Completion must be guaranteed on every exit path, exceptions included."
     }
   ],
   "raw_trace_counts": {
-    "implemented": 177,
+    "implemented": 178,
     "not-applicable": 1,
     "not-started": 19,
-    "partial": 128
+    "partial": 127
   },
   "full_audit_counts": {
     "blocked": 34,

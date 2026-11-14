@@ -323,9 +323,10 @@ live-migration user interface.
 Linux CORE-025 requires the real-process SIGKILL proof on tmpfs, the approved
 Qt 6.4.2 baseline, and a real mount-namespace proof that processed keys and
 unconfirmed holds survive an unmount whose mountpoint directory remains.
-Remount and later safe pruning MUST be proved too. Local volumes are covered
-by the identity rule. Network/FUSE identity stability remains Layer 5
-qualification; an unstable identity MUST keep entries. Periodic scanning
+Remount and later safe pruning MUST be proved too. These proofs qualify local
+mount replacement within one boot only. Cross-boot filesystem identity stability,
+removable-media identity reuse, and network/FUSE identity stability remain Layer 5
+activation qualification; an unstable identity MUST keep entries. Periodic scanning
 remains the notification fallback.
 
 ## Baseline traceability and disposition
