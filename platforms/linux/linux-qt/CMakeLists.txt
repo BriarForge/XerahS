@@ -1271,6 +1271,18 @@ target_link_libraries(watch-folder-service-test PRIVATE xerahs_watch_folders Qt6
 add_test(NAME watch-folder-service COMMAND watch-folder-service-test)
 set_tests_properties(watch-folder-service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
+# CORE-025 P7: the real process SIGKILL proof on a private tmpfs.
+add_executable(watch-kill-fixture tests/WatchKillFixture.cpp)
+set_target_properties(watch-kill-fixture PROPERTIES AUTOMOC ON)
+target_link_libraries(watch-kill-fixture PRIVATE xerahs_watch_folders Qt6::Widgets)
+add_executable(watch-kill-proof-test tests/WatchKillProofTest.cpp)
+set_target_properties(watch-kill-proof-test PROPERTIES AUTOMOC ON)
+target_include_directories(watch-kill-proof-test PRIVATE src)
+target_link_libraries(watch-kill-proof-test PRIVATE xerahs_core Qt6::Network Qt6::Widgets Qt6::Test)
+add_dependencies(watch-kill-proof-test watch-kill-fixture)
+add_test(NAME watch-kill-proof COMMAND watch-kill-proof-test)
+set_tests_properties(watch-kill-proof PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 120)
+
 # CORE-004, EU-017: the shared owner-bound worker helper (header only).
 add_executable(owned-work-test tests/OwnedWorkTest.cpp app/OwnedWork.h)
 set_target_properties(owned-work-test PROPERTIES AUTOMOC ON)

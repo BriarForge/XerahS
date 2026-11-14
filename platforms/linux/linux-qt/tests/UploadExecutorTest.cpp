@@ -152,6 +152,54 @@ private slots:
     QCOMPARE(report.value("attempts").toInt(), 2); QCOMPARE(report.value("url").toString(), outcome.url);
     QVERIFY(!report.contains("Authorization"));
   }
+  // CORE-025: an attempt that ends without an HTTP status is not answered. A
+  // later answered attempt does not repair an earlier unanswered one, so the
+  // answered count is what decides the publication, never the last status.
+  void aLostReplyThenAServerErrorIsNotFullyAnswered() {
+    FixtureManager manager;
+    // The first attempt times out, the second answers with a server error,
+    // and the third answers with a server error as well.
+    manager.modes = {"timeout", "http", "http"};
+    UploadExecutor executor(&manager, nullptr, 120);
+    QSignalSpy done(&executor, &UploadExecutor::finished);
+    PreparedUploadRequest request; request.url = QUrl("https://example.test/upload"); request.method = "PUT";
+    executor.start(request);
+    QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 5000);
+    const auto outcome = done.first().first().value<UploadOutcome>();
+    QCOMPARE(outcome.attempts, 3);
+    // Only the two attempts that received a status are answered.
+    QCOMPARE(outcome.answeredAttempts, 2);
+    // The last status was a server error, but the publication is not fully
+    // answered, because the first attempt never received a response.
+    QVERIFY(outcome.answeredAttempts != outcome.attempts);
+    QVERIFY(outcome.httpStatus >= 500);
+  }
+
+  void everyAnsweredAttemptIsCounted() {
+    FixtureManager manager; manager.mode = "http";
+    UploadExecutor executor(&manager);
+    QSignalSpy done(&executor, &UploadExecutor::finished);
+    PreparedUploadRequest request; request.url = QUrl("https://example.test/upload"); request.method = "PUT";
+    executor.start(request);
+    QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 2500);
+    const auto outcome = done.first().first().value<UploadOutcome>();
+    QCOMPARE(outcome.attempts, 3);
+    QCOMPARE(outcome.answeredAttempts, 3);
+  }
+
+  void aTimeoutAloneIsNotAnswered() {
+    FixtureManager manager; manager.mode = "timeout";
+    UploadExecutor executor(&manager, nullptr, 80);
+    QSignalSpy done(&executor, &UploadExecutor::finished);
+    PreparedUploadRequest request; request.url = QUrl("https://example.test/upload"); request.method = "PUT";
+    executor.start(request);
+    QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 5000);
+    const auto outcome = done.first().first().value<UploadOutcome>();
+    QVERIFY(outcome.attempts > 0);
+    QCOMPARE(outcome.answeredAttempts, 0);
+    QVERIFY(outcome.answeredAttempts != outcome.attempts);
+  }
+
   void exhaustedRetriesAreBoundedAndBackoffIncreases() {
     FixtureManager manager; manager.mode = "http";
     UploadExecutor executor(&manager); QSignalSpy done(&executor, &UploadExecutor::finished), retries(&executor, &UploadExecutor::retryScheduled);
