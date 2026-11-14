@@ -59,6 +59,7 @@ public:
   QTcpServer server;
   int received = 0;
   bool stall = false;
+  QList<int> responseStatuses;  // Zero holds this request without a response.
   QByteArray request;
   HttpFixture() {
     connect(&server, &QTcpServer::newConnection, this, [this] {
@@ -76,9 +77,10 @@ public:
           done = true;
           request = wire;
           ++received;
-          if (stall) return;
+          const int status = received <= responseStatuses.size() ? responseStatuses.at(received - 1) : 200;
+          if (stall || status == 0) return;
           const QByteArray body = R"({"url":"https://example.test/watched"})";
-          peer->write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " + QByteArray::number(body.size()) +
+          peer->write("HTTP/1.1 " + QByteArray::number(status) + " Reply\r\nContent-Type: application/json\r\nContent-Length: " + QByteArray::number(body.size()) +
                       "\r\nConnection: close\r\n\r\n" + body);
           peer->disconnectFromHost();
         });
@@ -1058,6 +1060,61 @@ private slots:
     service.setCheckpointHook({}); service.start(); scan(service); now += 2000; scan(service);
     QTRY_COMPARE(http.received, 1); QTRY_COMPARE(completed.count(), 2);
     service.stop(); service.finishCheckpoint();
+  }
+
+  void retryResponseCoverageSurvivesControllerAndRestart_data() {
+    QTest::addColumn<bool>("lostFirstReply");
+    QTest::newRow("all-server-errors-release") << false;
+    QTest::newRow("timeout-then-server-errors-hold") << true;
+  }
+  void retryResponseCoverageSurvivesControllerAndRestart() {
+    QFETCH(bool, lostFirstReply);
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto source = dir.filePath("input/retries.png"); QVERIFY(writeFile(source));
+    const auto key = watch::fingerprint(source);
+    HttpFixture http; http.responseStatuses = {lostFirstReply ? 0 : 503, 503, 503};
+    QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    auto ports = portsFor(dir); ports.uploadTimeoutMs = 150;
+    DestinationCatalog catalog(ports.catalogPath);
+    UploadDestination destination; destination.id = QUuid::createUuid(); destination.name = "retry proof";
+    destination.method = RequestMethod::Put;
+    destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    destination.body = BodyType::MultipartFormData; destination.fileFormName = "file"; destination.resultUrl = "{json:url}";
+    QCOMPARE(catalog.add(destination), QString());
+    qint64 now = 0; QWidget owner;
+    {
+      FileUploadController uploads(ports, &owner);
+      int attempts = -1, answered = -1;
+      connect(&uploads, &FileUploadController::publicationResolved, this,
+          [&](const QString &, UploadPublication, int sent, int replies) { attempts = sent; answered = replies; });
+      watch::WatchFolders store(dir.filePath("store"));
+      WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
+      watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(service.setRules({rule}), QString());
+      QSignalSpy completed(&service, &WatchFolderService::processed);
+      service.start(); scan(service); now += 2000; scan(service);
+      QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 1, 7000);
+      QCOMPARE(http.received, 3); QCOMPARE(attempts, 3); QCOMPARE(answered, lostFirstReply ? 2 : 3);
+      QVERIFY(!completed.first()[1].toBool()); QVERIFY(!store.processed(key));
+      QCOMPARE(store.publicationPending(key), lostFirstReply);
+      now += 4000; scan(service); QTest::qWait(100); QCOMPARE(http.received, 3);
+      service.stop(); service.finishCheckpoint();
+    }
+    {
+      FileUploadController uploads(ports, &owner);
+      watch::WatchFolders store(dir.filePath("store"));
+      WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
+      QSignalSpy completed(&service, &WatchFolderService::processed), notices(&service, &WatchFolderService::notify);
+      service.start(); scan(service); now += 2000; scan(service);
+      if (lostFirstReply) {
+        QTest::qWait(700); QCOMPARE(http.received, 3); QCOMPARE(completed.count(), 0);
+        bool named = false; for (const auto &notice : notices) named |= notice[0].toString().contains("watch-publication-unconfirmed");
+        QVERIFY(named); QVERIFY(store.publicationPending(key));
+      } else {
+        QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 1, 7000);
+        QCOMPARE(http.received, 4); QVERIFY(completed.first()[1].toBool()); QVERIFY(store.processed(key));
+      }
+      service.stop(); service.finishCheckpoint();
+    }
   }
 
   void stoppingAQueuedWatchUploadReleasesItsUnsentIntent() {

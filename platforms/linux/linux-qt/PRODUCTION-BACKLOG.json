@@ -870,6 +870,17 @@
         "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
         "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp"
       ]
+    },
+    {
+      "date": "2026-11-14",
+      "requirements": [
+        "CORE-025"
+      ],
+      "outcome": "Independent Sonnet review of 7aaa472 found no implementation defect under the literal approved policy, but required real version-reader evidence and controller/service response-coverage proof. The downgrade test now uses the actual PrivateJsonFile max-version-1 read and write refusal. A real HTTP controller/service test distinguishes three answered 503 attempts (released and uploaded on next session) from timeout then two 503 attempts (unconfirmed and held after restart). Replacing the controller answered count with the last HTTP status fails the new mixed case (/tmp/xerahs-core025-last-status-mutation-red.log); restoring the count passes. The previous claim that a stalled-only journey discriminated last-status derivation is withdrawn. All 19 vectors pass through the rebuilt Qt 6.4.2 adapter (/tmp/xerahs-core025-review-qt64-vectors.log). Unusable HTTP 2xx results currently follow the literal answered-failure release policy; maintainer disposition of that risk remains open before promotion. Full corrected suites and the push gate remain pending.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
+      ]
     }
   ],
   "audit_method": "All 16 capabilities and 345 IDs revalidated. Existing unchanged source/test behavior was compared to frozen reviewed evidence, changed production paths and meaningful test bodies inspected, and exact current hashes/method lines repinned. 325 desktop rows remain conservative candidate classifications; 20 MOB rows remain outside desktop scope.",

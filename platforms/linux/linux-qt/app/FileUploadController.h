@@ -46,6 +46,7 @@ struct FileUploadPorts {
   PipelineJournalStorage history = {};  // empty uses the shared default journal directory
   // WFCAT-002: execution records; empty uses the shared workflow-execution directory.
   workflows::WorkflowExecution::Writer executions = {};
+  int uploadTimeoutMs = 60000;  // Frozen transport deadline; tests can exercise a real timeout.
 };
 
 class FileUploadController final : public QObject {

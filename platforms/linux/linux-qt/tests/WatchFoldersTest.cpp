@@ -1,5 +1,6 @@
 // CORE-024, CORE-025: root consent, readiness and durable duplicate policy.
 #include "watch/WatchFolders.h"
+#include "storage/PrivateJsonFile.h"
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -394,16 +395,12 @@ private slots:
     const auto path = dir.filePath("watch-processed.json");
     const auto bytes = R"({"format":"com.xerahs.app/watch-folders","version":2,"items":[],"publications":[]})";
     QVERIFY(writeFile(path, bytes));
-    // A reader that only understands version 1 refuses the store and fails
-    // closed without republishing anything.
-    const auto read = [&] {
-      QFile file(path);
-      if (!file.open(QIODevice::ReadOnly)) return QString("watch-store-read-failed");
-      const auto document = QJsonDocument::fromJson(file.readAll()).object();
-      if (document.value("version").toInt() != 1) return QString("watch-store-invalid-version-or-data");
-      return QString();
-    };
-    QCOMPARE(read(), QString("watch-store-invalid-version-or-data"));
+    const xerahs::storage::PrivateJsonFile oldReader(path,
+        {QStringLiteral("com.xerahs.app/watch-folders"), 1, 16 * 1024 * 1024});
+    QCOMPARE(oldReader.read().status, xerahs::storage::StoreStatus::NewerVersion);
+    QByteArray written;
+    QCOMPARE(oldReader.write({{"items", QJsonArray{}}}, 1, bytes, &written),
+        xerahs::storage::StoreStatus::NewerVersion);
     QCOMPARE(readFile(path), bytes);
   }
 

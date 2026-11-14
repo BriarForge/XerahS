@@ -37,7 +37,7 @@ QString fileNameOf(const QString &path) {
 FileUploadController::FileUploadController(FileUploadPorts ports, QWidget *dialogParent, QObject *parent)
     : QObject(parent), m_ports(std::move(ports)), m_dialogParent(dialogParent),
       m_cap(m_ports.maxInputBytes.value_or(uploads::UploadRequestOptions{}.maxInputBytes)),
-      m_network(new QNetworkAccessManager(this)), m_executor(new uploads::UploadExecutor(m_network, this)) {
+      m_network(new QNetworkAccessManager(this)), m_executor(new uploads::UploadExecutor(m_network, this, m_ports.uploadTimeoutMs)) {
   if (dialogParent) {
     connect(dialogParent, &QObject::destroyed, this, [this] {
       if (m_progress)
