@@ -236,7 +236,7 @@
       "requirement": "CORE-025",
       "previous": "implemented",
       "current": "partial",
-      "reason": "Canonical authorized roots, readiness filtering, per-file duplicate checkpoints and owned cancellable copy/move/upload exist. However rescan recursively enumerates and stats the authorized tree on the GUI thread before checking pending work; no bounded/cancellable discovery path qualifies clean Stop for large or slow trees."
+      "reason": "Maintainer decisions A, B and C are implemented candidates. Accepted HTTP 2xx failures remain unconfirmed; parent device/inode identity protects processed and held keys across mount replacement; answered failures remain attempted across Stop/Start for the application process. All 31 CORE vectors and actual namespace retention proofs pass on Qt 6.12 and Qt 6.4.2. The process-session regression reproduces a second request when Stop precedes settlement on both Qt versions; the condition fixes it. Settlement before Stop remains green, a fresh service retries the released failure, and work stopped before dispatch remains retryable. Removing the condition reproduces the extra request. CORE-025 remains partial at 177/324 pending final full suites, maintainer and independent Sonnet reviews, and the rebased push gate. No other platform, activation, census closure or release is claimed."
     },
     {
       "capability": "COMPATIBILITY-CATALOG-001",
@@ -278,7 +278,7 @@
       "requirement": "CORE-025",
       "previous": "partial",
       "current": "partial",
-      "reason": "CORE-025 remains partial at 177/324. Maintainer decisions A and B are implemented candidates; C process-session retry suppression is next. A holds failed uploads with any accepted HTTP 2xx while preserving truthful attempt counters and explicit error reporting. B freezes recorded parent device/inode strings in every request, observes stat/fingerprint/stat on the worker, and adopts the resulting parent map only under the existing snapshot fence. Unknown, unstable or changed parent identity keeps work; unanimous unchanged-file nominations apply only to later writes. Malformed parent metadata fails closed, missing metadata remains compatible, and identities are not refreshed. All 31 contract vectors pass on both Qt versions. Actual namespace service proofs preserve processed and unconfirmed keys across unmount/remount, prune a deleted processed key after the original parent returns, and upload one new fingerprint on a different volume while keeping old keys and identity. The same tests rebuilt with byte-identical archived a5232a4 production code fail, and the rebuilt standalone probe now reports hold_after=1. Legacy unchanged/absent/malformed cases, 20-digit string precision and opaque legacy-key preservation have native coverage. Initial move checkpoints with an unqualified parent are conservatively retained under the amended R3 rule; native copy/move assertions still verify exact outputs and source removal, and the remount proof verifies later qualified pruning. Final process-session proofs, full final suites, maintainer and independent Sonnet reviews, and the rebased push gate remain required. No other platform is waived or claimed implemented, and no activation, census closure or release is approved."
+      "reason": "Maintainer decisions A, B and C are implemented candidates. Accepted HTTP 2xx failures remain unconfirmed; parent device/inode identity protects processed and held keys across mount replacement; answered failures remain attempted across Stop/Start for the application process. All 31 CORE vectors and actual namespace retention proofs pass on Qt 6.12 and Qt 6.4.2. The process-session regression reproduces a second request when Stop precedes settlement on both Qt versions; the condition fixes it. Settlement before Stop remains green, a fresh service retries the released failure, and work stopped before dispatch remains retryable. Removing the condition reproduces the extra request. CORE-025 remains partial at 177/324 pending final full suites, maintainer and independent Sonnet reviews, and the rebased push gate. No other platform, activation, census closure or release is claimed."
     }
   ],
   "review_limitations": [
@@ -917,6 +917,17 @@
         "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp"
+      ]
+    },
+    {
+      "date": "2026-11-14",
+      "requirements": [
+        "CORE-025"
+      ],
+      "outcome": "Maintainer decisions A, B and C are implemented candidates. Accepted HTTP 2xx failures remain unconfirmed; parent device/inode identity protects processed and held keys across mount replacement; answered failures remain attempted across Stop/Start for the application process. All 31 CORE vectors and actual namespace retention proofs pass on Qt 6.12 and Qt 6.4.2. The process-session regression reproduces a second request when Stop precedes settlement on both Qt versions; the condition fixes it. Settlement before Stop remains green, a fresh service retries the released failure, and work stopped before dispatch remains retryable. Removing the condition reproduces the extra request. CORE-025 remains partial at 177/324 pending final full suites, maintainer and independent Sonnet reviews, and the rebased push gate. No other platform, activation, census closure or release is claimed.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
       ]
     }
   ],

@@ -313,8 +313,9 @@ void WatchFolderService::settle(const QString &path, bool success, const QString
     emit notify(saved + ": watching stopped; completed action was not checkpointed.", false);
     if (!guard) return;
   }
-  // A cancelled action (stop mid-processing) is not a verdict on the file: forget the attempt so it is discovered again.
+  // Started publications remain attempted until process exit; unsent work can be discovered again.
   if (!success && !m_store.publicationPending(m_pendingKey) &&
+      !(m_publicationAction && m_uploadAttempts > 0) &&
       (!m_running || error == QLatin1String("cancelled"))) m_attempted.remove(m_pendingKey);
   emit processed(path, success && (m_terminalState.isEmpty() || m_terminalState == QLatin1String("succeeded")));
   if (!guard) return;

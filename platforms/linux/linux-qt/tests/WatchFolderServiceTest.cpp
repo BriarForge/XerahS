@@ -1063,6 +1063,55 @@ private slots:
     service.stop(); service.finishCheckpoint();
   }
 
+  void answeredFailureIsAttemptedForTheWholeProcessSession_data() {
+    QTest::addColumn<bool>("stopBeforeSettlement");
+    QTest::newRow("settle-after-stop") << true;
+    QTest::newRow("settle-before-stop") << false;
+  }
+  void answeredFailureIsAttemptedForTheWholeProcessSession() {
+    QFETCH(bool, stopBeforeSettlement);
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto source = dir.filePath("input/rejected.png"); QVERIFY(writeFile(source));
+    const auto key = watch::fingerprint(source);
+    HttpFixture http; http.responseStatuses = {400, 200};
+    QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    auto ports = portsFor(dir); DestinationCatalog catalog(ports.catalogPath);
+    UploadDestination destination; destination.id = QUuid::createUuid(); destination.name = "answered failure session";
+    destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    destination.body = BodyType::MultipartFormData; destination.fileFormName = "file"; destination.resultUrl = "{json:url}";
+    QCOMPARE(catalog.add(destination), QString()); qint64 now = 0; QWidget owner;
+    {
+      FileUploadController uploads(ports, &owner); watch::WatchFolders store(dir.filePath("store"));
+      WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
+      watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(service.setRules({rule}), QString());
+      struct Gate { std::atomic_int jobs{0}; std::atomic_bool entered{false}, release{false}; };
+      auto gate = std::make_shared<Gate>();
+      struct Release { std::shared_ptr<Gate> gate; ~Release() { gate->release = true; } } release{gate};
+      if (stopBeforeSettlement) service.setCheckpointHook([gate] {
+        if (++gate->jobs == 2) { gate->entered = true; while (!gate->release) QThread::msleep(2); }
+      });
+      QSignalSpy completed(&service, &WatchFolderService::processed);
+      service.start(); scan(service); now += 2000; scan(service);
+      QTRY_COMPARE(http.received, 1);
+      if (stopBeforeSettlement) {
+        QTRY_VERIFY(gate->entered.load()); QCOMPARE(completed.count(), 0);
+        service.stop(); gate->release = true; service.finishCheckpoint();
+      } else { QTRY_COMPARE(completed.count(), 1); service.stop(); service.finishCheckpoint(); }
+      QCOMPARE(completed.count(), 1); QVERIFY(!completed.first()[1].toBool());
+      QVERIFY(!store.processed(key)); QVERIFY(!store.publicationPending(key));
+      service.setCheckpointHook({}); service.start(); scan(service); now += 2000; scan(service);
+      QTest::qWait(1500); QCOMPARE(http.received, 1); QCOMPARE(completed.count(), 1);
+      service.stop(); service.finishCheckpoint();
+    }
+    FileUploadController uploads(ports, &owner); watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
+    QSignalSpy completed(&service, &WatchFolderService::processed);
+    service.start(); scan(service); now += 2000; scan(service);
+    QTRY_COMPARE(http.received, 2); QTRY_COMPARE(completed.count(), 1);
+    QVERIFY(completed.first()[1].toBool()); QVERIFY(store.processed(key));
+    service.stop(); service.finishCheckpoint();
+  }
+
   void acceptedResponseWithoutUsableResultStaysHeld_data() {
     QTest::addColumn<QString>("kind");
     for (const auto name : {"missing-link", "invalid-url", "server-error-then-accepted", "rejected-400"}) QTest::newRow(name) << QString(name);

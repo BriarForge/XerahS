@@ -148,3 +148,7 @@ Every checkpoint worker freezes the recorded map and observes parent identity
 before and after the file fingerprint. A changed, missing or unqualified parent
 keeps entries; qualification from an unchanged file authorizes only a later
 write. This preserves publication holds across unmount/remount.
+
+An answered watch-upload failure remains attempted for the life of the process,
+including Stop/Start before settlement finishes. A new service can retry that
+released failure. Work stopped before sending remains retryable on Start.
