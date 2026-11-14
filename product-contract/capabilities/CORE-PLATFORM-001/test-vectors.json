@@ -2,7 +2,7 @@
   "schema_version": 2,
   "capability": "CORE-PLATFORM-001",
   "comparison": "subset",
-  "notes": "watch-publication-disposition inputs are request_started (boolean), attempts (nonnegative integer), http_response_on_every_attempt (boolean), succeeded (boolean), and restart_with_sending (boolean). First match wins: restart_with_sending -> unconfirmed; succeeded -> processed; request_started and http_response_on_every_attempt -> released; other request_started -> unconfirmed; otherwise released. A surviving sending record overrides all runtime fields. Production proves response coverage using answeredAttempts == attempts with attempts > 0; the final HTTP status alone is insufficient. An acknowledged failure is not retried in the current session but remains discoverable in a later session. Unsent work stays discoverable under existing Start/Stop behavior. processed and unconfirmed hold the watch key against automatic publication; an explicit Upload file command is independent of that hold. watch-retain inputs are keys (array of checkpoint key strings), files (array of {key, parent_exists, fingerprint}, with fingerprint string or null), and optional sending_keys (array of keys, default empty). The keys include processed, unconfirmed and sending records. A sending key is always kept. Otherwise a key is kept when its parent is missing or the current fingerprint equals the key. fingerprint is the current complete key returned by the platform fingerprint helper; null means no current fingerprint. Output kept preserves input keys order. The adapter supplies observations to the same pure retain helper used by production; it does not implement the retention decision itself.",
+  "notes": "watch-publication-disposition uses request_started, attempts, http_response_on_every_attempt, http_2xx_on_any_attempt (missing means false), succeeded and restart_with_sending. First match: restart -> unconfirmed; success -> processed; started and any 2xx -> unconfirmed; started and every response with no 2xx -> released; other started -> unconfirmed; unsent -> released. watch-retain takes ordered keys, optional sending_keys (default empty), recorded_parents map path->{device,inode}, and files containing key,parent,before,fingerprint,after. Missing parent observations are null. Identity components are decimal strings. Apply P5 R0-R5 against the frozen recorded map; output ordered kept keys and the surviving/adopted parents map. A nomination must be stable, fingerprint-identical and unanimous for its parent, and cannot authorize pruning in this write. Expected results are the maintainer policy, not derived from the implementation.",
   "requirement_ids": [
     "CORE-025"
   ],
@@ -18,7 +18,8 @@
         "attempts": 1,
         "http_response_on_every_attempt": true,
         "succeeded": true,
-        "restart_with_sending": false
+        "restart_with_sending": false,
+        "http_2xx_on_any_attempt": true
       },
       "expected": {
         "disposition": "processed"
@@ -35,7 +36,8 @@
         "attempts": 1,
         "http_response_on_every_attempt": true,
         "succeeded": false,
-        "restart_with_sending": false
+        "restart_with_sending": false,
+        "http_2xx_on_any_attempt": false
       },
       "expected": {
         "disposition": "released"
@@ -52,7 +54,8 @@
         "attempts": 2,
         "http_response_on_every_attempt": true,
         "succeeded": true,
-        "restart_with_sending": false
+        "restart_with_sending": false,
+        "http_2xx_on_any_attempt": true
       },
       "expected": {
         "disposition": "processed"
@@ -69,7 +72,8 @@
         "attempts": 1,
         "http_response_on_every_attempt": false,
         "succeeded": false,
-        "restart_with_sending": false
+        "restart_with_sending": false,
+        "http_2xx_on_any_attempt": false
       },
       "expected": {
         "disposition": "unconfirmed"
@@ -86,7 +90,8 @@
         "attempts": 1,
         "http_response_on_every_attempt": false,
         "succeeded": false,
-        "restart_with_sending": false
+        "restart_with_sending": false,
+        "http_2xx_on_any_attempt": false
       },
       "expected": {
         "disposition": "unconfirmed"
@@ -103,7 +108,8 @@
         "attempts": 0,
         "http_response_on_every_attempt": false,
         "succeeded": false,
-        "restart_with_sending": false
+        "restart_with_sending": false,
+        "http_2xx_on_any_attempt": false
       },
       "expected": {
         "disposition": "released"
@@ -120,7 +126,8 @@
         "attempts": 1,
         "http_response_on_every_attempt": false,
         "succeeded": false,
-        "restart_with_sending": false
+        "restart_with_sending": false,
+        "http_2xx_on_any_attempt": false
       },
       "expected": {
         "disposition": "unconfirmed"
@@ -137,7 +144,8 @@
         "attempts": 1,
         "http_response_on_every_attempt": false,
         "succeeded": false,
-        "restart_with_sending": true
+        "restart_with_sending": true,
+        "http_2xx_on_any_attempt": false
       },
       "expected": {
         "disposition": "unconfirmed"
@@ -154,7 +162,8 @@
         "attempts": 0,
         "http_response_on_every_attempt": false,
         "succeeded": false,
-        "restart_with_sending": true
+        "restart_with_sending": true,
+        "http_2xx_on_any_attempt": false
       },
       "expected": {
         "disposition": "unconfirmed"
@@ -171,7 +180,8 @@
         "attempts": 1,
         "http_response_on_every_attempt": true,
         "succeeded": false,
-        "restart_with_sending": false
+        "restart_with_sending": false,
+        "http_2xx_on_any_attempt": false
       },
       "expected": {
         "disposition": "released"
@@ -188,7 +198,8 @@
         "attempts": 3,
         "http_response_on_every_attempt": true,
         "succeeded": false,
-        "restart_with_sending": false
+        "restart_with_sending": false,
+        "http_2xx_on_any_attempt": false
       },
       "expected": {
         "disposition": "released"
@@ -205,7 +216,8 @@
         "attempts": 2,
         "http_response_on_every_attempt": false,
         "succeeded": false,
-        "restart_with_sending": false
+        "restart_with_sending": false,
+        "http_2xx_on_any_attempt": false
       },
       "expected": {
         "disposition": "unconfirmed"
@@ -222,7 +234,8 @@
         "attempts": 2,
         "http_response_on_every_attempt": false,
         "succeeded": true,
-        "restart_with_sending": false
+        "restart_with_sending": false,
+        "http_2xx_on_any_attempt": true
       },
       "expected": {
         "disposition": "processed"
@@ -239,7 +252,8 @@
         "attempts": 2,
         "http_response_on_every_attempt": true,
         "succeeded": false,
-        "restart_with_sending": true
+        "restart_with_sending": true,
+        "http_2xx_on_any_attempt": false
       },
       "expected": {
         "disposition": "unconfirmed"
@@ -259,21 +273,49 @@
         "files": [
           {
             "key": "key-a",
-            "parent_exists": true,
-            "fingerprint": "key-a"
+            "fingerprint": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
           },
           {
             "key": "key-b",
-            "parent_exists": true,
-            "fingerprint": "key-b"
+            "fingerprint": "key-b",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
           }
-        ]
+        ],
+        "recorded_parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
       },
       "expected": {
         "kept": [
           "key-a",
           "key-b"
-        ]
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
       }
     },
     {
@@ -290,20 +332,48 @@
         "files": [
           {
             "key": "key-a",
-            "parent_exists": true,
-            "fingerprint": "key-a"
+            "fingerprint": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
           },
           {
             "key": "key-b",
-            "parent_exists": true,
-            "fingerprint": null
+            "fingerprint": null,
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
           }
-        ]
+        ],
+        "recorded_parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
       },
       "expected": {
         "kept": [
           "key-a"
-        ]
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
       }
     },
     {
@@ -320,20 +390,48 @@
         "files": [
           {
             "key": "key-a",
-            "parent_exists": true,
-            "fingerprint": "key-a"
+            "fingerprint": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
           },
           {
             "key": "key-b",
-            "parent_exists": true,
-            "fingerprint": "fp-b2"
+            "fingerprint": "fp-b2",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
           }
-        ]
+        ],
+        "recorded_parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
       },
       "expected": {
         "kept": [
           "key-a"
-        ]
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
       }
     },
     {
@@ -350,21 +448,43 @@
         "files": [
           {
             "key": "key-a",
-            "parent_exists": true,
-            "fingerprint": "key-a"
+            "fingerprint": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
           },
           {
             "key": "key-b",
-            "parent_exists": false,
-            "fingerprint": null
+            "fingerprint": null,
+            "parent": "/watched",
+            "before": null,
+            "after": null
           }
-        ]
+        ],
+        "recorded_parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
       },
       "expected": {
         "kept": [
           "key-a",
           "key-b"
-        ]
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
       }
     },
     {
@@ -384,21 +504,522 @@
         "files": [
           {
             "key": "key-a",
-            "parent_exists": true,
-            "fingerprint": "key-a"
+            "fingerprint": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
           },
           {
             "key": "key-b",
-            "parent_exists": true,
-            "fingerprint": null
+            "fingerprint": null,
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
           }
-        ]
+        ],
+        "recorded_parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
       },
       "expected": {
         "kept": [
           "key-a",
           "key-b"
-        ]
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      }
+    },
+    {
+      "id": "publication-accepted-without-usable-result-is-unconfirmed",
+      "operation": "watch-publication-disposition",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "request_started": true,
+        "attempts": 1,
+        "http_response_on_every_attempt": true,
+        "http_2xx_on_any_attempt": true,
+        "succeeded": false,
+        "restart_with_sending": false
+      },
+      "expected": {
+        "disposition": "unconfirmed"
+      }
+    },
+    {
+      "id": "publication-server-error-then-accepted-without-usable-result-is-unconfirmed",
+      "operation": "watch-publication-disposition",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "request_started": true,
+        "attempts": 2,
+        "http_response_on_every_attempt": true,
+        "http_2xx_on_any_attempt": true,
+        "succeeded": false,
+        "restart_with_sending": false
+      },
+      "expected": {
+        "disposition": "unconfirmed"
+      }
+    },
+    {
+      "id": "retain-keeps-unmounted-root-whose-mountpoint-remains",
+      "operation": "watch-retain",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "keys": [
+          "key-a"
+        ],
+        "files": [
+          {
+            "key": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "2",
+              "inode": "202"
+            },
+            "fingerprint": null,
+            "after": {
+              "device": "2",
+              "inode": "202"
+            }
+          }
+        ],
+        "recorded_parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      },
+      "expected": {
+        "kept": [
+          "key-a"
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      }
+    },
+    {
+      "id": "retain-keeps-remounted-root-unchanged-file",
+      "operation": "watch-retain",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "keys": [
+          "key-a"
+        ],
+        "files": [
+          {
+            "key": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "fingerprint": "key-a",
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
+          }
+        ],
+        "recorded_parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      },
+      "expected": {
+        "kept": [
+          "key-a"
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      }
+    },
+    {
+      "id": "retain-keeps-when-parent-changes-during-observation",
+      "operation": "watch-retain",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "keys": [
+          "key-a"
+        ],
+        "files": [
+          {
+            "key": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "fingerprint": null,
+            "after": {
+              "device": "2",
+              "inode": "202"
+            }
+          }
+        ],
+        "recorded_parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      },
+      "expected": {
+        "kept": [
+          "key-a"
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      }
+    },
+    {
+      "id": "retain-keeps-legacy-key-without-identity",
+      "operation": "watch-retain",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "keys": [
+          "key-a"
+        ],
+        "files": [
+          {
+            "key": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "fingerprint": null,
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
+          }
+        ],
+        "recorded_parents": {}
+      },
+      "expected": {
+        "kept": [
+          "key-a"
+        ],
+        "parents": {}
+      }
+    },
+    {
+      "id": "retain-adopts-identity-from-unchanged-file",
+      "operation": "watch-retain",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "keys": [
+          "key-a"
+        ],
+        "files": [
+          {
+            "key": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "fingerprint": "key-a",
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
+          }
+        ],
+        "recorded_parents": {}
+      },
+      "expected": {
+        "kept": [
+          "key-a"
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      }
+    },
+    {
+      "id": "retain-adoption-does-not-prune-in-same-write",
+      "operation": "watch-retain",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "keys": [
+          "key-a",
+          "key-b"
+        ],
+        "files": [
+          {
+            "key": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "fingerprint": "key-a",
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
+          },
+          {
+            "key": "key-b",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "fingerprint": null,
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
+          }
+        ],
+        "recorded_parents": {}
+      },
+      "expected": {
+        "kept": [
+          "key-a",
+          "key-b"
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      }
+    },
+    {
+      "id": "retain-prunes-after-identity-is-recorded",
+      "operation": "watch-retain",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "keys": [
+          "key-b"
+        ],
+        "files": [
+          {
+            "key": "key-b",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "fingerprint": null,
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
+          }
+        ],
+        "recorded_parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      },
+      "expected": {
+        "kept": [],
+        "parents": {}
+      }
+    },
+    {
+      "id": "retain-does-not-refresh-different-identity",
+      "operation": "watch-retain",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "keys": [
+          "key-a"
+        ],
+        "files": [
+          {
+            "key": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "2",
+              "inode": "202"
+            },
+            "fingerprint": "key-a",
+            "after": {
+              "device": "2",
+              "inode": "202"
+            }
+          }
+        ],
+        "recorded_parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      },
+      "expected": {
+        "kept": [
+          "key-a"
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      }
+    },
+    {
+      "id": "retain-drops-identity-of-unreferenced-parent",
+      "operation": "watch-retain",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "keys": [
+          "key-a"
+        ],
+        "files": [
+          {
+            "key": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "fingerprint": "key-a",
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
+          }
+        ],
+        "recorded_parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          },
+          "/unused": {
+            "device": "2",
+            "inode": "202"
+          }
+        }
+      },
+      "expected": {
+        "kept": [
+          "key-a"
+        ],
+        "parents": {
+          "/watched": {
+            "device": "1",
+            "inode": "101"
+          }
+        }
+      }
+    },
+    {
+      "id": "retain-conflicting-adoption-adopts-nothing",
+      "operation": "watch-retain",
+      "requirements": [
+        "CORE-025"
+      ],
+      "input": {
+        "keys": [
+          "key-a",
+          "key-b"
+        ],
+        "files": [
+          {
+            "key": "key-a",
+            "parent": "/watched",
+            "before": {
+              "device": "1",
+              "inode": "101"
+            },
+            "fingerprint": "key-a",
+            "after": {
+              "device": "1",
+              "inode": "101"
+            }
+          },
+          {
+            "key": "key-b",
+            "parent": "/watched",
+            "before": {
+              "device": "2",
+              "inode": "202"
+            },
+            "fingerprint": "key-b",
+            "after": {
+              "device": "2",
+              "inode": "202"
+            }
+          }
+        ],
+        "recorded_parents": {}
+      },
+      "expected": {
+        "kept": [
+          "key-a",
+          "key-b"
+        ],
+        "parents": {}
       }
     }
   ]

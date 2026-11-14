@@ -195,40 +195,34 @@ entries survive a checkpoint write.
 
 ### P1 Publication disposition
 
-A watched file's publication is acknowledged when the upload succeeded, or when
-at least one request was started, no prior-process sending record survived a
-restart, and every request attempt for that publication received an HTTP
-response of any status. An acknowledged failure releases the file. If any
-attempt ended without an HTTP response (timeout, network error, abort, or lost
-reply), the publication is unconfirmed unless the upload ultimately succeeded,
-whatever the later attempts returned. An implementation that cannot show that
-every attempt was answered MUST treat the publication as unconfirmed. A sending
-record left over from an earlier process is always unconfirmed, even when the
-new process's runtime fields are empty.
+An acknowledged failure requires a started request, no prior-process `sending`
+record, an HTTP response on every attempt, and no 2xx response on any attempt.
+A 2xx status is evidence of acceptance, not of rejection; answered-attempt
+accounting MUST still count it as answered. A failed upload with a 2xx response,
+including an unparseable result or invalid result URL, is unconfirmed.
 
-The disposition of one publication attempt is decided by the first matching
-rule, in this order:
+The first matching rule decides the publication:
 
-1. A publication left over as `sending` from an earlier process is
-   `unconfirmed`.
-2. A publication that succeeded is `processed`. It MUST be checkpointed as
-   complete and MUST NOT be uploaded again automatically under the same key.
-3. A publication for which at least one request was started and every request
-   attempt received an HTTP response, but which did not succeed, is `released`.
-   It MUST NOT be retried again in the current session and MUST remain
-   discoverable, so that a later session can find the work again.
-4. A publication for which at least one request was started and any attempt
-   ended without an HTTP response is `unconfirmed`. It MAY or MAY NOT have
-   reached the remote, and it MUST NOT be uploaded again automatically under
-   the same key.
-5. A publication for which no request was started is `released`. A publication
-   that was never sent includes validation failure, a missing destination,
-   cancellation before transfer, and a send intent that was not saved. It MUST
-   remain discoverable.
+1. A `sending` record left from an earlier process is `unconfirmed`, even when
+   the new process's runtime fields are empty.
+2. An upload that succeeded is `processed`. It MUST be checkpointed as complete
+   and MUST NOT be uploaded again automatically under the same key.
+3. A request that started and received a 2xx response on any attempt, without
+   ultimately succeeding, is `unconfirmed`.
+4. A request that started and received an HTTP response on every attempt, with
+   no 2xx response on any attempt, is `released`. It MUST NOT be retried in the
+   current session (P3) and MUST remain discoverable for a later session.
+5. A request that started and has any unanswered attempt is `unconfirmed`.
+6. A publication with no request started is `released` and MUST remain
+   discoverable. This includes validation failure, a missing destination,
+   cancellation before transfer, and an intent that was not saved.
 
-An implementation MUST NOT derive the acknowledged condition from the last
-attempt's status alone. A later answered attempt does not repair an earlier
-unanswered attempt.
+An unconfirmed publication MUST NOT be uploaded again automatically under its
+key. An implementation MUST NOT derive acknowledgement from the last status
+alone. A later answered attempt does not repair an earlier unanswered attempt;
+a later failed response does not erase evidence of an earlier 2xx acceptance.
+An implementation unable to prove every attempt answered MUST treat the
+publication as unconfirmed unless the upload ultimately succeeded.
 
 ### P2 Durable send intent
 
@@ -242,6 +236,14 @@ At startup, every leftover publication still recorded as `sending` is
 `unconfirmed`, whatever the new process's runtime fields contain.
 
 ### P3 Retry eligibility and notices
+
+A session is the life of the watch service in one application process, from its
+first start to process exit. Stop and Start in the same process MUST NOT begin
+a new session. An answered, released failure MUST NOT be retried in that
+process whether it settled before or after Stop; a new process MAY retry it.
+A request never started because of cancel or Stop is not a verdict and MAY be
+retried at the next Start in the same process. Unconfirmed holds MUST remain
+blocked across both Stop/Start and a process restart.
 
 Retry eligibility MUST remain controlled by explicit user action. The user MAY
 use the existing Upload file command for an explicit upload independently of the
@@ -263,39 +265,68 @@ copy has committed.
 
 ### P5 Checkpoint retention
 
-Each checkpoint write MUST prune a `processed` or `unconfirmed` entry when the
-entry's parent directory exists AND the file's current fingerprint differs from
-the fingerprint recorded in the key. The entry was then deleted, moved, or
-changed.
+Retention MUST record each canonical parent directory's volume and object
+identity: POSIX and macOS use `st_dev` and `st_ino`; Windows uses the volume
+serial number and file ID. Both components MUST be decimal strings. Each
+request MUST freeze the recorded parent map before worker observation.
 
-A `processed` or `unconfirmed` entry whose parent directory does not exist MUST
-be kept, because the parent may be an unmounted or removed root rather than a
-deleted file.
+For each key, the worker MUST observe parent identity before the file
+fingerprint and again afterwards. The first matching rule applies:
 
-An entry recorded as `sending` MUST NEVER be pruned.
+1. A key with no observation facts (an unrecognized historic key) MUST be kept.
+2. A `sending` key MUST be kept.
+3. If either parent observation is missing, or the observations differ, the key
+   MUST be kept.
+4. If there is no recorded identity for the parent, the key MUST be kept. An
+   unchanged file fingerprint MAY nominate its stable parent identity for
+   adoption. Missing or changed files MUST NOT nominate an identity.
+5. If the recorded identity differs from the observed identity, the key MUST
+   be kept and the recorded identity MUST NOT be refreshed.
+6. Otherwise the key MUST be kept when its fingerprint matches, and pruned
+   when its fingerprint differs or the file is absent.
 
-A file that is deleted and later reappears with the same size and modification
-time is treated as a new file and is accepted again.
+The output parent map MUST retain recorded identities referenced by kept keys.
+It MUST also include a nominated identity for an unrecorded parent only when
+all nominations for that parent agree. Conflicting nominations MUST adopt
+nothing for that parent. Identities unreferenced by kept keys MUST be dropped.
+An identity adopted in this write MUST NOT authorize pruning until a later
+write. The GUI MUST adopt worker results only under the existing snapshot
+fence.
+
+Legacy keys can qualify through an unchanged sibling under their parent.
+A recorded identity MUST NOT be refreshed even after a directory is recreated.
+Such conservatively kept entries remain bounded by the 16 MiB store limit,
+which fails closed with `watch-store-full`; a refresh policy is separate work.
+A file that was pruned after deletion and later reappears with the same size
+and modification time is treated as new and is accepted again.
 
 ### P6 Watch store format
 
-The watch checkpoint store is version 2 and holds
-`{"items": [keys], "publications": [{"key": ..., "state": "sending" | "unconfirmed", "at": ...}]}`.
+The watch checkpoint store is version 2:
+`{"items":[keys],"publications":[{"key":...,"state":"sending|unconfirmed","at":...}],"parents":[{"path":...,"device":...,"inode":...}]}`.
 
-A version 1 store MUST be readable, and MUST be upgraded on the next write.
-An implementation that only understands version 1 MUST refuse a version 2 store
-with `watch-store-invalid-version-or-data` and MUST fail closed without
-republishing any watched file.
+A missing `parents` field MUST read as empty, for version 1 and earlier
+unpublished version 2 files. A present `parents` field MUST be an array. Every
+entry MUST have an absolute string `path` and string `device` and `inode`
+components of 1–20 ASCII digits. Duplicate paths or malformed entries MUST
+fail closed with `watch-store-invalid-version-or-data`. Every version 2 write
+MUST include `parents`.
 
-The version of the watch rules store is unchanged.
-
-This is a pre-release format. It carries no live-migration user interface.
+Version 1 MUST remain readable and MUST upgrade on the next write. A reader
+that only understands version 1 MUST refuse version 2 with
+`watch-store-invalid-version-or-data` and MUST NOT republish watched files.
+The watch rules store stays at version 1. This pre-release format adds no
+live-migration user interface.
 
 ### P7 Implementation qualification
 
-CORE-025 is implemented on Linux only after a real process `SIGKILL` proof on
-`tmpfs` and the approved Qt 6.4.2 baseline. Network and FUSE qualification is
-a separate Layer 5 concern, and a periodic scan fallback exists.
+Linux CORE-025 requires the real-process SIGKILL proof on tmpfs, the approved
+Qt 6.4.2 baseline, and a real mount-namespace proof that processed keys and
+unconfirmed holds survive an unmount whose mountpoint directory remains.
+Remount and later safe pruning MUST be proved too. Local volumes are covered
+by the identity rule. Network/FUSE identity stability remains Layer 5
+qualification; an unstable identity MUST keep entries. Periodic scanning
+remains the notification fallback.
 
 ## Baseline traceability and disposition
 
@@ -306,23 +337,13 @@ implementation becomes normative merely through this package.
 
 ## Changelog
 
-- **0.6.0, 2026-11-14:** Maintainer Aoife approved the CORE-025 watch
-  publication and retention subsection. A publication is acknowledged when it
-  succeeded, or when at least one request was started, no prior-process sending
-  record survived a restart, and every attempt received an HTTP response of any
-  status. An acknowledged failure releases the file; an attempt that ended
-  without an HTTP response is unconfirmed unless the upload ultimately
-  succeeded; an implementation that cannot prove every attempt was answered
-  MUST treat the publication as unconfirmed. The send intent MUST be durably
-  saved before dispatch, every startup leftover `sending` record is
-  unconfirmed, retry eligibility resolves through an explicit Upload file
-  command or a changed file with a new fingerprint, local copy and move are
-  unchanged, checkpoint retention prunes by
-  parent existence and fingerprint change, and the watch checkpoint store
-  becomes version 2 with a version 1 read and next-write upgrade. Contract
-  0.4.0 records the decision and the vectors. Linux implements it first, and
-  only after a real process `SIGKILL` proof on `tmpfs` and the approved Qt
-  6.4.2 baseline; macOS and Windows remain unimplemented and MUST follow this
-  policy when built. No platform waiver, activation, census closure or release
-  approval is granted. See
-  [decision CORE-025](../../decisions/CORE-025-watch-publication-retention.md).
+- **0.6.0, 2026-11-14:** Maintainer Aoife approved the unpublished CORE-025
+  candidate and its amendment. Failed uploads with any HTTP 2xx response are
+  unconfirmed while genuine answered attempts remain counted. Durable intent
+  precedes dispatch; parent volume/object identities guard retention across
+  unmounts, and identities are adopted only for later writes. Checkpoint v2
+  adds optional-on-read, mandatory-on-write `parents`; rules stay v1. A session
+  lasts for one application process, with unsent-cancellation retry preserved.
+  Explicit uploads remain independent of watch holds. Contract 0.4.0 and this
+  package version are amended in place before publication. No activation,
+  census closure, release or other-platform implementation is approved.

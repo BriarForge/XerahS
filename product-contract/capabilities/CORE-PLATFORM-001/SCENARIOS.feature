@@ -83,3 +83,19 @@ Feature: Native platform capability invariants
     When the checkpoint store is written
     Then the checkpoint entry is kept
     And the entry is not pruned as a deleted file
+
+  @CORE-025
+  Scenario: Accepted response has no usable result
+    Given a watched file and a destination expecting a link field
+    When the server answers 200 without that field
+    Then one upload is unconfirmed and its notice names the file
+    And restarting does not upload that unchanged file again
+
+  @CORE-025
+  Scenario: A persistent mountpoint is unmounted and remounted
+    Given processed files and an unconfirmed hold on a watched bind root
+    When that root is unmounted but its directory remains
+    And another root completes a checkpoint write
+    And the original backing is mounted again
+    Then the original keys and parent identity remain
+    And restarting does not republish those files

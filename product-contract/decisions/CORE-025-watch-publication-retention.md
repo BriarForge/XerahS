@@ -17,140 +17,145 @@ never sent and a publication whose reply was lost could end up on the same
 path, and the checkpoint store had no way to record that a publication was in
 flight when the process stopped.
 
-## Decision
+## Binding amendment, 2026-11-14
 
-The publication disposition follows the first matching rule.
+Maintainer Aoife made decisions A, B and C under ROOT-REVIEW-001 after review
+of candidate a5232a4. Contract 0.4.0 and CORE-PLATFORM-001 0.6.0 are amended
+in place because neither version has been published. Other capability packages
+remain unchanged from 81220c4. No schema or linter is relaxed.
 
-1. A publication left over as `sending` from an earlier process is
-   `unconfirmed`.
-2. A publication that succeeded is `processed`: it is checkpointed as complete
-   and is never uploaded again automatically under the same key.
-3. A publication for which at least one request was started and every request
-   attempt received an HTTP response, but which did not succeed, is `released`:
-   it is not retried again in the current session and stays discoverable, so a
-   later session finds the work again.
-4. A publication for which at least one request was started and any attempt
-   ended without an HTTP response is `unconfirmed`: it may or may not have
-   reached the remote, and it is never uploaded again automatically under the
-   same key.
-5. A publication for which no request was started is `released`. That includes
-   validation failure, a missing destination, cancellation before transfer, and
-   a send intent that was not saved.
+## Decision A: accepted uploads without a usable result
 
-A publication is acknowledged when the upload succeeded, or when at least one
-request was started, no prior-process sending record survived a restart, and
-every request attempt received an HTTP response of any status. An acknowledged
-failure releases the file. An implementation that cannot show that every
-attempt was answered must treat the publication as unconfirmed.
+An acknowledged failure requires a started request, no prior-process `sending`
+record, an HTTP response on every attempt, and no 2xx response on any attempt.
+A 2xx status is evidence of acceptance, not of rejection; answered-attempt
+accounting MUST still count it as answered. A failed upload with a 2xx response,
+including an unparseable result or invalid result URL, is unconfirmed.
 
-The controlling rule is proof, not inference from the last status. A later
-answered attempt does not repair an earlier unanswered attempt, so a
-publication that saw a lost reply and then a `5xx` is unconfirmed, while a
-publication whose every attempt was answered with any status, including `5xx`,
-is released.
+The first matching rule decides the publication:
 
-### Send intent and startup
+1. A `sending` record left from an earlier process is `unconfirmed`, even when
+   the new process's runtime fields are empty.
+2. An upload that succeeded is `processed`. It MUST be checkpointed as complete
+   and MUST NOT be uploaded again automatically under the same key.
+3. A request that started and received a 2xx response on any attempt, without
+   ultimately succeeding, is `unconfirmed`.
+4. A request that started and received an HTTP response on every attempt, with
+   no 2xx response on any attempt, is `released`. It MUST NOT be retried in the
+   current session (P3) and MUST remain discoverable for a later session.
+5. A request that started and has any unanswered attempt is `unconfirmed`.
+6. A publication with no request started is `released` and MUST remain
+   discoverable. This includes validation failure, a missing destination,
+   cancellation before transfer, and an intent that was not saved.
 
-The intent to publish is durably saved before the request is dispatched, using
-the checkpoint work lane that already owns watch-folder checkpoint writes. If
-the intent cannot be saved, no HTTP request is issued, watching stops, and the
-failure is reported as `watch-store-write-failed`.
+An unconfirmed publication MUST NOT be uploaded again automatically under its
+key. An implementation MUST NOT derive acknowledgement from the last status
+alone. A later answered attempt does not repair an earlier unanswered attempt;
+a later failed response does not erase evidence of an earlier 2xx acceptance.
+An implementation unable to prove every attempt answered MUST treat the
+publication as unconfirmed unless the upload ultimately succeeded.
 
-Because the intent is saved first, a process that stops between the intent and
-the response leaves a durable `sending` record. Every leftover `sending` record
-is unconfirmed at startup, whatever the new process's runtime fields contain.
-This is why the startup rule is checked first and overrides every runtime fact.
+A successful upload keeps its existing result. An explicit Upload file command
+still reports `parse-failed` or `invalid-result-url` when applicable. Watch
+publication holds do not invent a usable URL or a successful receipt.
+The executor counts both answeredAttempts and acceptedAttempts; actual HTTP
+2xx responses count in both. The controller and service preserve these facts.
 
-### Retry eligibility and notices
+## Durable intent and local file effects
 
-Retry is controlled by explicit user action. The user can use the existing
-Upload file command independently of the watch key, or change the file, which
-gives it a new fingerprint and therefore a new key. The Upload file command
-does not change the fingerprint or clear the existing watch hold. No new user
-interface is added.
+An upload intent is durable before dispatch through the existing checkpoint
+OwnedWork lane. Failed intent means no HTTP request, watching stops, and the
+stable diagnostic is `watch-store-write-failed`. Earlier-process sending is
+unconfirmed. Local copy/move outputs remain UUID-named, never overwrite, and a
+move removes its source only after the copy commits. Copy/move crash replay
+before checkpoint remains possible.
 
-During a session, an unconfirmed publication is named in the current notices.
-At startup, one `watch-publication-unconfirmed` notice names up to five base
-names and reports how many further names remain. It discloses no directory
-path, no remote URL, and no other location detail.
+## Decision B: parent identity retention and store format
 
-### Local copy and move
+Retention MUST record each canonical parent directory's volume and object
+identity: POSIX and macOS use `st_dev` and `st_ino`; Windows uses the volume
+serial number and file ID. Both components MUST be decimal strings. Each
+request MUST freeze the recorded parent map before worker observation.
 
-Local copy and move behavior is unchanged. A crash before the checkpoint is
-written may repeat the copy. Generated output names never overwrite an
-existing file, and a move removes the source only after the copy has committed.
+For each key, the worker MUST observe parent identity before the file
+fingerprint and again afterwards. The first matching rule applies:
 
-### Retention
+1. A key with no observation facts (an unrecognized historic key) MUST be kept.
+2. A `sending` key MUST be kept.
+3. If either parent observation is missing, or the observations differ, the key
+   MUST be kept.
+4. If there is no recorded identity for the parent, the key MUST be kept. An
+   unchanged file fingerprint MAY nominate its stable parent identity for
+   adoption. Missing or changed files MUST NOT nominate an identity.
+5. If the recorded identity differs from the observed identity, the key MUST
+   be kept and the recorded identity MUST NOT be refreshed.
+6. Otherwise the key MUST be kept when its fingerprint matches, and pruned
+   when its fingerprint differs or the file is absent.
 
-Each checkpoint write prunes a `processed` or `unconfirmed` entry when the
-entry's parent directory exists AND the file's current fingerprint differs
-from the fingerprint recorded in the key, because the file was then deleted,
-moved, or changed. An entry whose parent directory does not exist is kept,
-because the parent may be an unmounted or removed root rather than a deleted
-file. An entry recorded as `sending` is never pruned.
+The output parent map MUST retain recorded identities referenced by kept keys.
+It MUST also include a nominated identity for an unrecorded parent only when
+all nominations for that parent agree. Conflicting nominations MUST adopt
+nothing for that parent. Identities unreferenced by kept keys MUST be dropped.
+An identity adopted in this write MUST NOT authorize pruning until a later
+write. The GUI MUST adopt worker results only under the existing snapshot
+fence.
 
-A file that is deleted and later reappears with the same size and modification
-time is treated as a new file and is accepted again.
+Legacy keys can qualify through an unchanged sibling under their parent.
+A recorded identity MUST NOT be refreshed even after a directory is recreated.
+Such conservatively kept entries remain bounded by the 16 MiB store limit,
+which fails closed with `watch-store-full`; a refresh policy is separate work.
+A file that was pruned after deletion and later reappears with the same size
+and modification time is treated as new and is accepted again.
 
 ### Store format
 
-The watch checkpoint store becomes version 2:
+The watch checkpoint store is version 2:
+`{"items":[keys],"publications":[{"key":...,"state":"sending|unconfirmed","at":...}],"parents":[{"path":...,"device":...,"inode":...}]}`.
 
-```json
-{"items": ["<key>"], "publications": [{"key": "<key>", "state": "sending", "at": "<timestamp>"}]}
-```
+A missing `parents` field MUST read as empty, for version 1 and earlier
+unpublished version 2 files. A present `parents` field MUST be an array. Every
+entry MUST have an absolute string `path` and string `device` and `inode`
+components of 1–20 ASCII digits. Duplicate paths or malformed entries MUST
+fail closed with `watch-store-invalid-version-or-data`. Every version 2 write
+MUST include `parents`.
 
-The `state` field is `sending` or `unconfirmed`. A version 1 store stays
-readable and is upgraded on the next write. A binary that only understands
-version 1 refuses a version 2 store with `watch-store-invalid-version-or-data`
-and fails closed without republishing anything. The watch rules store version
-is unchanged.
+Version 1 MUST remain readable and MUST upgrade on the next write. A reader
+that only understands version 1 MUST refuse version 2 with
+`watch-store-invalid-version-or-data` and MUST NOT republish watched files.
+The watch rules store stays at version 1. This pre-release format adds no
+live-migration user interface.
 
-This is a pre-release format. It carries no live-migration user interface.
+A private tmpfs/bind-root probe demonstrated the gap in parent-existence-only
+retention: hold_before=1, parent_exists_unmounted=1, fingerprint_restored=1,
+hold_after=0. The amended rule covers processed entries as well as holds.
+The worker observes stat(parent), fingerprint(file), stat(parent), decides
+against the frozen map and serializes. Snapshot-guarded GUI adoption publishes
+the resulting sets and map without filesystem work on the GUI thread.
 
-## Authorised implementation constraint
+## Decision C: retry session and notices
 
-The following future implementation shape is authorised by the maintainer and
-recorded here so the contract and the implementation cannot drift. No
-implementation code is written in this checkpoint.
+A session lasts for the watch service's life in one application process.
+Stopping and starting watching does not begin a new session. Answered released
+failures remain attempted even when settlement follows Stop. Cancelled work
+whose request never started remains retryable at the next Start. Persisted
+unconfirmed holds survive Stop/Start and process restart.
+An explicit Upload file command is independent of the watch hold. Changing the
+file gives it a new key. No new UI is added. An in-session notice names an
+unconfirmed file; one startup notice names up to five basenames and the count
+of remaining names, with no directory paths or URLs.
 
-The upload executor's attempt outcome must carry a separate answered flag
-alongside the attempt count, so that the "every attempt was answered" proof is
-available without inferring it from the last status. The executor's attempt
-completion path sets the flag true only on the path where a status was
-received, and false for a timeout, a network error or abort, a transient
-failure with no status, and any other attempt that ended without a response.
-The executor counts answered attempts and reports the count next to the total
-attempt count. The controller derives "every attempt received an HTTP
-response" as "answered attempts equal attempts, and attempts is greater than
-zero".
+## Implementation and qualification
 
-The derivation from the request-built flag, the attempt count, and the last
-HTTP status alone is explicitly insufficient: it reports the last attempt's
-status and therefore treats a lost reply followed by a `5xx` as answered. The
-required test is a timeout, then a `5xx`, then a retry exhaustion, which must
-be unconfirmed and must fail any last-status derivation.
-
-This is a minimal counter and result field, not a new architecture. Because the
-executor touches the credential surface, the implementation needs the
-independent second review that ROOT-SECURITY-001 requires, in addition to the
-maintainer's review.
-
-## Qualification
-
-CORE-025 is implemented on Linux only after a real process `SIGKILL` proof on
-`tmpfs` and the approved Qt 6.4.2 baseline. Network and FUSE qualification is a
-separate Layer 5 concern. A periodic scan fallback exists.
-
-## Impact
-
-The watch checkpoint store moves from version 1 to version 2 and gains a
-`publications` array. The watch rules store is unchanged. The uploaded file
-content, the destination contract, the upload request itself, and the local
-copy and move behavior are unchanged.
-
-The `Upload file` command, the file fingerprint scheme, the checkpoint store
-location, and the destination configuration are unchanged. No platform waiver,
-ownership expansion, credential access, activation, census closure, or release
-approval is granted. Windows and macOS remain unimplemented and must apply
-this policy when built.
+Reuse OwnedWork, PrivateJsonFile, the existing executor/controller and shared
+pure disposition/retention helpers. The adapter only translates observations.
+POSIX identities use stat; the C++17 baseline is unchanged. Add no watcher or
+mount-management mechanism, rules-store version change or identity-refresh UI.
+The unbounded exit drain and conservatively retained entries at the 16 MiB
+limit are accepted follow-ups, not new mechanisms in this slice.
+Prove unusable accepted results, real mount/unmount/remount preservation and
+safe later pruning, legacy/invalid parent metadata, and process-lifetime retry
+ordering on both Qt baselines. A skipped namespace proof is not qualification.
+Rebuild adapters, run the full suites, obtain maintainer line review and an
+independent Sonnet review of acceptedAttempts and the parents reader, then run
+the rebased push gate. Linux stays partial until qualified; other platforms
+are not waived. No activation, census closure or release is approved.

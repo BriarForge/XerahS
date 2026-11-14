@@ -1,17 +1,17 @@
 # Graph Report - product-contract  (2026-11-14)
 
 ## Corpus Check
-- 98 files · ~166,976 words
+- 98 files · ~168,244 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 16 file(s) not represented in the graph (top: .feature 16)
 
 ## Summary
-- 1278 nodes · 1568 edges · 61 communities (60 shown, 1 thin omitted)
+- 1276 nodes · 1565 edges · 55 communities (54 shown, 1 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8f27b4bb`
+- Built from commit: `a5232a44`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -63,25 +63,19 @@
 - Product Contract
 - capabilities
 - values
-- EDITOR-SESSION-001
 - CORE-025: watch publication disposition and retention
-- Decision
-- MOB-013
-- MOB-004
-- CORE-PLATFORM-001
 - Schemas
 - Decisions
 - baseline-deltas.yaml
 - EDITOR-CANVAS-001
 - EDITOR-EFFECTS-001
 - Waivers
-- Managed temporary upload artifact
 
 ## God Nodes (most connected - your core abstractions)
 1. `Filename deterministic acceptance vectors` - 55 edges
 2. `REGION-CAPTURE-001 Interactive region capture` - 53 edges
 3. `Document` - 51 edges
-4. `CORE-PLATFORM-001 Native platform capability foundation` - 46 edges
+4. `CORE-PLATFORM-001 Native platform capability foundation` - 45 edges
 5. `EDITOR-ANNOTATIONS-001 Annotation tools` - 44 edges
 6. `POST-CAPTURE-ACTIONS-001 Post-capture actions` - 44 edges
 7. `FILENAME-GENERATION-001 Filename generation` - 41 edges
@@ -92,19 +86,19 @@
 ## Surprising Connections (you probably didn't know these)
 - `FILENAME-GENERATION-001` --references--> `FILENAME-GENERATION-001 Filename generation`  [EXTRACTED]
   manifest.yaml → capabilities/FILENAME-GENERATION-001/SPEC.md
-- `Mike approval of filename wider sampling` --references--> `FILENAME-GENERATION-001 Filename generation`  [EXTRACTED]
-  reviews/APPROVAL-2026-11-12-FILENAME-WIDE-SAMPLING.json → capabilities/FILENAME-GENERATION-001/SPEC.md
 - `IEEE 754 binary64` --semantically_similar_to--> `IEEE 754 binary64`  [INFERRED] [semantically similar]
   VECTORS.md → capabilities/EDITOR-SESSION-001/SPEC.md
 - `test-vectors.json` --semantically_similar_to--> `test-vectors.json`  [INFERRED] [semantically similar]
   VECTORS.md → capabilities/EDITOR-SESSION-001/README.md
+- `Mike approval of filename wider sampling` --references--> `FILENAME-GENERATION-001 Filename generation`  [EXTRACTED]
+  reviews/APPROVAL-2026-11-12-FILENAME-WIDE-SAMPLING.json → capabilities/FILENAME-GENERATION-001/SPEC.md
 - `Product Contract` --conceptually_related_to--> `REGION-CAPTURE-001 Interactive region capture`  [INFERRED]
   glossary.md → capabilities/REGION-CAPTURE-001/SPEC.md
 
 ## Import Cycles
 - None detected.
 
-## Communities (61 total, 1 thin omitted)
+## Communities (55 total, 1 thin omitted)
 
 ### Community 0 - "REGION-CAPTURE-001 Interactive region capture"
 Cohesion: 0.05
@@ -112,7 +106,7 @@ Nodes (62): REGION-CAPTURE-001, Atomic last-region persistence, Capture result t
 
 ### Community 1 - "CORE-PLATFORM-001 Native platform capability foundation"
 Cohesion: 0.04
-Nodes (8): com.xerahs.app, CORE-PLATFORM-001 Native platform capability foundation, GPLv3, linux-editions.json, MOBILE-PLATFORM-001, NuGet, SETTINGS-CATALOG-001, XerahS
+Nodes (11): CORE-PLATFORM-001, experimental-mobile, native invariants, com.xerahs.app, CORE-PLATFORM-001 Native platform capability foundation, GPLv3, linux-editions.json, MOBILE-PLATFORM-001 (+3 more)
 
 ### Community 2 - "EDITOR-ANNOTATIONS-001 Annotation tools"
 Cohesion: 0.05
@@ -123,16 +117,16 @@ Cohesion: 0.05
 Nodes (42): Accepted setting dispositions, Human census closure approval, ImageEditor static inventory, Independent user-journey review, KovaForge 0.29.0 census, KovaForge 0.29.0 census provenance, Open baseline census, Sanitized compatibility fixtures (+34 more)
 
 ### Community 4 - "Document"
-Cohesion: 0.05
-Nodes (10): #AARRGGBB, COMPAT-XANN-001, Dirty state, Document, gzip, Rectangle annotation, Rendered image, SHA-256 (+2 more)
+Cohesion: 0.04
+Nodes (16): .xann, annotation-document.schema.json, EDITOR-SESSION-001, test-vectors.json, #AARRGGBB, annotation-document.schema.json, COMPAT-XANN-001, Dirty state (+8 more)
 
 ### Community 5 - "POST-CAPTURE-ACTIONS-001 Post-capture actions"
-Cohesion: 0.09
-Nodes (33): actions.json normative catalogue, Artifacts, Before-upload decline, Immutable selected action settings snapshot, Independent action failure continuation, Linked bounded retry attempts, Ordered action results, PCA-001 (+25 more)
+Cohesion: 0.07
+Nodes (41): MOB-013, Process termination recovery, actions.json normative catalogue, Artifacts, Before-upload decline, Immutable selected action settings snapshot, Independent action failure continuation, Interrupted unknown remote outcome (+33 more)
 
 ### Community 6 - "MOBILE-PLATFORM-001 Native mobile applications"
 Cohesion: 0.08
-Nodes (35): MOBILE-PLATFORM-001, Android 10 and iOS 17 baseline, Android intents iOS App Intents Shortcuts, GPLv3 iOS licensing review, Keystore and this-device-only Keychain, MediaCodec and ReplayKit recording, MediaStore and add-only Photos saving, MOB-001 (+27 more)
+Nodes (39): MOBILE-PLATFORM-001, Android 10 and iOS 17 baseline, Android intents iOS App Intents Shortcuts, Android MediaProjection consent, GPLv3 iOS licensing review, iOS screenshot and photo picker source, Keystore and this-device-only Keychain, MediaCodec and ReplayKit recording (+31 more)
 
 ### Community 7 - "SETTINGS-CATALOG-001 Application settings catalog"
 Cohesion: 0.08
@@ -260,7 +254,7 @@ Nodes (13): Minimal-width big-endian random-file sampling, Mike approval of file
 
 ### Community 38 - "Conformance vector format"
 Cohesion: 0.20
-Nodes (10): IEEE 754 binary64, CONTRACT-EVIDENCE-001, Conformance vector format, exact, IEEE 754 binary64, ROOT-PROHIBIT-001, ROOT-REVIEW-001, schemas/test-vectors.schema.json (+2 more)
+Nodes (10): CONTRACT-EVIDENCE-001, Conformance vector format, exact, IEEE 754 binary64, ROOT-PROHIBIT-001, ROOT-REVIEW-001, schemas/test-vectors.schema.json, signed 64-bit (+2 more)
 
 ### Community 39 - "backlog.json"
 Cohesion: 0.17
@@ -294,29 +288,9 @@ Nodes (8): capabilities, id, path, requirements, status, version, contract_versi
 Cohesion: 0.29
 Nodes (7): field, values, interface, cli, destination, gui, mcp
 
-### Community 47 - "EDITOR-SESSION-001"
-Cohesion: 0.33
-Nodes (6): .xann, annotation-document.schema.json, EDITOR-SESSION-001, test-vectors.json, annotation-document.schema.json, test-vectors.json
-
 ### Community 48 - "CORE-025: watch publication disposition and retention"
-Cohesion: 0.33
-Nodes (5): Authorised implementation constraint, CORE-025: watch publication disposition and retention, Impact, Problem, Qualification
-
-### Community 49 - "Decision"
-Cohesion: 0.33
-Nodes (6): Decision, Local copy and move, Retention, Retry eligibility and notices, Send intent and startup, Store format
-
-### Community 50 - "MOB-013"
-Cohesion: 0.50
-Nodes (5): MOB-013, Process termination recovery, Interrupted unknown remote outcome, PCA-012, PCA-022
-
-### Community 51 - "MOB-004"
-Cohesion: 0.50
-Nodes (4): Android MediaProjection consent, iOS screenshot and photo picker source, MOB-004, MOB-005
-
-### Community 52 - "CORE-PLATFORM-001"
-Cohesion: 0.67
-Nodes (3): CORE-PLATFORM-001, experimental-mobile, native invariants
+Cohesion: 0.20
+Nodes (9): Binding amendment, 2026-11-14, CORE-025: watch publication disposition and retention, Decision A: accepted uploads without a usable result, Decision B: parent identity retention and store format, Decision C: retry session and notices, Durable intent and local file effects, Implementation and qualification, Problem (+1 more)
 
 ### Community 53 - "Schemas"
 Cohesion: 0.40
@@ -342,29 +316,25 @@ Nodes (3): EDITOR-EFFECTS-001, effect-catalog-selection.json, effect-catalog-sel
 Cohesion: 0.67
 Nodes (3): D-REL-001 release waiver policy, Time-bound platform waiver, Waivers
 
-### Community 60 - "Managed temporary upload artifact"
-Cohesion: 1.00
-Nodes (3): Managed temporary upload artifact, PCA-006, PCA-019
-
 ## Knowledge Gaps
 - **282 isolated node(s):** `Capture result topology snapshot`, `Desktop physical coordinate space`, `DXGI WinRT Win32 capture`, `Half-open physical selection rectangle`, `IEEE754 floor epsilon mapping` (+277 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 807 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 806 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Product Contract` connect `INTERFACE-CATALOG-001 Native and agent interfaces` to `REGION-CAPTURE-001 Interactive region capture`, `POST-CAPTURE-ACTIONS-001 Post-capture actions`, `MOBILE-PLATFORM-001 Native mobile applications`, `SETTINGS-CATALOG-001 Application settings catalog`, `WORKFLOW-CATALOG-001 Workflow and action catalog`, `Filename deterministic acceptance vectors`?**
-  _High betweenness centrality (0.082) - this node is a cross-community bridge._
+  _High betweenness centrality (0.083) - this node is a cross-community bridge._
 - **What connects `Capture result topology snapshot`, `Desktop physical coordinate space`, `DXGI WinRT Win32 capture` to the rest of the system?**
   _282 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `REGION-CAPTURE-001 Interactive region capture` be split into smaller, more focused modules?**
   _Cohesion score 0.05129561078794289 - nodes in this community are weakly interconnected._
 - **Why does `Product Contract` connect `Product Contract` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Contract approval review — 2026-08-31`, `Document`, `Conformance vector format`, `backlog.json`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract completion status`, `Native implementation readiness`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
-  _High betweenness centrality (0.069) - this node is a cross-community bridge._
+  _High betweenness centrality (0.065) - this node is a cross-community bridge._
 - **Should `CORE-PLATFORM-001 Native platform capability foundation` be split into smaller, more focused modules?**
-  _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._
 - **Why does `FILENAME-GENERATION-001 Filename generation` connect `Filename deterministic acceptance vectors` to `INTERFACE-CATALOG-001 Native and agent interfaces`, `Product Contract reviews`, `Product Contract manifest`?**
-  _High betweenness centrality (0.053) - this node is a cross-community bridge._
+  _High betweenness centrality (0.055) - this node is a cross-community bridge._
 - **Should `EDITOR-ANNOTATIONS-001 Annotation tools` be split into smaller, more focused modules?**
   _Cohesion score 0.046511627906976744 - nodes in this community are weakly interconnected._
