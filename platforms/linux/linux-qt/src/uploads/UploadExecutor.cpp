@@ -41,7 +41,7 @@ UploadExecutor::UploadExecutor(QNetworkAccessManager *manager, QObject *parent, 
   m_timer.setSingleShot(true);
   connect(&m_timer, &QTimer::timeout, this, [this] {
     // A timeout ends the attempt without an HTTP status: not answered.
-    UploadOutcome out; out.code = QStringLiteral("timeout"); attemptFinished(out, true, false);
+    UploadOutcome out; out.code = QStringLiteral("timeout"); attemptFinished(out, true, 0);
   });
   m_retryTimer.setSingleShot(true);
   connect(&m_retryTimer, &QTimer::timeout, this, &UploadExecutor::sendAttempt);
@@ -90,7 +90,7 @@ void UploadExecutor::sendAttempt() {
   connect(m_reply, &QNetworkReply::readyRead, this, &UploadExecutor::drain);
   connect(m_reply, &QObject::destroyed, this, [this] {
     // The reply died without a status: not answered.
-    if (m_active) { UploadOutcome out; out.code = QStringLiteral("network-error"); attemptFinished(out, false, false); }
+    if (m_active) { UploadOutcome out; out.code = QStringLiteral("network-error"); attemptFinished(out, false, 0); }
   });
   connect(m_reply, &QNetworkReply::finished, this, [this, generation] {
     if (!m_active || !m_reply || generation != m_generation) return;
@@ -99,13 +99,14 @@ void UploadExecutor::sendAttempt() {
     if (!guard || !m_active || !m_reply || generation != m_generation) return;
     const int status = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (m_reply->error() != QNetworkReply::NoError && (status == 0 || (status >= 200 && status < 400))) {
-      // A transport failure without a usable status is not answered.
+      // A status line followed by a transport failure (truncated body) is
+      // answered, and accepted for 2xx, but the outcome stays failed.
       UploadOutcome out; out.code = QStringLiteral("network-error"); out.errorMessage = m_reply->errorString();
-      attemptFinished(out, transientNetworkError(m_reply->error()), false); return;
+      attemptFinished(out, transientNetworkError(m_reply->error()), status); return;
     }
     // The attempt reached a status line: answered, whatever that status is.
     attemptFinished(parseUploadResponse(m_request.destination, status, m_reply->rawHeaderPairs(), m_body, m_request.fileName),
-                    status >= 500 && status <= 599, true);
+                    status >= 500 && status <= 599, status);
   });
   m_timer.start(qMax(1, m_timeoutMs));
   emit progress(0, request.body.size());
@@ -138,12 +139,12 @@ void UploadExecutor::releaseReply() {
   auto reply = m_reply; m_reply.clear();
   if (reply) { reply->disconnect(this); if (!reply->isFinished()) reply->abort(); if (reply) reply->deleteLater(); }
 }
-void UploadExecutor::attemptFinished(UploadOutcome out, bool transient, bool answered) {
+void UploadExecutor::attemptFinished(UploadOutcome out, bool transient, int httpStatus) {
   if (!m_active) return;
   // CORE-025: count the attempt as answered only when it ended with a status.
-  if (answered) {
+  if (httpStatus > 0) {
     ++m_answeredAttempts;
-    if (out.httpStatus >= 200 && out.httpStatus < 300) ++m_acceptedAttempts;
+    if (httpStatus >= 200 && httpStatus < 300) ++m_acceptedAttempts;
   }
   if (!transient || !retrySafe() || m_attempts >= kMaximumUploadAttempts) { complete(out); return; }
   const QPointer<UploadExecutor> guard(this);

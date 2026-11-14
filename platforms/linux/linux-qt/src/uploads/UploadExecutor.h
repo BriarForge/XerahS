@@ -27,7 +27,7 @@ private:
   // CORE-025: `answered` is true only when the attempt ended with an actual
   // HTTP status. A timeout, a network abort or a failure without a status is
   // not answered, even when the attempt count grows.
-  void attemptFinished(UploadOutcome, bool transient, bool answered);
+  void attemptFinished(UploadOutcome, bool transient, int httpStatus);
   void releaseReply();
   bool retrySafe() const;
   void complete(UploadOutcome);

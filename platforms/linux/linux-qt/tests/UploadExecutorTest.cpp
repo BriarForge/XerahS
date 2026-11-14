@@ -22,9 +22,12 @@ public:
     setRequest(r); setUrl(r.url()); open(QIODevice::ReadOnly);
     if (mode == QLatin1String("timeout") || mode == QLatin1String("cancel")) return;
     QTimer::singleShot(0, this, [this, mode] {
-      setAttribute(QNetworkRequest::HttpStatusCodeAttribute, mode == QLatin1String("http") ? 500 : mode == QLatin1String("forbidden") ? 403 : mode == QLatin1String("rate") ? 429 : 200);
+      // A connection-level failure never produced a status line.
+      if (mode != QLatin1String("network")) setAttribute(QNetworkRequest::HttpStatusCodeAttribute, mode == QLatin1String("http") ? 500 : mode == QLatin1String("forbidden") ? 403 : mode == QLatin1String("rate") ? 429 :
+          mode == QLatin1String("truncated-302") ? 302 : 200);
       m_bytes = (mode == QLatin1String("oversize") || mode == QLatin1String("late-oversize")) ? QByteArray(4 * 1024 * 1024 + 1, 'x') :
           mode == QLatin1String("parse") ? QByteArray("invalid result") : mode == QLatin1String("http") ? QByteArray("secret-value") : QByteArray("https://example.com/result");
+      if (mode == QLatin1String("truncated-200") || mode == QLatin1String("truncated-302")) setError(QNetworkReply::RemoteHostClosedError, QStringLiteral("closed early"));
       if (mode == QLatin1String("network")) setError(QNetworkReply::RemoteHostClosedError, QStringLiteral("closed secret-value"));
       if (mode == QLatin1String("auth")) setError(QNetworkReply::AuthenticationRequiredError, QStringLiteral("denied"));
       if (mode != QLatin1String("late-oversize")) emit readyRead();
@@ -197,6 +200,41 @@ private slots:
     const auto outcome = done.first().first().value<UploadOutcome>();
     QCOMPARE(outcome.attempts, 2); QCOMPARE(outcome.answeredAttempts, 2); QCOMPARE(outcome.acceptedAttempts, 1);
     QCOMPARE(outcome.code, QString("parse-failed"));
+  }
+  // CORE-025 P1: a status line followed by a transport failure is still an answer.
+  void aTruncatedSuccessIsAnsweredAcceptedAndFailed() {
+    FixtureManager manager; manager.mode = "truncated-200";
+    UploadExecutor executor(&manager);
+    QSignalSpy done(&executor, &UploadExecutor::finished);
+    PreparedUploadRequest request; request.url = QUrl("https://example.test/upload"); request.method = "POST";
+    executor.start(request);
+    QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 2500);
+    const auto outcome = done.first().first().value<UploadOutcome>();
+    QCOMPARE(outcome.attempts, 1); QCOMPARE(outcome.answeredAttempts, 1); QCOMPARE(outcome.acceptedAttempts, 1);
+    QCOMPARE(outcome.code, QString("network-error"));
+    QVERIFY(outcome.url.isEmpty());
+  }
+  void aTruncatedRedirectIsAnsweredButNotAccepted() {
+    FixtureManager manager; manager.mode = "truncated-302";
+    UploadExecutor executor(&manager);
+    QSignalSpy done(&executor, &UploadExecutor::finished);
+    PreparedUploadRequest request; request.url = QUrl("https://example.test/upload"); request.method = "POST";
+    executor.start(request);
+    QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 2500);
+    const auto outcome = done.first().first().value<UploadOutcome>();
+    QCOMPARE(outcome.answeredAttempts, 1); QCOMPARE(outcome.acceptedAttempts, 0);
+    QCOMPARE(outcome.code, QString("network-error"));
+  }
+  void earlierAcceptanceSurvivesALaterLostRetry() {
+    FixtureManager manager; manager.modes = {"truncated-200", "network", "network"};
+    UploadExecutor executor(&manager, nullptr, 1000);
+    QSignalSpy done(&executor, &UploadExecutor::finished);
+    PreparedUploadRequest request; request.url = QUrl("https://example.test/upload"); request.method = "PUT";
+    executor.start(request);
+    QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 5000);
+    const auto outcome = done.first().first().value<UploadOutcome>();
+    QCOMPARE(outcome.attempts, 3); QCOMPARE(outcome.answeredAttempts, 1); QCOMPARE(outcome.acceptedAttempts, 1);
+    QCOMPARE(outcome.code, QString("network-error"));
   }
   void aTimeoutAloneIsNotAnswered() {
     FixtureManager manager; manager.mode = "timeout";
