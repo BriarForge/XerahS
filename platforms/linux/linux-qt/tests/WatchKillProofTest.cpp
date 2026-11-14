@@ -83,8 +83,12 @@ private slots:
     // than faked.
     if (qEnvironmentVariableIsSet("XERAHS_WATCH_KILL_NS")) return;
     const auto self = QCoreApplication::applicationFilePath();
+    // The unshare helper is in /usr/sbin or /usr/bin depending on the root.
+    QString unshare = QStringLiteral("/usr/sbin/unshare");
+    if (!QFileInfo::exists(unshare)) unshare = QStringLiteral("/usr/bin/unshare");
+    if (!QFileInfo::exists(unshare)) { m_namespaceUnavailable = true; return; }
     QProcess child;
-    child.start(QStringLiteral("/usr/sbin/unshare"),
+    child.start(unshare,
                 {QStringLiteral("--user"), QStringLiteral("--map-root-user"),
                  QStringLiteral("--mount"), self, QStringLiteral("--ns-child")});
     if (!child.waitForStarted(10000)) { m_namespaceUnavailable = true; return; }

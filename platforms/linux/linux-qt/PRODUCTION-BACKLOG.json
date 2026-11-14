@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 32,
-    "implemented": 177,
+    "implemented": 178,
     "not-applicable": 1,
     "not-started": 5,
-    "partial": 110
+    "partial": 109
   },
   "capabilities": [
     {
@@ -155,10 +155,10 @@
       "requirements": 37,
       "counts": {
         "blocked": 7,
-        "implemented": 8,
+        "implemented": 9,
         "not-applicable": 1,
         "not-started": 2,
-        "partial": 19
+        "partial": 18
       },
       "trace": "traceability/CORE-PLATFORM-001.json"
     },
@@ -272,6 +272,13 @@
       "previous": "partial",
       "current": "implemented",
       "reason": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites. The full rebuilt Qt 6.4.2 suite passed 178/178. Maintainer review approved the behavior, contract, evidence and promotion subject to two trace corrections, now applied; independent MiniMax persistence review approved the corrected a5afb31 tree with no blocking findings; the full 181-test host push gate remains pending. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion."
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-025",
+      "previous": "partial",
+      "current": "implemented",
+      "reason": "Maintainer-approved CORE-PLATFORM-001 0.6.0 / contract 0.4.0 resolves the watch publication and retention policy. The watch checkpoint store is version 2 with items and publications, a version 1 store is read and upgraded on the next write, and the watch rules store stays version 1. The publication disposition and the retention rule are pure production helpers that the service and the conformance adapter both call, so the policy is not implemented twice. The send intent is durably saved before any dispatch; when it cannot be saved no request is sent and watching stops with watch-store-write-failed. The acknowledgement test is proof over every attempt: the upload executor counts the attempts that ended with an HTTP status, so the last status alone cannot decide the publication. A publication left over as sending from an earlier process is unconfirmed, is never uploaded again automatically under its key, and is named in the startup notice without any path or URL. Local copy and move are unchanged. A real process SIGKILL proof on a private tmpfs shows the durable intent survives the kill and that the restarted process sends no second request. All nineteen CORE-025 contract vectors pass through the shared production helpers on Qt 6.12 and on the approved Qt 6.4.2 baseline. Network and FUSE qualification is a separate Layer 5 concern under CORE-025 P7 and is not claimed here."
     }
   ],
   "review_limitations": [

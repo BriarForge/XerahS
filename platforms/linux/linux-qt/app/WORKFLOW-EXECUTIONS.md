@@ -121,6 +121,16 @@ projection, so a failed step/terminal write cannot publish an absent output
 reference or announce success. Actual completed effects stay retained and watch
 uploads remain checkpointed against replay even if terminal storage failed.
 
+A watch-folder publication that cannot be confirmed publishes an unconfirmed
+terminal state. The state is recorded in the durable watch checkpoint store
+rather than in the upload result, because the uncertainty survives the process:
+a request that was started and never answered may or may not have reached the
+destination. An unconfirmed publication is never checkpointed as processed, so
+it is not uploaded again automatically under the same key. Its notice names the
+file and discloses no path, no remote URL and no other location detail. An
+explicit Upload file command produces a new file fingerprint and therefore a
+new key, and is the only way an unconfirmed publication may be sent again.
+
 Real native tests compare all four projections: PortalScreenshotTest covers
 pre-pipeline cancellation/denial/failure and partial action results;
 RecordingWorkflowTest covers Stop, Abort, denial, encoder failure and unconfirmed
