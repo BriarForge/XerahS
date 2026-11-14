@@ -30,10 +30,10 @@ namespace xerahs::app {
 // CORE-025 P1: the typed outcome of one upload publication.
 //   Unsent      - no request was started (validation, missing destination,
 //                 cancelled before transfer, or a send intent that was not saved);
-//   Acknowledged - the destination answered with an HTTP status of any kind,
-//                 and every preceding request was answered;
+//   Acknowledged - the upload succeeded, or every failed attempt was answered
+//                 without any HTTP 2xx acceptance;
 //   Unknown     - a request was started and at least one attempt ended without
-//                 an HTTP response, so the remote state cannot be known;
+//                 an HTTP response, or an accepted response had no usable result;
 // The type is derived from the attempt facts, never from the last status alone.
 enum class UploadPublication { Unsent, Acknowledged, Unknown };
 struct FileUploadPorts {
@@ -71,8 +71,8 @@ signals:
   void fileCompleted(const QString &path, bool success, const QString &error);
   // CORE-025: the typed publication outcome of the finished upload, with the
   // attempt facts that produced it. `attempts` is the number of request
-  // attempts and `answeredAttempts` the number that ended with an HTTP status.
-  void publicationResolved(const QString &path, xerahs::app::UploadPublication publication, int attempts, int answeredAttempts);
+  // attempts, answeredAttempts the HTTP responses, acceptedAttempts the 2xx responses.
+  void publicationResolved(const QString &path, xerahs::app::UploadPublication publication, int attempts, int answeredAttempts, int acceptedAttempts);
   // WFCAT-017: the terminal projection shared by dialog, notification and history.
   void activityChanged(const QString &text);
   void notify(const QString &title, const QString &body, bool success);
@@ -112,6 +112,7 @@ private:
   // acknowledged.
   int m_uploadAttempts = 0;
   int m_answeredAttempts = 0;
+  int m_acceptedAttempts = 0;
   bool m_requestStarted = false;
   QStringList m_executionOutputs;
   QJsonObject m_terminalObservation;

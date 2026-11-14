@@ -24,13 +24,8 @@ QString authorizeRoot(const QString &path, const QString &captures, QString *can
 bool matches(const Rule &rule, const QString &path);
 QString fingerprint(const QString &path);
 
-// CORE-025 P1: the disposition of one watch-folder publication attempt.
-// The order of these rules is the contract; the first match wins.
-//   1. a leftover `sending` record from an earlier process is unconfirmed;
-//   2. a publication that succeeded is processed;
-//   3. a started publication whose every attempt was answered is released;
-//   4. a started publication with any unanswered attempt is unconfirmed;
-//   5. a publication that never started is released.
+// CORE-025 P1: restart hold, success, accepted-but-unusable, fully answered
+// rejection, unanswered request, then unsent. The first matching rule wins.
 enum class PublicationDisposition { Processed, Released, Unconfirmed };
 QString publicationDispositionName(PublicationDisposition disposition);
 struct PublicationFacts {
@@ -38,6 +33,7 @@ struct PublicationFacts {
   int attempts = 0;                   // request attempts made
   bool everyAttemptAnswered = false;  // production can prove every attempt got an HTTP response
   bool succeeded = false;
+  bool acceptedOnAnyAttempt = false;  // An HTTP 2xx response, regardless of result parsing.
   bool restartWithSending = false;    // a sending record survived from an earlier process
 };
 PublicationDisposition publicationDisposition(const PublicationFacts &facts);

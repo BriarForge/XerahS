@@ -81,7 +81,7 @@ void FileUploadController::cancel() {
   // Return it to the watch service so cancellation can release that intent.
   for (const auto &file : abandoned) {
     if (file.origin != QLatin1String("watch-folder")) continue;
-    emit publicationResolved(file.path, UploadPublication::Unsent, 0, 0);
+    emit publicationResolved(file.path, UploadPublication::Unsent, 0, 0, 0);
     if (!owner) return;
     emit fileCompleted(file.path, false, QStringLiteral("cancelled"));
     if (!owner) return;
@@ -111,7 +111,7 @@ void FileUploadController::startNext() {
   m_existingFile = false; m_sensitiveValues.clear();
   m_rule = queued.rule; m_requestBuilt = false; m_httpStatus = 0; m_executionOutputs.clear(); m_executionStored = true; m_execution.reset();
   // CORE-025: the attempt facts reset with every queued file.
-  m_uploadAttempts = 0; m_answeredAttempts = 0; m_requestStarted = false;
+  m_uploadAttempts = 0; m_answeredAttempts = 0; m_acceptedAttempts = 0; m_requestStarted = false;
   showProgress(m_currentName);
   const auto credentials = m_ports.credentials;
   const auto catalogPath = m_ports.catalogPath;
@@ -278,6 +278,7 @@ void FileUploadController::showFailure(const QString &fileName, const QString &m
   uploads::UploadOutcome outcome; outcome.errorMessage = detail.isEmpty() ? message : message + ": " + detail;
   outcome.attempts = m_historyRecord.result.attempts;
   outcome.answeredAttempts = m_answeredAttempts;
+  outcome.acceptedAttempts = m_acceptedAttempts;
   if (m_historyRecord.failureCode.isEmpty()) m_historyRecord.failureCode = "upload-failed";
   const QPointer<FileUploadController> guard(this);
   const auto notice = settle(false);
@@ -287,7 +288,7 @@ void FileUploadController::showFailure(const QString &fileName, const QString &m
     // CORE-025: the publication facts are published before the completion, so
     // the watch service can apply the disposition to this very attempt.
     const QPointer<FileUploadController> owner(this);
-    emit publicationResolved(m_currentPath, publication(), m_uploadAttempts, m_answeredAttempts);
+    emit publicationResolved(m_currentPath, publication(), m_uploadAttempts, m_answeredAttempts, m_acceptedAttempts);
     if (!owner) return;
     emit fileCompleted(m_currentPath, false, message);
     closeProgress();
@@ -306,7 +307,7 @@ void FileUploadController::showSuccess(const QString &fileName, const uploads::U
   const auto storage = m_executionStored ? QString{} : QStringLiteral("workflow-storage-unavailable: Could not save the upload execution record.");
   recordCompletion(outcome, [this, fileName, outcome, notice, storage](const QString &historyError) {
     const QPointer<FileUploadController> owner(this);
-    emit publicationResolved(m_currentPath, UploadPublication::Acknowledged, m_uploadAttempts, m_answeredAttempts);
+    emit publicationResolved(m_currentPath, UploadPublication::Acknowledged, m_uploadAttempts, m_answeredAttempts, m_acceptedAttempts);
     if (!owner) return;
     emit fileCompleted(m_currentPath, true, {});
     closeProgress();
@@ -323,6 +324,7 @@ UploadPublication FileUploadController::publication() const {
   // CORE-025 P1. The acknowledgement test is proof over every attempt, not
   // the last status. A started request with any unanswered attempt is unknown.
   if (!m_requestStarted || m_uploadAttempts <= 0) return UploadPublication::Unsent;
+  if (m_acceptedAttempts > 0) return UploadPublication::Unknown;
   if (m_answeredAttempts == m_uploadAttempts) return UploadPublication::Acknowledged;
   return UploadPublication::Unknown;
 }
@@ -351,6 +353,7 @@ void FileUploadController::onFinished(const uploads::UploadOutcome &outcome) {
   // later answered attempt does not repair an earlier unanswered one.
   m_uploadAttempts = outcome.attempts;
   m_answeredAttempts = outcome.answeredAttempts;
+  m_acceptedAttempts = outcome.acceptedAttempts;
   if (m_stop || outcome.code == QLatin1String("cancelled")) {
     m_historyRecord.failureCode = "cancelled";
     showFailure(m_currentName, QStringLiteral("cancelled"), false, outcome.attempts > 0

@@ -18,6 +18,7 @@ struct UploadOutcome {
   // cannot, because a later answered attempt does not repair an earlier
   // unanswered one.
   int answeredAttempts = 0;
+  int acceptedAttempts = 0;  // HTTP 2xx attempts, even when the result is unusable.
 };
 // XML supports absolute element paths, first matching sibling, no predicates,
 // attributes, namespace resolution, external entities or general XPath evaluation.

@@ -27,10 +27,11 @@ WatchFolderService::WatchFolderService(watch::WatchFolders &store, FileUploadCon
   connect(&m_uploads, &FileUploadController::fileCompleted, this, &WatchFolderService::complete);
   // CORE-025 P1: the typed publication outcome decides the disposition.
   connect(&m_uploads, &FileUploadController::publicationResolved, this,
-      [this](const QString &path, UploadPublication, int attempts, int answeredAttempts) {
+      [this](const QString &path, UploadPublication, int attempts, int answeredAttempts, int acceptedAttempts) {
     if (path != m_pendingPath || path.isEmpty()) return;
     m_uploadAttempts = attempts;
     m_answeredAttempts = answeredAttempts;
+    m_acceptedAttempts = acceptedAttempts;
   });
 }
 void WatchFolderService::start() {
@@ -260,6 +261,7 @@ void WatchFolderService::complete(const QString &path, bool success, const QStri
     facts.requestStarted = m_uploadAttempts > 0;
     facts.attempts = m_uploadAttempts;
     facts.everyAttemptAnswered = m_uploadAttempts > 0 && m_answeredAttempts == m_uploadAttempts;
+    facts.acceptedOnAnyAttempt = m_acceptedAttempts > 0;
     facts.succeeded = success;
     facts.restartWithSending = false;
     const auto disposition = watch::publicationDisposition(facts);
@@ -423,7 +425,7 @@ void WatchFolderService::rescan() {
       if (watch::fingerprint(candidate.path) != key) continue;
       m_pendingPath = candidate.path; m_pendingKey = key; m_attempted.insert(key);
       m_publicationAction = candidate.rule.action == watch::Action::Upload;
-      m_uploadAttempts = 0; m_answeredAttempts = 0;
+      m_uploadAttempts = 0; m_answeredAttempts = 0; m_acceptedAttempts = 0;
       if (candidate.rule.action == watch::Action::Upload) {
         // CORE-025 P2: the send intent is durably saved before any dispatch.
         beginPublication(candidate.path, key, ruleSnapshot(candidate.rule));

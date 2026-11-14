@@ -61,6 +61,7 @@ PublicationDisposition publicationDisposition(const PublicationFacts &facts) {
   // CORE-025 P1. The order is the contract; the first match wins.
   if (facts.restartWithSending) return PublicationDisposition::Unconfirmed;
   if (facts.succeeded) return PublicationDisposition::Processed;
+  if (facts.requestStarted && facts.acceptedOnAnyAttempt) return PublicationDisposition::Unconfirmed;
   if (facts.requestStarted && facts.everyAttemptAnswered) return PublicationDisposition::Released;
   if (facts.requestStarted) return PublicationDisposition::Unconfirmed;
   return PublicationDisposition::Released;

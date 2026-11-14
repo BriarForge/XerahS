@@ -125,7 +125,8 @@ A watch-folder publication that cannot be confirmed publishes an unconfirmed
 terminal state. The state is recorded in the durable watch checkpoint store
 rather than in the upload result, because the uncertainty survives the process:
 a request that was started and never answered may or may not have reached the
-destination. An unconfirmed publication is never checkpointed as processed, so
+destination. A failed upload that received any HTTP 2xx is also unconfirmed,
+because acceptance can precede an unusable result URL. An unconfirmed publication is never checkpointed as processed, so
 it is not uploaded again automatically under the same key. Its notice names the
 file and discloses no path, no remote URL and no other location detail. An
 explicit Upload file command is independent of the watch hold. Changing the

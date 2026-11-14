@@ -60,6 +60,7 @@ public:
   int received = 0;
   bool stall = false;
   QList<int> responseStatuses;  // Zero holds this request without a response.
+  QList<QByteArray> responseBodies;
   QByteArray request;
   HttpFixture() {
     connect(&server, &QTcpServer::newConnection, this, [this] {
@@ -79,7 +80,7 @@ public:
           ++received;
           const int status = received <= responseStatuses.size() ? responseStatuses.at(received - 1) : 200;
           if (stall || status == 0) return;
-          const QByteArray body = R"({"url":"https://example.test/watched"})";
+          const QByteArray body = received <= responseBodies.size() ? responseBodies.at(received - 1) : QByteArray("{\"url\":\"https://example.test/watched\"}");
           peer->write("HTTP/1.1 " + QByteArray::number(status) + " Reply\r\nContent-Type: application/json\r\nContent-Length: " + QByteArray::number(body.size()) +
                       "\r\nConnection: close\r\n\r\n" + body);
           peer->disconnectFromHost();
@@ -1060,6 +1061,53 @@ private slots:
     service.setCheckpointHook({}); service.start(); scan(service); now += 2000; scan(service);
     QTRY_COMPARE(http.received, 1); QTRY_COMPARE(completed.count(), 2);
     service.stop(); service.finishCheckpoint();
+  }
+
+  void acceptedResponseWithoutUsableResultStaysHeld_data() {
+    QTest::addColumn<QString>("kind");
+    for (const auto name : {"missing-link", "invalid-url", "server-error-then-accepted", "rejected-400"}) QTest::newRow(name) << QString(name);
+  }
+  void acceptedResponseWithoutUsableResultStaysHeld() {
+    QFETCH(QString, kind);
+    const bool held = kind != "rejected-400", retried = kind == "server-error-then-accepted";
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto source = dir.filePath("input/accepted.png"); QVERIFY(writeFile(source));
+    const auto key = watch::fingerprint(source);
+    HttpFixture http; http.responseStatuses = retried ? QList<int>{503, 200} : QList<int>{held ? 200 : 400};
+    http.responseBodies = retried ? QList<QByteArray>{"{}", "{\"other\":\"x\"}"} :
+        QList<QByteArray>{kind == "invalid-url" ? QByteArray("{\"link\":\"ftp://x\"}") : QByteArray("{\"other\":\"x\"}")};
+    QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    auto ports = portsFor(dir); ports.uploadTimeoutMs = 1000;
+    DestinationCatalog catalog(ports.catalogPath); UploadDestination destination;
+    destination.id = QUuid::createUuid(); destination.name = "accepted result proof"; destination.method = RequestMethod::Put;
+    destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    destination.body = BodyType::MultipartFormData; destination.fileFormName = "file"; destination.resultUrl = "{json:link}";
+    QCOMPARE(catalog.add(destination), QString()); qint64 now = 0; QWidget owner;
+    {
+      FileUploadController uploads(ports, &owner); int attempts = -1, answered = -1, accepted = -1;
+      connect(&uploads, &FileUploadController::publicationResolved, this,
+          [&](const QString &, UploadPublication, int sent, int replies, int acceptedReplies) { attempts = sent; answered = replies; accepted = acceptedReplies; });
+      watch::WatchFolders store(dir.filePath("store"));
+      WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
+      watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(service.setRules({rule}), QString());
+      QSignalSpy completed(&service, &WatchFolderService::processed), notices(&service, &WatchFolderService::notify);
+      service.start(); scan(service); now += 2000; scan(service);
+      QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 1, 7000);
+      QCOMPARE(http.received, retried ? 2 : 1); QCOMPARE(attempts, http.received); QCOMPARE(answered, attempts); QCOMPARE(accepted, held ? 1 : 0);
+      QVERIFY(!completed.first()[1].toBool()); QVERIFY(!store.processed(key));
+      QCOMPARE(store.publicationPending(key), held);
+      bool named = false; for (const auto &notice : notices) named |= notice[0].toString().contains("watch-publication-unconfirmed") && notice[0].toString().contains("accepted.png");
+      QCOMPARE(named, held); service.stop(); service.finishCheckpoint();
+    }
+    if (!held) return;
+    FileUploadController uploads(ports, &owner); watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
+    QSignalSpy notices(&service, &WatchFolderService::notify);
+    const auto received = http.received;
+    service.start(); scan(service); now += 2000; scan(service); QTest::qWait(1500);
+    QCOMPARE(http.received, received); QVERIFY(store.publicationPending(key));
+    bool named = false; for (const auto &notice : notices) named |= notice[0].toString().contains("watch-publication-unconfirmed") && notice[0].toString().contains("accepted.png");
+    QVERIFY(named); service.stop(); service.finishCheckpoint();
   }
 
   void retryResponseCoverageSurvivesControllerAndRestart_data() {

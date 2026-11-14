@@ -308,6 +308,13 @@ private slots:
   }
   // CORE-025 P1: the disposition of one publication attempt. The order of
   // the rules is the contract; the first match wins.
+  void acceptedFailureIsHeldWithoutOverridingSuccessOrRestart() {
+    PublicationFacts facts; facts.requestStarted = true; facts.everyAttemptAnswered = true; facts.acceptedOnAnyAttempt = true;
+    QCOMPARE(publicationDisposition(facts), PublicationDisposition::Unconfirmed);
+    facts.succeeded = true; QCOMPARE(publicationDisposition(facts), PublicationDisposition::Processed);
+    facts.restartWithSending = true; QCOMPARE(publicationDisposition(facts), PublicationDisposition::Unconfirmed);
+  }
+
   void publicationDispositionFollowsTheContractOrder_data() {
     QTest::addColumn<bool>("restartWithSending");
     QTest::addColumn<bool>("succeeded");

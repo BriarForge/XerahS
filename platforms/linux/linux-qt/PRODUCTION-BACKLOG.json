@@ -278,7 +278,7 @@
       "requirement": "CORE-025",
       "previous": "partial",
       "current": "partial",
-      "reason": "CORE-025 remains partial pending review and final qualification of the corrected candidate. Parent review of cedc424 found five runtime regressions: released keys became processed, another file checkpoint erased unconfirmed holds, and all three checkpoint writers omitted production retention. These fail in /tmp/xerahs-core025-parent-red.log. Corrected writes preserve unrelated publications and call the shared retention helper on the worker; release uses PublicationDisposition rather than overloading Sending. Store tests now exercise all three writers with processed, unconfirmed and sending entries against changed, deleted, unchanged and missing-parent files, including a newline in the filename. The service refuses dispatch after Stop during a held intent and drains the release before returning. Sending records loaded by a new store become unconfirmed in memory; startup notices use basenames without fingerprint metadata. The SIGKILL proof now receives the entire HTTP request body before killing and pumps the parent server event loop throughout the restarted watcher observation. Local copy/move outputs are unchanged; P5 removes a completed move source key because the source no longer exists, while copy keys remain. Maintainer and independent Sonnet reviews, refreshed conformance, both Qt baselines and the final integration gate remain required before promotion. Network/FUSE qualification and other platforms are not claimed."
+      "reason": "CORE-025 remains partial at 177/324 while the maintainer-approved A/B/C amendment is implemented. Decision A is implemented: the executor counts actual answered and HTTP 2xx accepted attempts separately; the controller passes both counts and the service holds accepted uploads without a usable successful result. Missing-link, invalid-web-URL and 503-then-unusable-200 journeys produce one accepted publication and no repeat after a fresh service loads the hold. A 400 remains released. The three new acceptance cases fail before the fix on Qt 6.12 and fail when the accepted rule is removed on both Qt 6.12 and Qt 6.4.2; restoration passes on both. Executor counter and existing watch suites pass on both Qt versions. All 16 publication vectors pass through the adapter; the 15 amended parent-retention vectors intentionally await decision B implementation. Decisions B (frozen parent device/inode retention and legacy qualification) and C (process-lifetime answered-failure retry suppression) are approved in the contract but not yet implemented. The earlier a5232a4 clean-quit drain, failed-intent blocking proof and bounded startup notice fixes remain. Final mount proofs, both full suites, maintainer and independent Sonnet review, and the rebased push gate remain required; no platform waiver, activation, census closure or release is claimed."
     }
   ],
   "review_limitations": [
@@ -893,6 +893,18 @@
         "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
         "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp",
         "platforms/linux/linux-qt/tests/WatchKillFixture.cpp"
+      ]
+    },
+    {
+      "date": "2026-11-14",
+      "requirements": [
+        "CORE-025"
+      ],
+      "outcome": "CORE-025 remains partial at 177/324 while the maintainer-approved A/B/C amendment is implemented. Decision A is implemented: the executor counts actual answered and HTTP 2xx accepted attempts separately; the controller passes both counts and the service holds accepted uploads without a usable successful result. Missing-link, invalid-web-URL and 503-then-unusable-200 journeys produce one accepted publication and no repeat after a fresh service loads the hold. A 400 remains released. The three new acceptance cases fail before the fix on Qt 6.12 and fail when the accepted rule is removed on both Qt 6.12 and Qt 6.4.2; restoration passes on both. Executor counter and existing watch suites pass on both Qt versions. All 16 publication vectors pass through the adapter; the 15 amended parent-retention vectors intentionally await decision B implementation. Decisions B (frozen parent device/inode retention and legacy qualification) and C (process-lifetime answered-failure retry suppression) are approved in the contract but not yet implemented. The earlier a5232a4 clean-quit drain, failed-intent blocking proof and bounded startup notice fixes remain. Final mount proofs, both full suites, maintainer and independent Sonnet review, and the rebased push gate remain required; no platform waiver, activation, census closure or release is claimed.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp",
+        "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
       ]
     }
   ],

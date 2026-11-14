@@ -36,6 +36,7 @@ private:
   QTimer m_timer, m_retryTimer;
   int m_attempts = 0;
   int m_answeredAttempts = 0;
+  int m_acceptedAttempts = 0;
   int m_timeoutMs;
   bool m_active = false, m_finishing = false;
   quint64 m_generation = 0;

@@ -51,7 +51,7 @@ UploadExecutor::~UploadExecutor() {
 }
 void UploadExecutor::start(const PreparedUploadRequest &request) {
   if (m_active || m_finishing) return;
-  m_active = true; m_request = request; m_attempts = 0; m_answeredAttempts = 0;
+  m_active = true; m_request = request; m_attempts = 0; m_answeredAttempts = 0; m_acceptedAttempts = 0;
   sendAttempt();
 }
 void UploadExecutor::sendAttempt() {
@@ -141,7 +141,10 @@ void UploadExecutor::releaseReply() {
 void UploadExecutor::attemptFinished(UploadOutcome out, bool transient, bool answered) {
   if (!m_active) return;
   // CORE-025: count the attempt as answered only when it ended with a status.
-  if (answered) ++m_answeredAttempts;
+  if (answered) {
+    ++m_answeredAttempts;
+    if (out.httpStatus >= 200 && out.httpStatus < 300) ++m_acceptedAttempts;
+  }
   if (!transient || !retrySafe() || m_attempts >= kMaximumUploadAttempts) { complete(out); return; }
   const QPointer<UploadExecutor> guard(this);
   const auto generation = m_generation;
@@ -160,6 +163,7 @@ void UploadExecutor::complete(UploadOutcome out) {
   if (!guard) return;
   out.attempts = m_attempts;
   out.answeredAttempts = m_answeredAttempts;
+  out.acceptedAttempts = m_acceptedAttempts;
   for (const auto &secret : m_request.sensitiveValues) {
     out.errorMessage.replace(secret, QStringLiteral("[redacted]"));
     out.errorMessage.replace(QString::fromLatin1(QUrl::toPercentEncoding(secret)), QStringLiteral("[redacted]"));

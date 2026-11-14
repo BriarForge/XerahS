@@ -187,6 +187,17 @@ private slots:
     QCOMPARE(outcome.answeredAttempts, 3);
   }
 
+  void acceptedAttemptCountsEvenWhenItsResultCannotBeParsed() {
+    FixtureManager manager; manager.modes = {"http", "success"};
+    UploadExecutor executor(&manager, nullptr, 1000);
+    QSignalSpy done(&executor, &UploadExecutor::finished);
+    PreparedUploadRequest request; request.url = QUrl("https://example.test/upload"); request.method = "PUT";
+    request.destination.resultUrl = "{json:link}";
+    executor.start(request); QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 5000);
+    const auto outcome = done.first().first().value<UploadOutcome>();
+    QCOMPARE(outcome.attempts, 2); QCOMPARE(outcome.answeredAttempts, 2); QCOMPARE(outcome.acceptedAttempts, 1);
+    QCOMPARE(outcome.code, QString("parse-failed"));
+  }
   void aTimeoutAloneIsNotAnswered() {
     FixtureManager manager; manager.mode = "timeout";
     UploadExecutor executor(&manager, nullptr, 80);

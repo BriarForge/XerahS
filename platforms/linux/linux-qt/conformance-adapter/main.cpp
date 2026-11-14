@@ -883,6 +883,7 @@ QJsonObject runCorePlatform(const QString &operation, const QJsonObject &input) 
     facts.requestStarted = input.value(u"request_started").toBool();
     facts.attempts = input.value(u"attempts").toInt();
     facts.everyAttemptAnswered = input.value(u"http_response_on_every_attempt").toBool();
+    facts.acceptedOnAnyAttempt = input.value(u"http_2xx_on_any_attempt").toBool();
     facts.succeeded = input.value(u"succeeded").toBool();
     facts.restartWithSending = input.value(u"restart_with_sending").toBool();
     const auto disposition = xerahs::watch::publicationDisposition(facts);

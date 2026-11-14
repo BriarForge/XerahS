@@ -76,6 +76,7 @@ private:
   quint64 m_publicationGeneration = 0;
   int m_uploadAttempts = 0;
   int m_answeredAttempts = 0;
+  int m_acceptedAttempts = 0;
   // CORE-025 P4: a copy or move is not a publication and keeps its own path.
   bool m_publicationAction = false;
   std::function<void()> m_checkpointHook;
