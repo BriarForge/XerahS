@@ -40,6 +40,70 @@ private slots:
     WatchFolders reloaded(dir.path()); QVERIFY(reloaded.processed("first")); QVERIFY(reloaded.processed("second"));
   }
 
+  void releasingAPublicationDoesNotMarkItProcessed() {
+    QTemporaryDir dir; WatchFolders store(dir.path());
+    const auto intent = store.publicationIntent("released-key");
+    QCOMPARE(store.adoptIntent(intent, WatchFolders::writeIntent(intent)), QString());
+    const auto release = store.settlePublication("released-key", PublicationDisposition::Released);
+    QCOMPARE(store.adoptSettlement(release, WatchFolders::writeSettlement(release)), QString());
+    QVERIFY(!store.processed("released-key"));
+    WatchFolders restarted(dir.path());
+    QVERIFY(!restarted.processed("released-key"));
+    QVERIFY(!restarted.publicationPending("released-key"));
+  }
+
+  void completingAnotherFilePreservesUnconfirmedPublications() {
+    QTemporaryDir dir; WatchFolders store(dir.path());
+    const auto intent = store.publicationIntent("held-key");
+    QCOMPARE(store.adoptIntent(intent, WatchFolders::writeIntent(intent)), QString());
+    const auto unknown = store.settlePublication("held-key", PublicationDisposition::Unconfirmed);
+    QCOMPARE(store.adoptSettlement(unknown, WatchFolders::writeSettlement(unknown)), QString());
+    QCOMPARE(store.remember("finished-key"), QString());
+    WatchFolders restarted(dir.path());
+    QVERIFY(restarted.publicationPending("held-key"));
+    QVERIFY(restarted.processed("finished-key"));
+  }
+
+  void everyCheckpointPrunesRealDeletedFiles_data() {
+    QTest::addColumn<QString>("operation"); QTest::addColumn<QString>("state"); QTest::addColumn<QString>("change");
+    for (const auto op : {"checkpoint", "intent", "settlement"})
+      for (const auto state : {"processed", "unconfirmed", "sending"})
+        for (const auto change : {"deleted", "changed", "missing-parent", "unchanged"})
+          QTest::newRow(qPrintable(QString("%1-%2-%3").arg(op, state, change))) << QString(op) << QString(state) << QString(change);
+  }
+  void everyCheckpointPrunesRealDeletedFiles() {
+    QFETCH(QString, operation); QFETCH(QString, state); QFETCH(QString, change);
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto source = dir.filePath("input/new\nline.png"); QVERIFY(writeFile(source));
+    const auto key = fingerprint(source); WatchFolders store(dir.filePath("store"));
+    if (state == "processed") QCOMPARE(store.remember(key), QString());
+    else {
+      const auto intent = store.publicationIntent(key);
+      QCOMPARE(store.adoptIntent(intent, WatchFolders::writeIntent(intent)), QString());
+      if (state == "unconfirmed") {
+        const auto write = store.settlePublication(key, PublicationDisposition::Unconfirmed);
+        QCOMPARE(store.adoptSettlement(write, WatchFolders::writeSettlement(write)), QString());
+      }
+    }
+    if (change == "changed") QVERIFY(writeFile(source, "a changed fingerprint"));
+    else if (change != "unchanged") QVERIFY(QFile::remove(source));
+    if (change == "missing-parent") QVERIFY(QDir().rmdir(dir.filePath("input")));
+    if (operation == "checkpoint") QCOMPARE(store.remember("finished-key"), QString());
+    else if (operation == "intent") {
+      const auto write = store.publicationIntent("other-key");
+      QCOMPARE(store.adoptIntent(write, WatchFolders::writeIntent(write)), QString());
+    } else {
+      const auto write = store.settlePublication("other-key", PublicationDisposition::Released);
+      QCOMPARE(store.adoptSettlement(write, WatchFolders::writeSettlement(write)), QString());
+    }
+    const bool kept = state == "sending" || change == "missing-parent" || change == "unchanged";
+    QCOMPARE(store.processed(key), kept && state == "processed");
+    QCOMPARE(store.publicationPending(key), kept && state != "processed");
+    WatchFolders restarted(dir.filePath("store"));
+    QCOMPARE(restarted.processed(key), kept && state == "processed");
+    QCOMPARE(restarted.publicationPending(key), kept && state != "processed");
+  }
+
   void canonicalizesRootsAndRefusesLoops() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
@@ -360,7 +424,7 @@ private slots:
     QVERIFY(restarted.publicationPending("key-a"));
     QCOMPARE(restarted.publications().size(), 1);
     QCOMPARE(restarted.publications().first().key, QString("key-a"));
-    QCOMPARE(restarted.publications().first().state, PublicationState::Sending);
+    QCOMPARE(restarted.publications().first().state, PublicationState::Unconfirmed);
     QCOMPARE(restarted.publications().first().at, QString("2026-11-14T00:00:00Z"));
   }
 
@@ -375,14 +439,14 @@ private slots:
     QCOMPARE(store.adoptIntent(intent, std::move(intentResult)), QString());
     QVERIFY(store.publicationPending("key-a"));
 
-    const auto settle = store.settlePublication("key-a", PublicationState::Unconfirmed);
+    const auto settle = store.settlePublication("key-a", PublicationDisposition::Unconfirmed);
     auto settleResult = WatchFolders::writeSettlement(settle);
     QCOMPARE(settleResult.error, QString());
     QCOMPARE(store.adoptSettlement(settle, std::move(settleResult)), QString());
     QVERIFY(store.publicationPending("key-a"));
     QCOMPARE(store.publications().first().state, PublicationState::Unconfirmed);
 
-    const auto release = store.settlePublication("key-a", PublicationState::Sending);
+    const auto release = store.settlePublication("key-a", PublicationDisposition::Released);
     auto releaseResult = WatchFolders::writeSettlement(release);
     QCOMPARE(releaseResult.error, QString());
     QCOMPARE(store.adoptSettlement(release, std::move(releaseResult)), QString());

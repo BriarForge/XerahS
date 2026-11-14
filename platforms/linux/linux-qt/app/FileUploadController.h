@@ -31,13 +31,11 @@ namespace xerahs::app {
 //   Unsent      - no request was started (validation, missing destination,
 //                 cancelled before transfer, or a send intent that was not saved);
 //   Acknowledged - the destination answered with an HTTP status of any kind,
-//                 and the upload did not succeed;
+//                 and every preceding request was answered;
 //   Unknown     - a request was started and at least one attempt ended without
 //                 an HTTP response, so the remote state cannot be known;
-//   Succeeded   - the upload succeeded.
 // The type is derived from the attempt facts, never from the last status alone.
-enum class UploadPublication { Unsent, Acknowledged, Unknown, Succeeded };
-QString uploadPublicationName(UploadPublication publication);
+enum class UploadPublication { Unsent, Acknowledged, Unknown };
 struct FileUploadPorts {
   QString catalogPath;
   std::shared_ptr<uploads::CredentialStore> credentials;
@@ -73,7 +71,7 @@ signals:
   // CORE-025: the typed publication outcome of the finished upload, with the
   // attempt facts that produced it. `attempts` is the number of request
   // attempts and `answeredAttempts` the number that ended with an HTTP status.
-  void publicationResolved(const QString &path, const QString &publication, int attempts, int answeredAttempts);
+  void publicationResolved(const QString &path, xerahs::app::UploadPublication publication, int attempts, int answeredAttempts);
   // WFCAT-017: the terminal projection shared by dialog, notification and history.
   void activityChanged(const QString &text);
   void notify(const QString &title, const QString &body, bool success);

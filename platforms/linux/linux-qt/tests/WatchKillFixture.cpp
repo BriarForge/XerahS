@@ -78,5 +78,13 @@ int main(int argc, char *argv[]) {
   service.start();
   // The parent kills this process once the server has the first request.
   QTimer::singleShot(30000, &app, [] { QCoreApplication::quit(); });
-  return app.exec();
+  if (argc > 4 && QByteArray(argv[4]) == "observe") {
+    QTimer::singleShot(6500, &app, [] {
+      std::fputs("restart-observation-complete\n", stdout); std::fflush(stdout);
+      QCoreApplication::quit();
+    });
+  }
+  const auto result = app.exec();
+  service.stop(); service.finishCheckpoint();
+  return result;
 }

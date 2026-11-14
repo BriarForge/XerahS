@@ -55,18 +55,15 @@ struct RetentionFacts {
 };
 QStringList retainedKeys(const QStringList &keys, const QList<RetentionFacts> &facts);
 
-struct CheckpointWrite { QString path; QSet<QString> processed; QString key; QByteArray expected; };
-struct CheckpointResult { QString error; QByteArray snapshot; QSet<QString> processed; };
-
-// CORE-025 P6: the watch checkpoint store. Version 2 adds `publications`;
-// version 1 stays readable and is upgraded on the next write.
 enum class PublicationState { Sending, Unconfirmed };
 QString publicationStateName(PublicationState state);
 struct PublicationRecord { QString key; PublicationState state = PublicationState::Sending; QString at; };
-struct CheckpointIntent { QString path; QSet<QString> processed; QList<PublicationRecord> publications; QString key; QByteArray expected; };
-struct IntentResult { QString error; QByteArray snapshot; QSet<QString> processed; QList<PublicationRecord> publications; };
-struct SettleRequest { QString path; QSet<QString> processed; QList<PublicationRecord> publications; QString key; PublicationState state; QByteArray expected; };
-struct SettleResult { QString error; QByteArray snapshot; QSet<QString> processed; QList<PublicationRecord> publications; };
+struct CheckpointWrite { QString path; QSet<QString> processed; QString key; QByteArray expected; QList<PublicationRecord> publications; };
+struct CheckpointResult { QString error; QByteArray snapshot; QSet<QString> processed; QList<PublicationRecord> publications; };
+struct CheckpointIntent { QString path; QSet<QString> processed; QList<PublicationRecord> publications; QString key; QByteArray expected; QString at; };
+using IntentResult = CheckpointResult;
+struct SettleRequest { QString path; QSet<QString> processed; QList<PublicationRecord> publications; QString key; PublicationDisposition disposition; QByteArray expected; };
+using SettleResult = CheckpointResult;
 
 class WatchFolders {
 public:
@@ -88,11 +85,10 @@ public:
   static IntentResult writeIntent(const CheckpointIntent &intent);
   QString adoptIntent(const CheckpointIntent &intent, IntentResult result);
   // CORE-025 P1/P2: settle a publication as processed, released or unconfirmed.
-  SettleRequest settlePublication(const QString &key, PublicationState state) const;
+  SettleRequest settlePublication(const QString &key, PublicationDisposition disposition) const;
   static SettleResult writeSettlement(const SettleRequest &request);
   QString adoptSettlement(const SettleRequest &request, SettleResult result);
-  // CORE-025 P5: prune processed and unconfirmed entries whose file changed.
-  static QStringList retained(const QStringList &keys, const QList<RetentionFacts> &facts);
+
 private:
   QString m_directory, m_error;
   QByteArray m_rulesSnapshot, m_processedSnapshot;

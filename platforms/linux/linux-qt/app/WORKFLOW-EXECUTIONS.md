@@ -128,8 +128,9 @@ a request that was started and never answered may or may not have reached the
 destination. An unconfirmed publication is never checkpointed as processed, so
 it is not uploaded again automatically under the same key. Its notice names the
 file and discloses no path, no remote URL and no other location detail. An
-explicit Upload file command produces a new file fingerprint and therefore a
-new key, and is the only way an unconfirmed publication may be sent again.
+explicit Upload file command is independent of the watch hold. Changing the
+file gives it a new fingerprint and watch key. Neither action silently clears
+the hold on the original key.
 
 Real native tests compare all four projections: PortalScreenshotTest covers
 pre-pipeline cancellation/denial/failure and partial action results;

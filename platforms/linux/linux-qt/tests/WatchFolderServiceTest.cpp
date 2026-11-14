@@ -340,7 +340,7 @@ private slots:
     if (dispatched) {
       QCOMPARE(readFile(QDir(captures).filePath(outputs.first())), QByteArray("retain actual file contents"));
       QVERIFY(message.contains("outcome-unconfirmed"));
-      QVERIFY(store.processed(key)); // completed side effects must not be replayed after restart
+      QCOMPARE(store.processed(key), !move); // P5 prunes the removed move source; copy keys still suppress replay.
     } else QVERIFY(!store.processed(key));
     const auto writesAfterAttempt = writes;
     QVERIFY(writeFile(dir.filePath("input/second.png")));
@@ -492,14 +492,14 @@ private slots:
     QCOMPARE(outputs.size(), 1);
     QVERIFY(outputs.first().endsWith("-new.png"));
     QCOMPARE(readFile(QDir(captures).filePath(outputs.first())), QByteArray("new complete file content"));
-    QVERIFY(store.processed(key));
+    QCOMPARE(store.processed(key), !move);
     now += 3000;
     scan(service);
     QCOMPARE(processed.count(), 1);
     service.stop();
     watch::WatchFolders restarted(dir.filePath("store"));
     QVERIFY(restarted.loadError().isEmpty());
-    QVERIFY(restarted.processed(key));
+    QCOMPARE(restarted.processed(key), !move);
     WatchFolderService second(restarted, uploads, [&] { return captures; }, [&] { return now; });
     QSignalSpy repeated(&second, &WatchFolderService::processed);
     second.start(); scan(second);
@@ -1026,6 +1026,66 @@ private slots:
     QVERIFY(!store.publicationPending(watch::fingerprint(source)));
     QCOMPARE(http.received, 0);
     QVERIFY(QFileInfo::exists(source));
+  }
+
+  void stopDuringIntentDoesNotDispatchAndDrainsRelease() {
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto source = dir.filePath("input/new.png"); QVERIFY(writeFile(source));
+    HttpFixture http; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    auto ports = portsFor(dir); DestinationCatalog catalog(ports.catalogPath);
+    UploadDestination destination; destination.id = QUuid::createUuid(); destination.name = "held intent";
+    destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    destination.body = BodyType::MultipartFormData; destination.fileFormName = "file"; destination.resultUrl = "{json:url}";
+    QCOMPARE(catalog.add(destination), QString());
+    QWidget owner; FileUploadController uploads(ports, &owner);
+    watch::WatchFolders store(dir.filePath("store")); qint64 now = 0;
+    WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
+    watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(service.setRules({rule}), QString());
+    struct Gate { std::atomic_bool entered{false}, release{false}; };
+    auto gate = std::make_shared<Gate>();
+    struct Release { std::shared_ptr<Gate> gate; ~Release() { gate->release = true; } } release{gate};
+    service.setCheckpointHook([gate] { gate->entered = true; while (!gate->release) QThread::msleep(2); });
+    QSignalSpy completed(&service, &WatchFolderService::processed);
+    service.start(); scan(service); now += 2000; scan(service);
+    QTRY_VERIFY(gate->entered.load());
+    service.stop(); gate->release = true;
+    service.finishCheckpoint();
+    QCOMPARE(completed.count(), 1);
+    const auto key = watch::fingerprint(source);
+    QVERIFY(!store.publicationPending(key)); QVERIFY(!store.processed(key));
+    QVERIFY(!watch::WatchFolders(dir.filePath("store")).publicationPending(key));
+    QTest::qWait(100); QCOMPARE(http.received, 0);
+    service.setCheckpointHook({}); service.start(); scan(service); now += 2000; scan(service);
+    QTRY_COMPARE(http.received, 1); QTRY_COMPARE(completed.count(), 2);
+    service.stop(); service.finishCheckpoint();
+  }
+
+  void stoppingAQueuedWatchUploadReleasesItsUnsentIntent() {
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto source = dir.filePath("input/new.png"), other = dir.filePath("explicit.dat");
+    QVERIFY(writeFile(source)); QVERIFY(writeFile(other));
+    HttpFixture http; http.stall = true; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    auto ports = portsFor(dir); DestinationCatalog catalog(ports.catalogPath);
+    UploadDestination destination; destination.id = QUuid::createUuid(); destination.name = "queued intent";
+    destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    destination.body = BodyType::MultipartFormData; destination.fileFormName = "file"; destination.resultUrl = "{json:url}";
+    QCOMPARE(catalog.add(destination), QString());
+    QWidget owner; FileUploadController uploads(ports, &owner);
+    uploads.upload({other}); QTRY_COMPARE(http.received, 1);
+    watch::WatchFolders store(dir.filePath("store")); qint64 now = 0;
+    WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
+    watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy completed(&service, &WatchFolderService::processed);
+    const auto key = watch::fingerprint(source);
+    service.start(); scan(service); now += 2000; scan(service);
+    QTRY_VERIFY(store.publicationPending(key));
+    service.stop(); service.finishCheckpoint();
+    QTRY_COMPARE(completed.count(), 1);
+    QCOMPARE(completed.first()[0].toString(), source);
+    QVERIFY(!store.publicationPending(key)); QVERIFY(!store.processed(key));
+    watch::WatchFolders restarted(dir.filePath("store"));
+    QVERIFY(!restarted.publicationPending(key)); QVERIFY(!restarted.processed(key));
+    QCOMPARE(http.received, 1);
   }
 
   // CORE-025 P2: when the intent cannot be saved, no HTTP request is sent and

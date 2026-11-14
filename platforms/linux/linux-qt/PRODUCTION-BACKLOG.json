@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 32,
-    "implemented": 178,
+    "implemented": 177,
     "not-applicable": 1,
     "not-started": 5,
-    "partial": 109
+    "partial": 110
   },
   "capabilities": [
     {
@@ -155,10 +155,10 @@
       "requirements": 37,
       "counts": {
         "blocked": 7,
-        "implemented": 9,
+        "implemented": 8,
         "not-applicable": 1,
         "not-started": 2,
-        "partial": 18
+        "partial": 19
       },
       "trace": "traceability/CORE-PLATFORM-001.json"
     },
@@ -277,8 +277,8 @@
       "capability": "CORE-PLATFORM-001",
       "requirement": "CORE-025",
       "previous": "partial",
-      "current": "implemented",
-      "reason": "Maintainer-approved CORE-PLATFORM-001 0.6.0 / contract 0.4.0 resolves the watch publication and retention policy. The watch checkpoint store is version 2 with items and publications, a version 1 store is read and upgraded on the next write, and the watch rules store stays version 1. The publication disposition and the retention rule are pure production helpers that the service and the conformance adapter both call, so the policy is not implemented twice. The send intent is durably saved before any dispatch; when it cannot be saved no request is sent and watching stops with watch-store-write-failed. The acknowledgement test is proof over every attempt: the upload executor counts the attempts that ended with an HTTP status, so the last status alone cannot decide the publication. A publication left over as sending from an earlier process is unconfirmed, is never uploaded again automatically under its key, and is named in the startup notice without any path or URL. Local copy and move are unchanged. A real process SIGKILL proof on a private tmpfs shows the durable intent survives the kill and that the restarted process sends no second request. All nineteen CORE-025 contract vectors pass through the shared production helpers on Qt 6.12 and on the approved Qt 6.4.2 baseline. Network and FUSE qualification is a separate Layer 5 concern under CORE-025 P7 and is not claimed here."
+      "current": "partial",
+      "reason": "CORE-025 remains partial pending review and final qualification of the corrected candidate. Parent review of cedc424 found five runtime regressions: released keys became processed, another file checkpoint erased unconfirmed holds, and all three checkpoint writers omitted production retention. These fail in /tmp/xerahs-core025-parent-red.log. Corrected writes preserve unrelated publications and call the shared retention helper on the worker; release uses PublicationDisposition rather than overloading Sending. Store tests now exercise all three writers with processed, unconfirmed and sending entries against changed, deleted, unchanged and missing-parent files, including a newline in the filename. The service refuses dispatch after Stop during a held intent and drains the release before returning. Sending records loaded by a new store become unconfirmed in memory; startup notices use basenames without fingerprint metadata. The SIGKILL proof now receives the entire HTTP request body before killing and pumps the parent server event loop throughout the restarted watcher observation. Local copy/move outputs are unchanged; P5 removes a completed move source key because the source no longer exists, while copy keys remain. Maintainer and independent Sonnet reviews, refreshed conformance, both Qt baselines and the final integration gate remain required before promotion. Network/FUSE qualification and other platforms are not claimed."
     }
   ],
   "review_limitations": [
@@ -857,6 +857,18 @@
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "product-contract/reference-baselines/provenance/kova-0.29.0-xann-sidecar-observation.md"
+      ]
+    },
+    {
+      "date": "2026-11-14",
+      "requirements": [
+        "CORE-025"
+      ],
+      "outcome": "CORE-025 remains partial pending review and final qualification of the corrected candidate. Parent review of cedc424 found five runtime regressions: released keys became processed, another file checkpoint erased unconfirmed holds, and all three checkpoint writers omitted production retention. These fail in /tmp/xerahs-core025-parent-red.log. Corrected writes preserve unrelated publications and call the shared retention helper on the worker; release uses PublicationDisposition rather than overloading Sending. Store tests now exercise all three writers with processed, unconfirmed and sending entries against changed, deleted, unchanged and missing-parent files, including a newline in the filename. The service refuses dispatch after Stop during a held intent and drains the release before returning. Sending records loaded by a new store become unconfirmed in memory; startup notices use basenames without fingerprint metadata. The SIGKILL proof now receives the entire HTTP request body before killing and pumps the parent server event loop throughout the restarted watcher observation. Local copy/move outputs are unchanged; P5 removes a completed move source key because the source no longer exists, while copy keys remain. Maintainer and independent Sonnet reviews, refreshed conformance, both Qt baselines and the final integration gate remain required before promotion. Network/FUSE qualification and other platforms are not claimed. The queued-watch Stop regression also fails before the controller reports abandoned watch entries as unsent, and passes after durable release. Parent targeted watch suites and the strengthened SIGKILL proof pass on Qt 6.12 and Qt 6.4.2; the Qt 6.4 proof explicitly runs inside the private namespace with mount capability and reports zero skips. The earlier sandbox DBus failure is not waived: a root-mapped private rerun of capture-file-output passes 24 tests; the full baseline must still be rerun.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp"
       ]
     }
   ],

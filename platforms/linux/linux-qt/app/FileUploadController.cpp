@@ -34,16 +34,6 @@ QString fileNameOf(const QString &path) {
   return name.isEmpty() ? path : name;
 }
 }  // namespace
-QString uploadPublicationName(UploadPublication publication) {
-  switch (publication) {
-    case UploadPublication::Unsent: return QStringLiteral("unsent");
-    case UploadPublication::Acknowledged: return QStringLiteral("acknowledged");
-    case UploadPublication::Unknown: return QStringLiteral("unknown");
-    case UploadPublication::Succeeded: return QStringLiteral("succeeded");
-  }
-  return QStringLiteral("unsent");
-}
-
 FileUploadController::FileUploadController(FileUploadPorts ports, QWidget *dialogParent, QObject *parent)
     : QObject(parent), m_ports(std::move(ports)), m_dialogParent(dialogParent),
       m_cap(m_ports.maxInputBytes.value_or(uploads::UploadRequestOptions{}.maxInputBytes)),
@@ -82,8 +72,20 @@ void FileUploadController::chooseAndUpload() {
 void FileUploadController::cancel() {
   if (!m_busy) return;
   m_stop = true;
+  const auto abandoned = std::move(m_queue);
   m_queue.clear();
+  const QPointer<FileUploadController> owner(this);
   if (m_transferring) m_executor->cancel();
+  if (!owner) return;
+  // A queued watch item owns a durable intent but has not started a request.
+  // Return it to the watch service so cancellation can release that intent.
+  for (const auto &file : abandoned) {
+    if (file.origin != QLatin1String("watch-folder")) continue;
+    emit publicationResolved(file.path, UploadPublication::Unsent, 0, 0);
+    if (!owner) return;
+    emit fileCompleted(file.path, false, QStringLiteral("cancelled"));
+    if (!owner) return;
+  }
 }
 
 void FileUploadController::startNext() {
@@ -284,7 +286,9 @@ void FileUploadController::showFailure(const QString &fileName, const QString &m
   recordCompletion(outcome, [this, fileName, message, missingDestination, detail, notice, storage](const QString &historyError) {
     // CORE-025: the publication facts are published before the completion, so
     // the watch service can apply the disposition to this very attempt.
-    emit publicationResolved(m_currentPath, uploadPublicationName(publication()), m_uploadAttempts, m_answeredAttempts);
+    const QPointer<FileUploadController> owner(this);
+    emit publicationResolved(m_currentPath, publication(), m_uploadAttempts, m_answeredAttempts);
+    if (!owner) return;
     emit fileCompleted(m_currentPath, false, message);
     closeProgress();
     QStringList text{message}; if (!historyError.isEmpty()) text.append(historyError); if (!storage.isEmpty()) text.append(storage);
@@ -301,7 +305,9 @@ void FileUploadController::showSuccess(const QString &fileName, const uploads::U
   if (!guard) return;
   const auto storage = m_executionStored ? QString{} : QStringLiteral("workflow-storage-unavailable: Could not save the upload execution record.");
   recordCompletion(outcome, [this, fileName, outcome, notice, storage](const QString &historyError) {
-    emit publicationResolved(m_currentPath, uploadPublicationName(UploadPublication::Succeeded), m_uploadAttempts, m_answeredAttempts);
+    const QPointer<FileUploadController> owner(this);
+    emit publicationResolved(m_currentPath, UploadPublication::Acknowledged, m_uploadAttempts, m_answeredAttempts);
+    if (!owner) return;
     emit fileCompleted(m_currentPath, true, {});
     closeProgress();
     auto *dialog = new FileUploadResultDialog(fileName, outcome, m_dialogParent, notice.headline + QLatin1Char('\n') + actions::pipelineObservationText(m_terminalObservation));

@@ -17,6 +17,7 @@
 #include <QObject>
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QRegularExpression>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTemporaryDir>
@@ -25,6 +26,7 @@
 #include <csignal>
 #include <sys/mount.h>
 #include <thread>
+#include <vector>
 
 namespace {
 // A local HTTP server that accepts one request and then stalls, so the child
@@ -37,9 +39,17 @@ public:
   bool listen() {
     connect(&server, &QTcpServer::newConnection, this, [this] {
       while (auto *socket = server.nextPendingConnection()) {
-        // The request arrived. The server deliberately sends no status line,
-        // so the child stays inside the request until it is killed.
-        ++received;
+        connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
+        connect(socket, &QTcpSocket::readyRead, this, [this, socket, wire = QByteArray(), counted = false]() mutable {
+          wire += socket->readAll();
+          if (counted) return;
+          const auto split = wire.indexOf("\r\n\r\n");
+          if (split < 0) return;
+          const auto length = QRegularExpression("Content-Length: (\\d+)", QRegularExpression::CaseInsensitiveOption)
+              .match(QString::fromLatin1(wire.left(split)));
+          if (!length.hasMatch() || wire.size() < split + 4 + length.captured(1).toLongLong()) return;
+          counted = true; ++received;
+        });
       }
     });
     return server.listen(QHostAddress::LocalHost);
@@ -156,13 +166,14 @@ private:
     // the request again, and it must report the publication as unconfirmed.
     QProcess restarted;
     restarted.setProcessEnvironment(QProcessEnvironment::systemEnvironment());
-    restarted.start(fixturePath(), {input, store, url});
+    restarted.start(fixturePath(), {input, store, url, "observe"});
     QVERIFY(restarted.waitForStarted(10000));
-    QVERIFY(restarted.waitForReadyRead(10000));
-    QString output;
-    while (restarted.state() != QProcess::NotRunning && restarted.waitForReadyRead(2000))
-      output += QString::fromLocal8Bit(restarted.readAllStandardOutput());
-    output += QString::fromLocal8Bit(restarted.readAllStandardOutput());
+    // Pump the parent event loop while the restarted watcher scans, so this
+    // server can actually observe a forbidden second request.
+    QTRY_COMPARE_WITH_TIMEOUT(restarted.state(), QProcess::NotRunning, 12000);
+    QCOMPARE(restarted.exitCode(), 0);
+    const auto output = QString::fromLocal8Bit(restarted.readAllStandardOutput());
+    QVERIFY(output.contains("restart-observation-complete"));
     QVERIFY(output.contains(QStringLiteral("watch-publication-unconfirmed")));
     QVERIFY(output.contains(QStringLiteral("new.png")));
     // No path and no URL are disclosed in the notice.
@@ -170,8 +181,7 @@ private:
     QVERIFY(!output.contains(url));
     // The server never saw a second request.
     QCOMPARE(http.received, 1);
-    restarted.kill();
-    restarted.waitForFinished(10000);
+
   }
 
   bool m_namespaceUnavailable = false;
@@ -185,18 +195,19 @@ int main(int argc, char *argv[]) {
   // child marks itself with an environment variable and runs the proof.
   bool child = false;
   int childArgc = 1;
-  char *childArgv[] = {argv[0], nullptr};
+  std::vector<char *> childArgv(size_t(argc) + 1);
+  childArgv[0] = argv[0];
   for (int i = 1; i < argc; ++i) {
     if (QByteArray(argv[i]) == "--ns-child") { child = true; continue; }
     childArgv[childArgc++] = argv[i];
   }
   if (child) qputenv("XERAHS_WATCH_KILL_NS", "1");
-  QApplication app(childArgc, childArgv);
+  QApplication app(childArgc, childArgv.data());
   WatchKillProofTest test;
   if (child) {
     // Run only the proof inside the namespace. The exit code carries the
     // result to the parent, so a failed proof fails the whole test.
-    const auto result = QTest::qExec(&test, childArgc, childArgv);
+    const auto result = QTest::qExec(&test, childArgc, childArgv.data());
     return result == 0 ? 0 : 1;
   }
   return QTest::qExec(&test, argc, argv);
