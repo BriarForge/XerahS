@@ -35,7 +35,7 @@ private slots:
     QVERIFY(store.processed("first")); QVERIFY(store.processed("worker-only"));
     const auto stale = store.checkpoint("stale");
     QCOMPARE(store.remember("second"), QString());
-    CheckpointResult staleResult{{}, {}, {"stale"}};
+    CheckpointResult staleResult{{}, {}, {"stale"}, {}, {}};
     QCOMPARE(store.adoptCheckpoint(stale, std::move(staleResult)), QString("watch-store-write-failed"));
     QVERIFY(!store.processed("stale")); QVERIFY(store.processed("first")); QVERIFY(store.processed("second"));
     WatchFolders reloaded(dir.path()); QVERIFY(reloaded.processed("first")); QVERIFY(reloaded.processed("second"));
@@ -103,6 +103,95 @@ private slots:
     WatchFolders restarted(dir.filePath("store"));
     QCOMPARE(restarted.processed(key), kept && state == "processed");
     QCOMPARE(restarted.publicationPending(key), kept && state != "processed");
+  }
+
+  void legacyParentQualificationRequiresAnUnchangedFile_data() {
+    QTest::addColumn<QString>("state");
+    for (const auto name : {"present", "absent", "changed"}) QTest::newRow(name) << QString(name);
+  }
+  void legacyParentQualificationRequiresAnUnchangedFile() {
+    QFETCH(QString, state);
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input")); QVERIFY(QDir(dir.path()).mkpath("store"));
+    const auto source = dir.filePath("input/legacy.png"); QVERIFY(writeFile(source)); const auto key = fingerprint(source);
+    const auto path = dir.filePath("store/watch-processed.json");
+    QVERIFY(writeFile(path, QJsonDocument(QJsonObject{{"format", "com.xerahs.app/watch-folders"}, {"version", 1}, {"items", QJsonArray{key}}}).toJson()));
+    if (state == "absent") QVERIFY(QFile::remove(source));
+    if (state == "changed") QVERIFY(writeFile(source, "changed legacy bytes"));
+    WatchFolders store(dir.filePath("store")); QCOMPARE(store.loadError(), QString());
+    QCOMPARE(store.remember("other-key"), QString()); QVERIFY(store.processed(key));
+    const auto envelope = QJsonDocument::fromJson(readFile(path)).object();
+    QVERIFY(envelope.value("parents").isArray()); const auto parents = envelope.value("parents").toArray();
+    QCOMPARE(parents.size(), state == "present" ? 1 : 0);
+    if (state == "present") {
+      const auto parent = parents.first().toObject();
+      QCOMPARE(parent.value("path").toString(), QFileInfo(source).absolutePath());
+      QVERIFY(parent.value("device").isString()); QVERIFY(parent.value("inode").isString());
+      QVERIFY(!parent.value("device").toString().isEmpty()); QVERIFY(!parent.value("inode").toString().isEmpty());
+    }
+  }
+
+  void malformedParentIdentitiesFailClosed_data() {
+    QTest::addColumn<QJsonValue>("parents");
+    const QJsonObject valid{{"path", "/private/input"}, {"device", "1"}, {"inode", "101"}};
+    QTest::newRow("not-array") << QJsonValue(QJsonObject{});
+    QTest::newRow("null") << QJsonValue(QJsonValue::Null);
+    QTest::newRow("duplicate-path") << QJsonValue(QJsonArray{valid, valid});
+    for (const auto name : {"relative-path", "missing-path", "numeric-device", "empty-inode", "long-device", "non-ascii"}) {
+      auto record = valid;
+      const auto mode = QString(name);
+      if (mode == "relative-path") record["path"] = "relative";
+      if (mode == "missing-path") record.remove("path");
+      if (mode == "numeric-device") record["device"] = 1;
+      if (mode == "empty-inode") record["inode"] = "";
+      if (mode == "long-device") record["device"] = QString(21, '1');
+      if (mode == "non-ascii") record["inode"] = QString(QChar(0x0661));
+      QTest::newRow(name) << QJsonValue(QJsonArray{record});
+    }
+  }
+  void malformedParentIdentitiesFailClosed() {
+    QFETCH(QJsonValue, parents); QTemporaryDir dir;
+    const auto path = dir.filePath("watch-processed.json");
+    const auto bytes = QJsonDocument(QJsonObject{{"format", "com.xerahs.app/watch-folders"}, {"version", 2},
+        {"items", QJsonArray{"keep"}}, {"publications", QJsonArray{}}, {"parents", parents}}).toJson();
+    QVERIFY(writeFile(path, bytes)); WatchFolders store(dir.path());
+    QCOMPARE(store.loadError(), QString("watch-store-invalid-version-or-data"));
+    QCOMPARE(store.remember("no-write"), QString("watch-store-invalid-version-or-data")); QCOMPARE(readFile(path), bytes);
+  }
+
+  void opaqueLegacyKeysAreNotTreatedAsCurrentFingerprints() {
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto source = dir.filePath("input/live.png"); QVERIFY(writeFile(source));
+    WatchFolders store(dir.filePath("store")); QCOMPARE(store.remember(fingerprint(source)), QString());
+    const auto opaque = dir.filePath("input/opaque") + "\nnot-size\nnot-time";
+    QCOMPARE(store.remember(opaque), QString()); QVERIFY(store.processed(opaque));
+    QVERIFY(WatchFolders(dir.filePath("store")).processed(opaque));
+  }
+
+  void parentIdentityStringsKeepFullPrecision() {
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input")); QVERIFY(QDir(dir.path()).mkpath("store"));
+    const auto source = dir.filePath("input/kept.png"); QVERIFY(writeFile(source)); const auto key = fingerprint(source);
+    const auto path = dir.filePath("store/watch-processed.json");
+    const QJsonObject identity{{"path", QFileInfo(source).absolutePath()}, {"device", "18446744073709551615"}, {"inode", "9007199254740993"}};
+    QVERIFY(writeFile(path, QJsonDocument(QJsonObject{{"format", "com.xerahs.app/watch-folders"}, {"version", 2},
+        {"items", QJsonArray{key}}, {"publications", QJsonArray{}}, {"parents", QJsonArray{identity}}}).toJson()));
+    WatchFolders store(dir.filePath("store")); QCOMPARE(store.loadError(), QString());
+    QCOMPARE(store.remember("another-key"), QString()); QVERIFY(store.processed(key));
+    QCOMPARE(QJsonDocument::fromJson(readFile(path)).object().value("parents").toArray(), QJsonArray{identity});
+  }
+
+  void replacingAParentNeverRefreshesItsRecordedIdentity() {
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto source = dir.filePath("input/kept.png"); QVERIFY(writeFile(source)); const auto originalKey = fingerprint(source);
+    WatchFolders store(dir.filePath("store")); QCOMPARE(store.remember(originalKey), QString());
+    const auto path = dir.filePath("store/watch-processed.json");
+    const auto parents = QJsonDocument::fromJson(readFile(path)).object().value("parents");
+    QVERIFY(QDir().rename(dir.filePath("input"), dir.filePath("original"))); QVERIFY(QDir().mkpath(dir.filePath("input")));
+    QCOMPARE(store.remember("another-root"), QString()); QVERIFY(store.processed(originalKey));
+    QVERIFY(writeFile(source, "a different file in the replacement directory"));
+    const auto replacementKey = fingerprint(source); QVERIFY(replacementKey != originalKey);
+    QCOMPARE(store.remember(replacementKey), QString());
+    WatchFolders restarted(dir.filePath("store")); QVERIFY(restarted.processed(originalKey)); QVERIFY(restarted.processed(replacementKey));
+    QCOMPARE(QJsonDocument::fromJson(readFile(path)).object().value("parents"), parents);
   }
 
   void canonicalizesRootsAndRefusesLoops() {
@@ -358,11 +447,12 @@ private slots:
     QTest::addColumn<QStringList>("keys");
     QTest::addColumn<QList<RetentionFacts>>("facts");
     QTest::addColumn<QStringList>("expected");
-    const RetentionFacts live{"key-a", true, "key-a", false};
-    const RetentionFacts deleted{"key-b", true, "", false};
-    const RetentionFacts changed{"key-c", true, "key-c2", false};
-    const RetentionFacts missingParent{"key-d", false, "", false};
-    const RetentionFacts sending{"key-e", true, "", true};
+    const ParentIdentity identity{"1", "101"};
+    const RetentionFacts live{"key-a", "/watch", identity, "key-a", identity, false};
+    const RetentionFacts deleted{"key-b", "/watch", identity, "", identity, false};
+    const RetentionFacts changed{"key-c", "/watch", identity, "key-c2", identity, false};
+    const RetentionFacts missingParent{"key-d", "/watch", {}, "", {}, false};
+    const RetentionFacts sending{"key-e", "/watch", identity, "", identity, true};
     QTest::newRow("live") << QStringList{"key-a"} << QList<RetentionFacts>{live} << QStringList{"key-a"};
     QTest::newRow("deleted") << QStringList{"key-b"} << QList<RetentionFacts>{deleted} << QStringList{};
     QTest::newRow("changed") << QStringList{"key-c"} << QList<RetentionFacts>{changed} << QStringList{};
@@ -376,7 +466,7 @@ private slots:
     QFETCH(QStringList, keys);
     QFETCH(QList<RetentionFacts>, facts);
     QFETCH(QStringList, expected);
-    QCOMPARE(retainedKeys(keys, facts), expected);
+    QCOMPARE(retain(keys, facts, {{"/watch", ParentIdentity{"1", "101"}}}).kept, expected);
   }
 
   // CORE-025 P6: a version 1 store stays readable and is upgraded on the next
@@ -468,15 +558,18 @@ private slots:
     const auto key = fingerprint(path);
     QVERIFY(!key.isEmpty());
     QList<RetentionFacts> facts;
-    facts.append(RetentionFacts{key, true, fingerprint(path), false});
-    QCOMPARE(retainedKeys({key}, facts), QStringList{key});
+    const auto parent = QFileInfo(path).absolutePath();
+    const ParentIdentity identity{"1", "101"};
+    const ParentMap recorded{{parent, identity}};
+    facts.append(RetentionFacts{key, parent, identity, fingerprint(path), identity, false});
+    QCOMPARE(retain({key}, facts, recorded).kept, QStringList{key});
     // The file changed: the fingerprint no longer equals the key.
     facts[0].fingerprint = fingerprint(path) + "2";
-    QCOMPARE(retainedKeys({key}, facts), QStringList{});
+    QCOMPARE(retain({key}, facts, recorded).kept, QStringList{});
     // The parent is gone: the entry is kept, because the root may be unmounted.
-    facts[0].parentExists = false;
+    facts[0].before.reset(); facts[0].after.reset();
     facts[0].fingerprint = {};
-    QCOMPARE(retainedKeys({key}, facts), QStringList{key});
+    QCOMPARE(retain({key}, facts, recorded).kept, QStringList{key});
   }
 };
 

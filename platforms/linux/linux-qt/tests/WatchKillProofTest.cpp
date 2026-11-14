@@ -9,6 +9,14 @@
 // The store lives on a tmpfs mount, so the proof exercises the real durable
 // path rather than an in-memory stand-in.
 #include "watch/WatchFolders.h"
+#include "WatchFolderService.h"
+#include "FileUploadController.h"
+#include "NativeWorkflowExecutions.h"
+#include "uploads/DestinationCatalog.h"
+#include "storage/PrivateJsonFile.h"
+#include <QDateTime>
+#include <QSignalSpy>
+#include <QApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -27,6 +35,10 @@
 #include <sys/mount.h>
 #include <thread>
 #include <vector>
+
+using namespace xerahs;
+using namespace xerahs::app;
+using namespace xerahs::uploads;
 
 namespace {
 // A local HTTP server that accepts one request and then stalls, so the child
@@ -64,6 +76,39 @@ bool writeFile(const QString &path, const QByteArray &bytes = "watch kill fixtur
   QFile file(path);
   return file.open(QIODevice::WriteOnly) && file.write(bytes) == bytes.size();
 }
+class PublicationServer final : public QObject {
+public:
+  QTcpServer server;
+  QMap<QString, int> bodies;
+  PublicationServer() {
+    connect(&server, &QTcpServer::newConnection, this, [this] {
+      while (auto *socket = server.nextPendingConnection()) {
+        connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
+        connect(socket, &QTcpSocket::readyRead, this, [this, socket, wire = QByteArray(), counted = false]() mutable {
+          wire += socket->readAll(); if (counted) return;
+          const auto split = wire.indexOf("\r\n\r\n"); if (split < 0) return;
+          const auto length = QRegularExpression("Content-Length: (\\d+)", QRegularExpression::CaseInsensitiveOption).match(QString::fromLatin1(wire.left(split)));
+          if (!length.hasMatch() || wire.size() < split + 4 + length.captured(1).toLongLong()) return;
+          const auto name = QRegularExpression("filename=\"([^\"]+)\"").match(QString::fromLatin1(wire.mid(split + 4))).captured(1);
+          counted = true; ++bodies[name]; if (name == "unconfirmed.png") return;
+          const QByteArray body = "{\"url\":\"https://example.test/mounted\"}";
+          socket->write("HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
+          socket->disconnectFromHost();
+        });
+      }
+    });
+  }
+};
+void reconcile(WatchFolderService &service) {
+  service.rescan(); QTRY_VERIFY_WITH_TIMEOUT(!service.discovering(), 7000);
+}
+QJsonObject storedParent(const QString &directory, const QString &parent) {
+  QFile file(QDir(directory).filePath("watch-processed.json")); if (!file.open(QIODevice::ReadOnly)) return {};
+  const auto records = QJsonDocument::fromJson(file.readAll()).object().value("parents").toArray();
+  for (const auto &record : records) if (record.toObject().value("path").toString() == parent) return record.toObject();
+  return {};
+}
+
 // The tmpfs mount for the durable store. It is a private mount in the test's
 // own temporary directory and is removed with it.
 class TmpfsMount final {
@@ -74,9 +119,16 @@ public:
     m_mounted = ::mount("tmpfs", target.toLocal8Bit().constData(), "tmpfs", 0, "size=16m") == 0;
     return m_mounted;
   }
+  bool bind(const QString &source, const QString &target) {
+    m_target = target; QDir().mkpath(target);
+    m_mounted = ::mount(source.toLocal8Bit().constData(), target.toLocal8Bit().constData(), nullptr, MS_BIND, nullptr) == 0;
+    return m_mounted;
+  }
   ~TmpfsMount() { unmount(); }
-  void unmount() {
-    if (m_mounted) { ::umount2(m_target.toLocal8Bit().constData(), 0); m_mounted = false; }
+  bool unmount() {
+    if (!m_mounted) return true;
+    if (::umount2(m_target.toLocal8Bit().constData(), 0) != 0) return false;
+    m_mounted = false; return true;
   }
   bool mounted() const { return m_mounted; }
 private:
@@ -103,9 +155,10 @@ private slots:
     if (!QFileInfo::exists(unshare)) unshare = QStringLiteral("/usr/bin/unshare");
     if (!QFileInfo::exists(unshare)) { m_namespaceUnavailable = true; return; }
     QProcess child;
-    child.start(unshare,
-                {QStringLiteral("--user"), QStringLiteral("--map-root-user"),
-                 QStringLiteral("--mount"), self, QStringLiteral("--ns-child")});
+    QStringList arguments{QStringLiteral("--user"), QStringLiteral("--map-root-user"),
+        QStringLiteral("--mount"), self, QStringLiteral("--ns-child")};
+    arguments.append(QCoreApplication::arguments().mid(1));
+    child.start(unshare, arguments);
     if (!child.waitForStarted(10000)) { m_namespaceUnavailable = true; return; }
     child.waitForFinished(-1);
     m_namespaceExit = child.exitCode();
@@ -126,7 +179,6 @@ private slots:
     }
   }
 
-private:
 private slots:
   void aCleanQuitReleasesKnownUnsentOrAnsweredWork_data() {
     QTest::addColumn<QString>("stage");
@@ -155,6 +207,118 @@ private slots:
     QCOMPARE(restarted.loadError(), QString());
     QVERIFY(!restarted.publicationPending(xerahs::watch::fingerprint(source)));
     QVERIFY(!restarted.processed(xerahs::watch::fingerprint(source)));
+  }
+
+  void parentIdentitySurvivesMountReplacement_data() {
+    QTest::addColumn<bool>("differentVolume");
+    QTest::newRow("remount-then-prune") << false;
+    QTest::newRow("different-volume-new-key") << true;
+  }
+  void parentIdentitySurvivesMountReplacement() {
+    if (!qEnvironmentVariableIsSet("XERAHS_WATCH_KILL_NS")) {
+      if (m_namespaceUnavailable) QSKIP("a private mount namespace is not available here");
+      QCOMPARE(m_namespaceExit, 0); return;
+    }
+    QFETCH(bool, differentVolume);
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    const auto backing = dir.filePath("backing"), alternate = dir.filePath("alternate"), input = dir.filePath("input");
+    const auto other = dir.filePath("other"), directory = dir.filePath("store"), captures = dir.filePath("captures");
+    TmpfsMount first, second, root;
+    QVERIFY(first.mount(backing)); QVERIFY(second.mount(alternate)); QVERIFY(root.bind(backing, input));
+    QVERIFY(QDir().mkpath(other));
+    const auto p = input + "/processed.png", u = input + "/unconfirmed.png";
+    QVERIFY(writeFile(p)); QVERIFY(writeFile(u));
+    const auto processedKey = watch::fingerprint(p), heldKey = watch::fingerprint(u);
+    PublicationServer http; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    FileUploadPorts ports; ports.catalogPath = dir.filePath("destinations.json"); ports.uploadTimeoutMs = 200;
+    ports.credentials = std::make_shared<MemoryCredentialStore>();
+    ports.history = std::make_shared<NativePipelineJournal>(dir.filePath("history"));
+    ports.executions = NativeWorkflowExecutions(dir.filePath("executions")).writer();
+    DestinationCatalog catalog(ports.catalogPath); UploadDestination destination;
+    destination.id = QUuid::createUuid(); destination.name = "mount fixture";
+    destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    destination.body = BodyType::MultipartFormData; destination.fileFormName = "file"; destination.resultUrl = "{json:url}";
+    QCOMPARE(catalog.add(destination), QString());
+    qint64 now = 0; QWidget owner; QJsonObject recordedIdentity;
+    {
+      FileUploadController uploads(ports, &owner); watch::WatchFolders store(directory);
+      WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+      watch::Rule watched, extra; watched.path = input; extra.path = other;
+      QCOMPARE(service.setRules({watched, extra}), QString());
+      QSignalSpy completed(&service, &WatchFolderService::processed);
+      service.start(); reconcile(service); now += 2000; reconcile(service);
+      QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 2, 7000);
+      QVERIFY(store.processed(processedKey)); QVERIFY(store.publicationPending(heldKey));
+      QCOMPARE(http.bodies.value("processed.png"), 1); QCOMPARE(http.bodies.value("unconfirmed.png"), 1);
+      recordedIdentity = storedParent(directory, input);
+      QVERIFY(root.unmount()); QVERIFY(QFileInfo(input).isDir()); QVERIFY(!QFileInfo::exists(p));
+      QVERIFY(writeFile(other + "/trigger.png")); reconcile(service); now += 2000; reconcile(service);
+      QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 3, 7000);
+      QVERIFY(store.processed(processedKey)); QVERIFY(store.publicationPending(heldKey));
+      QCOMPARE(storedParent(directory, input), recordedIdentity);
+      if (differentVolume) {
+        const auto replacement = alternate + "/processed.png";
+        QVERIFY(writeFile(replacement, "different volume contents"));
+        QFile file(replacement); QVERIFY(file.open(QIODevice::ReadWrite));
+        QVERIFY(file.setFileTime(QFileInfo(backing + "/processed.png").lastModified().addSecs(10), QFileDevice::FileModificationTime));
+        file.close(); QVERIFY(root.bind(alternate, input));
+      } else QVERIFY(root.bind(backing, input));
+      service.stop(); service.finishCheckpoint();
+    }
+    {
+      FileUploadController uploads(ports, &owner); watch::WatchFolders store(directory);
+      WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+      QSignalSpy completed(&service, &WatchFolderService::processed), notices(&service, &WatchFolderService::notify);
+      service.start(); reconcile(service); now += 2000; reconcile(service);
+      if (differentVolume) {
+        const auto newKey = watch::fingerprint(p); QVERIFY(newKey != processedKey);
+        QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 1, 7000);
+        QVERIFY(store.processed(newKey)); QCOMPARE(http.bodies.value("processed.png"), 2);
+      } else {
+        QTest::qWait(1500); QCOMPARE(completed.count(), 0); QCOMPARE(http.bodies.value("processed.png"), 1);
+      }
+      QCOMPARE(http.bodies.value("unconfirmed.png"), 1);
+      QVERIFY(store.processed(processedKey)); QVERIFY(store.publicationPending(heldKey));
+      bool named = false; for (const auto &notice : notices) named |= notice[0].toString().contains("watch-publication-unconfirmed") && notice[0].toString().contains("unconfirmed.png");
+      QVERIFY(named); QVERIFY(!recordedIdentity.isEmpty()); QCOMPARE(storedParent(directory, input), recordedIdentity);
+      if (!differentVolume) {
+        QVERIFY(QFile::remove(p)); QVERIFY(writeFile(other + "/after-remount.png"));
+        reconcile(service); now += 2000; reconcile(service);
+        QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 1, 7000);
+        QVERIFY(!store.processed(processedKey)); QVERIFY(store.publicationPending(heldKey));
+        QCOMPARE(storedParent(directory, input), recordedIdentity);
+      }
+      service.stop(); service.finishCheckpoint();
+    }
+  }
+
+  void legacyParentMetadataQualification_data() {
+    QTest::addColumn<QString>("state");
+    for (const auto name : {"unchanged", "absent", "malformed"}) QTest::newRow(name) << QString(name);
+  }
+  void legacyParentMetadataQualification() {
+    if (!qEnvironmentVariableIsSet("XERAHS_WATCH_KILL_NS")) {
+      if (m_namespaceUnavailable) QSKIP("a private mount namespace is not available here");
+      QCOMPARE(m_namespaceExit, 0); return;
+    }
+    QFETCH(QString, state); QTemporaryDir dir; TmpfsMount mount;
+    QVERIFY(mount.mount(dir.filePath("store"))); QVERIFY(QDir().mkpath(dir.filePath("input")));
+    const auto source = dir.filePath("input/legacy.png"); QVERIFY(writeFile(source));
+    const auto key = watch::fingerprint(source), path = dir.filePath("store/watch-processed.json");
+    QJsonObject envelope{{"format", "com.xerahs.app/watch-folders"}, {"version", 1}, {"items", QJsonArray{key}}};
+    if (state == "malformed") { envelope["version"] = 2; envelope["publications"] = QJsonArray{}; envelope["parents"] = QJsonObject{}; }
+    const auto original = QJsonDocument(envelope).toJson(); QVERIFY(writeFile(path, original));
+    if (state == "absent") QVERIFY(QFile::remove(source));
+    watch::WatchFolders store(dir.filePath("store"));
+    if (state == "malformed") {
+      QCOMPARE(store.loadError(), QString("watch-store-invalid-version-or-data"));
+      QFile file(path); QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), original); return;
+    }
+    QCOMPARE(store.loadError(), QString()); QCOMPARE(store.remember("another-key"), QString());
+    QVERIFY(store.processed(key));
+    QCOMPARE(storedParent(dir.filePath("store"), dir.filePath("input")).isEmpty(), state == "absent");
+    const storage::PrivateJsonFile oldReader(path, {"com.xerahs.app/watch-folders", 1, 16 * 1024 * 1024});
+    QCOMPARE(oldReader.read().status, storage::StoreStatus::NewerVersion);
   }
 
 private:

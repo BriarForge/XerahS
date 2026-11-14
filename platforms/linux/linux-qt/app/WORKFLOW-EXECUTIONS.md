@@ -142,3 +142,9 @@ partial removal, cancellation, upload and admission/start/step/terminal faults.
 This closes the former file-operation log/progress omission. WFCAT-017 remains
 partial for the full catalogue: utility/application-control families and
 unimplemented admitted workflow families still need the same lifecycle coverage.
+
+Watch retention records each parent directory device/inode as decimal strings.
+Every checkpoint worker freezes the recorded map and observes parent identity
+before and after the file fingerprint. A changed, missing or unqualified parent
+keeps entries; qualification from an unchanged file authorizes only a later
+write. This preserves publication holds across unmount/remount.

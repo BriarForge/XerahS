@@ -1,6 +1,7 @@
 // CORE-024, CORE-025: authorized watch rules and durable readiness checkpoints.
 #pragma once
 #include <QHash>
+#include <QMap>
 #include <QJsonArray>
 #include <QSet>
 #include <QStringList>
@@ -38,27 +39,32 @@ struct PublicationFacts {
 };
 PublicationDisposition publicationDisposition(const PublicationFacts &facts);
 
-// CORE-025 P5: the checkpoint entries that survive a checkpoint write.
-// `keys` is the full key set before the write; `facts` gives the current file
-// state for each key. A key is kept when the parent directory is missing (the
-// root may be unmounted or removed) or when the current fingerprint still
-// equals the recorded key. A key recorded as sending is never pruned.
+// Recorded parent identity is immutable; a different directory at the path
+// cannot authorize pruning work recorded under the original directory.
+struct ParentIdentity {
+  QString device, inode;
+  bool operator==(const ParentIdentity &other) const { return device == other.device && inode == other.inode; }
+  bool operator!=(const ParentIdentity &other) const { return !(*this == other); }
+};
+using ParentMap = QMap<QString, ParentIdentity>;
 struct RetentionFacts {
-  QString key;
-  bool parentExists = false;
-  QString fingerprint;  // the complete recorded key, compared for equality
+  QString key, parent;
+  std::optional<ParentIdentity> before;
+  QString fingerprint;
+  std::optional<ParentIdentity> after;
   bool sending = false;
 };
-QStringList retainedKeys(const QStringList &keys, const QList<RetentionFacts> &facts);
+struct Retention { QStringList kept; ParentMap parents; };
+Retention retain(const QStringList &keys, const QList<RetentionFacts> &facts, const ParentMap &recorded);
 
 enum class PublicationState { Sending, Unconfirmed };
 QString publicationStateName(PublicationState state);
 struct PublicationRecord { QString key; PublicationState state = PublicationState::Sending; QString at; };
-struct CheckpointWrite { QString path; QSet<QString> processed; QString key; QByteArray expected; QList<PublicationRecord> publications; };
-struct CheckpointResult { QString error; QByteArray snapshot; QSet<QString> processed; QList<PublicationRecord> publications; };
-struct CheckpointIntent { QString path; QSet<QString> processed; QList<PublicationRecord> publications; QString key; QByteArray expected; QString at; };
+struct CheckpointWrite { QString path; QSet<QString> processed; QString key; QByteArray expected; QList<PublicationRecord> publications; ParentMap parents; };
+struct CheckpointResult { QString error; QByteArray snapshot; QSet<QString> processed; QList<PublicationRecord> publications; ParentMap parents; };
+struct CheckpointIntent { QString path; QSet<QString> processed; QList<PublicationRecord> publications; QString key; QByteArray expected; QString at; ParentMap parents; };
 using IntentResult = CheckpointResult;
-struct SettleRequest { QString path; QSet<QString> processed; QList<PublicationRecord> publications; QString key; PublicationDisposition disposition; QByteArray expected; };
+struct SettleRequest { QString path; QSet<QString> processed; QList<PublicationRecord> publications; QString key; PublicationDisposition disposition; QByteArray expected; ParentMap parents; };
 using SettleResult = CheckpointResult;
 
 class WatchFolders {
@@ -93,6 +99,7 @@ private:
   QStringList m_diagnostics;
   QSet<QString> m_processed;
   QList<PublicationRecord> m_publications;
+  ParentMap m_parents;
 };
 class StabilityTracker {
 public:

@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 // CORE-024, CORE-025.
 #include "WatchFolders.h"
 #include "storage/PrivateJsonFile.h"
@@ -66,22 +67,40 @@ PublicationDisposition publicationDisposition(const PublicationFacts &facts) {
   if (facts.requestStarted) return PublicationDisposition::Unconfirmed;
   return PublicationDisposition::Released;
 }
-QStringList retainedKeys(const QStringList &keys, const QList<RetentionFacts> &facts) {
+Retention retain(const QStringList &keys, const QList<RetentionFacts> &facts, const ParentMap &recorded) {
   QHash<QString, RetentionFacts> byKey;
   for (const auto &fact : facts) byKey.insert(fact.key, fact);
-  QStringList kept;
+  Retention result;
+  ParentMap nominations;
+  QSet<QString> conflicting;
   for (const auto &key : keys) {
     const auto it = byKey.constFind(key);
-    if (it == byKey.constEnd()) { kept.append(key); continue; }
+    if (it == byKey.constEnd()) { result.kept.append(key); continue; }
     const auto &fact = *it;
-    // A sending publication is never pruned.
-    if (fact.sending) { kept.append(key); continue; }
-    // A missing parent may be an unmounted or removed root, not a deleted file.
-    if (!fact.parentExists) { kept.append(key); continue; }
-    // The file is kept only while its fingerprint still equals the recorded key.
-    if (fact.fingerprint == key) kept.append(key);
+    if (fact.sending || !fact.before || !fact.after || fact.before != fact.after) {
+      result.kept.append(key); continue;
+    }
+    const auto identity = recorded.constFind(fact.parent);
+    if (identity == recorded.constEnd()) {
+      result.kept.append(key);
+      if (fact.fingerprint == key) {
+        const auto nomination = nominations.constFind(fact.parent);
+        if (nomination != nominations.constEnd() && *nomination != *fact.before) conflicting.insert(fact.parent);
+        else nominations.insert(fact.parent, *fact.before);
+      }
+      continue;
+    }
+    if (*identity != *fact.before || fact.fingerprint == key) result.kept.append(key);
   }
-  return kept;
+  for (const auto &key : result.kept) {
+    const auto fact = byKey.constFind(key);
+    if (fact == byKey.constEnd()) continue;
+    const auto recordedIdentity = recorded.constFind(fact->parent);
+    if (recordedIdentity != recorded.constEnd()) result.parents.insert(fact->parent, *recordedIdentity);
+    else if (!conflicting.contains(fact->parent) && nominations.contains(fact->parent))
+      result.parents.insert(fact->parent, nominations.value(fact->parent));
+  }
+  return result;
 }
 namespace {
 storage::PrivateJsonFile watchFile(const QString &path) {
@@ -94,7 +113,8 @@ storage::PrivateJsonFile rulesFile(const QString &path) {
 // adds `publications`. A version 2 store is refused by a reader that only
 // understands version 1, so the refusal happens in the version check below.
 QString readProcessedStore(const QString &path, QJsonArray *items, QJsonArray *publications,
-                           QByteArray *snapshot, int *version) {
+                           QByteArray *snapshot, QJsonValue *parents) {
+  *parents = QJsonValue(QJsonValue::Undefined);
   const auto read = watchFile(path).read();
   *snapshot = read.snapshot;
   switch (read.status) {
@@ -105,11 +125,11 @@ QString readProcessedStore(const QString &path, QJsonArray *items, QJsonArray *p
     case storage::StoreStatus::Ok: break;
     default: return "watch-store-invalid-version-or-data";
   }
+  *parents = read.document.value("parents");
   if (!read.document.value("items").isArray()) return "watch-store-invalid-version-or-data";
   if (read.version == 1) {
     *items = read.document.value("items").toArray();
     if (publications) *publications = QJsonArray{};
-    if (version) *version = 1;
     return {};
   }
   if (read.version != 2) return "watch-store-invalid-version-or-data";
@@ -117,7 +137,6 @@ QString readProcessedStore(const QString &path, QJsonArray *items, QJsonArray *p
   if (!records.isArray()) return "watch-store-invalid-version-or-data";
   *items = read.document.value("items").toArray();
   if (publications) *publications = records.toArray();
-  if (version) *version = 2;
   return {};
 }
 QString readRulesStore(const QString &path, QJsonArray *items, QByteArray *snapshot) {
@@ -156,8 +175,41 @@ QList<PublicationRecord> publicationsFrom(const QJsonArray &array, QString *erro
   }
   return records;
 }
+bool decimalIdentityPart(const QJsonValue &value) {
+  if (!value.isString()) return false;
+  const auto text = value.toString();
+  if (text.isEmpty() || text.size() > 20) return false;
+  for (const auto character : text) if (character < QLatin1Char('0') || character > QLatin1Char('9')) return false;
+  return true;
+}
+ParentMap parentsFrom(const QJsonValue &value, QString *error) {
+  ParentMap result;
+  if (value.isUndefined()) return result;
+  if (!value.isArray()) { *error = QStringLiteral("watch-store-invalid-version-or-data"); return {}; }
+  for (const auto &entry : value.toArray()) {
+    const auto object = entry.toObject();
+    const auto path = object.value("path");
+    if (!path.isString() || !QDir::isAbsolutePath(path.toString()) || result.contains(path.toString()) ||
+        !decimalIdentityPart(object.value("device")) || !decimalIdentityPart(object.value("inode"))) {
+      *error = QStringLiteral("watch-store-invalid-version-or-data"); return {};
+    }
+    result.insert(path.toString(), {object.value("device").toString(), object.value("inode").toString()});
+  }
+  return result;
+}
+QJsonArray parentsJson(const ParentMap &parents) {
+  QJsonArray result;
+  for (auto it = parents.constBegin(); it != parents.constEnd(); ++it)
+    result.append(QJsonObject{{"path", it.key()}, {"device", it->device}, {"inode", it->inode}});
+  return result;
+}
+std::optional<ParentIdentity> parentIdentity(const QString &path) {
+  struct stat info{};
+  if (::stat(QFile::encodeName(path).constData(), &info) != 0 || !S_ISDIR(info.st_mode)) return std::nullopt;
+  return ParentIdentity{QString::number(quint64(info.st_dev)), QString::number(quint64(info.st_ino))};
+}
 QString writeProcessedStore(const QString &path, const QJsonArray &items, const QJsonArray &publications,
-                             QByteArray *snapshot) {
+                             const ParentMap &parents, QByteArray *snapshot) {
   const auto store = watchFile(path);
   const auto read = store.read();
   if (read.status == storage::StoreStatus::Unsafe) return "watch-store-unsafe";
@@ -168,7 +220,7 @@ QString writeProcessedStore(const QString &path, const QJsonArray &items, const 
   const QFileInfo dir(parent);
   if ((dir.exists() && dir.ownerId() != uint(geteuid())) || !QDir().mkpath(parent)) return "watch-store-unsafe";
   if (!QFile::setPermissions(parent, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner)) return "watch-store-permissions";
-  const auto status = store.write({{"items", items}, {"publications", publications}}, 2, *snapshot, snapshot);
+  const auto status = store.write({{"items", items}, {"publications", publications}, {"parents", parentsJson(parents)}}, 2, *snapshot, snapshot);
   switch (status) {
     case storage::StoreStatus::Ok: return {};
     case storage::StoreStatus::Unsafe: return "watch-store-unsafe";
@@ -179,7 +231,7 @@ QString writeProcessedStore(const QString &path, const QJsonArray &items, const 
 // Called only by worker write paths. Fingerprints end in two newline-separated
 // numeric fields; removing those from the right preserves newlines in filenames.
 CheckpointResult persistCheckpoint(const QString &path, const QByteArray &expected,
-    QSet<QString> processed, QList<PublicationRecord> publications) {
+    QSet<QString> processed, QList<PublicationRecord> publications, const ParentMap &recorded) {
   auto allKeys = processed;
   QSet<QString> sending;
   for (const auto &record : publications) {
@@ -194,17 +246,26 @@ CheckpointResult persistCheckpoint(const QString &path, const QByteArray &expect
     // Preserve unrecognized historic keys rather than guessing their paths.
     if (previous < 0) continue;
     const auto source = key.left(previous);
-    facts.append({key, QFileInfo(QFileInfo(source).absolutePath()).isDir(), fingerprint(source), sending.contains(key)});
+    const auto sizeText = key.mid(previous + 1, last - previous - 1), timeText = key.mid(last + 1);
+    bool sizeValid = false, timeValid = false;
+    const auto size = sizeText.toLongLong(&sizeValid), time = timeText.toLongLong(&timeValid);
+    if (!QDir::isAbsolutePath(source) || QDir::cleanPath(source) != source || source.contains(QChar::Null) ||
+        !sizeValid || size < 0 || QString::number(size) != sizeText || !timeValid || QString::number(time) != timeText) continue;
+    const auto parent = QFileInfo(source).absolutePath();
+    const auto before = parentIdentity(parent);
+    const auto current = fingerprint(source);
+    const auto after = parentIdentity(parent);
+    facts.append({key, parent, before, current, after, sending.contains(key)});
   }
-  const auto retained = retainedKeys(keys, facts);
-  const QSet<QString> kept(retained.cbegin(), retained.cend());
+  auto retained = retain(keys, facts, recorded);
+  const QSet<QString> kept(retained.kept.cbegin(), retained.kept.cend());
   processed.intersect(kept);
   publications.removeIf([&](const PublicationRecord &record) { return !kept.contains(record.key); });
   QJsonArray items;
   for (const auto &key : processed) items.append(key);
   auto snapshot = expected;
-  const auto error = writeProcessedStore(path, items, publicationsJson(publications), &snapshot);
-  return {error, snapshot, std::move(processed), std::move(publications)};
+  const auto error = writeProcessedStore(path, items, publicationsJson(publications), retained.parents, &snapshot);
+  return {error, snapshot, std::move(processed), std::move(publications), std::move(retained.parents)};
 }
 // The watch rules store keeps version 1; CORE-025 P6 changes only the checkpoint store.
 QString writeRulesStore(const QString &path, const QJsonArray &items, QByteArray *snapshot) {
@@ -228,10 +289,12 @@ QString writeRulesStore(const QString &path, const QJsonArray &items, QByteArray
 }
 }
 WatchFolders::WatchFolders(QString directory) : m_directory(std::move(directory)) {
-  QJsonArray rules, processed, publications;
+  QJsonArray rules, processed, publications; QJsonValue parents;
   m_error = readRulesStore(QDir(m_directory).filePath("watch-folders.json"), &rules, &m_rulesSnapshot);
   if (m_error.isEmpty())
-    m_error = readProcessedStore(QDir(m_directory).filePath("watch-processed.json"), &processed, &publications, &m_processedSnapshot, nullptr);
+    m_error = readProcessedStore(QDir(m_directory).filePath("watch-processed.json"), &processed, &publications, &m_processedSnapshot, &parents);
+  if (!m_error.isEmpty()) return;
+  m_parents = parentsFrom(parents, &m_error);
   if (!m_error.isEmpty()) return;
   if (rules.size() > maximumWatchRules) { m_error = "watch-store-full"; return; }
   QSet<QUuid> ids; QSet<QString> paths;
@@ -306,19 +369,20 @@ QString WatchFolders::remember(const QString &key) {
   return adoptCheckpoint(write, writeCheckpoint(write));
 }
 CheckpointWrite WatchFolders::checkpoint(const QString &key) const {
-  return {QDir(m_directory).filePath("watch-processed.json"), m_processed, key, m_processedSnapshot, m_publications};
+  return {QDir(m_directory).filePath("watch-processed.json"), m_processed, key, m_processedSnapshot, m_publications, m_parents};
 }
 CheckpointResult WatchFolders::writeCheckpoint(const CheckpointWrite &write) {
   auto next = write.processed; next.insert(write.key);
   auto publications = write.publications;
   publications.removeIf([&](const PublicationRecord &record) { return record.key == write.key; });
-  return persistCheckpoint(write.path, write.expected, std::move(next), std::move(publications));
+  return persistCheckpoint(write.path, write.expected, std::move(next), std::move(publications), write.parents);
 }
 QString WatchFolders::adoptCheckpoint(const CheckpointWrite &write, CheckpointResult result) {
   if (!result.error.isEmpty()) return result.error;
   if (m_processedSnapshot != write.expected) return QStringLiteral("watch-store-write-failed");
   m_processed = std::move(result.processed);
   m_publications = std::move(result.publications);
+  m_parents = std::move(result.parents);
   m_processedSnapshot = result.snapshot;
   return {};
 }
@@ -328,24 +392,25 @@ bool WatchFolders::publicationPending(const QString &key) const {
 }
 CheckpointIntent WatchFolders::publicationIntent(const QString &key, const QString &at) const {
   return {QDir(m_directory).filePath("watch-processed.json"), m_processed, m_publications, key, m_processedSnapshot,
-      at.isEmpty() ? QDateTime::currentDateTimeUtc().toString(Qt::ISODate) : at};
+      at.isEmpty() ? QDateTime::currentDateTimeUtc().toString(Qt::ISODate) : at, m_parents};
 }
 IntentResult WatchFolders::writeIntent(const CheckpointIntent &intent) {
   auto records = intent.publications;
   records.removeIf([&](const PublicationRecord &record) { return record.key == intent.key; });
   records.append({intent.key, PublicationState::Sending, intent.at});
-  return persistCheckpoint(intent.path, intent.expected, intent.processed, std::move(records));
+  return persistCheckpoint(intent.path, intent.expected, intent.processed, std::move(records), intent.parents);
 }
 QString WatchFolders::adoptIntent(const CheckpointIntent &intent, IntentResult result) {
   if (!result.error.isEmpty()) return result.error;
   if (m_processedSnapshot != intent.expected) return QStringLiteral("watch-store-write-failed");
   m_processed = std::move(result.processed);
   m_publications = std::move(result.publications);
+  m_parents = std::move(result.parents);
   m_processedSnapshot = result.snapshot;
   return {};
 }
 SettleRequest WatchFolders::settlePublication(const QString &key, PublicationDisposition disposition) const {
-  return {QDir(m_directory).filePath("watch-processed.json"), m_processed, m_publications, key, disposition, m_processedSnapshot};
+  return {QDir(m_directory).filePath("watch-processed.json"), m_processed, m_publications, key, disposition, m_processedSnapshot, m_parents};
 }
 SettleResult WatchFolders::writeSettlement(const SettleRequest &request) {
   auto next = request.processed;
@@ -354,13 +419,14 @@ SettleResult WatchFolders::writeSettlement(const SettleRequest &request) {
   records.removeIf([&](const PublicationRecord &record) { return record.key == request.key; });
   if (request.disposition == PublicationDisposition::Unconfirmed)
     records.append({request.key, PublicationState::Unconfirmed, QDateTime::currentDateTimeUtc().toString(Qt::ISODate)});
-  return persistCheckpoint(request.path, request.expected, std::move(next), std::move(records));
+  return persistCheckpoint(request.path, request.expected, std::move(next), std::move(records), request.parents);
 }
 QString WatchFolders::adoptSettlement(const SettleRequest &request, SettleResult result) {
   if (!result.error.isEmpty()) return result.error;
   if (m_processedSnapshot != request.expected) return QStringLiteral("watch-store-write-failed");
   m_processed = std::move(result.processed);
   m_publications = std::move(result.publications);
+  m_parents = std::move(result.parents);
   m_processedSnapshot = result.snapshot;
   return {};
 }

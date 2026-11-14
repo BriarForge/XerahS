@@ -278,7 +278,7 @@ fingerprint and again afterwards. The first matching rule applies:
 3. If either parent observation is missing, or the observations differ, the key
    MUST be kept.
 4. If there is no recorded identity for the parent, the key MUST be kept. An
-   unchanged file fingerprint MAY nominate its stable parent identity for
+   unchanged file fingerprint MUST nominate its stable parent identity for
    adoption. Missing or changed files MUST NOT nominate an identity.
 5. If the recorded identity differs from the observed identity, the key MUST
    be kept and the recorded identity MUST NOT be refreshed.

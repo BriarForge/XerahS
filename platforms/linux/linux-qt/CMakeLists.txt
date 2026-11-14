@@ -1278,7 +1278,7 @@ target_link_libraries(watch-kill-fixture PRIVATE xerahs_watch_folders Qt6::Widge
 add_executable(watch-kill-proof-test tests/WatchKillProofTest.cpp)
 set_target_properties(watch-kill-proof-test PROPERTIES AUTOMOC ON)
 target_include_directories(watch-kill-proof-test PRIVATE src)
-target_link_libraries(watch-kill-proof-test PRIVATE xerahs_core Qt6::Network Qt6::Widgets Qt6::Test)
+target_link_libraries(watch-kill-proof-test PRIVATE xerahs_watch_folders Qt6::Network Qt6::Widgets Qt6::Test)
 add_dependencies(watch-kill-proof-test watch-kill-fixture)
 add_test(NAME watch-kill-proof COMMAND watch-kill-proof-test)
 set_tests_properties(watch-kill-proof PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 120)

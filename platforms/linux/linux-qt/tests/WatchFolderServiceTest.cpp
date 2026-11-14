@@ -343,7 +343,7 @@ private slots:
     if (dispatched) {
       QCOMPARE(readFile(QDir(captures).filePath(outputs.first())), QByteArray("retain actual file contents"));
       QVERIFY(message.contains("outcome-unconfirmed"));
-      QCOMPARE(store.processed(key), !move); // P5 prunes the removed move source; copy keys still suppress replay.
+      QVERIFY(store.processed(key)); // An unqualified parent cannot authorize pruning, including after a move.
     } else QVERIFY(!store.processed(key));
     const auto writesAfterAttempt = writes;
     QVERIFY(writeFile(dir.filePath("input/second.png")));
@@ -495,14 +495,14 @@ private slots:
     QCOMPARE(outputs.size(), 1);
     QVERIFY(outputs.first().endsWith("-new.png"));
     QCOMPARE(readFile(QDir(captures).filePath(outputs.first())), QByteArray("new complete file content"));
-    QCOMPARE(store.processed(key), !move);
+    QVERIFY(store.processed(key));
     now += 3000;
     scan(service);
     QCOMPARE(processed.count(), 1);
     service.stop();
     watch::WatchFolders restarted(dir.filePath("store"));
     QVERIFY(restarted.loadError().isEmpty());
-    QCOMPARE(restarted.processed(key), !move);
+    QVERIFY(restarted.processed(key));
     WatchFolderService second(restarted, uploads, [&] { return captures; }, [&] { return now; });
     QSignalSpy repeated(&second, &WatchFolderService::processed);
     second.start(); scan(second);

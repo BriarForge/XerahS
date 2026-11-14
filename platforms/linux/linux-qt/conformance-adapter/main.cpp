@@ -894,23 +894,29 @@ QJsonObject runCorePlatform(const QString &operation, const QJsonObject &input) 
   if (operation == u"watch-retain") {
     QStringList keys;
     for (const auto &value : input.value(u"keys").toArray()) keys.append(value.toString());
+    const auto identity = [](const QJsonValue &value) -> std::optional<xerahs::watch::ParentIdentity> {
+      if (!value.isObject()) return std::nullopt;
+      const auto object = value.toObject();
+      return xerahs::watch::ParentIdentity{object.value(u"device").toString(), object.value(u"inode").toString()};
+    };
+    xerahs::watch::ParentMap recorded;
+    const auto inputParents = input.value(u"recorded_parents").toObject();
+    for (auto it = inputParents.constBegin(); it != inputParents.constEnd(); ++it)
+      if (const auto value = identity(it.value())) recorded.insert(it.key(), *value);
     QList<xerahs::watch::RetentionFacts> facts;
     QSet<QString> sending;
     for (const auto &value : input.value(u"sending_keys").toArray()) sending.insert(value.toString());
     for (const auto &value : input.value(u"files").toArray()) {
       const auto object = value.toObject();
-      xerahs::watch::RetentionFacts fact;
-      fact.key = object.value(u"key").toString();
-      fact.parentExists = object.value(u"parent_exists").toBool();
-      fact.fingerprint = object.value(u"fingerprint").toString();
-      fact.sending = sending.contains(fact.key);
-      facts.append(fact);
+      facts.append({object.value(u"key").toString(), object.value(u"parent").toString(),
+          identity(object.value(u"before")), object.value(u"fingerprint").toString(), identity(object.value(u"after")),
+          sending.contains(object.value(u"key").toString())});
     }
-    QJsonArray kept;
-    for (const auto &key : xerahs::watch::retainedKeys(keys, facts)) kept.append(key);
-    QJsonObject result;
-    result.insert(QStringLiteral("kept"), kept);
-    return result;
+    const auto retained = xerahs::watch::retain(keys, facts, recorded);
+    QJsonObject parents;
+    for (auto it = retained.parents.constBegin(); it != retained.parents.constEnd(); ++it)
+      parents.insert(it.key(), QJsonObject{{"device", it->device}, {"inode", it->inode}});
+    return {{"kept", QJsonArray::fromStringList(retained.kept)}, {"parents", parents}};
   }
   return adapterError(QStringLiteral("unsupported operation: ") + operation);
 }

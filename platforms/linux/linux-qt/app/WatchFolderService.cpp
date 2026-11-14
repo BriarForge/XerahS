@@ -188,7 +188,7 @@ void WatchFolderService::beginPublication(const QString &path, const QString &ke
     try {
       if (hook) hook();
       return watch::WatchFolders::writeIntent(intent);
-    } catch (...) { return {QStringLiteral("watch-store-write-failed"), {}, {}, {}}; }
+    } catch (...) { return {QStringLiteral("watch-store-write-failed"), {}, {}, {}, {}}; }
   }, [this, intent, path, rule, generation](watch::IntentResult result) {
     // CORE-025 P2: an intent that cannot be saved is always reported as
     // watch-store-write-failed, whichever store error caused it.
@@ -239,9 +239,9 @@ void WatchFolderService::writeSettlement(const QString &path, watch::Publication
     try {
       if (hook) hook();
       return watch::WatchFolders::writeSettlement(request);
-    } catch (...) { return {QStringLiteral("watch-store-write-failed"), {}, {}, {}}; }
+    } catch (...) { return {QStringLiteral("watch-store-write-failed"), {}, {}, {}, {}}; }
   }, [this, expected = request.expected, path, disposition, error](watch::SettleResult result) {
-    const auto saved = m_store.adoptSettlement({{}, {}, {}, {}, disposition, expected}, std::move(result));
+    const auto saved = m_store.adoptSettlement({{}, {}, {}, {}, disposition, expected, {}}, std::move(result));
     m_checkpointing = false;
     const QPointer<WatchFolderService> guard(this);
     if (disposition == watch::PublicationDisposition::Unconfirmed) {
@@ -283,9 +283,9 @@ void WatchFolderService::complete(const QString &path, bool success, const QStri
     try {
       if (hook) hook();
       return watch::WatchFolders::writeCheckpoint(write);
-    } catch (...) { return {QStringLiteral("watch-store-write-failed"), {}, {}, {}}; }
+    } catch (...) { return {QStringLiteral("watch-store-write-failed"), {}, {}, {}, {}}; }
   }, [this, key = write.key, expected = write.expected, path, success, error](watch::CheckpointResult result) {
-    const auto saved = m_store.adoptCheckpoint({{}, {}, key, expected, {}}, std::move(result));
+    const auto saved = m_store.adoptCheckpoint({{}, {}, key, expected, {}, {}}, std::move(result));
     m_checkpointing = false;
     const QPointer<WatchFolderService> guard(this);
     settle(path, success, error, saved);
