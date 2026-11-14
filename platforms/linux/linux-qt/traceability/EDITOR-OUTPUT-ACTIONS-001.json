@@ -1,7 +1,7 @@
 {
   "capability": "EDITOR-OUTPUT-ACTIONS-001",
   "capability_version": "0.1.0",
-  "contract_version": "0.3.2",
+  "contract_version": "0.4.0",
   "platform": "linux",
   "edition": "linux-qt",
   "implementation": [
@@ -56,7 +56,7 @@
         "classification": "partial",
         "spec_line": 9,
         "coverage": "Individual outputs freeze document snapshots and refuse unsupported loss; complete background inclusion and all-output matrix remain incomplete.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
           "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
@@ -86,7 +86,7 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
             "method": "workerSnapshotSurvivesConcurrentCallerChanges",
             "line": 161
           },
@@ -97,8 +97,8 @@
             "line": 35
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Audit 2026-11-04: Clauses: immutable source/document snapshot and no mixed concurrent edits are proven by EditorSaveTest::workerSnapshotSurvivesConcurrentCallerChanges, EditorCopyTest::workerUsesOneSnapshotAndPublishesOnlyOnTheGuiWithOwnedAlphaAndPng, EditorPrintTest::frozenPreparationAndNativePdfOutputHaveIndependentPixelsAndGeometry, and EditorPinTest::nativeActionPinsRenderedAlphaWithoutChangingDocumentOrHistory. Output declarations name visible annotations and source, including alpha/colour conversions. Background inclusion is still unproven because background composition depends on deferred EC-013. Remains partial for that dependency; physical qualification is not the blocker.",
       "incremental_note": {
@@ -124,7 +124,7 @@
         "classification": "implemented",
         "spec_line": 12,
         "coverage": "Native image/PNG clipboard offers preserve alpha or disclose conversion, remain snapshot-owned, and do not clear dirty state or close.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -161,8 +161,8 @@
             "line": 120
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Native Copy Image publishes image plus PNG, preserves alpha/document state and reports uncertain delivery. Real clipboard consumers and all target qualification remain. Audit 2026-11-03: native image plus PNG representation with alpha (EditorCopyTest::workerUsesOneSnapshotAndPublishesOnlyOnTheGuiWithOwnedAlphaAndPng, nativeOfferHasBothInteroperableRepresentationsAndReportsOwnership), no dirty-state change or close (EditorWindowTest::copyMenuAndShortcutPublishOneSnapshotWithoutSavingOrClearingHistory), and user-visible format-loss disclosure (EditorCopyTest::colourConversionIsDisclosedAndDoesNotMutateTheSource, EditorWindowTest::copyStatusDisclosesSourceColourConversion asserts the status shows '(source colours converted to sRGB)' for a linear-profile source and not for an sRGB source).",
       "incremental_note": {
@@ -195,7 +195,7 @@
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
         ],
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -221,7 +221,7 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
             "method": "realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash",
             "line": 173
           },
@@ -232,8 +232,8 @@
             "line": 338
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Native PNG Save/Save As validate paths and adopt only complete successful results. Full user-facing formats and filesystem/platform qualification remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required. Audit 2026-11-03: Save writes the current durable path directly only when it passes validation, and a path that fails validation is never written: EditorWindowTest::saveUsesTheDurablePathOnlyAfterValidationAndSaveAsPickerIsAccessible (valid PNG path saves with no picker; an unsupported-extension durable path opens the picker instead and a cancel leaves file, companion and dirty title unchanged), with symlink/foreign-destination/oversize path refusal in EditorSaveTest::symlinksAndChangedCompanionsArePreservedAndParentSegmentsKeepKernelMeaning and encodeExceptionAndRacingReplacementPreserveThePreviousDestination. Save As uses the accessible native picker (EditorSaveDialogTest::saveAsPickerIsAnAccessibleSavePickerWithNamedControls and the window test assert the accessible name 'Save image destination and encoding', Save accept mode and named quality/matte controls) and never changes the current path before a complete write (EditorWindowTest::partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes, splitJpegSaveAsRepairsCompanionWithoutAdoptingPathEarly).",
       "incremental_note": {
@@ -268,7 +268,7 @@
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
         ],
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -294,19 +294,19 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
             "method": "encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy",
             "line": 104
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
             "method": "qualityChangesActualEncodingAndFailuresKeepPreviousPairs",
             "line": 132
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Editor raster Save As currently exposes PNG. JPEG/WebP alpha/quality/extension/overwrite behavior is missing; format-disposition.json still requires product-owner approval. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required.",
       "incremental_note": {
@@ -338,7 +338,7 @@
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
         ],
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -364,19 +364,19 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
             "method": "encodeExceptionAndRacingReplacementPreserveThePreviousDestination",
             "line": 181
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
             "method": "resultsReportDestinationFormatAndRecoverabilityAndNeverCarryPrivatePayloads",
             "line": 207
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Same-directory temporary publication and prior-file protection are tested. Full permission/ACL/disk-full/shutdown/durability and target matrix remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required. Audit 2026-11-03: Same-directory temporary publication with atomic replace and previous-destination preservation on encode/write failure are proven (EditorSaveTest::encodeExceptionAndRacingReplacementPreserveThePreviousDestination, oversizedEncodedTemporaryIsRejectedWithoutReplacingOrBufferingIt, qualityChangesActualEncodingAndFailuresKeepPreviousPairs, cancelledBeforePublicationPreservesFilesAndAfterRasterRetainsPartialFacts). Destination, format and recoverability are reported: EditorSaveTest::resultsReportDestinationFormatAndRecoverabilityAndNeverCarryPrivatePayloads asserts the stable path-free codes raster-save-failed/sidecar-save-failed, the receipt's destination path and WebP format enabling companion repair, and that a thrown 'PRIVATE exception payload' never reaches results, receipts or Qt log output; EditorWindowTest::failedSaveReportsDestinationFormatAndRecoverabilityWithoutThePrivateExceptionPayload asserts the visible Save incomplete report names 'Destination: <path>', 'Format: PNG' and that the previous destination and editable document were kept, with no private payload in dialog text, window title, labels or logs.",
       "incremental_note": {
@@ -413,13 +413,13 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 26,
-        "coverage": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites. The full rebuilt Qt 6.4.2 suite passed 178/178. Maintainer review approved the behavior, contract, evidence and promotion subject to two trace corrections, now applied; independent MiniMax persistence review approved the corrected a5afb31 tree with no blocking findings; the full 181-test host push gate remains pending. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion. Candidate completion of this Linux clause only; independent MiniMax persistence review approved; the host push gate pending. Native editor journey is automated with real widgets and files under offscreen/private XDG; no physical desktop or release approval is claimed.",
+        "coverage": "Raster/sidecar persistence has direct automated success, source-mismatch, dirty checkpoint, partial-publication and companion-only retry evidence. The last empty-save baseline edge now follows the approved shadow policy: native clear/Save/reopen keeps the baseline exact and reloads zero annotations; a late baseline reports a partial sidecar failure and explicit retry completes the shadow. Unsupported defaults and published-raster hash binding remain protected.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
         ],
-        "reviewed_at_revision": "1fc988d275359bd8d8524c7d908801cd8916ac69",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -448,6 +448,10 @@
           {
             "path": "platforms/linux/linux-qt/app/CaptureSave.cpp",
             "sha256": "b30d9e08a0d94e5d368d711a44f3250e568ead9235c77dd543698ff7ba57f903"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
+            "sha256": "3c8009d24a1ac0bb08326e1ee73fad14a5917c2b5a938a4c019ea8d5418e65d8"
           }
         ],
         "test_anchors": [
@@ -494,8 +498,8 @@
             "line": 271
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "revalidated_from_revision": "1fc988d275359bd8d8524c7d908801cd8916ac69",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "specification": "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md",
         "specification_sha256": "5c966c9f044cd1135c70e7d69e345b1cfb4ffffabd26f58e6ec9e7eb582c824f",
         "baseline_observation": {
@@ -577,7 +581,7 @@
         "classification": "implemented",
         "spec_line": 28,
         "coverage": "Explicit native upload freezes one image, confirms destination/privacy, supports cancellation and retains editor on failure/missing service.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
         ],
@@ -622,8 +626,8 @@
             "line": 131
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Native File > Upload Image and Ctrl+U render one owned source/visible-annotation PNG snapshot, confirm the configured destination and publication implications with default Cancel, and transfer through the existing bounded upload engine on a worker. The confirmed destination is frozen even if the catalog changes. Success shows the selectable/copyable URL in the existing result dialog; known failure keeps the document and offers a fresh explicit attempt, while uncertain delivery asks the user to inspect the destination. Native local HTTP tests cover rendered pixels/alpha, confirmation cancellation, HTTP failure, transfer cancellation, missing configuration/service, unsupported annotations and owner destruction. This is candidate implementation evidence; credential/security review and supported-target/human qualification remain separate.",
       "incremental_note": {
@@ -648,7 +652,7 @@
         "classification": "implemented",
         "spec_line": 31,
         "coverage": "Native print configuration exposes printer/page/scale/orientation/color and cancellation with immutable owned source and no document/file mutation.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -685,8 +689,8 @@
             "line": 139
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Native print preview/submission has cancellation and immutable-session tests. Physical printer/driver and supported-desktop qualification remains. Audit 2026-11-03: Native print flow: the Print Image preview exposes scale, orientation, colour, page size, margins and Cancel without files (EditorPrintTest::nativePreviewExposesScaleOrientationColourPageAndCancelWithoutFiles); the printer selection is exposed by the production native QPrintDialog path, driven offscreen through the chooseEditorPrinterWith seam that only supplies the printer (EditorPrintTest::nativePrintDialogExposesTheSelectedPrinterAndCancelReturnsWithoutFilesOrSubmission asserts the dialog is constructed with that QPrinter, file export and selection are disabled, the printer selector is shown, and cancel returns Cancelled with no printer, no output file and an untouched clipboard); cancellation and owner destruction before submission (EditorPrintTest::cancellationAndOwnerDestructionBeforeConfigurationCannotSubmit, configurationCancellationExceptionAndOwnerDeletionCannotSubmit); the document is neither mutated nor saved (EditorPrintTest::frozenPreparationAndNativePdfOutputHaveIndependentPixelsAndGeometry).",
       "incremental_note": {
@@ -712,7 +716,7 @@
         "classification": "partial",
         "spec_line": 33,
         "coverage": "Owned native pin action and lifecycle/retry tests exist; approved native service/platform disposition and physical moving/scaling qualification remain open.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorPinTest.cpp"
         ],
@@ -760,8 +764,8 @@
             "line": 84
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Editor File > Pin to Screen and Ctrl+P now render an owned snapshot and hand it to the existing native PinWindow service. Native action/shortcut tests check composite pixels and alpha, unchanged source/document/history/redo/preferences/viewport, independent pin move/scale/close and lifetime after editor destruction. Cancellation before publication and unsupported annotations create no pin. Approved service/disposition, supported desktop and physical accessibility qualification remain Required.",
       "incremental_note": {
@@ -778,7 +782,7 @@
         "classification": "partial",
         "spec_line": 36,
         "coverage": "Native wallpaper portal confirms background/lock target and retained file, but per-display/layout choice is unavailable and needs approved degraded disposition.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp"
         ],
@@ -826,8 +830,8 @@
             "line": 140
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp"
@@ -860,7 +864,7 @@
         "classification": "implemented",
         "spec_line": 39,
         "coverage": "Task Continue returns owned prepared media once, honors later auto-copy/close and preserves actual partial failure facts.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -897,8 +901,8 @@
             "line": 116
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Audit 2026-11-04: Clauses: Continue returns owned rendered pixels and one outcome; auto-copy and auto-close run only after readiness; partial failures remain distinct. EditorTaskTest::continueOnceOwnsPixelsAndRunsLaterActions tests all copy success/failure/skipped/exception x auto-close combinations, reentrant Continue, real PNG and journal persistence. ownerDestroyedDuringAutoCopyStillReturnsOneReadyContinue and upstreamCancelDuringCopyDoesNotBecomeAnEmptyTaskCancel cover lifetime and late cancellation. noAutoCopyDoesNotTouchClipboardAndContinueStillCompletes proves preferences off. No physical qualification claim.",
       "incremental_note": {
@@ -925,7 +929,7 @@
         "classification": "implemented",
         "spec_line": 42,
         "coverage": "Task Cancel has no rendered/external result and uses native dirty-discard confirmation; upstream cancellation cannot masquerade as an empty completed Cancel.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -962,8 +966,8 @@
             "line": 128
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Audit 2026-11-04: Clauses: Cancel returns only Cancel, no rendered result or external output; dirty discard follows Save/Discard/Cancel. EditorTaskTest::cancelAndDirtyCloseLeaveClipboardFilesAndUploadUntouched covers both Cancel and window close, first refusing Cancel in the confirmation and then accepting Discard, with one Cancel and unchanged clipboard/files/save/upload boundaries. quitUsesTheDirtyTaskCancelPolicy covers application Quit. Save in the dirty prompt is separate explicit save intent that leaves the task open; it never emits Cancel as a successful save side effect.",
       "incremental_note": {
@@ -990,7 +994,7 @@
         "classification": "implemented",
         "spec_line": 45,
         "coverage": "Standalone native close preserves Save/Discard/Cancel, retains the editor on failed/cancelled Save and handles quit/session manager distinctly.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -1027,8 +1031,8 @@
             "line": 191
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Audit 2026-11-04: Clauses: Save/Discard/Cancel and failed/cancelled Save retain the editor; callback acknowledgement requires persisted artifacts and a clean checkpoint. EditorExitTest::dirtyExitMatrix covers native Save success, encoder failure, empty-success and wrong-content-success, Discard and Cancel; cancelledSavePickerKeepsUntitledEditorOpen covers the picker. EditorSaveTest::lossyHostEncoderMustWriteTheRasterContent covers JPEG/WebP false acknowledgement. sessionManagerRetainsDirtyDocumentWithoutInteraction tests the production session-manager seam, no-interaction retention, interactive Cancel and Discard. Decision: commitDataRequest follows Save/Discard/Cancel where interaction is allowed; otherwise shutdown is cancelled and the document remains dirty without silent saving. aboutToQuit performs no implicit save; Qt does not allow veto there. A real desktop session manager cannot be instantiated under the offscreen test plugin; its allowsInteraction/release/cancel bridge is source-reviewed, with the policy exercised through the same production seam.",
       "incremental_note": {
@@ -1090,7 +1094,7 @@
           "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
           "platforms/linux/linux-qt/app/EDITOR-HOST-CALLBACKS.md"
         ],
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -1190,11 +1194,11 @@
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
             "method": "hostExceptionPreservesTheArtifactPublicationBoundary",
             "line": 192,
-            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827"
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1"
           }
         ],
-        "revalidated_from_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Audit 2026-11-04: Clauses: ownership/thread/cancellation/lifetime/error/reentrancy semantics are declared on EditorSaveHooks, EditorCopyPorts, EditorPrintPorts, EditorPinPorts, EditorUploadPorts, EditorWallpaperPorts, taskFinished and EditorShutdown; native Save As/Close are owned native flows rather than optional no-op callbacks. EditorCopyTest::callbackExceptionAndLateCancellationKeepActualDeliveryFacts, EditorSaveTest::encodeExceptionAndRacingReplacementPreserveThePreviousDestination and modalWorkerOwnsItsSnapshotAndReleasesWithoutJoiningOnParentDestruction, EditorPrintTest::configurationCancellationExceptionAndOwnerDeletionCannotSubmit, EditorPinTest::thrownPublicationIsUnknownAndReentrantActionDoesNotPublishAgain, and EditorUploadTest::missingServiceAndUnsupportedAnnotations exercise those contracts. EditorTaskTest::missingTaskHostExplainsContinueAndCancelWithoutOutputs closes the missing completion-host gap; continueOnceOwnsPixelsAndRunsLaterActions fences recursive completion. Missing copy/print/pin/upload callbacks explain or disable their actions. Pin-service approval remains deferred EO-009 and is not granted here.",
       "full_audit_snapshot": {
@@ -1323,7 +1327,7 @@
           "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
           "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
         ],
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -1360,8 +1364,8 @@
             "line": 115
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Audit 2026-11-04: Clauses: accessible names/keyboard focus are covered by NativeSurfaceAccessibilityTest::nativeSurfaces(editor) and EditorCanvasTest::explicitToolsAreCheckedAccessibleAndSelectNeverCreates. Shared visible-action/shortcut behavior, busy/disabled state, cancellable progress, completion/failure and guarded retries are proven for save/copy/print by EditorWindowTest::copyMenuAndShortcutPublishOneSnapshotWithoutSavingOrClearingHistory, printMenuAndShortcutSubmitWithoutSavingOrChangingHistoryFilesPreferencesOrClipboard, saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions, knownCopyFailureOffersDefaultCancelRetryWithoutRenderingOrChangingRedo and knownPrintFailureRetryUsesFrozenSnapshotAndFreshConfirmationWithDefaultCancel. EditorPinTest covers the pin shortcut, missing host, cancellation and retry. Full upload/wallpaper shortcut, confirmation and error/retry evidence still requires the socket/D-Bus fixtures editor-upload and editor-wallpaper, blocked in this sandbox. Kept partial for incomplete automated full-action proof, not physical/human qualification.",
       "incremental_note": {
@@ -1398,7 +1402,7 @@
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
           "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
         ],
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -1424,13 +1428,13 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
             "method": "qualityChangesActualEncodingAndFailuresKeepPreviousPairs",
             "line": 132
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "a4b49d1bb16494e83561a2226070e31f031f43390abeb86fd5bac76e04295827",
+            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
             "method": "nativeEncoderDiskFullPreservesThePreviousPair",
             "line": 33
           },
@@ -1441,8 +1445,8 @@
             "line": 198
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Audit 2026-11-04: Clauses: success, cancellation, encoder failure, callback exceptions and raster/sidecar split outcomes are proven by EditorSaveTest::realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash, cancelledBeforePublicationPreservesFilesAndAfterRasterRetainsPartialFacts, encodeExceptionAndRacingReplacementPreserveThePreviousDestination, incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng, and EditorCopyTest::encodingFailureAndMissingProviderDoNotChangeTheClipboard. Unsupported hosts are covered by EditorUploadTest::missingServiceAndUnsupportedAnnotations and EditorPinTest::missingAndFailingServicesKeepEditorAndExposeRetry. Permission-denial portal fixtures and full upload transport cases are socket-blocked (editor-wallpaper, editor-upload, capture-upload); a dedicated disk-full/ENOSPC production-path test is still absent. Overwrite refusal/legacy pair policy still intersects deferred ES-014/ES-030. No published EO vectors. Remains partial for these concrete proof gaps; other platforms are not claimed.",
       "incremental_note": {
@@ -1453,15 +1457,15 @@
   },
   "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+    "source_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
     "checked_at": "2026-11-14",
     "specification": "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md",
     "specification_sha256": "5c966c9f044cd1135c70e7d69e345b1cfb4ffffabd26f58e6ec9e7eb582c824f",
-    "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
+    "method": "Revalidate all manifest clauses against current source and meaningful named automated methods. Compare unchanged evidence to the prior full audit; inspect changed production/test bodies and approved specification changes. A direct current-production HTTP probe tests P1 accounting independently of the existing passing suite. Source hashes and named methods below pin the current revision; prior trace snapshots and audit histories remain available.",
     "reviewed_requirement_count": 16,
     "counts": {
-      "partial": 6,
-      "implemented": 10
+      "implemented": 10,
+      "partial": 6
     },
     "production_surfaces": [
       "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
@@ -1538,7 +1542,8 @@
     ],
     "remaining_scope": "EO-001, EO-004, EO-009, EO-010, EO-014, EO-015, EO-016",
     "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval.",
-    "counts_revision": "1fc988d275359bd8d8524c7d908801cd8916ac69"
+    "counts_revision": "1fc988d275359bd8d8524c7d908801cd8916ac69",
+    "version_role": "contract_version and capability_version identify the normative manifest mapped by this review, not whole-platform acceptance or release approval."
   },
   "previous_audit": {
     "source_revision": "43b11bbf5dda234d6d1b65bfd720ed58dedcc898",
@@ -1916,6 +1921,94 @@
       ],
       "remaining_scope": "EO-001, EO-004, EO-006, EO-009, EO-010, EO-014, EO-015, EO-016",
       "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
+    },
+    {
+      "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+      "checked_at": "2026-11-14",
+      "specification": "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md",
+      "specification_sha256": "5c966c9f044cd1135c70e7d69e345b1cfb4ffffabd26f58e6ec9e7eb582c824f",
+      "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
+      "reviewed_requirement_count": 16,
+      "counts": {
+        "partial": 6,
+        "implemented": 10
+      },
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
+        "platforms/linux/linux-qt/app/EditorCopy.cpp",
+        "platforms/linux/linux-qt/app/EditorPin.cpp",
+        "platforms/linux/linux-qt/app/EditorPrint.cpp",
+        "platforms/linux/linux-qt/app/EditorSave.cpp",
+        "platforms/linux/linux-qt/app/EditorUpload.cpp",
+        "platforms/linux/linux-qt/app/EditorWallpaper.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/PinWindow.cpp",
+        "platforms/linux/linux-qt/app/PortalWallpaper.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp": [
+          "callbackExceptionAndLateCancellationKeepActualDeliveryFacts",
+          "colourConversionIsDisclosedAndDoesNotMutateTheSource",
+          "nativeOfferHasBothInteroperableRepresentationsAndReportsOwnership",
+          "workerUsesOneSnapshotAndPublishesOnlyOnTheGuiWithOwnedAlphaAndPng"
+        ],
+        "platforms/linux/linux-qt/tests/EditorExitTest.cpp": [
+          "cancelledSavePickerKeepsUntitledEditorOpen",
+          "dirtyExitMatrix",
+          "sessionManagerRetainsDirtyDocumentWithoutInteraction"
+        ],
+        "platforms/linux/linux-qt/tests/EditorPinTest.cpp": [
+          "fixedShortcutPinsAndClosingPinKeepsEditorOpen",
+          "missingAndFailingServicesKeepEditorAndExposeRetry",
+          "nativeActionPinsRenderedAlphaWithoutChangingDocumentOrHistory",
+          "thrownPublicationIsUnknownAndReentrantActionDoesNotPublishAgain"
+        ],
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp": [
+          "nativePreviewExposesScaleOrientationColourPageAndCancelWithoutFiles",
+          "nativePrintDialogExposesTheSelectedPrinterAndCancelReturnsWithoutFilesOrSubmission"
+        ],
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp": [
+          "encodeExceptionAndRacingReplacementPreserveThePreviousDestination",
+          "encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy",
+          "incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng",
+          "nativeEncoderDiskFullPreservesThePreviousPair",
+          "qualityChangesActualEncodingAndFailuresKeepPreviousPairs",
+          "realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash",
+          "resultsReportDestinationFormatAndRecoverabilityAndNeverCarryPrivatePayloads",
+          "workerSnapshotSurvivesConcurrentCallerChanges"
+        ],
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp": [
+          "changedRasterRequiresChoiceAndKeepsValidatedSnapshots"
+        ],
+        "platforms/linux/linux-qt/tests/EditorTaskTest.cpp": [
+          "cancelAndDirtyCloseLeaveClipboardFilesAndUploadUntouched",
+          "continueOnceOwnsPixelsAndRunsLaterActions",
+          "missingTaskHostExplainsContinueAndCancelWithoutOutputs",
+          "ownerDestroyedDuringAutoCopyStillReturnsOneReadyContinue",
+          "upstreamCancelDuringCopyDoesNotBecomeAnEmptyTaskCancel"
+        ],
+        "platforms/linux/linux-qt/tests/EditorUploadTest.cpp": [
+          "missingDestinationExplainsConfigurationWithoutSubmitting",
+          "nativeUpload"
+        ],
+        "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp": [
+          "confirmedWallpaperPassesRetainedFileAndLeavesDocumentUnchanged",
+          "deniedAndUnsupportedServicesHaveStableCodes",
+          "nativeDialogShowsChoiceAndPathAndAppliesLockscreen"
+        ],
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp": [
+          "textModalAndBusyInputTakePrecedenceOverAdditionalAndProtectedCommands"
+        ]
+      },
+      "findings": [
+        {
+          "kind": "partial",
+          "summary": "Actual encoder /dev/full ENOSPC proof exists; do not describe all disk-full failures as only mocked, and do not claim publication ENOSPC or full EO016 completion."
+        }
+      ],
+      "remaining_scope": "EO-001, EO-004, EO-009, EO-010, EO-014, EO-015, EO-016",
+      "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval.",
+      "counts_revision": "1fc988d275359bd8d8524c7d908801cd8916ac69"
     }
   ],
   "upstream_incremental_reviews": [

@@ -1,10 +1,10 @@
 # Linux production backlog
 
-Revalidated 2026-11-14 at `fdc728fb6c33dc0a7685205e77dfdcfd37217db6` against all 16 manifest capabilities and 345 requirement IDs. The previous source audit and later integration records remain in each trace map’s audit history. Unchanged source and test bodies were compared to their frozen revisions; changed behavior and test assertions were reviewed against the current contract. The frozen revalidation pinned 1,815 production/test anchors across 205 files; later completions add revision-specific hashes and named test locations. Anchors are **EXTRACTED** source evidence; graph links and file presence do not establish behavior.
+Revalidated 2026-11-14 at `c40a0c02dbd743fb15af1b106229ffffa34d0da6` against all 16 manifest capabilities /345 IDs under Product Contract 0.4.0. Current trace maps pin 1,897 production/test anchors across 213 files. Unchanged specification/source/test bodies were compared to the previous complete review; changed implementation paths, assertions and approved contract decisions were read. Anchors are **EXTRACTED** source evidence; graph edges and file presence do not establish behavior. Prior snapshots and audit histories remain available.
 
-The 325 desktop requirements classify as **178 tested candidate implementations, 109 partial, 5 not started, 32 blocked and 1 outside desktop scope**. The 20 MOB requirements remain outside Linux desktop scope. These classifications do not approve parity, release or supported-target qualification.
+The 325 desktop requirements classify as **177 tested candidate implementations, 110 partial, 5 not started, 32 blocked and 1 outside desktop scope**. The 20 MOB requirements remain outside Linux desktop scope. These classifications do not approve parity, release, security or supported-target qualification.
 
-[Trace maps](traceability/) and the [machine inventory](PRODUCTION-BACKLOG.json) retain dispositions, vectors, previous audits and the current classifications. Blocked rows receive no implemented credit.
+[Trace maps](traceability/) and the [machine inventory](PRODUCTION-BACKLOG.json) preserve dispositions, vectors and prior author records. Current audit coverage and the demonstrated gap supersede the earlier CORE-025 completion assessment. Mapped version fields identify the specification reviewed, not whole-platform acceptance.
 
 ## Capability inventory
 
@@ -23,33 +23,37 @@ The 325 desktop requirements classify as **178 tested candidate implementations,
 | SETTINGS-CATALOG-001 | 20 | 2 | 13 | 0 | 5 | 0 |
 | WORKFLOW-CATALOG-001 | 18 | 4 | 12 | 1 | 1 | 0 |
 | INTERFACE-CATALOG-001 | 18 | 3 | 10 | 1 | 4 | 0 |
-| CORE-PLATFORM-001 | 37 | 9 | 18 | 2 | 7 | 1 |
+| CORE-PLATFORM-001 | 37 | 8 | 19 | 2 | 7 | 1 |
 | COMPATIBILITY-CATALOG-001 | 18 | 2 | 12 | 0 | 4 | 0 |
 
 ## Next work in build order
 
-1. Finish asynchronous editor recovery control flow. Storage and serialization already run through a serialized OwnedWork queue. Replace nested wait/waitIdle loops and modal restart/close waits with owner-fenced continuations; preserve Save, Discard, Restore, deferred records and signal-exit cleanup.
-2. Move file-upload execution admission/step/terminal persistence through owned work while retaining the existing pre-HTTP failure fence and durable terminal observation. Network requests already stop on admission/start/read-step storage failure.
-3. Finish watch-folder GUI storage boundaries: rule persistence, execution-record writes and the remaining settings transfer/import/migration boundaries. The checkpoint persistence, watcher registration, final file identity check, publication disposition, send intent and retention work are landed under CORE-025 0.6.0.
-4. Continue the lowest remaining capture/output/catalogue journey gap after the foundation above. Region cursor capture has a tested default-off single-output compositor path; mixed-scale/rotated/desktop qualification stays partial. ES-029 public diagnostics and separate value-free reasons are implemented candidates under the approved 0.2.1 capability.
-5. Retain model/dependency/threshold/retention/security/release gates. Do not rebuild landed history import, shared execution, diagnostic export, recovery protection/takeover, recursive discovery or ES-029 boundaries.
+1. Fix CORE-025 P1 accounting for a received HTTP 2xx status followed by a truncated-body transport failure. A separately built current-production probe observes status 200 but reports answeredAttempts=0 and acceptedAttempts=0; P1 requires both to count. Add the native regression before fixing it. Include the related 3xx-with-error accounting boundary, keep truncated 2xx outcomes failed/unconfirmed, and preserve earlier acceptance across retry-safe attempts. The publication remains conservatively unconfirmed; no duplicate publication is demonstrated.
+2. Finish asynchronous editor recovery control flow. Storage and serialization already run through a serialized OwnedWork queue. Replace nested wait/waitIdle loops and modal restart/close waits with owner-fenced continuations; preserve Save, Discard, Restore, deferred records and signal-exit cleanup.
+3. Move file-upload execution admission/step/terminal persistence through owned work while retaining the existing pre-HTTP failure fence and durable terminal observation.
+4. Finish remaining watch GUI boundaries: rules/execution persistence, watcher registration, final dispatch fingerprint and the nested shutdown checkpoint drain. Discovery, checkpoint intent/settlement/retention and worker-built checkpoint adoption already use OwnedWork. Do not rebuild those or the now-owned settings export/import/migration/backup lane.
+5. Continue the lowest remaining capture/output/catalogue journey gap after the foundation above. Region cursor evidence stays region-only; wider source options and topology/target qualification remain partial. Preserve the approved empty-save baseline shadows, ES-029 diagnostic boundaries and existing history/import/output journeys.
+6. Retain model/dependency/threshold/editor-retention/security/release gates. The approved watch retention policy does not decide editor recovery or diagnostic retention.
 
 ## Current findings
 
-- Recovery count cleanup now protects newer, foreign, corrupt, locked and live records, plans under existing store locks, and deletes only after successful publication. A full protected collection refuses a new record. Restore takes over only its selected ID and snapshot. Held-worker and signal-exit tests cover recovery storage and cleanup. Externally deleted known snapshots now recreate safely under collection/record locks, with protected-capacity refusal and intervening replacement tests. Configured retention remains blocked.
-- File-upload execution admission/start/read-step failures now stop before HTTP. Existing tests inject all three stages and assert zero requests. Non-idempotent Qt upload bodies cannot rewind for transport replay; missing remote acknowledgement remains interrupted. Execution persistence itself still runs in GUI callbacks.
-- Recursive watch discovery/stat runs through OwnedWork. Held-scan tests cover Stop/restart, rule and capture-folder changes, owner destruction and retained-source restart. Checkpoint persistence now runs through OwnedWork; watcher registration and the final dispatch fingerprint remain accepted GUI work for thread affinity and last-moment replacement checks.
-- Region cursor inclusion is no longer absent. The default-off, profile-local compositor path has real controller/crop/PNG integration tests. RC-013 moves from not started to partial; wider topology and target guarantees remain open.
-- ES-029 now reports its closed public diagnostic set and keeps specific, value-free reasons separately. Current parser, reader, native warning and conformance evidence supersedes the old extra-code finding. The maintainer-approved contract and implementation remain unchanged by this audit.
-- XML/SQLite/JSON history import, shared execution, output consent and the reviewed filename/host completions remain present. Their separate retention, privacy, compatibility, physical and human qualification edges remain explicit.
+- CORE-025 is partial for one demonstrated P1 boundary. A loopback server returns HTTP 200 with Content-Length 100 and closes after a short body. A separate build of current UploadExecutor observes QNetworkReply status 200 / RemoteHostClosedError, but its outcome reports attempts=1, answered=0, accepted=0 and httpStatus=0. The probe exits 1 against the contract-derived expectation of one answered/accepted attempt. Both audit reader and primary agent reproduced it. Source, CMake, output and command are archived in shared loop state iteration44-evidence/truncated200. The unconfirmed disposition remains safe; no duplicate-publication claim is made.
+- Landed watch behavior includes durable send intent, accepted/unanswered publication holds, process-lifetime answered-failure retry suppression, checkpoint v2/legacy loading, parent identity and snapshot-fenced worker adoption, retention, and real-process kill/mount/clean-exit tests. The new counter gap does not erase that evidence. Activation and wider identity qualification remain separate.
+- Approved empty saves now shadow a baseline companion with a zero-annotation default sidecar bound to the published raster hash. Existing baseline bytes remain untouched; late-baseline failure/retry, clean state and reopen paths have native/Core/capture tests. Preserve ES-014, ES-030 and EO-006 implemented candidates. The prior empty-save policy/runtime question is resolved by the approved decision and existing pinned observation; no reference was built or run in this audit.
+- Settings export/import, migration and backup inspect/commit now use OwnedWork with asynchronous pickers/confirmation, conflicting controls disabled and destructor fencing. Cancellation and owner teardown have native tests. Recovery storage remains worker-owned, but its close/restart/shutdown waits still nest event loops. Upload/watch rule and execution persistence retain GUI work.
+- Region cursor inclusion, ES-029 public diagnostics/separate value-free reasons, explicit outputs, private storage and reviewed history imports remain present. Existing scheduler recognition/model/threshold/security/release gates remain in force; no product behavior or contract changes here.
 
 ## Explicit gates
 
-The scheduler still blocks remove_background, QR scanning/OCR dependencies, the scroll alignment threshold, human .sxie/Secret Service review, and release/signing/security-posture changes. No upstream note cancels those instructions. Product-policy questions remain explicit in shared loop state; this audit changes no contract, behavior, dependency or approval.
+The scheduler still blocks remove_background, QR scanning/OCR dependencies, the scroll alignment threshold, human .sxie/Secret Service review, and release/signing/security-posture changes. Watch publication/retention and empty-save decisions were already approved upstream; this audit neither changes those decisions nor invents defaults for other stores.
 
 ## Verification
 
-The full Debug offscreen suite and final push gate must pass on the integrated tree. Actual results are recorded in shared loop state after push. Contract lint, backlog/progress freshness and current anchor integrity are checked separately.
+The existing full Debug offscreen suite passes 182/182; the separate failing P1 probe identifies an uncovered requirement, not a failure in that suite. Final integrated push-gate results are recorded in shared loop state. Contract lint, backlog/progress freshness and every current anchor are checked separately.
+
+## Historical integration evidence
+
+The following unchanged checkpoint records describe evidence and review outcomes when they were written. The current audit above supersedes earlier counts and the CORE-025 completion assessment; it retains their valid implementation and qualification evidence.
 
 ## Watch-folder checkpoint candidate — 2026-11-14 (superseded by final qualification below)
 

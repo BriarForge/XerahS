@@ -1,7 +1,7 @@
 {
   "capability": "INTERFACE-CATALOG-001",
   "capability_version": "0.1.0",
-  "contract_version": "0.3.1",
+  "contract_version": "0.4.0",
   "platform": "linux",
   "edition": "linux-qt",
   "implementation": [
@@ -41,7 +41,7 @@
         "classification": "not-started",
         "spec_line": 9,
         "coverage": "Full interface-ledger approved operation/request/authority/accessibility/disposition definitions are incomplete.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -49,7 +49,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -68,8 +68,8 @@
             "line": 82
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "The registry declares stable IDs/surfaces and shares QAction ownership. Full linked interface-ledger outcomes, schemas and human dispositions remain."
     },
@@ -92,7 +92,7 @@
         "classification": "partial",
         "spec_line": 13,
         "coverage": "Existing GUI/tray/hotkey/CLI operations share domain paths; MCP/provider breadth and complete cross-entry side-effect equivalence remain incomplete.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -100,7 +100,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -119,8 +119,8 @@
             "line": 82
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "GUI/tray/hotkeys/CLI share registry/domain operations for supported captures. MCP/provider semantic equivalence and complete operation families remain."
     },
@@ -143,7 +143,7 @@
         "classification": "partial",
         "spec_line": 16,
         "coverage": "InterfaceStatesTest exercises actual native loading/validation/failure/result cues for many tools; universal GUI-state inventory including every permission/partial outcome is not complete.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -151,7 +151,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -170,8 +170,8 @@
             "line": 791
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Current native dialogs expose tested load/empty/error/busy/result states. A state matrix is now driven through the real widgets for the shell window and the QR, hash, icon and colour dialogs: initial, loading (determinate and indeterminate), empty, populated, validation error, permission denied (portal refusal and runtime-storage text), dependency unavailable (portal unavailable, no upload destination, video tooling), cancelled and terminal failure, each as plain visible text with an accessible alert for failures. Remaining: the same matrix for the other ~30 windows and dialogs (editor, capture, workflow, history, upload destinations, settings), partial-success presentation outside the capture result views, and a declared per-surface applicability list. Audit 2026-11-03: InterfaceStatesTest::shellWindowStatesAreVisibleTextWithAnAccessibleCue, qrDialogStates, hashCheckerStates, iconConverterStates, colourPickerStates. Row stays partial: only five surfaces are in the matrix. Update 2026-11-04: InterfaceStatesTest also drives New Image (validation, error, loading, cancelled, failure without leaking the cause), Open Image from URL (empty, refused scheme, unencrypted opt-in, loading with progress, cancelled; no request in refused cases) and Scan QR codes (permission wait, cancel, populated, empty result, denied, unavailable) as visible text."
     },
@@ -194,7 +194,7 @@
         "classification": "partial",
         "spec_line": 19,
         "coverage": "Native widget accessibility audit checks names/tab chains/contrast/motion/layout; physical screen-reader/native conventions and complete surface coverage remain unaccepted.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp"
         ],
@@ -208,7 +208,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -227,8 +227,8 @@
             "line": 137
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Qt keyboard/accessibility tests cover current windows. Complete screen-reader, text scaling, contrast and reduced-motion qualification remains. NativeSurfaceAccessibilityTest::nativeSurfaces adds 20 named data rows for shell, settings, capture/pipeline/workflow history, workflows, destinations, watch folders, editor, effects, presets, colour picker/sampler, hash, icon, QR generation/scanning, OCR, comparison and video conversion under a high-contrast QPalette, 1.5x native font and disabled native UI motion effects. It checks native names, root purpose descriptions, focus state, complete Tab traversal plus native radio-group arrows, wrapped-label height, work-area recovery, palette distinction and Escape/close for idle dialogs. NativeAccessibility keeps busy/error text in accessible descriptions, retains wrapped labels at their required height and reuses adaptive scroll/focus recovery without rewriting native preferences. Effects parameter rows now have explicit reading order through sliders and edits. busyAndErrorTextUpdatesAccessibleDescriptions covers actual shell and hash states. Keep partial: physical visible-focus/screen-reader review, busy/error/cancel variants on every secondary GUI surface and complete supported-platform qualification remain Required; the 20-surface automated audit is not a blanket all-GUI approval."
     },
@@ -253,7 +253,7 @@
         "classification": "partial",
         "spec_line": 23,
         "coverage": "Broad native modal fixtures verify safe defaults, purpose/consequences, active focus confinement, Escape and focus restoration. Universal permission/destructive-dialog and physical screen-reader/native target coverage remains incomplete.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -261,7 +261,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -286,8 +286,8 @@
             "line": 176
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Native confirmation defaults and modal precedence have tests. Remove-destination confirmation defaulted to Yes for a destructive keyring delete; it now defaults to No. Every one of the 20 choice confirmations in app/ (QMessageBox) is source-checked for an explicit safe default (Cancel/No/Save) and a non-generic title, the remove confirmation names the destination and the keyring deletion, and six real dialogs (QR code, colour picker, hash checker, icon converter, new image, open from URL) are driven modal: the modal trap exists only while open, the title identifies the purpose, a Cancel/Close action exists, no default button is destructive, Escape rejects, and focus returns to the host control. Remaining: the other ~30 modal dialog classes (editor, capture, workflow, history, settings, file pickers) are only covered by the source scan, not driven for focus restore; permission prompts are portal-owned and unreviewed. Audit 2026-11-03: ModalDialogsTest::everyChoiceConfirmationDefaultsToASafeButtonAndHasAPurposefulTitle (fails on the old implicit-Yes default), removingADestinationSaysWhatIsDeletedDefaultsToNoAndRestoresFocus and modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus (6 dialogs). Not enough to classify every modal dialog, so the row stays partial. Rationale: default-Cancel/No for destructive confirmations is the Qt/GNOME HIG and reference ShareX behavior. Update 2026-11-04: ModalDialogsTest now also drives Insert Image, Scan QR codes, Recognize text (OCR) and Compare Images through the modal trap/purpose/Escape/safe-default/focus-restore checks (ten dialogs driven in total)."
     },
@@ -313,8 +313,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 27,
-        "coverage": "Capture/editor/hash/media/upload/copy/move and now recursive watch discovery and recovery storage run on owned workers, retaining results with cancellation/owner tests. Universal long-running native surfaces remain partial: recovery close/restart/shutdown enter nested event loops; upload execution and watch checkpoint persistence and watcher registration/final identity checks retain GUI work.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "coverage": "Long-running capture/editor/hash/media/upload/file-work surfaces preserve progress, cancellation and retained results. Recursive watch discovery, checkpoint/retention and recovery storage now run on owned workers; settings transfer/migration has a separate owned lane reviewed in the settings audit. Universal background/terminal behavior remains partial because recovery and watch shutdown still enter nested loops and rule/execution persistence plus watcher/final identity boundaries retain GUI work.",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -322,7 +322,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -334,7 +334,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "e3c8ac7741c8b860b56f89b8ae27d9218fa4a8951570cb0990bc69c31e068de0"
+            "sha256": "071180c6b4de1d3f717ffd3b62832824b332a99921dbe76f99524dd304472dec"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+            "sha256": "05ba25b8297ea2028fc39c0c854060b78e17b9d1e21db942f93948dfb3738a4f"
           }
         ],
         "test_anchors": [
@@ -352,19 +356,25 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "b40a4747273405f77e64109a8f4f4f701dffd8b7aefca387207e012fe6c156da",
+            "sha256": "c64854349862f4eb715d9ebe6e22f45a73762cadcaab531f2a145ed544cb6586",
             "method": "slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed",
-            "line": 680
+            "line": 754
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
             "method": "discoveryDoesNotBlockTheGui",
-            "sha256": "b40a4747273405f77e64109a8f4f4f701dffd8b7aefca387207e012fe6c156da",
-            "line": 105
+            "sha256": "c64854349862f4eb715d9ebe6e22f45a73762cadcaab531f2a145ed544cb6586",
+            "line": 177
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "method": "stopDuringIntentDoesNotDispatchAndDrainsRelease",
+            "sha256": "c64854349862f4eb715d9ebe6e22f45a73762cadcaab531f2a145ed544cb6586",
+            "line": 1034
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "OwnedWork and domain cancellation/progress have native lifetime tests. Real-shell tests now show unknown-size tool work reports indeterminate progress and cancels cooperatively with a visible terminal state; hiding the shell window mid-operation does not cancel it and the latest progress and terminal result are there when it is shown again; and a finished tool result survives closing and reopening its window. That test found and fixed a defect: closing the hash checker after it finished replaced the terminal status with 'Cancelling\u2026' and disabled its progress. Remaining: only the shell window and the hash tool are covered; other operation families (editor save/print/upload, recording, conversion, OCR, capture pipeline) and a durable record for tool-window results beyond the open window are not converged. Audit 2026-11-03: OperationResultsTest::unknownSizeWorkShowsIndeterminateProgressAndCancelsCooperatively, aFinishedResultSurvivesClosingTheToolWindowAndReopeningIt (failed before the HashCheckerDialog::cancel guard), hidingTheShellWindowDoesNotCancelAndKeepsTheLatestResult; ApplicationWindowTest::preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults covers determinate progress. Row stays partial: other operation families are not driven."
     },
@@ -387,7 +397,7 @@
         "classification": "partial",
         "spec_line": 30,
         "coverage": "NativeSurfaceAccessibilityTest and translations test expanded/scaled/RTL tool layouts; full topology/font-substitution/scaling/localization matrix across all supported targets is not established.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -395,7 +405,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -414,8 +424,8 @@
             "line": 137
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Editor display recovery and minimum viewport behavior are tested. Full application RTL/localization/font/scaling/topology matrix remains."
     },
@@ -441,7 +451,7 @@
         "classification": "implemented",
         "spec_line": 34,
         "coverage": "CLI-CONTRACT and real-process fixtures verify stable command grammar/environment precedence, help, stream ownership, machine output, exit statuses and SIGINT/SIGTERM cleanup.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -449,7 +459,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -468,8 +478,8 @@
             "line": 66
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "CLI launch/discovery/execution lookup have versioned JSON (schemaVersion 1), help/exit and malformed-input tests. SIGINT/SIGTERM cancel the primary cleanly (event loop exit, normal teardown, lock released) with documented exit 130/143; arguments alone choose operation and output mode (no XERAHS_* environment switches; XDG_* only locates the profile); the stdout/stderr ownership and exit-code tables are in app/CLI-CONTRACT.md. Wait/cancel/live-progress CLI commands are not part of this row's text (see IFCAT-006 and WORKFLOW-CLI.md). Audit 2026-11-03: stable names: CliContractTest::standardStreamsFollowTheOwnershipTable(help) lists every flag; precedence: CliContractTest::environmentCannotSelectOperationOrOutputMode; stdout/stderr ownership: CliContractTest::standardStreamsFollowTheOwnershipTable (11 modes); exit codes 0/1/2: NativeInstanceTest::actualApplicationForwardsWorkflowIdsAndReportsOnlyDelivery, 130/143: CliContractTest::primaryExitsWithDocumentedStatusOnSigintAndSigterm plus TerminationSignalsTest (three cases); non-interactive: NativeInstanceTest::workflowCliRefusesMalformedHeadlessAndMissingProfilesWithoutSideEffects; versioned JSON: schemaVersion assertions in both suites. Rationale: arguments-only CLI and 128+signal follow the reference XerahS/ShareX daemons and Unix shell convention."
     },
@@ -491,7 +501,7 @@
         "classification": "implemented",
         "spec_line": 37,
         "coverage": "Actual-process --non-interactive commands refuse presentation/consent-dependent operations before forwarding or effects and return explicit presentation-required failures.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -499,7 +509,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -518,8 +528,8 @@
             "line": 391
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Non-interactive refusal is generic: any graphical operation (every capture source, edit, run-workflow, all recording commands and a plain launch) returns presentation-required (exit 1, fixed actionable text, requestId only) before QApplication, display, instance election, preferences or portal consent, and never forwards to a running instance. Read-only list/result commands never prompt. No current CLI command takes credentials or destructive approval, so those cases cannot arise until such commands exist. Audit 2026-11-03: each operation refused with presentation-required and no side effects: NativeInstanceTest::workflowCliRefusesMalformedHeadlessAndMissingProfilesWithoutSideEffects (rows run-workflow, capture-region, capture-full-screen, capture-monitor, capture-active-window, start-recording, stop-recording, region-recording-headless, edit, plain-launch; checks stable code, actionable stderr 'No operation was started.', no leaked argument, no display/profile/instance access); not forwarded to a live owner: NativeInstanceTest::nonInteractiveNeverForwardsToARunningOwnerOrPerformsTheOperation (all eight actions plus plain launch). Rationale: refusal over prompting matches ShareX/Flameshot headless behavior."
     },
@@ -542,7 +552,7 @@
         "classification": "implemented",
         "spec_line": 40,
         "coverage": "Actual-process CLI redaction tests cover all modes including noisy diagnostic environment, private IDs/paths/corrupt settings; verbosity cannot expose raw private input.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -550,7 +560,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -569,8 +579,8 @@
             "line": 172
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Explicit CLI metadata excludes paths/settings/payloads and uses fixed diagnostics in actual-process tests. Every CLI mode (help, list, result lookup, all refusals, usage errors, forwarded launches in accepted/busy/rejected/unknown-delivery states) is redacted by default; the CLI has no verbose or diagnostic flag (they are refused as usage-invalid) and diagnostic environment settings cannot weaken redaction. Redaction rules are in app/CLI-CONTRACT.md. Audit 2026-11-03: CliContractTest::redactionHoldsInEveryCliModeEvenWithDiagnosticSettings (58 rows incl. every operation flag with and without --json, corrupt and valid secret-laden profiles, secret arguments and environment, QT_LOGGING_RULES/XERAHS_VERBOSE diagnostic variants, JSON fields limited to the stable set); NativeInstanceTest::workflowDiscoveryIsHeadlessReadOnlyAndDoesNotActivatePrimary keeps the per-field privacy assertions. CLI output carries no capture content or account data by construction."
     },
@@ -583,7 +593,7 @@
         "classification": "blocked",
         "spec_line": 43,
         "coverage": "Human-approved MCP schema/authority/side-effect/progress/cancellation policy is pending; no native MCP implementation qualifies this row.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -591,7 +601,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -610,8 +620,8 @@
             "line": 82
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "No native MCP server or versioned tool schemas/progress/cancellation/publication annotations are implemented.",
       "evidence": [
@@ -628,7 +638,7 @@
         "classification": "blocked",
         "spec_line": 47,
         "coverage": "MCP/agent human-consent and least-authority security posture require product-owner approval; no agent-origin execution is authorized by imported text.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -636,7 +646,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -655,8 +665,8 @@
             "line": 82
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "No native MCP authority/consent workflow is implemented; authenticated CLI IPC is not MCP approval.",
       "evidence": [
@@ -673,7 +683,7 @@
         "classification": "blocked",
         "spec_line": 52,
         "coverage": "Human-approved MCP granted-scope, metadata-only discovery and returned-data lifetime policy are pending.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -681,7 +691,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -700,8 +710,8 @@
             "line": 82
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Metadata-only CLI discovery exists; MCP capture/history/settings/annotation/upload result minimization and grants are absent.",
       "evidence": [
@@ -728,7 +738,7 @@
         "classification": "partial",
         "spec_line": 56,
         "coverage": "Static custom uploader fields/secret refs and native editor validation exist; complete versioned provider field/help/conditional/auth action schema inventory is incomplete.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -736,7 +746,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -755,8 +765,8 @@
             "line": 82
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Destination models, native configuration and secret references exist with validation tests. Complete provider field/conditional/authentication schema coverage remains."
     },
@@ -781,7 +791,7 @@
         "classification": "partial",
         "spec_line": 60,
         "coverage": "Native explicit cancellable HEAD connection tests perform no implicit view-time request; complete provider authentication action family and physical credential review remain incomplete.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/DestinationConnectionTestTest.cpp"
         ],
@@ -795,7 +805,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -814,8 +824,8 @@
             "line": 82
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Supported native providers are versioned custom HTTP destinations. Shared configuration retains scoped keyring references; SecretServiceCredentialStore owns credentials. Ordinary catalog viewing/validation is local. The destinations UI now offers explicit Test connection and Cancel test: owned preparation resolves only the selected destination ID scope, and a content-free HEAD probe disables redirects, cookie load/save and authentication reuse. Filename-dependent endpoints are refused; success explicitly means HEAD reachability, not upload authorization. Escape/Close/cancel and owner destruction retire pending work or abort the reply, with timeout and value-free stable diagnostics. DestinationConnectionTestTest uses an injected counting network manager to prove zero requests on load/view/validation, click-only HEAD with no body, scoped credentials, invalid endpoint/refusal, success/HTTP/network/redirect/unsupported failures, cancellation before preparation and during transfer, timeout, owner teardown and redaction. No OAuth provider/authorization flow is currently supported. Rationale: reference CustomUploaderEditorViewModel.TestUploaderAsync is preview-only; the requested explicit HEAD probe supplies connection reachability without publishing sample/capture content. Human credential/security review remains Required before release. Final consent review found that viewing previously used an interactive secret lookup. Viewing now calls metadata-only availability (SearchItems, no session, Unlock, Prompt or GetSecrets), and connection preparation uses lookupWithoutPrompt so a locked keyring fails without leaving an authorization prompt. The injected credential counter proves viewing performs zero secret reads and the probe uses only non-prompting scoped reads. SecretServiceCredentialStoreTest::availabilityAndProbeReadsNeverUnlockOrPrompt adds real transport evidence, but its private D-Bus test must pass outside the sandbox before promoting these security-sensitive rows. Keep partial pending that evidence and credential/security review."
     },
@@ -841,7 +851,7 @@
         "classification": "partial",
         "spec_line": 63,
         "coverage": "Shared fixed code/message/retry table and correlation receipts cover existing shell/pipeline paths; universal mapping across every native tool/provider surface remains incomplete.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -849,7 +859,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -868,8 +878,8 @@
             "line": 17
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Native/domain stable codes and request/execution IDs have tests. The CLI/activation/workflow-lookup family (30 stable codes) now has one presentation table (src/shell/ErrorPresentation) giving every code fixed text, exit status and a Safe/AfterChange/CheckFirst retry rule, shared by the JSON producers, CLI stderr, exit codes and the window's activation messages; launch results keep the request UUID as correlation ID and nothing else. Remaining: the other domain code families shown by GUI surfaces (capture pipeline outcomes, portal/permission, upload, recording, editor save/open) are not in the table and have no all-codes mapping test; no MCP/provider surfaces exist. Audit 2026-11-03: CLI/activation family proven by ErrorPresentationTest::everyStableCodeHasFixedTextExitStatusAndRetryRule, unknownCodesGetTheGenericPresentationWithoutEcho and producersAcceptExactlyTheTableCodesAndLaunchResultsKeepTheCorrelationId, and CliContractTest::stderrAndExitStatusComeFromThePresentationTable (10 real failure paths incl. busy exit 2, delivery-unknown, handler-failed). Other families unproven, so the row stays partial. Rationale: retry only for nothing-started failures follows the reference busy/'try again' wording."
     },
@@ -894,7 +904,7 @@
         "classification": "partial",
         "spec_line": 66,
         "coverage": "Registered commands have handlers or explicit unavailable explanations and native unsupported workflow definitions are refused; accepted equivalent/degraded dispositions across all integrations remain open.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -902,7 +912,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -921,8 +931,8 @@
             "line": 82
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Current registry shares availability. Optional video tooling is omitted or visibly disabled with its reason when unavailable. The shell's feature installers now run through one function (installShellFeatures, shared by main and tests), so the real registry is checked: every one of the registered commands has a handler or is a disabled command that states why it is unavailable, window buttons and tray entries are the shared wired actions, and no enabled button in the tool dialogs opened through their commands is inert. Remaining: approved capability/platform dispositions (CORE-PLATFORM-001 ledger dispositions are incomplete) decide which unavailable integrations need an equivalent versus explanation versus absence, so 'follows disposition' is unproven; dialogs outside the tool set were not opened through the registry. Audit 2026-11-03: ShellCommandsTest::everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation (fails for an enabled handler-less command), windowButtonsAndTrayEntriesAreTheSharedWiredActions, noEnabledButtonInAnOpenedToolDialogIsInert; ToolsFeatureUnavailableTest covers the missing-GStreamer branch. Row stays partial pending approved dispositions (product decision)."
     },
@@ -946,7 +956,7 @@
         "classification": "blocked",
         "spec_line": 70,
         "coverage": "Full cross-entry/schema/authority/physical screen-reader/localization/provider/all-platform activation matrix and acceptance remain pending.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/CommandRegistry.cpp",
@@ -954,7 +964,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "4de07af7ccc608ffa71eaae104edeb84586bbd21d71491524f9c44f455e65abb"
+            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
           },
           {
             "path": "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
@@ -973,8 +983,8 @@
             "line": 82
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Current entry-point, malformed input and native GUI fixtures exist. MCP, complete providers, screen readers/localization and all-platform qualification remain. FileUploadTest also preserves local-file and remote-URL drop cases on the Qt 6.4 constructor API and rejects text-only drops without emitting upload requests. The earlier baseline compile failure is recorded in CI 40099542917; full native qualification is still partial.",
       "blocked_reason": "Full cross-entry/schema/authority/physical screen-reader/localization/provider/all-platform activation matrix and acceptance remain pending."
@@ -982,11 +992,11 @@
   },
   "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+    "source_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
     "checked_at": "2026-11-14",
     "specification": "product-contract/capabilities/INTERFACE-CATALOG-001/SPEC.md",
     "specification_sha256": "f9a2c5eecfa17e78f79abf8b0565e6e68a7008c0fefb64b47194660d2d4538fb",
-    "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
+    "method": "Revalidate all manifest clauses against current source and meaningful named automated methods. Compare unchanged evidence to the prior full audit; inspect changed production/test bodies and approved specification changes. A direct current-production HTTP probe tests P1 accounting independently of the existing passing suite. Source hashes and named methods below pin the current revision; prior trace snapshots and audit histories remain available.",
     "reviewed_requirement_count": 18,
     "counts": {
       "blocked": 4,
@@ -1035,7 +1045,8 @@
     },
     "findings": [],
     "remaining_scope": "IFCAT-001, IFCAT-002, IFCAT-003, IFCAT-004, IFCAT-005, IFCAT-006, IFCAT-007, IFCAT-011, IFCAT-012, IFCAT-013, IFCAT-014, IFCAT-015, IFCAT-016, IFCAT-017, IFCAT-018",
-    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval.",
+    "version_role": "contract_version and capability_version identify the normative manifest mapped by this review, not whole-platform acceptance or release approval."
   },
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
@@ -1182,6 +1193,62 @@
       "specification": "product-contract/capabilities/INTERFACE-CATALOG-001/SPEC.md",
       "specification_sha256": "f9a2c5eecfa17e78f79abf8b0565e6e68a7008c0fefb64b47194660d2d4538fb",
       "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+      "reviewed_requirement_count": 18,
+      "counts": {
+        "blocked": 4,
+        "implemented": 3,
+        "not-started": 1,
+        "partial": 10
+      },
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/CommandRegistry.cpp",
+        "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/app/main.cpp",
+        "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/CliContractTest.cpp": [
+          "primaryExitsWithDocumentedStatusOnSigintAndSigterm",
+          "redactionHoldsInEveryCliModeEvenWithDiagnosticSettings"
+        ],
+        "platforms/linux/linux-qt/tests/ErrorPresentationTest.cpp": [
+          "everyStableCodeHasFixedTextExitStatusAndRetryRule"
+        ],
+        "platforms/linux/linux-qt/tests/InterfaceStatesTest.cpp": [
+          "shellWindowStatesAreVisibleTextWithAnAccessibleCue"
+        ],
+        "platforms/linux/linux-qt/tests/ModalDialogsTest.cpp": [
+          "everyChoiceConfirmationDefaultsToASafeButtonAndHasAPurposefulTitle",
+          "modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus"
+        ],
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp": [
+          "nonInteractiveNeverForwardsToARunningOwnerOrPerformsTheOperation"
+        ],
+        "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp": [
+          "nativeSurfaces"
+        ],
+        "platforms/linux/linux-qt/tests/OperationResultsTest.cpp": [
+          "aFinishedResultSurvivesClosingTheToolWindowAndReopeningIt",
+          "unknownSizeWorkShowsIndeterminateProgressAndCancelsCooperatively"
+        ],
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp": [
+          "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation"
+        ],
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp": [
+          "slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed"
+        ]
+      },
+      "findings": [],
+      "remaining_scope": "IFCAT-001, IFCAT-002, IFCAT-003, IFCAT-004, IFCAT-005, IFCAT-006, IFCAT-007, IFCAT-011, IFCAT-012, IFCAT-013, IFCAT-014, IFCAT-015, IFCAT-016, IFCAT-017, IFCAT-018",
+      "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
+    },
+    {
+      "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+      "checked_at": "2026-11-14",
+      "specification": "product-contract/capabilities/INTERFACE-CATALOG-001/SPEC.md",
+      "specification_sha256": "f9a2c5eecfa17e78f79abf8b0565e6e68a7008c0fefb64b47194660d2d4538fb",
+      "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
       "reviewed_requirement_count": 18,
       "counts": {
         "blocked": 4,

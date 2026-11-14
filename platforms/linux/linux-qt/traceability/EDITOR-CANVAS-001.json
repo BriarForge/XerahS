@@ -1,6 +1,6 @@
 {
   "capability": "EDITOR-CANVAS-001",
-  "contract_version": "0.3.1",
+  "contract_version": "0.4.0",
   "platform": "linux",
   "edition": "linux-qt",
   "status": "partial",
@@ -115,7 +115,7 @@
         "classification": "implemented",
         "spec_line": 9,
         "coverage": "Validated native New Image composes dimensions/alpha/profile/optional pixels and confirms replacement only after preparation succeeds.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -145,13 +145,13 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-            "sha256": "8b734abc20720ede84dba1b7dd1536c914410d10a09465058a8f378fd3451600",
+            "sha256": "357cf1cc79163857a594798ba8fa800e16f01dcb0c9d8ab12cb4e5b9887f560c",
             "method": "newImageReplacementResetsSessionBindingsAndSavesChosenProfile",
-            "line": 2711
+            "line": 2750
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/NewImageTest.cpp",
@@ -168,7 +168,7 @@
         "classification": "implemented",
         "spec_line": 12,
         "coverage": "Native Open and recent selection validate source/sidecar before session replacement, normalize once and retain typed failures.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -197,8 +197,8 @@
             "line": 75
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
@@ -217,7 +217,7 @@
         "classification": "implemented",
         "spec_line": 15,
         "coverage": "Explicit URL opening enforces HTTPS default, optional HTTP opt-in, bounded redirects/download/decode, cancellation and untitled no-local-copy result.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -256,8 +256,8 @@
             "line": 150
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "File > Open Image from URL\u2026 (no default shortcut) opens a guarded dialog; nothing is requested until the user presses Download. The policy lives in Qt Core src/image-editor/ImageUrl: https only by default, plain http only through a per-request, clearly labelled checkbox, other schemes, userinfo, empty hosts, control characters and over-long URLs refused with stable url-* codes; redirects are limited to 5, every target is re-validated and https->http is never followed even with the opt-in. app/UrlDownload (QNetworkAccessManager, manual redirects, no cache/cookies, 30 s no-progress timeout) enforces the 1 GiB encoded cap (equal to the shared RasterSource ceiling, static_assert) both from Content-Length and while streaming, so an oversized body is aborted mid-transfer. Content-Type is not trusted: bytes go through the shared RasterSource decoder (header/pixel limits, orientation, alpha/profile) inside an owned EditorOpen worker with progress and Cancel, then the existing dirty-session Save/Discard/Cancel flow, and are adopted as an untitled unsaved session exactly like New Image. Cancel, Escape, dialog close and owner destruction abort the transfer. Local-copy outcome: bytes are held in memory only, no file is written (Qt disk cache disabled); the dialog states that the server sees the request and IP, and the status line says no local copy was kept. The title/status show only host[:port], never path, query or credentials. Native tests (image-url, url-download, editor-url-open) cover valid PNG into a session, corrupt/non-image content with the session unchanged, size cap mid-stream, too many redirects, bad redirect targets, cancel mid-download, timeout, owner destruction, plain-http refusal and dirty Cancel/Discard. TLS evidence: a loopback QSslServer fixture with checked-in test-only certificates (tests/tls, regenerated by tests/tls/generate.sh; CA key discarded) is trusted only through the downloader's test seam (setExtraTrustedCas); production configuration is untouched. Native tests verify https success (IP and DNS names) with the trusted CA, refusal of a CA-signed cert when the CA is not trusted, a self-signed cert, and a hostname mismatch with the stable url-tls-failed code and no HTTP request sent, an https->http redirect refused over real TLS even with the http opt-in, and the editor session left unchanged after TLS refusal. Product decisions recorded: 1 GiB cap tied to the decoder cap; opted-in http->http cross-host redirects allowed with re-validation; disposition Required. Human privacy/security review of the feature remains a release gate outside this native requirement; proxy-specific behaviour is not separately exercised.",
       "evidence": [
@@ -277,7 +277,7 @@
         "classification": "implemented",
         "spec_line": 18,
         "coverage": "Native validated file/clipboard insertion commits an embedded editable image with alpha/aspect and one history step; optional screen ingress is not offered.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -308,8 +308,8 @@
             "line": 49
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Native Image annotation accepts an explicitly selected validated file or explicitly read clipboard image. Owned worker preparation validates per-image dimensions/resources, applies orientation once and embeds PNG with alpha. Aspect-fitted drag or natural-size click commits one editable annotation and one undo step. File and clipboard sources stay unchanged; Cancel, stale state/selection/source/tool and owner destruction cannot publish. No bypass preference or optional screen source is offered. Aggregate document resource limits and complete target qualification remain EC-017/ES-028 obligations.",
       "verification_environment": {
@@ -333,7 +333,7 @@
         "classification": "implemented",
         "spec_line": 22,
         "coverage": "Viewport zoom/fit/reset/pan update only view transforms, leaving pixels/document/history/dirty state untouched.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -356,8 +356,8 @@
             "line": 27
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "EditorViewport holds zoom and pan outside document history. Native actions, Control+wheel, pinch, scrollbars, middle drag, Space+drag, and keyboard pan share that state. EditorViewportTest and EditorCanvasTest verify immutable pixels and geometry, clean checkpoints, and unchanged history.",
       "evidence": [
@@ -375,7 +375,7 @@
         "classification": "implemented",
         "spec_line": 25,
         "coverage": "Finite bounded zoom keeps pointer anchor and access through pan at both scale extremes.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -404,8 +404,8 @@
             "line": 55
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Finite zoom is bounded to 1/64..64. Zoom keeps the logical point under the pointer unless image visibility bounds require clamping; native scrollbars and pan keep at least a 32px strip accessible. The status bar exposes zoom. Native tests cover wheel/pinch anchoring, finite bounds, zoom-independent hit targets and rotated previews.",
       "evidence": [
@@ -434,7 +434,7 @@
         "classification": "implemented",
         "spec_line": 28,
         "coverage": "Crop operation/tool share normalized retained bounds and atomic transformed/intersected annotations.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -463,8 +463,8 @@
             "line": 1986
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Crop Image and the Crop tool use one normalized/clipped rectangle and one history commit. Stroke-grown rotated intersection removes wholly outside rectangles, translates retained objects, and clips partial objects at export. CANVAS-POLICY.md documents the policy; native tests exercise pointer cancellation, dialog crop, undo/redo and sidecar reopening. Native capture Crop now shares normalized reverse/clipped numeric/pointer bounds, an owned worker preview and one guarded Core history commit. Private in-memory source regions compose through crops/history, while the capture worker independently reproduces original-source pixels before accepting changed source/dimensions. Actual objects/assets/alpha, no-op/Cancel, source/viewport Undo/Redo, typed unknown refusal, PNG/.xann reopen and retry are indexed in CAPTURE-CROP.md. Full tool/field/resource/privacy/security/a11y/compatibility/parity/native/human/release qualification remains Required. Main-editor numeric and pointer Crop now reuse the owned preview with frozen state/exact selection/generation, one canvas commit, prepared source/private display and nonblocking Cancel/child/owner teardown. Native keyboard/pointer, inverse-rotation compatibility, alpha/profile/fields/assets, exact history/checkpoint, stale/unknown refusal and actual PNG/.xann reopen are indexed in EDITOR-CROP.md. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required. Capture source-history now retires Cancel/Escape/close/deleted progress jobs immediately, isolates late jobs, and restores through the existing Core state/exact-selection/adjacent-target guard plus native generation. Exact source/profile/alpha/fields/assets/selection/composed source-region, owner teardown, stale refusal, failure/retry and actual capture PNG/.xann save retry evidence is indexed in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required; policies, vectors and labels are unchanged."
     },
@@ -482,7 +482,7 @@
         "classification": "implemented",
         "spec_line": 31,
         "coverage": "Explicit alpha/color/tolerance crop rules retain deterministic foreground/annotations and exact no-op/history semantics.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -511,8 +511,8 @@
             "line": 224
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Native Auto Crop exposes border reference, alpha threshold, inclusive RGBA channel tolerance and whether visible annotations contribute to bounds. The Qt Core engine renders without flattening, scans deterministically, and reuses the crop intersection policy. Empty/full bounds are no-ops with no history. Core and native-window tests cover exact bounds/pixels, alpha and colour thresholds, editable annotations, row-level cancellation, save/reopen and one-step undo. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required."
     },
@@ -535,7 +535,7 @@
         "classification": "implemented",
         "spec_line": 34,
         "coverage": "Resize validates aspect/interpolation/resource limits and transforms every typed annotation with immutable atomic output.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -564,8 +564,8 @@
             "line": 125
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Resize Image has pixel dimensions distinct from display scale (viewport zoom never changes pixels; CanvasOperationsTest and EditorViewportTest), aspect locking, validated interpolation (nearest, alpha-aware bilinear) and dimension limits, and carries every stored annotation type through one shared affine routine. Determinations by Aoife under Mike's similar-apps rule, from the reference app (ShareX.ImageEditor Core/Editor/EditorCore.cs ScaleAnnotations, Core/Annotations/Base/Annotation.cs Scale, Text/TextAnnotation.cs Scale): resize never refuses; stroke width *= min(sx,sy); Text/SpeechBalloon font size *= sy; Step with no stored size follows its box; effect strength is not rescaled; local box extents scale by the world factors and an off-quarter rotated object under unequal factors is a documented deterministic approximation (CANVAS-POLICY.md). Unknown (UnsupportedAnnotation) objects refuse the whole operation by the contract's data-preservation rule. AnnotationTransformTest covers every type x transform. Shared goldens and target qualification remain the usual non-blocking qualification note."
     },
@@ -585,7 +585,7 @@
         "classification": "implemented",
         "spec_line": 37,
         "coverage": "Nine anchors, added fill and crop/translation are independent of source resampling and covered by exact pixel tests.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -614,8 +614,8 @@
             "line": 131
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Native Resize Canvas provides nine anchors, explicit alpha/colour fill, exact retained-pixel copies and annotation translation/removal. CANVAS-POLICY.md defines odd-size alignment and the intersection policy. Unit and native window tests cover expansion, shrink, anchors, colour/alpha, save and undo. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required."
     },
@@ -640,7 +640,7 @@
         "classification": "implemented",
         "spec_line": 39,
         "coverage": "Shared affine transform carries all typed annotations, points and directional assets through rotations/flips atomically.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -675,8 +675,8 @@
             "line": 67
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "All 17 stored annotation types (rectangle, ellipse, line, arrow, freehand, text, step, highlight, blur, pixelate, speech-balloon, magnify, spotlight, smart-eraser, image, emoji, cursor) pass through one shared affine routine (transformShape) for rotate 90/180/270, custom angle and flip H/V, as one atomic operation: centres and orientations map exactly, flips mirror path/tail points in the object's own frame and re-encode embedded Image/Emoji/Cursor PNG pixels mirrored (no document field is added), text stays upright. Exact inputs stay exact and exact inverses restore the original geometry. Unknown annotation types, undecodable assets or invalid geometry refuse the whole operation with no partial result; refusing unknown objects is the contract's data-preservation rule, not a gap. AnnotationTransformTest covers every type x transform x rotation (oracle, XANN reload, inverses, asset pixels, render equivalence, atomic refusal); EditorWindowTest drives real rotate and flip actions with undo/redo, save and reload, and the refusal path. Shared goldens and target qualification remain the usual non-blocking qualification note."
     },
@@ -694,7 +694,7 @@
         "classification": "implemented",
         "spec_line": 42,
         "coverage": "Native rotation preview uses owned cancellable work with explicit angle/sampling/canvas/background and one final session commit.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -723,8 +723,8 @@
             "line": 328
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Native Rotate Image exposes angle, nearest/bilinear interpolation, expand/crop and uncovered-pixel ARGB controls. A cancellable worker prepares the complete source/document and authoritative rendered preview without entering session history. Changes invalidate obsolete previews; accepting commits exactly the prepared result with a state guard, once. Native tests exercise the cancelled 17-degree annotated/dirty scenario, rejection of an obsolete preview, controls, live-worker cancellation, save/reopen and one-step history; core tests verify independent sampling and atomic failures. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required."
     },
@@ -736,7 +736,7 @@
         "classification": "blocked",
         "spec_line": 45,
         "coverage": "No complete background composition surface/model exists; deterministic smart-padding/background and retention policy remain explicit unanswered product decisions.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -752,8 +752,8 @@
           }
         ],
         "test_anchors": [],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "No complete background composition surface/model exists; deterministic smart-padding/background and retention policy remain explicit unanswered product decisions.",
@@ -774,7 +774,7 @@
         "classification": "partial",
         "spec_line": 49,
         "coverage": "Flatten correctly composites represented source/annotations and preserves unknown objects/history, but separate background composition is absent.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -803,8 +803,8 @@
             "line": 446
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Audit 2026-11-04: Clauses: compositing into immutable source, clearing only represented objects, alpha/profile preservation and full undo. CanvasOperationsTest::flattenCompositesOnlyRepresentedObjectsAndRetainsOthers checks independent source-over pixels, retained hidden/transparent/off-canvas/unsupported objects and atomic visible-unsupported refusal; nativeFlattenRestoresSourceAssetsSelectionAndCheckpointWithUndo checks source/selection/checkpoint restoration. flattenAndClearCancellationNeverReturnPartialEdits checks cancellation. Background composition remains dependent on deferred EC-013 (including smart-padding policy), so Flatten cannot yet meet the background clause. Remains partial solely for that product dependency and incomplete background evidence, not physical qualification."
     },
@@ -823,7 +823,7 @@
         "classification": "implemented",
         "spec_line": 53,
         "coverage": "Clear Annotations and Clear Image/Document are distinct named atomic operations; dirty replacement uses native close confirmation.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -852,8 +852,8 @@
             "line": 272
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Distinct native Clear Annotations and Clear Image and Annotations commands share atomic history. Annotation clear retains source PNG bytes exactly. Pixel clear uses an accessible native confirmation defaulting to Cancel, offers Save before Clear/Clear without Saving for dirty sessions, retains dimensions/profile and complete Undo recovery, and changes files only after explicit save. Core and native window tests cover cancellation, save/discard/clear choices, checkpoint and selection restoration, unsupported-object recovery and transparent PNG output. New Image replacement now prepares the complete new source before native Save/Discard/Cancel confirmation, defaulting to Cancel; cancellation and incomplete saves keep the current dirty session and history. Save and Discard intentionally adopt a fresh unsaved session only after success/confirmation. Native window tests cover all choices, untitled destination cancellation, failed raster and sidecar persistence, and preserved old files except explicit Save. Open-in-place now validates the candidate before the same confirmation; native tests verify Save/Discard/Cancel, unchanged state on invalid/cancelled input, clean adoption and reload of an explicitly saved overlapping candidate. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required."
     },
@@ -866,7 +866,7 @@
         "classification": "implemented",
         "spec_line": 56,
         "coverage": "Immutable comparison layout accepts validated images at declared native-size policy and exposes accessible native divider controls.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -897,8 +897,8 @@
             "line": 23
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp"
@@ -934,7 +934,7 @@
         "classification": "partial",
         "spec_line": 59,
         "coverage": "Finite dimensions/resource admission, cancellable costly edits and immutable failure/cancellation have meaningful Core/native tests and Linux canvas-vector coverage. Complete all-operation behavior remains partial because EC-013 background composition is absent and aggregate/background resource behavior has no approved complete path; other-platform implementation and qualification are not inferred.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -963,8 +963,8 @@
             "line": 301
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Audit 2026-11-04: Clauses: finite dimensions/resource limits, costly-operation progress/cancellation, session atomicity and shared vectors. CanvasOperationsTest::invalidAndCancelledEditsHaveNoPartialOutputs, customRotationRejectsInvalidOrExcessiveDimensionsAndCancels and cancelledEncodingAndInvalidCommitLeaveTheSessionUntouched prove geometry/resource/atomicity clauses; EditorSourceTest::encodedFilesAreBoundedBeforeBufferAllocation proves encoded-ingress limits; EditorWindowTest::saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions proves real progress/cancellation. All three published canvas vectors remain covered by the Linux conformance seam. The quantifier all canvas operations still includes deferred EC-013 background composition; finite aggregate assets/background resources and that operation path cannot yet be audited as complete. Remains partial for this dependency and proof gap; this row does not claim Windows/macOS behavior or physical qualification."
     }
@@ -992,11 +992,11 @@
   },
   "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+    "source_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
     "checked_at": "2026-11-14",
     "specification": "product-contract/capabilities/EDITOR-CANVAS-001/SPEC.md",
     "specification_sha256": "cca62433c31f6fb34eca4f12fd469944a79840e6f36dba9ddab9a334ce9d2157",
-    "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
+    "method": "Revalidate all manifest clauses against current source and meaningful named automated methods. Compare unchanged evidence to the prior full audit; inspect changed production/test bodies and approved specification changes. A direct current-production HTTP probe tests P1 accounting independently of the existing passing suite. Source hashes and named methods below pin the current revision; prior trace snapshots and audit histories remain available.",
     "reviewed_requirement_count": 17,
     "counts": {
       "blocked": 1,
@@ -1071,7 +1071,8 @@
     },
     "findings": [],
     "remaining_scope": "EC-013, EC-014, EC-017",
-    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval.",
+    "version_role": "contract_version and capability_version identify the normative manifest mapped by this review, not whole-platform acceptance or release approval."
   },
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
@@ -1373,6 +1374,88 @@
       "specification": "product-contract/capabilities/EDITOR-CANVAS-001/SPEC.md",
       "specification_sha256": "cca62433c31f6fb34eca4f12fd469944a79840e6f36dba9ddab9a334ce9d2157",
       "method": "Read all normative clauses, inspect production and named automated test bodies; verify prior assertions against current code. Graph relationships are navigation, not compliance evidence.",
+      "reviewed_requirement_count": 17,
+      "counts": {
+        "blocked": 1,
+        "implemented": 14,
+        "partial": 2
+      },
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/EditorCanvasOperations.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
+        "platforms/linux/linux-qt/app/ImageInsert.cpp",
+        "platforms/linux/linux-qt/app/ImageInsertDialog.cpp",
+        "platforms/linux/linux-qt/app/NewImageDialog.cpp",
+        "platforms/linux/linux-qt/app/NewImageSource.cpp",
+        "platforms/linux/linux-qt/app/UrlOpenDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/CanvasOperations.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ImageComparison.cpp",
+        "platforms/linux/linux-qt/src/image-editor/NewImage.cpp"
+      ],
+      "automated_test_surfaces": {
+        "platforms/linux/linux-qt/tests/AnnotationTransformTest.cpp": [
+          "everyTypeEveryTransform",
+          "flipMirrorsDirectionalAssetPixelsOnTheRightAxis"
+        ],
+        "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp": [
+          "allNineAnchorsHaveDeterministicOffsets",
+          "autoCropColorDistanceIncludesAlphaAndInclusiveTolerance",
+          "autoCropNoForegroundAndFullBoundsPreserveHistory",
+          "cancelledEncodingAndInvalidCommitLeaveTheSessionUntouched",
+          "clearCommandsAreDistinctAtomicAndRepeatAsNoOps",
+          "cropNormalizesDragAndUsesRotatedIntersection",
+          "customRotationHasAnalyticalNearestPixelsAndCanvasGeometry",
+          "flattenCompositesOnlyRepresentedObjectsAndRetainsOthers",
+          "invalidAndCancelledEditsHaveNoPartialOutputs",
+          "nativeFlattenRestoresSourceAssetsSelectionAndCheckpointWithUndo",
+          "preparedPreviewCompositesAnnotationsAndCommitsOnlyOnRequest",
+          "resizeHasExplicitNearestAndAlphaAwareBilinear",
+          "rotationsAndFlipsPermutePixels",
+          "smallerCanvasRetainsPixelsWithoutResampling"
+        ],
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp": [
+          "cropToolUsesImageCoordinatesAndCancellationIsLossless"
+        ],
+        "platforms/linux/linux-qt/tests/EditorExitTest.cpp": [
+          "dirtyExitMatrix"
+        ],
+        "platforms/linux/linux-qt/tests/EditorOpenTest.cpp": [
+          "nativeSourceChoiceSurvivesChildAndOwnerDestruction"
+        ],
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp": [
+          "orientationIsAppliedExactlyOnceToPixelsAndEmbeddedSource"
+        ],
+        "platforms/linux/linux-qt/tests/EditorUrlOpenTest.cpp": [
+          "cancelMidDownloadFromDialogStopsTransferAndKeepsSession",
+          "plainHttpRefusedUntilOptedInAndNothingIsRequested",
+          "tooManyRedirectsKeepsSession"
+        ],
+        "platforms/linux/linux-qt/tests/EditorViewportTest.cpp": [
+          "fitAndResetDoNotResampleOrAlterHistory",
+          "zoomKeepsImagePointUnderPointer",
+          "zoomLimitsStillAllowPanAndFiniteTransforms"
+        ],
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp": [
+          "newImageReplacementResetsSessionBindingsAndSavesChosenProfile"
+        ],
+        "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp": [
+          "centeredAlignmentUsesNativeSizesAndOddPadding"
+        ],
+        "platforms/linux/linux-qt/tests/ImageInsertTest.cpp": [
+          "fileAndClipboard"
+        ]
+      },
+      "findings": [],
+      "remaining_scope": "EC-013, EC-014, EC-017",
+      "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
+    },
+    {
+      "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+      "checked_at": "2026-11-14",
+      "specification": "product-contract/capabilities/EDITOR-CANVAS-001/SPEC.md",
+      "specification_sha256": "cca62433c31f6fb34eca4f12fd469944a79840e6f36dba9ddab9a334ce9d2157",
+      "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
       "reviewed_requirement_count": 17,
       "counts": {
         "blocked": 1,

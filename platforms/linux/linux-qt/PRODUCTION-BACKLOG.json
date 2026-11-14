@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "date": "2026-11-14",
-  "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+  "source_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
   "contract_version": "0.4.0",
   "scope": "All 16 manifest capabilities reviewed for Linux applicability; 325 desktop requirements classified and 20 mobile-only requirements explicitly outside Linux scope. Counts measure candidate behavior, not completion percentage or release acceptance.",
   "classification_rules": {
@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 32,
-    "implemented": 178,
+    "implemented": 177,
     "not-applicable": 1,
     "not-started": 5,
-    "partial": 109
+    "partial": 110
   },
   "capabilities": [
     {
@@ -155,10 +155,10 @@
       "requirements": 37,
       "counts": {
         "blocked": 7,
-        "implemented": 9,
+        "implemented": 8,
         "not-applicable": 1,
         "not-started": 2,
-        "partial": 18
+        "partial": 19
       },
       "trace": "traceability/CORE-PLATFORM-001.json"
     },
@@ -286,6 +286,13 @@
       "previous": "partial",
       "current": "implemented",
       "reason": "CORE-025 implemented on Linux after the final rebased host gate, full Qt 6.4.2 suite (179/179), explicit full namespace proofs on both Qt versions (10 passed, 0 failed, 0 skipped each), and freshly rebuilt adapters (31/31 CORE vectors each). Saved send intent precedes HTTP; missing acknowledgement or an accepted 2xx without a usable result is held unconfirmed across restart. Answered failures stay attempted across Stop/Start for the process lifetime and retry in a new service. Parent identity guards every checkpoint writer with frozen stat/fingerprint/stat observations and snapshot-fenced adoption. Native crash, clean-quit, mount replacement, legacy and failure journeys and discriminating mutations cover the policy. Aoife approved source 71ad37b; independent Viktor (Sonnet) review found no blocking code defect. Maintainer decision under ROOT-REVIEW-001 authorizes P7 scope clarification and this promotion after gates. Coverage is 178/324; activation blocked by CORE025-FU-IDENTITY. Other platforms, activation, census closure and release are not approved."
+    },
+    {
+      "requirement": "CORE-025",
+      "from": "implemented",
+      "to": "partial",
+      "reason": "Canonical root authorization, readiness and duplicate checkpoints remain implemented paths. New publication/retention work persists send intent before HTTP; holds successful-but-unusable accepted responses and unknown outcomes across restart; preserves process-lifetime answered-failure attempts; uses parent identity/fingerprint/identity observations and snapshot-fenced worker adoption; reads legacy stores and writes checkpoint v2. Named store/service/protocol and real-process tmpfs kill/mount tests exercise the policy, with independent shared vectors for pure dispositions and retention. However, P1 exact response accounting is incomplete: an HTTP 200 reply followed by a truncated-body RemoteHostClosedError is reported by current UploadExecutor with answeredAttempts=0, acceptedAttempts=0 and httpStatus=0, despite QNetworkReply carrying status 200. A separately compiled current-production loopback probe reproduces this; the contract requires that 2xx attempt to count as answered and accepted. The disposition remains conservatively unconfirmed, so no duplicate-publication failure is claimed. CORE-025 is partial until that accounting boundary has a regression and fix. Cross-boot/removable/network/FUSE identity qualification and activation/release remain separate gates.",
+      "revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
     }
   ],
   "review_limitations": [
@@ -959,7 +966,7 @@
       ]
     }
   ],
-  "audit_method": "All 16 capabilities and 345 IDs revalidated. Existing unchanged source/test behavior was compared to frozen reviewed evidence, changed production paths and meaningful test bodies inspected, and exact current hashes/method lines repinned. 325 desktop rows remain conservative candidate classifications; 20 MOB rows remain outside desktop scope.",
+  "audit_method": "All 16 capabilities /345 IDs revalidated against current source and tests; unchanged bodies compared to the previous complete review, changed paths and approved contracts inspected. Existing suite passes but direct current-production HTTP probe exposes the P1 2xx/truncated-body accounting gap. No release or security acceptance inferred.",
   "reviewed_at": "2026-11-14",
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
@@ -2626,48 +2633,1130 @@
         }
       ],
       "integration_note": "Ten upstream commits integrated after the full audit: approved wide random-file sampling resolves FN-009/021/026; explicit editor host contracts close EO-014. Other source/test updates and evidence remain preserved. The frozen full audit is still pinned to d25064e. ES-029 capability 0.2.1 adds the fifth completion beyond the frozen 169-row implemented audit, bringing current candidate implementations to 174; frozen audit counts remain historical."
+    },
+    {
+      "schema_version": 2,
+      "date": "2026-11-14",
+      "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+      "contract_version": "0.4.0",
+      "scope": "All 16 manifest capabilities reviewed for Linux applicability; 325 desktop requirements classified and 20 mobile-only requirements explicitly outside Linux scope. Counts measure candidate behavior, not completion percentage or release acceptance.",
+      "classification_rules": {
+        "implemented": "Candidate Linux behavior has automated production-path evidence; does not approve release, parity or human qualification.",
+        "partial": "Some production behavior/evidence exists; full normative Linux requirement remains incomplete.",
+        "not-started": "No native user flow found for the requirement; related generic helpers are insufficient.",
+        "blocked": "Work requires the named human decision; underlying implementation status remains visible in the trace.",
+        "not-applicable": "Explicitly outside Linux desktop scope, not a platform waiver."
+      },
+      "requirement_count": 325,
+      "capability_count": 16,
+      "desktop_capability_count": 15,
+      "counts": {
+        "blocked": 32,
+        "implemented": 178,
+        "not-applicable": 1,
+        "not-started": 5,
+        "partial": 109
+      },
+      "capabilities": [
+        {
+          "capability": "FILENAME-GENERATION-001",
+          "requirements": 27,
+          "counts": {
+            "implemented": 27
+          },
+          "trace": "traceability/FILENAME-GENERATION-001.json"
+        },
+        {
+          "capability": "POST-CAPTURE-ACTIONS-001",
+          "requirements": 24,
+          "counts": {
+            "implemented": 24
+          },
+          "trace": "traceability/POST-CAPTURE-ACTIONS-001.json"
+        },
+        {
+          "capability": "REGION-CAPTURE-001",
+          "requirements": 27,
+          "counts": {
+            "blocked": 1,
+            "implemented": 19,
+            "not-started": 1,
+            "partial": 6
+          },
+          "trace": "traceability/REGION-CAPTURE-001.json"
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirements": 30,
+          "counts": {
+            "blocked": 1,
+            "implemented": 26,
+            "partial": 3
+          },
+          "trace": "traceability/EDITOR-SESSION-001.json"
+        },
+        {
+          "capability": "EDITOR-ANNOTATIONS-001",
+          "requirements": 20,
+          "counts": {
+            "blocked": 1,
+            "implemented": 16,
+            "partial": 3
+          },
+          "trace": "traceability/EDITOR-ANNOTATIONS-001.json"
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 1,
+            "implemented": 7,
+            "partial": 10
+          },
+          "trace": "traceability/EDITOR-EFFECTS-001.json"
+        },
+        {
+          "capability": "EDITOR-CANVAS-001",
+          "requirements": 17,
+          "counts": {
+            "blocked": 1,
+            "implemented": 14,
+            "partial": 2
+          },
+          "trace": "traceability/EDITOR-CANVAS-001.json"
+        },
+        {
+          "capability": "EDITOR-OUTPUT-ACTIONS-001",
+          "requirements": 16,
+          "counts": {
+            "implemented": 10,
+            "partial": 6
+          },
+          "trace": "traceability/EDITOR-OUTPUT-ACTIONS-001.json"
+        },
+        {
+          "capability": "EDITOR-SETTINGS-001",
+          "requirements": 16,
+          "counts": {
+            "blocked": 1,
+            "implemented": 8,
+            "partial": 7
+          },
+          "trace": "traceability/EDITOR-SETTINGS-001.json"
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirements": 19,
+          "counts": {
+            "blocked": 5,
+            "implemented": 7,
+            "partial": 7
+          },
+          "trace": "traceability/EDITOR-UTILITIES-001.json"
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirements": 20,
+          "counts": {
+            "blocked": 5,
+            "implemented": 2,
+            "partial": 13
+          },
+          "trace": "traceability/SETTINGS-CATALOG-001.json"
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 1,
+            "implemented": 4,
+            "not-started": 1,
+            "partial": 12
+          },
+          "trace": "traceability/WORKFLOW-CATALOG-001.json"
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 4,
+            "implemented": 3,
+            "not-started": 1,
+            "partial": 10
+          },
+          "trace": "traceability/INTERFACE-CATALOG-001.json"
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirements": 37,
+          "counts": {
+            "blocked": 7,
+            "implemented": 9,
+            "not-applicable": 1,
+            "not-started": 2,
+            "partial": 18
+          },
+          "trace": "traceability/CORE-PLATFORM-001.json"
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirements": 18,
+          "counts": {
+            "blocked": 4,
+            "implemented": 2,
+            "partial": 12
+          },
+          "trace": "traceability/COMPATIBILITY-CATALOG-001.json"
+        }
+      ],
+      "outside_linux_scope": [
+        {
+          "capability": "MOBILE-PLATFORM-001",
+          "classification": "not-applicable",
+          "reason": "SPEC Scope and relationship to desktop declares Android and iOS only. No mobile completion is claimed.",
+          "requirements": [
+            "MOB-001",
+            "MOB-002",
+            "MOB-003",
+            "MOB-004",
+            "MOB-005",
+            "MOB-006",
+            "MOB-007",
+            "MOB-008",
+            "MOB-009",
+            "MOB-010",
+            "MOB-011",
+            "MOB-012",
+            "MOB-013",
+            "MOB-014",
+            "MOB-015",
+            "MOB-016",
+            "MOB-017",
+            "MOB-018",
+            "MOB-019",
+            "MOB-020"
+          ]
+        }
+      ],
+      "classification_changes": [
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-029",
+          "previous": "partial",
+          "current": "implemented",
+          "reason": "Maintainer-approved EDITOR-SESSION-001 0.2.1 keeps the nine ES-029 diagnostics closed and carries value-free rejection reasons separately. parseDocument and parseAnnotationList map traversal and unsafe content to document-invalid; readXann maps malformed/duplicate-key/encoding failures to document-invalid and lexical depth/element/size limits to document-too-large. Unknown future JSON-boundary failures fall back to document-invalid, never a constructed public code. Validation, per-record rejection findings and persisted XANN bytes remain unchanged. Version then size then invalid precedence is covered by native tests and four new vectors. LoadedSource carries the reason; standalone Open and replacement show a localized diagnostic, a separate Rejected document reason and the import report, preserving raster/sidecar bytes and omitting payload values. Both Qt 6.12 and Qt 6.4.2 pass XannCompatibilityTest, EditorSessionTest, EditorSourceTest, all three EditorWindowTest partitions and all 23 conformance vectors. Prior-reader closure, old mappings and omitted native reason tests fail before the fix. This is an implemented Linux candidate; maintainer review accepted the code, contract, evidence and classification on 2026-11-13, conditional on correcting the current trace question (now resolved) and passing the rebuilt full integration gate. Target/parity/release qualification remains separate."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-004",
+          "previous": "implemented",
+          "current": "blocked",
+          "reason": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirement": "WFCAT-002",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Supported capture, recording and upload/watch operations now use WorkflowExecution with stable IDs, start/origin/settings, ordered results and terminal projection. FileUploadController still continues to network transfer when execution admit/start or read-file-step persistence fails; one traceable durable execution is therefore not guaranteed at that boundary."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirement": "WFCAT-004",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Shared file-operation failure taxonomy distinguishes validation, permission, unavailable, transient/permanent, partial and cancelled states. Watch storage failures stop new effects and retain completed output honestly. File upload still crosses admission/start/step storage failure before transfer, so durable workflow reporting at all side-effect boundaries remains incomplete."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-025",
+          "previous": "implemented",
+          "current": "partial",
+          "reason": "Maintainer decisions A, B and C are implemented candidates. Accepted HTTP 2xx failures remain unconfirmed; parent device/inode identity protects processed and held keys across mount replacement; answered failures remain attempted across Stop/Start for the application process. All 31 CORE vectors and actual namespace retention proofs pass on Qt 6.12 and Qt 6.4.2. The process-session regression reproduces a second request when Stop precedes settlement on both Qt versions; the condition fixes it. Settlement before Stop remains green, a fresh service retries the released failure, and work stopped before dispatch remains retryable. Removing the condition reproduces the extra request. CORE-025 remains partial at 177/324 pending final full suites, maintainer and independent Sonnet reviews, and the rebased push gate. No other platform, activation, census closure or release is claimed."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-010",
+          "previous": "partial",
+          "current": "implemented",
+          "reason": "SQLite reader holds a read-only transaction and bounded backup snapshot, validates integrity and ordinary-table schema, disables extensions/views/triggers, bounds bytes/rows/time and emits typed transaction failures; WAL/concurrent writer and malicious schema tests exercise this native behavior."
+        },
+        {
+          "requirement": "RC-013",
+          "from": "not-started",
+          "to": "partial",
+          "reason": "Default-off, profile-local cursor inclusion now uses an owned compositor frame before the overlay. Native controller/crop/PNG integration verifies saved cursor pixels exactly once, frozen preferences, unsupported/mismatched refusal, cancellation, stale completion and owner-loss fencing. Mixed-scale/rotated/multi-output and every supported desktop remain unqualified; partial, not absent or fully implemented.",
+          "revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-014",
+          "previous": "blocked",
+          "current": "implemented",
+          "reason": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites. The full rebuilt Qt 6.4.2 suite passed 178/178. Maintainer review approved the behavior, contract, evidence and promotion subject to two trace corrections, now applied; independent MiniMax persistence review approved the corrected a5afb31 tree with no blocking findings; the full 181-test host push gate remains pending. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-030",
+          "previous": "blocked",
+          "current": "implemented",
+          "reason": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites. The full rebuilt Qt 6.4.2 suite passed 178/178. Maintainer review approved the behavior, contract, evidence and promotion subject to two trace corrections, now applied; independent MiniMax persistence review approved the corrected a5afb31 tree with no blocking findings; the full 181-test host push gate remains pending. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion."
+        },
+        {
+          "capability": "EDITOR-OUTPUT-ACTIONS-001",
+          "requirement": "EO-006",
+          "previous": "partial",
+          "current": "implemented",
+          "reason": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites. The full rebuilt Qt 6.4.2 suite passed 178/178. Maintainer review approved the behavior, contract, evidence and promotion subject to two trace corrections, now applied; independent MiniMax persistence review approved the corrected a5afb31 tree with no blocking findings; the full 181-test host push gate remains pending. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-025",
+          "previous": "partial",
+          "current": "partial",
+          "reason": "Maintainer decisions A, B and C are implemented candidates. Accepted HTTP 2xx failures remain unconfirmed; parent device/inode identity protects processed and held keys across mount replacement; answered failures remain attempted across Stop/Start for the application process. All 31 CORE vectors and actual namespace retention proofs pass on Qt 6.12 and Qt 6.4.2. The process-session regression reproduces a second request when Stop precedes settlement on both Qt versions; the condition fixes it. Settlement before Stop remains green, a fresh service retries the released failure, and work stopped before dispatch remains retryable. Removing the condition reproduces the extra request. CORE-025 remains partial at 177/324 pending final full suites, maintainer and independent Sonnet reviews, and the rebased push gate. No other platform, activation, census closure or release is claimed."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-025",
+          "previous": "partial",
+          "current": "implemented",
+          "reason": "CORE-025 implemented on Linux after the final rebased host gate, full Qt 6.4.2 suite (179/179), explicit full namespace proofs on both Qt versions (10 passed, 0 failed, 0 skipped each), and freshly rebuilt adapters (31/31 CORE vectors each). Saved send intent precedes HTTP; missing acknowledgement or an accepted 2xx without a usable result is held unconfirmed across restart. Answered failures stay attempted across Stop/Start for the process lifetime and retry in a new service. Parent identity guards every checkpoint writer with frozen stat/fingerprint/stat observations and snapshot-fenced adoption. Native crash, clean-quit, mount replacement, legacy and failure journeys and discriminating mutations cover the policy. Aoife approved source 71ad37b; independent Viktor (Sonnet) review found no blocking code defect. Maintainer decision under ROOT-REVIEW-001 authorizes P7 scope clarification and this promotion after gates. Coverage is 178/324; activation blocked by CORE025-FU-IDENTITY. Other platforms, activation, census closure and release are not approved."
+        }
+      ],
+      "review_limitations": [
+        "Candidate Linux behavior only; physical target and cross-platform qualification and human acceptance remain separate.",
+        "Scheduler model/dependency/threshold/security/release gates remain explicit even where upstream code or approval documentation exists.",
+        "Source-extracted defects without a current runtime repro are identified as source findings, not demonstrated failures.",
+        "The frozen source audit changed no product behavior; the separately approved 0.3.2 ES-014/030 checkpoint adds ownership-preserving empty-save shadows and associated expected results.",
+        "Retained upstream author notes for CORE-004, CORE-025, WFCAT-002 and RC-013 refer to earlier audit text now preserved in audit_history. Current audit.coverage and revision-specific anchors record this revalidation."
+      ],
+      "waiting_on_mike": [
+        {
+          "capability": "REGION-CAPTURE-001",
+          "requirement": "RC-027",
+          "question": "Product decision required: approve authoritative pre-acquisition physical topology source. Native code now validates against packed QScreen bounds, but that does not settle the recorded mapping-authority question."
+        },
+        {
+          "capability": "EDITOR-SESSION-001",
+          "requirement": "ES-020",
+          "question": "Explicit output authority and private temporary storage exist; approved configured editor temp/recovery retention and secure-delete limits are still an unanswered policy gate."
+        },
+        {
+          "capability": "EDITOR-ANNOTATIONS-001",
+          "requirement": "EA-009",
+          "question": "Reference-derived alphabetic/Roman and reset code exists, but the loop's exact mapping/start/reset questions remain unresolved; tests do not approve product semantics."
+        },
+        {
+          "capability": "EDITOR-EFFECTS-001",
+          "requirement": "EE-015",
+          "question": "Static mapping, safe inert unknown-ID/parameter round-trip and unsupported-step isolation are implemented and tested, but human security review of .sxie import remains an explicit scheduler gate. Native fixtures do not waive that gate."
+        },
+        {
+          "capability": "EDITOR-CANVAS-001",
+          "requirement": "EC-013",
+          "question": "No complete background composition surface/model exists; deterministic smart-padding/background and retention policy remain explicit unanswered product decisions."
+        },
+        {
+          "capability": "EDITOR-SETTINGS-001",
+          "requirement": "ESET-001",
+          "question": "Full accepted per-field contract names/defaults/migration/privacy/dispositions/downstream effects remain absent; reference defaults are not product approval."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-004",
+          "question": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-009",
+          "question": "No approved local model/provenance/tensor/device/setup policy authorizes background removal."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-010",
+          "question": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-011",
+          "question": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract."
+        },
+        {
+          "capability": "EDITOR-UTILITIES-001",
+          "requirement": "EU-019",
+          "question": "Konami shader preserve/correct/omit remains an explicit product-owner accessibility/performance/security/discoverability/maintenance decision."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-001",
+          "question": "Complete settings-ledger semantic/default/migration/privacy/downstream/platform acceptance is still absent; native field declarations cannot approve it."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-007",
+          "question": "Native credential-store code exists; scheduler-mandated human Secret Service security review remains pending."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-008",
+          "question": "An explicit verified legacy plaintext-secret migration/removal flow and secure-store approval are still required; ordinary settings import does not migrate secrets."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-017",
+          "question": "Update/plugin/executable trust, provenance, sandbox and activation policy remain human authority gates; imported configuration cannot approve execution."
+        },
+        {
+          "capability": "SETTINGS-CATALOG-001",
+          "requirement": "SETCAT-020",
+          "question": "Full approved settings-ledger dispositions, all value families/upgrades/downgrades and all three adapters are not accepted; native boundary coverage does not activate this package."
+        },
+        {
+          "capability": "WORKFLOW-CATALOG-001",
+          "requirement": "WFCAT-018",
+          "question": "Activation requires full action-family matrix and accepted tests on all supported platform adapters, including human permission/security/accessibility gates; native Linux tests alone are insufficient."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-011",
+          "question": "Human-approved MCP schema/authority/side-effect/progress/cancellation policy is pending; no native MCP implementation qualifies this row."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-012",
+          "question": "MCP/agent human-consent and least-authority security posture require product-owner approval; no agent-origin execution is authorized by imported text."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-013",
+          "question": "Human-approved MCP granted-scope, metadata-only discovery and returned-data lifetime policy are pending."
+        },
+        {
+          "capability": "INTERFACE-CATALOG-001",
+          "requirement": "IFCAT-018",
+          "question": "Full cross-entry/schema/authority/physical screen-reader/localization/provider/all-platform activation matrix and acceptance remain pending."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-011",
+          "question": "Human product owner must approve signed release provenance/update channel/install/rollback policy; no approved update implementation exists."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-013",
+          "question": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-015",
+          "question": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-022",
+          "question": "Approved isolated plugin host/signing/permissions/secret mediation security posture is a human decision; trusted-process plugin execution must not be added."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-028",
+          "question": "Unsigned native archive/deb/rpm install and AUR candidate tooling exists. Signing, release provenance, replacement migration/update/rollback and supported target acceptance remain explicitly human-blocked by the scheduler."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-030",
+          "question": "Human security/privacy/accessibility/licensing/compatibility/parity activation acceptance on all supported platforms is pending."
+        },
+        {
+          "capability": "CORE-PLATFORM-001",
+          "requirement": "CORE-036",
+          "question": "Human accepted Linux dispositions and identical vector results on every supported edition target distribution remain pending."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-008",
+          "question": "Complete legacy-secret consent, verification, native secure migration and recoverable plaintext removal await approved human credential/security policy."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-012",
+          "question": "Plugin-host package provenance, manifest authority, isolation and explicit installation policy are not approved or implemented."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-013",
+          "question": "Editable XANN/preset unknown preservation exists, but complete legacy geometry/effect/font/asset compatibility and scheduler-mandated human SXIE import security review remain pending."
+        },
+        {
+          "capability": "COMPATIBILITY-CATALOG-001",
+          "requirement": "COMPCAT-014",
+          "question": "MCP operation/schema and current-consent authority are not approved; imported automation text cannot grant execution authority."
+        }
+      ],
+      "verification_blockers": [
+        "Full local native build/test and final push-gate results are recorded in shared loop state after successful push.",
+        "Shared normative vectors remain absent for nine desktop packages; native tests do not supply independent cross-platform expected values.",
+        "Native physical security/privacy/accessibility/licensing/parity and release acceptance remain outstanding."
+      ],
+      "incremental_updates": [
+        {
+          "requirements": [
+            "CORE-023",
+            "WFCAT-002",
+            "WFCAT-017",
+            "SETCAT-015"
+          ],
+          "outcome": "Native workflow execution metadata review and confirmed unchanged-record removal are implemented and tested. Full retention and remaining capability behavior remain partial.",
+          "evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
+        },
+        {
+          "requirements": [
+            "EO-003",
+            "EO-004",
+            "EO-005",
+            "EO-006",
+            "EO-014",
+            "EO-015",
+            "EO-016"
+          ],
+          "outcome": "Native Save As offers PNG/JPEG/WebP with explicit quality, JPEG matte and extension validation. Actual worker encoding, source-preserving sidecars, format-aware repair and cancellation-boundary refusal are tested. Full codec/profile/target/fault and human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "RC-007",
+            "RC-010",
+            "RC-011",
+            "SETCAT-003",
+            "SETCAT-005",
+            "SETCAT-009",
+            "SETCAT-010",
+            "SETCAT-012"
+          ],
+          "outcome": "Native profile preferences expose quick confirmation and snapping with normative enabled defaults, field validation and Apply/Cancel/reset. Options freeze before portal acquisition; explicit confirmation enables existing keyboard adjustments. Interactive handles/presets, remaining fields and native target/human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+            "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "RC-010",
+            "RC-023",
+            "RC-019"
+          ],
+          "outcome": "Selected region corner handles are interactive with logical-coordinate hit-testing, persistent drag cursors, grab offset, Core positive-size/desktop clamps, resize announcements and explicit Enter confirmation. All corners at 1x/2x native scale and cancellation/actual output are tested. Optional presets and native target/accessibility qualification remain partial. RC-027 recapture requires an approved physical mapping source before pixel acquisition; no speculative recapture was added.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+            "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "RC-017",
+            "RC-027"
+          ],
+          "outcome": "Native successful region screenshots persist version-1 geometry only through OwnedWork and PrivateJsonFile before actions. Existing malformed/newer/stale/unsafe records remain intact; compatible unknown fields round-trip. Metadata failures retain normal image outputs and stay visible even when workflow processing admission also fails. Storage and actual controller ordering/teardown/cancellation tests pass. Native recapture remains blocked on pre-acquisition physical topology authority; physical mapping/identity, crash and target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/LastRegionStoreTest.cpp",
+            "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008"
+          ],
+          "outcome": "Native speech-balloon edit dialog provides asynchronous explicit commit/cancel for multiline text, font size and tail enable/tip coordinates. Existing points persist without a schema change. Tail-only edits commit once and undo/redo correctly; shared Core validation rejects invalid or overflowing mapped geometry. Regression evidence covers ignored tail changes, missing history admission for tip-only edits, and a real tiny-balloon renderer clamp assertion. State/selection/document and owner teardown tests pass. Font family/weight/italic/alignment/text color, creation/default breadth and physical qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008"
+          ],
+          "outcome": "Text and speech balloons expose horizontal alignment in a shared asynchronous native text dialog. An optional per-object enum persists with legacy rendering retained when absent. Core rejects invalid creation/edit/import values, while unrelated annotation types preserve the same property opaquely. UI/history/reload and actual renderer glyph-placement tests cover both types. Font family, bold/italic, text colors, creation/default breadth and human target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008"
+          ],
+          "outcome": "Native Text and SpeechBalloon Bold/Italic controls apply optional booleans as one undoable object edit. Legacy native styling remains unchanged when absent. Core persistence refuses invalid text field types and retains opaque same-named values on unrelated families. UI/history/reload and renderer glyph tests cover both types. Font family, explicit text color, creation/default breadth and human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008"
+          ],
+          "outcome": "Native Text and SpeechBalloon text-color entry supports explicit #AARRGGBB and empty/default restoration independently of border/fill. Optional Core color persists canonically with alpha, including transparent zero; absence retains exact legacy rendering. Invalid entry/import cannot partially mutate the document. Tests cover native Apply/Cancel, no-op history, color-only undo/redo/reload, opaque fields on other types and actual alpha composition. Font family, creation/default breadth and target/human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008"
+          ],
+          "outcome": "Native Text and SpeechBalloon font-family selection preserves unavailable saved names, renders them with the unchanged native fallback, and permits explicit installed replacements or default restoration as one history edit. Optional family strings persist without touching older documents. Core validates shape string/resource boundaries and retains opaque fields on other families. Native UI/history/reload, independent Qt glyph comparison and missing-font fallback tests cover both types. Reproduced/fixed QComboBox entry truncation from 100000 to 32767 characters. Creation/default breadth and target/human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008",
+            "EA-014",
+            "EA-017"
+          ],
+          "outcome": "Native Text and SpeechBalloon creation now opens full formatting controls asynchronously before any document mutation. Apply creates once from pointer-down geometry/style/state/selection; Cancel and empty entry create nothing. Shared completion fences document replacement, stale/disabled/dead owners and duplicate/deferred callbacks. Tests cover creation formatting, frozen defaults, undo/redo/reload, cancellation, focus transfer and teardown. Reproduced/fixed focus loss cancelling modal creation and old completed-dialog destruction clearing later modal pending state. Saved-default authority, remaining style breadth and human target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-009",
+            "EA-017"
+          ],
+          "outcome": "Selected Step numbers now edit asynchronously across the existing v1 0..1000000000 range, preserving previously clamped large values. Shared persisted/create/edit numeric bounds refuse invalid mutations. Text and Step reuse one guarded dialog completion path, retaining creation focus/cancellation behavior. Native tests cover boundaries, Apply/Cancel/no-op, history/reload, stale and dead owners, duplicate completion and deferred cleanup. Reproduced native 1000000 clamping and invalid create/edit admission before fixes. Alphabetic/Roman mappings and reset semantics are blocked pending product decisions; tail, defaults and full qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-011",
+            "EA-017"
+          ],
+          "outcome": "Blur/Pixelate/Magnify/Spotlight native strength editing now uses owned asynchronous fractional input through shared guarded completion. Eight regressions reproduced integer rounding and zero/default materialization on unchanged Apply. The dialog preserves exact saved values when unchanged, including compatible values outside current native editing ranges; explicit edits retain those existing ranges and commit once. Native tests cover precision, Cancel/history/reload, stale/dead owners and deferred cleanup. Renderer behavior, persistence schema and default policy remain unchanged; full option and target qualification remains partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008",
+            "EA-011",
+            "EA-017",
+            "EA-019",
+            "EA-020"
+          ],
+          "outcome": "Creation now refuses font-size and strength values rejected by the existing reader/edit boundaries before any object, state, selection or history mutation. Reproduced 35 invalid admissions before fixing; zero, fractions and maximum boundaries retain exact values through history and reload. No schema, renderer, default or contract range changes. Other options/resource and target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008",
+            "EA-017",
+            "EA-019"
+          ],
+          "outcome": "Native text/balloon font-size input supports doubles with 17 decimal places in the existing 1..2000 editing range. Comparing against the initialized displayed value preserves exact saved fractions and zero/default on no-op Apply, including compatible values below the native minimum. Reproduced two native .125-to-1 regressions; tests cover fractional/high-precision edits, Cancel/no-op, one history step, undo/redo/reload and source preservation. No renderer, schema, saved-default or reader-range changes. Remaining text border/fill and target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008",
+            "EA-017",
+            "EA-019"
+          ],
+          "outcome": "Native Text/SpeechBalloon have optional per-object alpha-preserving fill input during creation and selected editing. Absent values retain exact legacy fill/fallback rendering; explicit transparent zero stays distinct and clearing restores legacy. Strict parsing/canonical writing applies only to these families, keeping same-named opaque fields on other and unknown types. Native UI, creation/history/reload and independent opaque/half/zero-alpha rendering tests cover the real path. Two missing-control failures and six ignored-fill pixel failures were reproduced before implementation. Border and full target qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-016",
+            "EA-017"
+          ],
+          "outcome": "Asset-free annotation selections can copy/cut from image-bearing documents without publishing unselected embedded images. A shared private-v1 clipboard guard refuses incoming and outgoing Image/Emoji/Cursor references, including absent-pixel offers; local duplication keeps assets and one history step. Seven Core baseline failures reproduced the incorrect document-wide block and dangling references. Native clipboard/cut/undo/save/reopen tests retain actual unselected PNG assets. Transport shape/version, resource bounds and validation precedence are unchanged; full asset-bearing clipboard transport remains partial. The headless GUI fixture publishes actual Qt MIME data with an explicitly acknowledged test port; production ownership/unknown-delivery guards are unchanged, and physical ownership qualification remains open.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EA-008",
+            "EA-017",
+            "EA-019"
+          ],
+          "outcome": "Native SpeechBalloon creation/editing now supports an independent optional #AARRGGBB border override, including transparent zero; absence/clearing preserves the original stroke-color rule. Body and tail share the existing outline geometry. Five baseline failures reproduced the missing native control, ignored opaque/half/zero-alpha outline pixels and invalid import admission. EditorCanvasTest covers Apply/Cancel/no-op/invalid input, one history step, undo/redo/reload, immutable source, retained text/fill/tail fields, canonical clipboard round-trip, actual creation and independent source-over export pixels. The field is typed only for SpeechBalloon; Text/other/unknown families retain same-named opaque data. Regular Text border geometry, other tool options and physical/human qualification remain partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "PCA-006",
+            "PCA-019"
+          ],
+          "outcome": "CaptureActions replaces its buffer-only temporary.file with a real owner-private PNG consumed by path and removed by default engine cleanup or executor teardown. Saved-file precedence, success/failure/cancel cleanup and independent action continuation have native tests.",
+          "evidence": [
+            "tests/CaptureUploadTest.cpp",
+            "app/CaptureActions.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EO-001",
+            "EO-007",
+            "EO-009",
+            "EO-014",
+            "EO-015",
+            "EO-016"
+          ],
+          "outcome": "The editor now has native Pin to Screen and Upload Image actions. Upload confirms a frozen configured destination, exposes progress/cancellation, keeps the document on failures and displays a selectable/copyable result URL. Pin remains partial pending approved service/desktop qualification.",
+          "evidence": [
+            "tests/EditorPinTest.cpp",
+            "tests/EditorUploadTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "EU-001",
+            "EU-004",
+            "EU-015",
+            "EU-016",
+            "EU-017",
+            "WFCAT-011"
+          ],
+          "outcome": "User-approved local ZXing QR scanning and Tesseract English OCR are reachable through native Image File/Screen/Region tool windows, with explicit Copy and owned cancellation/session cleanup. Dependency-absent and missing-model failures are explicit.",
+          "evidence": [
+            "DEPENDENCIES.md",
+            "tests/QrRecognitionTest.cpp",
+            "tests/OcrRecognitionTest.cpp",
+            "tests/ImageRecognitionDialogTest.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "PCA-002",
+            "PCA-013",
+            "PCA-014",
+            "PCA-015",
+            "WFCAT-011"
+          ],
+          "outcome": "Saved capture workflows now run local OCR/QR and explicit OCR clipboard through existing ordered worker/GUI pipeline. Empty OCR leaves clipboard unchanged; recognition values are omitted from durable receipts and journals. Retained metadata does not authorize recognition retry.",
+          "evidence": [
+            "tests/CaptureRecognitionTest.cpp",
+            "app/CaptureActions.cpp",
+            "app/CapturePipeline.cpp"
+          ]
+        },
+        {
+          "requirements": [
+            "PCA-009",
+            "PCA-014",
+            "PCA-023",
+            "WFCAT-002",
+            "WFCAT-005",
+            "WFCAT-006",
+            "WFCAT-016"
+          ],
+          "outcome": "Concurrent quick-task implementation 94ae69d retained during rebase. Additional private-bus PortalScreenshotTest evidence exercises a configured quick-task workflow through the real CaptureController: acquired region pixels reach the native chooser, run-only Save replaces the configured clipboard choice, an actual PNG is published, the effective plan is journaled, and borrowed source bytes plus the original workflow snapshot remain unchanged. This complements the concurrently landed native selector implementation; physical desktop qualification remains open.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
+            "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+            "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-13",
+          "requirements": [
+            "WFCAT-002"
+          ],
+          "outcome": "FileUploadController stops before HTTP if execution admission, start or read-file persistence fails. executionStorageFailurePreventsUpload reproduced one POST per failed write before the fix and zero afterward. Existing acknowledged-upload terminal-storage failure behavior is retained. The earlier source-extracted finding is resolved for this boundary; the historical audit is retained and the requirement stays partial pending complete qualification.",
+          "evidence": [
+            "platforms/linux/linux-qt/app/FileUploadController.cpp",
+            "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-13",
+          "requirements": [
+            "CORE-004",
+            "CORE-025"
+          ],
+          "outcome": "Recursive watch discovery now runs on one owned worker; repeated scan requests coalesce. Held-enumeration evidence proves GUI event delivery, cancellation, changed rule/capture-folder rejection, safe owner destruction and rediscovery of retained sources. Existing readiness, exclusions, duplicate checkpoints and copy/move/upload result tests wait for completed observations without weakening their assertions. The earlier synchronous-discovery finding is resolved for enumeration; watcher registration, final candidate identity checks, checkpoint I/O and unknown-publication restart policy remain separate.",
+          "evidence": [
+            "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-13",
+          "requirements": [
+            "ES-018",
+            "CORE-027"
+          ],
+          "outcome": "Candidate recovery cleanup preserves protected records, refuses new recovery at protected capacity and still allows updates above capacity. Cleanup follows successful publication. Restore now adopts its selected id and expected snapshot, leaving all seven other deferred files unchanged in the eight-record crash-leftover regression. Failed/changed takeover preserves bytes and the editor retains its own optimistic-write snapshot for future updates/removal. Maintainer accepted protected-capacity refusal and narrowing the existing count bound, requested the now-fixed takeover defect, and approved corrected candidate 8bfd4a9 subject to the full integration gate. A known snapshot currently blocks recreation of an externally removed recovery file; safe recreation remains a follow-up with explicit-save guidance meanwhile. Configured retention, PID namespaces and worker-owned recovery I/O remain pending.",
+          "evidence": [
+            "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
+            "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-13",
+          "requirements": [
+            "CORE-004",
+            "ES-018",
+            "CORE-027"
+          ],
+          "outcome": "Editor recovery serialization, storage, removal, pruning and restart listing now run through one process-owned FIFO on OwnedWork. Autosaves return immediately and coalesce queued writes by record; Save/Discard removes pending writes and orders removal after any running write. Close and explicit writes wait through a Qt event loop, and shutdown drains the queue. Window destruction leaves started writes to finish without delivering into the dead window. Native held-worker tests cover GUI timers, a second canvas edit reaching the latest snapshot, Save/Discard cleanup, owner destruction, two editors and corrupt-file startup listing. Existing takeover and lifecycle rules remain unchanged.  Maintainer review found signal-triggered QApplication::exit can interrupt nested close waits. The application now drains recovery again after exec returns, preserving explicit Discard even during SIGTERM/SIGINT. Subprocess tests first failed with a surviving recovery file for both signals when that drain was omitted; both pass with the real termination handler and post-loop drain. Claude Opus maintainer approved composed candidate 74ec3a9..2caab22 on 2026-11-13, subject to the rebuilt full 181-target integration gate before push.",
+          "evidence": [
+            "platforms/linux/linux-qt/app/EditorRecoveryQueue.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorExitTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-13",
+          "requirements": [
+            "ES-029"
+          ],
+          "outcome": "Maintainer-approved EDITOR-SESSION-001 0.2.1 keeps the nine ES-029 diagnostics closed and carries value-free rejection reasons separately. parseDocument and parseAnnotationList map traversal and unsafe content to document-invalid; readXann maps malformed/duplicate-key/encoding failures to document-invalid and lexical depth/element/size limits to document-too-large. Unknown future JSON-boundary failures fall back to document-invalid, never a constructed public code. Validation, per-record rejection findings and persisted XANN bytes remain unchanged. Version then size then invalid precedence is covered by native tests and four new vectors. LoadedSource carries the reason; standalone Open and replacement show a localized diagnostic, a separate Rejected document reason and the import report, preserving raster/sidecar bytes and omitting payload values. Both Qt 6.12 and Qt 6.4.2 pass XannCompatibilityTest, EditorSessionTest, EditorSourceTest, all three EditorWindowTest partitions and all 23 conformance vectors. Prior-reader closure, old mappings and omitted native reason tests fail before the fix. This is an implemented Linux candidate; maintainer review accepted the code, contract, evidence and classification on 2026-11-13, conditional on correcting the current trace question (now resolved) and passing the rebuilt full integration gate. Target/parity/release qualification remains separate.",
+          "evidence": [
+            "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.h",
+            "platforms/linux/linux-qt/app/EditorSource.cpp",
+            "platforms/linux/linux-qt/app/EditorWindow.cpp",
+            "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+            "product-contract/capabilities/EDITOR-SESSION-001/test-vectors.json"
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "requirements": [
+            "ES-018",
+            "CORE-027"
+          ],
+          "outcome": "Maintainer decision, 2026-11-14: external deletion is not an explicit Discard of a running dirty editor. Its next ordinary write recreates the private recovery record under the same id. A locked Missing read uses an empty expected snapshot, while the writer keeps its cached ownership snapshot until publication succeeds. Recreation still passes new-record capacity/pruning admission; protected capacity refuses without changing other files. Changed supported, newer, corrupt and linked intervening files are preserved. Store and native tests cover latest-document recreation, subsequent updates/removal, refusal at protected capacity followed by a foreign replacement, four intervening-file cases, and Save/Undo/Discard after recreation. The original store/native regressions fail before the fix; preservation cases stay green. The rebuilt probe succeeds with subsequent_write=ok and exists=1. No watcher, queue/lifetime change, new retention threshold or contract change. Claude Opus maintainer and independent MiniMax Code reviewer approved candidate 4010535 on 2026-11-14. The rebuilt 181-target gate passed after one isolated capture-recognition rerun, and the unchanged source was pushed as fdc728f. This approval covers the bounded recreation/preservation change; broader retention, PID-namespace and release qualification remain open.",
+          "evidence": [
+            "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
+            "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "requirements": [
+            "CORE-004",
+            "CORE-025"
+          ],
+          "outcome": "Watch-folder processed checkpoints now freeze inputs on the GUI thread and serialize/re-read/atomically publish through OwnedWork. Completion is reported only after save or explicit checkpoint failure; no next file dispatches while pending. Stop does not cancel an already-earned checkpoint; owner destruction drops only adoption, retaining the worker write. The post-exec drain waits for completion, including signal exits; a conflicting writer or failed write blocks watching without adoption or retry. GUI-thread watcher registration remains accepted because QFileSystemWatcher owns its thread-bound inotify watches; the final one-file fingerprint remains accepted to refuse replacement immediately before dispatch. Rule persistence, execution-record writes, settings transfer/import/migration and other storage boundaries remain separate. Unknown-publication restart policy and checkpoint retention remain open; CORE-025 stays partial. Held-worker tests pass for settle, Stop/Start, destruction, drain and writer conflict on Qt 6.12 and Qt 6.4.2. The synchronous-path mutation fails the new responsiveness case. Both original suites passed twenty repetitions on Qt 6.12 and Qt 6.4.2. Option B approved after test hardening; the full gate remains required before push. Maintainer accepts the rest of 81fe180 and requested Option B: the worker returns its completed processed set for move-adoption, avoiding GUI-thread copying/rehashing; final old-set release on the GUI thread is accepted. The core adoption test now inserts a worker-only marker into the returned set and asserts it survives adoption; restoring insert(write.key) fails that assertion, and move-adoption passes. The stale-snapshot guard remains covered; Option B approved after test hardening. Both original watch suites passed twenty repetitions on each Qt baseline.",
+          "evidence": [
+            "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+            "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "platforms/linux/linux-qt/app/features/UploadFeature.cpp",
+            "platforms/linux/linux-qt/app/main.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "requirements": [
+            "CORE-004",
+            "SETCAT-019"
+          ],
+          "outcome": "Settings export/import, previous-app inspection/migration, backup revision/probe, restore and dismiss now run through one dialog-owned OwnedWork lane with copied paths/plans only. Busy covers picker, inspection, preview and publication; transfer/Apply/OK/reset re-entry is disabled, and late picker rejection after selection does not end the operation. Confirmed commits ignore ordinary dialog completion and disable Cancel until live store adoption and callbacks finish. ApplicationSettingsStore is loaded on the worker and moved into the GUI-owned store; existing refresh, shortcut invalidation, imported and applied callbacks retain owner fencing and order. Before commit, close/cancel drops delivery; a confirmed commit continues after forced owner deletion without callbacks, either completing atomically on disk or using existing startup recovery. App quit is not intercepted and no new exit mechanism is introduced. GUI-side imported callbacks still reload editor/workflow settings and remain a separate follow-up. Persisted formats, transaction fences, source preservation, backups, secret omission and the 8MiB input bound are unchanged. Native tests cover asynchronous stage boundaries, all five busy transfer controls, picker rejection/destruction, preview cancellation, commit-close refusal, teardown in inspect/preview/commit, and backup enablement. Synchronous commit mutation fails the immediate-publication and owner-teardown assertions. Maintainer accepted the lane subject to the prescribed destructor fence and passing suites; both conditions are met in fa4c3d2. Independent MiniMax threading/import review verified fa4c3d2, including the destructor fix, with no remaining finding. The full integration gate remains required before push; statuses stay partial and coverage174/324 unchanged. Maintainer review accepted the operation lane, stage ordering and exit policy but found untouched picker destruction could reach already-deleted controls. An out-of-line destructor now closes delivery and cancels the work handle before QWidget tears down its children. New export/import/migration untouched-picker rows cover direct owner deletion; the export row crashed with SIGSEGV before the destructor fence and the fixed three suites pass on both Qt 6.12 and Qt 6.4.2. Independent MiniMax review verified the corrected candidate as sound, and maintainer conditions are satisfied; the final integration gate remains pending.",
+          "evidence": [
+            "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+            "platforms/linux/linux-qt/app/SettingsDialog.h",
+            "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "requirements": [
+            "ES-014",
+            "ES-030",
+            "EO-006"
+          ],
+          "outcome": "Maintainer-approved EDITOR-SESSION-001 0.2.2 / contract 0.3.2 resolves ES-014/030: explicit empty saves write a zero-annotation default shadow when a baseline companion exists, bound to the published PNG SHA-256. Baseline bytes are never read for the existence decision, changed, renamed or deleted. Without baseline, compatible-default removal and no returned path remain; without intent, both files remain unchanged. Unsupported defaults remain protected. A late baseline still refuses removal honestly, and explicit Retry writes the shadow. Real EditorWindow clear/Save/close/reopen tests cover default-and-baseline, baseline-only and late-baseline, clean state, no unexpected warning, exact legacy bytes and source hash. Capture publication uses the same Core path. The prior refusal mutation fails two Core intent rows, all three native editor rows and the capture legacy-alias row. Both Qt baselines pass the 26 editor-session vectors and relevant editor/capture suites. The full rebuilt Qt 6.4.2 suite passed 178/178. Maintainer review approved the behavior, contract, evidence and promotion subject to two trace corrections, now applied; independent MiniMax persistence review approved the corrected a5afb31 tree with no blocking findings; the full 181-test host push gate remains pending. Pinned ShareX.ImageEditor 651b1d8 built and ran in an isolated scratch harness. GetDefaultSidecarPath returned d/shot.xann; SaveAsync with one rectangle wrote that path and LoadAsync returned one annotation with a matching SHA-256; zero annotations removed the companion and returned null. The recorded source/assembly/harness/output/raster hashes were checked against artifacts. This is Linux library runtime evidence for the naming convention, not other-platform or GUI-baseline qualification. XerahS shadowing is an approved ownership-preserving divergence from baseline deletion. Linux candidate coverage becomes 177/324; independent MiniMax persistence review approved; the host push gate pending. Other platforms remain unimplemented with no waiver.",
+          "evidence": [
+            "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "platforms/linux/linux-qt/app/EditorSave.cpp",
+            "platforms/linux/linux-qt/app/CaptureSave.cpp",
+            "platforms/linux/linux-qt/app/EditorWindow.cpp",
+            "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+            "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+            "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+            "product-contract/reference-baselines/provenance/kova-0.29.0-xann-sidecar-observation.md"
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "requirements": [
+            "CORE-025"
+          ],
+          "outcome": "CORE-025 remains partial pending review and final qualification of the corrected candidate. Parent review of cedc424 found five runtime regressions: released keys became processed, another file checkpoint erased unconfirmed holds, and all three checkpoint writers omitted production retention. These fail in /tmp/xerahs-core025-parent-red.log. Corrected writes preserve unrelated publications and call the shared retention helper on the worker; release uses PublicationDisposition rather than overloading Sending. Store tests now exercise all three writers with processed, unconfirmed and sending entries against changed, deleted, unchanged and missing-parent files, including a newline in the filename. The service refuses dispatch after Stop during a held intent and drains the release before returning. Sending records loaded by a new store become unconfirmed in memory; startup notices use basenames without fingerprint metadata. The SIGKILL proof now receives the entire HTTP request body before killing and pumps the parent server event loop throughout the restarted watcher observation. Local copy/move outputs are unchanged; P5 removes a completed move source key because the source no longer exists, while copy keys remain. Maintainer and independent Sonnet reviews, refreshed conformance, both Qt baselines and the final integration gate remain required before promotion. Network/FUSE qualification and other platforms are not claimed. The queued-watch Stop regression also fails before the controller reports abandoned watch entries as unsent, and passes after durable release. Parent targeted watch suites and the strengthened SIGKILL proof pass on Qt 6.12 and Qt 6.4.2; the Qt 6.4 proof explicitly runs inside the private namespace with mount capability and reports zero skips. The earlier sandbox DBus failure is not waived: a root-mapped private rerun of capture-file-output passes 24 tests; the full baseline must still be rerun.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "requirements": [
+            "CORE-025"
+          ],
+          "outcome": "Independent Sonnet review of 7aaa472 found no implementation defect under the literal approved policy, but required real version-reader evidence and controller/service response-coverage proof. The downgrade test now uses the actual PrivateJsonFile max-version-1 read and write refusal. A real HTTP controller/service test distinguishes three answered 503 attempts (released and uploaded on next session) from timeout then two 503 attempts (unconfirmed and held after restart). Replacing the controller answered count with the last HTTP status fails the new mixed case (/tmp/xerahs-core025-last-status-mutation-red.log); restoring the count passes. The previous claim that a stalled-only journey discriminated last-status derivation is withdrawn. All 19 vectors pass through the rebuilt Qt 6.4.2 adapter (/tmp/xerahs-core025-review-qt64-vectors.log). Unusable HTTP 2xx results currently follow the literal answered-failure release policy; maintainer disposition of that risk remains open before promotion. Full corrected suites and the push gate remain pending.",
+          "evidence": [
+            "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "requirements": [
+            "CORE-025"
+          ],
+          "outcome": "Maintainer review of 7aaa472 requested clean-quit and evidence corrections. Real subprocess rows reproduce unsent preparation and answered-failure journal callbacks leaving false holds before the fix (/tmp/xerahs-core025-clean-quit-red2.log). The drain now waits for the pending file settlement, not just a running checkpoint; it still returns when application exit interrupts a nested loop so main can drain after exec. The failed-intent test observes the server for 1.5 seconds, checks the exact write-failed notice, unchanged store/rules and persistent blocking. A mutant that dispatches after failed intent now fails with one received HTTP body (/tmp/xerahs-core025-failed-intent-mutation-red.log). A seven-file startup notice test fails before the count wording fix and passes after it. The real downgrade-reader and controller/service response-count evidence was already fixed in 4c67e89, whose full corrected Qt 6.4.2 suite passed 179/179; full gates must rerun after these drain changes. The HTTP 2xx unusable-result decision remains open. A private mount probe now proves the persistent-mountpoint retention gap: hold_before=1, parent_exists_unmounted=1, fingerprint_restored=1, hold_after=0 (/tmp/xerahs-core025-mount-retention-probe.log). Retention policy for that case and the definition of an answered-failure retry session require binding maintainer disposition before implementation or promotion. CORE-025 remains partial.",
+          "evidence": [
+            "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchKillFixture.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "requirements": [
+            "CORE-025"
+          ],
+          "outcome": "CORE-025 remains partial at 177/324 while the maintainer-approved A/B/C amendment is implemented. Decision A is implemented: the executor counts actual answered and HTTP 2xx accepted attempts separately; the controller passes both counts and the service holds accepted uploads without a usable successful result. Missing-link, invalid-web-URL and 503-then-unusable-200 journeys produce one accepted publication and no repeat after a fresh service loads the hold. A 400 remains released. The three new acceptance cases fail before the fix on Qt 6.12 and fail when the accepted rule is removed on both Qt 6.12 and Qt 6.4.2; restoration passes on both. Executor counter and existing watch suites pass on both Qt versions. All 16 publication vectors pass through the adapter; the 15 amended parent-retention vectors intentionally await decision B implementation. Decisions B (frozen parent device/inode retention and legacy qualification) and C (process-lifetime answered-failure retry suppression) are approved in the contract but not yet implemented. The earlier a5232a4 clean-quit drain, failed-intent blocking proof and bounded startup notice fixes remain. Final mount proofs, both full suites, maintainer and independent Sonnet review, and the rebased push gate remain required; no platform waiver, activation, census closure or release is claimed.",
+          "evidence": [
+            "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp",
+            "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "requirements": [
+            "CORE-025"
+          ],
+          "outcome": "CORE-025 remains partial at 177/324. Maintainer decisions A and B are implemented candidates; C process-session retry suppression is next. A holds failed uploads with any accepted HTTP 2xx while preserving truthful attempt counters and explicit error reporting. B freezes recorded parent device/inode strings in every request, observes stat/fingerprint/stat on the worker, and adopts the resulting parent map only under the existing snapshot fence. Unknown, unstable or changed parent identity keeps work; unanimous unchanged-file nominations apply only to later writes. Malformed parent metadata fails closed, missing metadata remains compatible, and identities are not refreshed. All 31 contract vectors pass on both Qt versions. Actual namespace service proofs preserve processed and unconfirmed keys across unmount/remount, prune a deleted processed key after the original parent returns, and upload one new fingerprint on a different volume while keeping old keys and identity. The same tests rebuilt with byte-identical archived a5232a4 production code fail, and the rebuilt standalone probe now reports hold_after=1. Legacy unchanged/absent/malformed cases, 20-digit string precision and opaque legacy-key preservation have native coverage. Initial move checkpoints with an unqualified parent are conservatively retained under the amended R3 rule; native copy/move assertions still verify exact outputs and source removal, and the remount proof verifies later qualified pruning. Final process-session proofs, full final suites, maintainer and independent Sonnet reviews, and the rebased push gate remain required. No other platform is waived or claimed implemented, and no activation, census closure or release is approved.",
+          "evidence": [
+            "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+            "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "requirements": [
+            "CORE-025"
+          ],
+          "outcome": "Maintainer decisions A, B and C are implemented candidates. Accepted HTTP 2xx failures remain unconfirmed; parent device/inode identity protects processed and held keys across mount replacement; answered failures remain attempted across Stop/Start for the application process. All 31 CORE vectors and actual namespace retention proofs pass on Qt 6.12 and Qt 6.4.2. The process-session regression reproduces a second request when Stop precedes settlement on both Qt versions; the condition fixes it. Settlement before Stop remains green, a fresh service retries the released failure, and work stopped before dispatch remains retryable. Removing the condition reproduces the extra request. CORE-025 remains partial at 177/324 pending final full suites, maintainer and independent Sonnet reviews, and the rebased push gate. No other platform, activation, census closure or release is claimed.",
+          "evidence": [
+            "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "requirements": [
+            "CORE-025"
+          ],
+          "outcome": "CORE-025 implemented on Linux after the final rebased host gate, full Qt 6.4.2 suite (179/179), explicit full namespace proofs on both Qt versions (10 passed, 0 failed, 0 skipped each), and freshly rebuilt adapters (31/31 CORE vectors each). Saved send intent precedes HTTP; missing acknowledgement or an accepted 2xx without a usable result is held unconfirmed across restart. Answered failures stay attempted across Stop/Start for the process lifetime and retry in a new service. Parent identity guards every checkpoint writer with frozen stat/fingerprint/stat observations and snapshot-fenced adoption. Native crash, clean-quit, mount replacement, legacy and failure journeys and discriminating mutations cover the policy. Aoife approved source 71ad37b; independent Viktor (Sonnet) review found no blocking code defect. Maintainer decision under ROOT-REVIEW-001 authorizes P7 scope clarification and this promotion after gates. Coverage is 178/324; activation blocked by CORE025-FU-IDENTITY. Other platforms, activation, census closure and release are not approved.",
+          "evidence": [
+            "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+            "platforms/linux/linux-qt/src/watch/WatchFolders.h",
+            "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp",
+            "platforms/linux/linux-qt/src/uploads/UploadResponse.h",
+            "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "platforms/linux/linux-qt/app/FileUploadController.cpp",
+            "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp",
+            "platforms/linux/linux-qt/tests/WatchKillFixture.cpp",
+            "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp"
+          ]
+        }
+      ],
+      "audit_method": "All 16 capabilities and 345 IDs revalidated. Existing unchanged source/test behavior was compared to frozen reviewed evidence, changed production paths and meaningful test bodies inspected, and exact current hashes/method lines repinned. 325 desktop rows remain conservative candidate classifications; 20 MOB rows remain outside desktop scope.",
+      "reviewed_at": "2026-11-14",
+      "findings": [
+        {
+          "id": "recovery-continuations",
+          "classification": "partial",
+          "source": "app/EditorRecoveryQueue.cpp:75 and :83; app/EditorWindow.cpp:1760",
+          "finding": "Worker I/O exists, but recovery wait/waitIdle and modal restart/close prompts still nest event loops. Replace these with owner-fenced continuations; no latency claim is made."
+        },
+        {
+          "id": "remaining-storage-boundaries",
+          "classification": "partial",
+          "source": "app/FileUploadController.cpp:145; app/WatchFolderService.cpp:143,243,251",
+          "finding": "Upload execution persistence retains a synchronous GUI boundary. Watch checkpoint serialization/storage now uses OwnedWork; watcher registration and the final per-file fingerprint remain accepted GUI work because the watcher owns thread-bound inotify state and the fingerprint refuses last-moment replacements. Rule persistence and settings transfer/import/migration remain separate. Recursive discovery and recovery serialization/storage already use OwnedWork."
+        },
+        {
+          "id": "CORE025-FU-IDENTITY",
+          "classification": "activation-blocker",
+          "source": "src/watch/WatchFolders.cpp:70; CORE-PLATFORM-001 SPEC P7",
+          "finding": "CORE025-FU-IDENTITY (blocks activation qualification; owner: maintainer; review by 2026-12-14).\n(a) Proven: on the reference host, btrfs `/home` reports a different `st_dev` on each boot (observed 61/63/65/66 \u2192 62). Recorded identities never match again, so entries are kept conservatively, as P7 requires, until the store reaches 16 MiB and fails closed with `watch-store-full`. This is safe but makes the feature degrade over time on btrfs.\n(b) Unproven: removable media may reuse device number + root inode, so different media could qualify an old parent and prune its holds. This would fail in the unsafe direction.\nFixing either needs a separate maintainer decision on a stable filesystem identity (for example a filesystem UUID or subvolume identity) or on a fenced-refresh policy, with contract vectors. This slice adds no implementation for either. Activation and release stay blocked until both are resolved."
+        },
+        {
+          "id": "watch-unbounded-drain",
+          "classification": "follow-up",
+          "source": "app/WatchFolderService.cpp:115,297",
+          "finding": "Existing unbounded-drain follow-up. Includes: the copy/move worker has no handler for an allocation exception, and `OwnedWork` drops completion, so a pending drain can wait forever. Completion must be guaranteed on every exit path, exceptions included."
+        }
+      ],
+      "raw_trace_counts": {
+        "implemented": 178,
+        "not-applicable": 1,
+        "not-started": 19,
+        "partial": 127
+      },
+      "full_audit_counts": {
+        "blocked": 34,
+        "implemented": 174,
+        "not-applicable": 1,
+        "not-started": 5,
+        "partial": 111
+      },
+      "integration_revision": "1fc988d275359bd8d8524c7d908801cd8916ac69",
+      "incremental_classification_updates": [
+        {
+          "requirement": "EO-014",
+          "previous": "partial",
+          "current": "implemented",
+          "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+        },
+        {
+          "requirement": "FN-009",
+          "previous": "partial",
+          "current": "implemented",
+          "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+        },
+        {
+          "requirement": "FN-021",
+          "previous": "partial",
+          "current": "implemented",
+          "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+        },
+        {
+          "requirement": "FN-026",
+          "previous": "partial",
+          "current": "implemented",
+          "source_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459"
+        },
+        {
+          "requirement": "ES-029",
+          "previous": "partial",
+          "current": "implemented",
+          "source_revision": "e8bc3a9"
+        }
+      ],
+      "integration_note": "Current review incorporates recovery preservation/takeover/owned I/O, upload admission and unknown-publication/replay handling, owned watch discovery, profile-local cursor inclusion, and the maintainer-approved ES-029 diagnostic/reason boundary. Historical findings are retained in audit_history, not represented as current missing features. Integration at fdc728fb6c33dc0a7685205e77dfdcfd37217db6 preserves landed recovery recreation and its store/native regression proof. It removes that completed item from the current backlog; maintainer/independent acceptance of that implementation remains separately recorded upstream. ES-014, ES-030 and EO-006 are now implemented Linux candidates with explicit approved shadow policy, baseline runtime observation, native save/reopen and conformance evidence; reviews and full gates pending."
     }
   ],
   "findings": [
     {
-      "id": "recovery-continuations",
-      "classification": "partial",
-      "source": "app/EditorRecoveryQueue.cpp:75 and :83; app/EditorWindow.cpp:1760",
-      "finding": "Worker I/O exists, but recovery wait/waitIdle and modal restart/close prompts still nest event loops. Replace these with owner-fenced continuations; no latency claim is made."
+      "kind": "source-finding",
+      "source": "platforms/linux/linux-qt/app/EditorRecoveryQueue.cpp:75,83",
+      "finding": "Recovery worker I/O remains present, but Queue wait/waitIdle and restart/close continuations still nest event loops; retained backlog item remains valid."
     },
     {
-      "id": "remaining-storage-boundaries",
-      "classification": "partial",
-      "source": "app/FileUploadController.cpp:145; app/WatchFolderService.cpp:143,243,251",
-      "finding": "Upload execution persistence retains a synchronous GUI boundary. Watch checkpoint serialization/storage now uses OwnedWork; watcher registration and the final per-file fingerprint remain accepted GUI work because the watcher owns thread-bound inotify state and the fingerprint refuses last-moment replacements. Rule persistence and settings transfer/import/migration remain separate. Recursive discovery and recovery serialization/storage already use OwnedWork."
+      "kind": "landed",
+      "source": "platforms/linux/linux-qt/app/SettingsDialog.cpp:34,325",
+      "finding": "Do not describe settings transfer/import/export/migration/backup operations as synchronous GUI storage: they now use OwnedWork, asynchronous dialogs and an out-of-line destructor fence. Other ordinary settings persistence or device-refresh boundaries are separate."
     },
     {
-      "id": "CORE025-FU-IDENTITY",
-      "classification": "activation-blocker",
-      "source": "src/watch/WatchFolders.cpp:70; CORE-PLATFORM-001 SPEC P7",
-      "finding": "CORE025-FU-IDENTITY (blocks activation qualification; owner: maintainer; review by 2026-12-14).\n(a) Proven: on the reference host, btrfs `/home` reports a different `st_dev` on each boot (observed 61/63/65/66 \u2192 62). Recorded identities never match again, so entries are kept conservatively, as P7 requires, until the store reaches 16 MiB and fails closed with `watch-store-full`. This is safe but makes the feature degrade over time on btrfs.\n(b) Unproven: removable media may reuse device number + root inode, so different media could qualify an old parent and prune its holds. This would fail in the unsafe direction.\nFixing either needs a separate maintainer decision on a stable filesystem identity (for example a filesystem UUID or subvolume identity) or on a fenced-refresh policy, with contract vectors. This slice adds no implementation for either. Activation and release stay blocked until both are resolved."
+      "kind": "resolved-policy",
+      "source": "product-contract/decisions/ES-014-030-empty-save-baseline.md",
+      "finding": "Remove the old ES-014/030 empty-save/baseline-runtime question from Blocked on Mike; the maintainer-approved policy, pinned observation record, native implementation and direct tests now exist. This does not waive scheduler security/model/OCR/QR/threshold/release gates."
     },
     {
-      "id": "watch-unbounded-drain",
-      "classification": "follow-up",
-      "source": "app/WatchFolderService.cpp:115,297",
-      "finding": "Existing unbounded-drain follow-up. Includes: the copy/move worker has no handler for an allocation exception, and `OwnedWork` drops completion, so a pending drain can wait forever. Completion must be guaranteed on every exit path, exceptions included."
+      "kind": "qualification-limit",
+      "source": "product-contract/reference-baselines/provenance/kova-0.29.0-xann-sidecar-observation.md",
+      "finding": "Runtime evidence is the existing pinned Linux library observation. I read it and the contract/review provenance; did not build or execute the reference. It does not qualify other-platform or baseline GUI behavior."
+    },
+    {
+      "id": "core025-2xx-truncated-body-accounting",
+      "classification": "demonstrated behavior gap",
+      "contract": "product-contract/capabilities/CORE-PLATFORM-001/SPEC.md P1; any 2xx counts as answered and accepted",
+      "production": "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp:101-104",
+      "production_sha256": "de7dfa263036ac703963e22b9009cae0091e64dc8c66ba25c24b8ff73aa399b6",
+      "probe_directory": "/tmp/audit44-partial200",
+      "result": "/tmp/audit44-partial200/result2.json",
+      "command": "cmake -S /tmp/audit44-partial200 -B /tmp/audit44-partial200/build -G Ninja && cmake --build /tmp/audit44-partial200/build -j2 && /tmp/audit44-partial200/build/probe",
+      "expected": {
+        "attempts": 1,
+        "answered": 1,
+        "accepted": 1
+      },
+      "observed": {
+        "accepted": 0,
+        "answered": 0,
+        "attempts": 1,
+        "code": "network-error",
+        "httpStatus": 0,
+        "observedReplyError": 2,
+        "observedReplyStatus": 200
+      },
+      "exit_code": 1,
+      "implication": "Exact attempt counters violate P1; unconfirmed disposition remains conservative. No duplicate-publication reproduction is claimed."
+    },
+    {
+      "id": "watch-shutdown-nested-loop",
+      "classification": "source finding",
+      "production": "platforms/linux/linux-qt/app/WatchFolderService.cpp:298-308",
+      "finding": "finishCheckpoint uses nested QEventLoop to await pending publication/checkpoint; clean-exit fixtures exercise draining but do not eliminate this architectural gap."
+    },
+    {
+      "id": "remaining-watch-gui-boundaries",
+      "classification": "source finding",
+      "production": "platforms/linux/linux-qt/app/WatchFolderService.cpp:setRules,startFileWork,finishFileWork,rescan; FileUploadController.cpp:startNext,settle",
+      "finding": "Checkpoint serialization/stat/retention is worker-owned, but rules writes, execution admission/steps/terminal writes, watcher add/remove and final fingerprint remain synchronous GUI callbacks."
+    },
+    "All four scoped SPEC files are byte-identical to the prior 54ec4db audit. Every one of the 78 desktop rows retained its conservative classification after current evidence continuity checks; all 20 mobile-only IDs remain outside Linux desktop scope.",
+    "All scoped production/test anchor files match their frozen current-audit hashes except the shared conformance-adapter main.cpp. Its filename-generation and region-capture production dispatch/function bodies are unchanged; the diff only adds editor empty-shadow fields and CORE-025 watch adapters.",
+    "All 51 unique anchored test method bodies across the three desktop capabilities are byte-identical to 54ec4db. Shared capture empty-sidecar shadow integration changed a separate native CaptureAnnotationTest row from honest refusal to successful zero-annotation default shadow under the approved ES-014/030 contract. It tests preserved legacy bytes, empty recovered annotations and binding to the saved raster hash.",
+    "RC-013 remains partial: actual owner/stale/cancellation/default/frozen/profile native cursor tests exercise region capture only; no broad full-screen/monitor/window cursor or mixed-topology qualification is inferred.",
+    "RC-027 remains blocked: no new approved authoritative pre-acquisition physical topology source landed; durable last-region storage does not settle that mapping-authority gate. RC-015 remains not-started for HDR/wide-gamut conversion behavior.",
+    {
+      "id": "response-accounting-fix-boundaries",
+      "classification": "source finding and regression guidance",
+      "production": "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp:101-104",
+      "finding": "The same branch discards 3xx statuses when accompanied by a transport error. Include a regression for answered/not-accepted 3xx handling; the demonstrated 2xx case must remain failed/unconfirmed rather than parsing a truncated body as success. Preserve prior 2xx acceptance evidence across any retry-safe attempts."
     }
   ],
   "raw_trace_counts": {
-    "implemented": 178,
+    "implemented": 177,
     "not-applicable": 1,
     "not-started": 19,
-    "partial": 127
+    "partial": 128
   },
   "full_audit_counts": {
-    "blocked": 34,
-    "implemented": 174,
+    "blocked": 32,
+    "implemented": 177,
     "not-applicable": 1,
     "not-started": 5,
-    "partial": 111
+    "partial": 110
   },
-  "integration_revision": "1fc988d275359bd8d8524c7d908801cd8916ac69",
+  "integration_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
   "incremental_classification_updates": [
     {
       "requirement": "EO-014",
@@ -2700,5 +3789,5 @@
       "source_revision": "e8bc3a9"
     }
   ],
-  "integration_note": "Current review incorporates recovery preservation/takeover/owned I/O, upload admission and unknown-publication/replay handling, owned watch discovery, profile-local cursor inclusion, and the maintainer-approved ES-029 diagnostic/reason boundary. Historical findings are retained in audit_history, not represented as current missing features. Integration at fdc728fb6c33dc0a7685205e77dfdcfd37217db6 preserves landed recovery recreation and its store/native regression proof. It removes that completed item from the current backlog; maintainer/independent acceptance of that implementation remains separately recorded upstream. ES-014, ES-030 and EO-006 are now implemented Linux candidates with explicit approved shadow policy, baseline runtime observation, native save/reopen and conformance evidence; reviews and full gates pending."
+  "integration_note": "Preserve approved empty-save baseline-shadow completions, owned settings transfer/migration and landed watch checkpoint/publication/retention breadth. CORE-025 returns to partial only for demonstrated exact-attempt accounting; conservative unconfirmed disposition remains intact. Mapped version metadata now matches Product Contract 0.4.0 and current capability versions; no contract changed."
 }

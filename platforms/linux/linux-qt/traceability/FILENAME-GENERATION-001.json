@@ -1,7 +1,7 @@
 {
   "capability": "FILENAME-GENERATION-001",
-  "capability_version": "0.2.0",
-  "contract_version": "0.3.1",
+  "capability_version": "0.2.1",
+  "contract_version": "0.4.0",
   "platform": "linux",
   "edition": "linux-qt",
   "implementation": [
@@ -36,7 +36,7 @@
         "classification": "implemented",
         "spec_line": 34,
         "coverage": "Expansion uses a single supplied value context; native contexts are captured before expansion.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -46,9 +46,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -57,8 +57,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "expand() takes the context by const reference and reads each value once per parse. Native profile output freezes folder/pattern before acquisition; Save continues to capture one time/locale/size context per expansion. Actual controller snapshots and later-profile output are verified.",
       "incremental_note": {
@@ -85,7 +85,7 @@
           "unix-seconds"
         ],
         "coverage": "Date/time token branches implement ASCII padding and locale names; deterministic contract vectors exercise output.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -95,9 +95,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -106,8 +106,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Date/time token branches implement ASCII padding and locale names; deterministic contract vectors exercise output.",
@@ -137,7 +137,7 @@
           "twelve-hour-noon"
         ],
         "coverage": "Presence of %pm determines twelve-hour mode before token expansion; boundary clock vectors cover AM/PM.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -147,9 +147,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -158,8 +158,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Presence of %pm determines twelve-hour mode before token expansion; boundary clock vectors cover AM/PM.",
@@ -187,7 +187,7 @@
           "empty-result"
         ],
         "coverage": "Dimensions expand only when positive; unknown dimensions are empty.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -197,9 +197,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -208,8 +208,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Dimensions expand only when positive; unknown dimensions are empty.",
@@ -239,7 +239,7 @@
           "url-mode-percent-encoding"
         ],
         "coverage": "Window/process metadata is trimmed, spaces changed and mode sanitization applied before insertion.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -249,9 +249,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -260,8 +260,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Window/process metadata is trimmed, spaces changed and mode sanitization applied before insertion.",
@@ -287,7 +287,7 @@
           "text-mode-environment-unchanged"
         ],
         "coverage": "User/domain/host values are supplied in the immutable context; token expansion does not reread the environment.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -297,9 +297,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -308,8 +308,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "User/domain/host values are supplied in the immutable context; token expansion does not reread the environment.",
@@ -345,7 +345,7 @@
           "blank-pattern-does-not-advance-counter"
         ],
         "coverage": "One pre-scan advances a non-negative counter once; every token uses the same result and padding/base rules.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -355,9 +355,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -366,8 +366,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "One pre-scan advances a non-negative counter once; every token uses the same result and padding/base rules.",
@@ -410,7 +410,7 @@
           "invalid-repeat-does-not-consume-counter"
         ],
         "coverage": "System CSPRNG and injected byte sources feed bounded random-token counts and UUID/word/emoji branches.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -420,9 +420,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
@@ -437,8 +437,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "System CSPRNG and injected byte sources feed bounded random-token counts and UUID/word/emoji branches.",
@@ -482,7 +482,7 @@
           "random-file-empty"
         ],
         "coverage": "Explicit file-read grants precede all reads; denied, missing, invalid UTF-8, NUL-containing and empty input fail with typed value-free errors. Every trimmed eligible line is selectable, including beyond 256. Native tests cover grant/refusal and 1/2/3-byte line-count boundaries; shared wide-list vectors and the complete filename conformance suite pass.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -492,9 +492,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
@@ -527,8 +527,8 @@
             "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
           }
         ],
-        "revalidated_from_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Expansion honours the caller's grant through RandomFileAccess. The production grant prompt arrives with the pattern editor UI. The native pattern editor now visibly denies random-file tokens without a read grant, before saving/running. Full grant UI/authority qualification remains Required. Audit 2026-11-03: FilenameGeneratorTest::randomFileReadsOneTrimmedLineWhenGranted (granted read of one trimmed line from LF/CRLF content), randomFileFailuresAreTypedAndExposeNothing (denied -> file-permission-denied; missing, non-UTF-8, truncated UTF-8, NUL content, empty and blank-only files -> file-unavailable, each with token %rf and offset, counter unchanged) and randomFileWithoutAGrantIsDeniedAndReadsNothing prove the clause; the shared random-file-line, random-file-permission-denied and random-file-empty vectors run through the conformance adapter, and CaptureWorkflowsTest/NativeCaptureWorkflowsTest cover the native denial. A truncated trailing UTF-8 sequence was previously accepted and now fails as non-text. The native app never offers a grant (the clause is MAY), so every production %rf is denied.",
       "full_audit_snapshot": {
@@ -615,7 +615,7 @@
           "unknown-and-literal-percent"
         ],
         "coverage": "Unknown/case-mismatched tokens survive and %% emits a literal percent through left-to-right tokenization.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -625,9 +625,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -636,8 +636,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Unknown/case-mismatched tokens survive and %% emits a literal percent through left-to-right tokenization.",
@@ -671,7 +671,7 @@
           "reserved-device-name-with-extension"
         ],
         "coverage": "Portable replacement, collapsed replacements, trailing removal and reserved device names are implemented by shared finalization.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -681,9 +681,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -692,8 +692,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Portable replacement, collapsed replacements, trailing removal and reserved device names are implemented by shared finalization.",
@@ -725,7 +725,7 @@
           "path-mode-rejects-drive"
         ],
         "coverage": "Path mode rejects rooted/drive paths and parent components and uses portable per-component finalization.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -735,9 +735,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -746,8 +746,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Path mode rejects rooted/drive paths and parent components and uses portable per-component finalization.",
@@ -781,7 +781,7 @@
           "blank-pattern-text-mode"
         ],
         "coverage": "Blank/empty/dot components become underscore; extension is appended after token expansion.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -791,9 +791,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -802,8 +802,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Blank/empty/dot components become underscore; extension is appended after token expansion.",
@@ -831,7 +831,7 @@
           "max-length-counts-scalar-values"
         ],
         "coverage": "UTF-32 scalar storage is truncated before the separately preserved extension; vectors exercise scalar/extension limits.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -841,9 +841,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -852,8 +852,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "UTF-32 scalar storage is truncated before the separately preserved extension; vectors exercise scalar/extension limits.",
@@ -890,7 +890,7 @@
           "preview-does-not-commit"
         ],
         "coverage": "Preview calls the same expansion with a separate deterministic byte source and never persists a counter.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -900,9 +900,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
@@ -917,8 +917,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": " Native workflow editing now calls production deterministic preview, presents a read-only PNG example and typed token/scalar-offset errors, and creates no directories or persistent counters.",
       "incremental_note": {
@@ -950,7 +950,7 @@
           "invalid-repeat-does-not-consume-counter"
         ],
         "coverage": "Native save commits a locked private counter reservation before final publication; failure, collision, reopen and aborted-publication tests cover consumed/nonconsumed boundaries.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -991,8 +991,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "The native Save path validates and privately encodes before committing the per-profile counter through the existing owner-private atomic CounterStore. This durable name reservation precedes publication; failed counter writes publish nothing with stable counter diagnostics, while rename failure and process exit before publication leave the counter consumed. Collision retries acquire and commit a fresh counter. CaptureSaveTest proves real write failure, changed/newer/corrupt storage, publication failure, collision/reopen and a forked process exiting without destructors at the pre-publication boundary; NativeCaptureWorkflowsTest proves pre-action cancellation/invalid-pattern byte preservation and later-action failure consumption. Reservation-before-publication follows FN-016 explicitly; no extra product policy is introduced. Verification: CaptureSaveTest 16 passed; direct NativeCaptureWorkflowsTest cancellation/validation and later-failure cases 7 passed; direct CapturePipelineTest failed-reservation cases 4 passed. Registered D-Bus-wrapped ctests require an outside-sandbox rerun.",
       "incremental_note": {
@@ -1010,7 +1010,7 @@
         "classification": "implemented",
         "spec_line": 87,
         "coverage": "Conformance adapter invokes the same production expand/preview functions for every published filename vector.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -1020,9 +1020,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -1031,8 +1031,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Conformance adapter invokes the same production expand/preview functions for every published filename vector.",
@@ -1064,7 +1064,7 @@
           "random-non-ambiguous"
         ],
         "coverage": "Token table is longest-first and case-sensitive; tokenizer resumes after unknown percent signs.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -1074,9 +1074,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -1085,8 +1085,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Token table is longest-first and case-sensitive; tokenizer resumes after unknown percent signs.",
@@ -1120,7 +1120,7 @@
           "unterminated-argument"
         ],
         "coverage": "Only eligible tokens accept arguments; ASCII 1..256 validation and missing-brace errors precede expansion.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -1130,9 +1130,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -1141,8 +1141,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Only eligible tokens accept arguments; ASCII 1..256 validation and missing-brace errors precede expansion.",
@@ -1176,7 +1176,7 @@
           "unix-seconds"
         ],
         "coverage": "Adapter preserves supplied wall-clock fields and unix value; production expands padded clock/week and localized/English names.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -1186,9 +1186,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -1197,8 +1197,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Adapter preserves supplied wall-clock fields and unix value; production expands padded clock/week and localized/English names.",
@@ -1249,7 +1249,7 @@
           "random-file-line"
         ],
         "coverage": "Approved 2026-11-12 FN-021 clarification implemented: lists up to 256 preserve the original one-byte rejection mapping and consumption; larger random files draw the minimum unsigned big-endian byte width and reject complete groups above the unbiased limit. Native tests cover all 257 selectable indices, 256/257/65536/65537 boundaries, whole-group rejection, later-token consumption and partial-draw exhaustion. Existing static-list and UUID vectors remain unchanged.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -1259,9 +1259,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
@@ -1288,8 +1288,8 @@
             "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
           }
         ],
-        "revalidated_from_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "Files with more than 256 non-empty lines: only the first 256 are selectable, pending a contract clarification.",
       "evidence": [
@@ -1392,7 +1392,7 @@
           "path-mode-components"
         ],
         "coverage": "Metadata insertion trims Unicode White_Space and applies filename sanitization or UTF-8 percent encoding according to mode.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -1402,9 +1402,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -1413,8 +1413,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Metadata insertion trims Unicode White_Space and applies filename sanitization or UTF-8 percent encoding according to mode.",
@@ -1452,7 +1452,7 @@
           "extension-exceeds-max-length"
         ],
         "coverage": "Shared finalization applies the mandated expansion/sanitize/empty/extension/scalar truncation/reserved-name sequence.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -1462,9 +1462,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -1473,8 +1473,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Shared finalization applies the mandated expansion/sanitize/empty/extension/scalar truncation/reserved-name sequence.",
@@ -1506,7 +1506,7 @@
           "path-mode-rejects-drive"
         ],
         "coverage": "Literal slash and backslash delimit components; canonical output uses slash; relative/traversal checks occur before publication.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -1516,9 +1516,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -1527,8 +1527,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Literal slash and backslash delimit components; canonical output uses slash; relative/traversal checks occur before publication.",
@@ -1556,7 +1556,7 @@
           "counter-overflow"
         ],
         "coverage": "Signed 64-bit counter bound and exact decimal/base36/hex expansion are checked before increment.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -1566,9 +1566,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "conformance/runner/xerahs_conformance.py",
@@ -1577,8 +1577,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
       "note": "Signed 64-bit counter bound and exact decimal/base36/hex expansion are checked before increment.",
@@ -1639,7 +1639,7 @@
           "random-file-empty"
         ],
         "coverage": "All declared typed expansion errors retain token and Unicode-scalar offset; errors preserve the original counter. Random files now select among all nonempty trimmed LF/CRLF lines, without the former first-256 truncation. Shared wide-draw exhaustion vectors and native scalar-offset/counter/rejection tests pass alongside all existing filename vectors.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -1649,9 +1649,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
@@ -1684,8 +1684,8 @@
             "sha256": "fb7734fad46b8e8605fa8fd2cad5aaa9a7dd70ef8811809a726322794d480e9e"
           }
         ],
-        "revalidated_from_revision": "4dffe3cbe074129f50a6eaf483d76b885261d459",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": " Malformed native Save patterns now fail before directory creation or encoding. Profile preview exposes production error token/Unicode-scalar offset; invalid folders/patterns preserve saved settings.",
       "full_audit_snapshot": {
@@ -1802,7 +1802,7 @@
           "preview-does-not-commit"
         ],
         "coverage": "PreviewRandomSource emits ordered wrapping bytes and preview reports uncommitted nextCounter.",
-        "reviewed_at_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
@@ -1812,9 +1812,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
-            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "sha256": "a0449d132e94a4aa332cace73d409d23f001ac6be88ca11bdce8ee588e36194a",
             "method": "runFilenameGeneration",
-            "line": 97
+            "line": 98
           },
           {
             "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
@@ -1829,8 +1829,8 @@
             "line": 121
           }
         ],
-        "revalidated_from_revision": "d25064efea688636af7f6b7c7b043db2a4d0ed09",
-        "prior_trace_snapshot_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6"
+        "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+        "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": " Native profile previews repeat fixed sample context and the existing 0..255 wrapping preview source without committing anything.",
       "incremental_note": {
@@ -1841,11 +1841,11 @@
   },
   "audit_scope": "Every clause reviewed against current source and meaningful automated test bodies; candidate behavior is distinct from cross-platform, physical and human acceptance.",
   "audit": {
-    "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+    "source_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
     "checked_at": "2026-11-14",
     "specification": "product-contract/capabilities/FILENAME-GENERATION-001/SPEC.md",
     "specification_sha256": "8fe3e33ca0cd0f5afec0c3914adfbf8754ddccf973f2fc34e9bad1794ea0b798",
-    "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
+    "method": "Revalidate all manifest clauses against current source and meaningful named automated methods. Compare unchanged evidence to the prior full audit; inspect changed production/test bodies and approved specification changes. A direct current-production HTTP probe tests P1 accounting independently of the existing passing suite. Source hashes and named methods below pin the current revision; prior trace snapshots and audit histories remain available.",
     "reviewed_requirement_count": 27,
     "counts": {
       "implemented": 27
@@ -1878,7 +1878,8 @@
       "Reviewed all filename requirements against current FilenameGenerator.cpp, native CaptureSave and its counter tests, and conformance adapter/vector path. No classification changes: 24 implemented candidates, 3 partial for the unresolved greater-than-256-line random-file sampling rule. Counter reservation persists before native publication; interrupted publication and collision fixtures exercise non-reuse."
     ],
     "remaining_scope": "FN-009, FN-021, FN-026",
-    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
+    "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval.",
+    "version_role": "contract_version and capability_version identify the normative manifest mapped by this review, not whole-platform acceptance or release approval."
   },
   "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
@@ -1994,6 +1995,46 @@
       "counts": {
         "implemented": 24,
         "partial": 3
+      },
+      "production_surfaces": [
+        "platforms/linux/linux-qt/app/CaptureSave.cpp",
+        "platforms/linux/linux-qt/src/naming/CounterStore.cpp",
+        "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp"
+      ],
+      "automated_test_surfaces": {
+        "conformance/runner/xerahs_conformance.py": [
+          "run_capability"
+        ],
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp": [
+          "runFilenameGeneration"
+        ],
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp": [
+          "nativeCounterPublicationSurvivesReopenAndCollisionContextMatchesTheName",
+          "publicationFailureConsumesTheDurableReservation",
+          "restartAfterAbortedPublicationDoesNotReuseReservedName"
+        ],
+        "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp": [
+          "defaultCapturePatternUsesSystemRandom",
+          "previewNeverNeedsInjectedRandomness",
+          "randomFileFailuresAreTypedAndExposeNothing",
+          "randomFileReadsOneTrimmedLineWhenGranted"
+        ]
+      },
+      "findings": [
+        "Reviewed all filename requirements against current FilenameGenerator.cpp, native CaptureSave and its counter tests, and conformance adapter/vector path. No classification changes: 24 implemented candidates, 3 partial for the unresolved greater-than-256-line random-file sampling rule. Counter reservation persists before native publication; interrupted publication and collision fixtures exercise non-reuse."
+      ],
+      "remaining_scope": "FN-009, FN-021, FN-026",
+      "evidence_kind": "EXTRACTED source/test evidence at the pinned revision; not release or parity approval."
+    },
+    {
+      "source_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
+      "checked_at": "2026-11-14",
+      "specification": "product-contract/capabilities/FILENAME-GENERATION-001/SPEC.md",
+      "specification_sha256": "8fe3e33ca0cd0f5afec0c3914adfbf8754ddccf973f2fc34e9bad1794ea0b798",
+      "method": "Revalidate every manifest clause and current production/test evidence against the prior source audit; compare unchanged files/method bodies exactly, inspect integration deltas, and retain conservative unresolved classifications. Prior trace records are available at prior_trace_snapshot_revision; revision-specific anchors below refer to the current source. No graph relationship or mere test presence establishes behavior.",
+      "reviewed_requirement_count": 27,
+      "counts": {
+        "implemented": 27
       },
       "production_surfaces": [
         "platforms/linux/linux-qt/app/CaptureSave.cpp",
