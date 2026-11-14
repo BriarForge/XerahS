@@ -881,6 +881,19 @@
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
       ]
+    },
+    {
+      "date": "2026-11-14",
+      "requirements": [
+        "CORE-025"
+      ],
+      "outcome": "Maintainer review of 7aaa472 requested clean-quit and evidence corrections. Real subprocess rows reproduce unsent preparation and answered-failure journal callbacks leaving false holds before the fix (/tmp/xerahs-core025-clean-quit-red2.log). The drain now waits for the pending file settlement, not just a running checkpoint; it still returns when application exit interrupts a nested loop so main can drain after exec. The failed-intent test observes the server for 1.5 seconds, checks the exact write-failed notice, unchanged store/rules and persistent blocking. A mutant that dispatches after failed intent now fails with one received HTTP body (/tmp/xerahs-core025-failed-intent-mutation-red.log). A seven-file startup notice test fails before the count wording fix and passes after it. The real downgrade-reader and controller/service response-count evidence was already fixed in 4c67e89, whose full corrected Qt 6.4.2 suite passed 179/179; full gates must rerun after these drain changes. The HTTP 2xx unusable-result decision remains open. A private mount probe now proves the persistent-mountpoint retention gap: hold_before=1, parent_exists_unmounted=1, fingerprint_restored=1, hold_after=0 (/tmp/xerahs-core025-mount-retention-probe.log). Retention policy for that case and the definition of an answered-failure retry session require binding maintainer disposition before implementation or promotion. CORE-025 remains partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchKillFixture.cpp"
+      ]
     }
   ],
   "audit_method": "All 16 capabilities and 345 IDs revalidated. Existing unchanged source/test behavior was compared to frozen reviewed evidence, changed production paths and meaningful test bodies inspected, and exact current hashes/method lines repinned. 325 desktop rows remain conservative candidate classifications; 20 MOB rows remain outside desktop scope.",

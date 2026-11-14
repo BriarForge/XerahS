@@ -55,9 +55,10 @@ void WatchFolderService::start() {
       } else ++remaining;
     }
     if (!names.isEmpty()) {
-      auto notice = QStringLiteral("watch-publication-unconfirmed: %1 may already have been uploaded. Use Upload file to retry.")
-          .arg(names.join(QStringLiteral(", ")));
-      if (remaining > 0) notice += QStringLiteral(" and %1 more").arg(remaining);
+      auto summary = names.join(QStringLiteral(", "));
+      if (remaining > 0) summary += QStringLiteral(" and %1 more").arg(remaining);
+      const auto notice = QStringLiteral("watch-publication-unconfirmed: %1 may already have been uploaded. Use Upload file to retry.")
+          .arg(summary);
       emit notify(notice, false);
       if (!owner) return;
     }
@@ -292,11 +293,16 @@ void WatchFolderService::complete(const QString &path, bool success, const QStri
 }
 void WatchFolderService::setCheckpointHook(std::function<void()> hook) { m_checkpointHook = std::move(hook); }
 void WatchFolderService::finishCheckpoint() {
-  if (!m_checkpointing) return;
-  QEventLoop loop;
-  connect(this, &WatchFolderService::checkpointSettled, &loop, &QEventLoop::quit);
-  connect(this, &QObject::destroyed, &loop, &QEventLoop::quit);
-  loop.exec(QEventLoop::ExcludeUserInputEvents);
+  const QPointer<WatchFolderService> owner(this);
+  while (owner && (m_checkpointing || !m_pendingPath.isEmpty())) {
+    QEventLoop loop;
+    bool settled = false;
+    connect(this, &WatchFolderService::checkpointSettled, &loop, [&] { settled = true; loop.quit(); });
+    connect(this, &QObject::destroyed, &loop, &QEventLoop::quit);
+    loop.exec(QEventLoop::ExcludeUserInputEvents);
+    // Application exit interrupts nested loops; main drains again after exec.
+    if (!settled) return;
+  }
 }
 void WatchFolderService::settle(const QString &path, bool success, const QString &error, const QString &saved) {
   const QPointer<WatchFolderService> guard(this);
@@ -321,6 +327,7 @@ void WatchFolderService::settle(const QString &path, bool success, const QString
   } else emit notify(notice.completed ? notice.headline : (error.isEmpty() ? notice.headline : error + QLatin1Char('\n') + notice.headline), notice.completed);
   if (!guard) return;
   m_pendingPath.clear(); m_pendingKey.clear(); m_terminalState.clear(); m_terminalObservation = {};
+  emit checkpointSettled();
 }
 void WatchFolderService::rescan() {
   if (!m_running || m_blocked) return;

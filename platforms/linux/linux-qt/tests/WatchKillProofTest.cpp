@@ -36,6 +36,7 @@ class StallingServer final : public QObject {
 public:
   QTcpServer server;
   int received = 0;
+  int responseStatus = 0;
   bool listen() {
     connect(&server, &QTcpServer::newConnection, this, [this] {
       while (auto *socket = server.nextPendingConnection()) {
@@ -49,6 +50,10 @@ public:
               .match(QString::fromLatin1(wire.left(split)));
           if (!length.hasMatch() || wire.size() < split + 4 + length.captured(1).toLongLong()) return;
           counted = true; ++received;
+          if (responseStatus) {
+            socket->write("HTTP/1.1 " + QByteArray::number(responseStatus) + " Reply\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+            socket->disconnectFromHost();
+          }
         });
       }
     });
@@ -119,6 +124,37 @@ private slots:
       qWarning("the proof inside the private mount namespace failed:\n%s", qPrintable(m_namespaceOutput));
       QFAIL("the watch kill proof failed inside the private mount namespace");
     }
+  }
+
+private:
+private slots:
+  void aCleanQuitReleasesKnownUnsentOrAnsweredWork_data() {
+    QTest::addColumn<QString>("stage");
+    QTest::newRow("preparation") << QString("clean-preparation");
+    QTest::newRow("answered-journal") << QString("clean-answered");
+  }
+  void aCleanQuitReleasesKnownUnsentOrAnsweredWork() {
+    if (!qEnvironmentVariableIsSet("XERAHS_WATCH_KILL_NS")) {
+      if (m_namespaceUnavailable) QSKIP("a private mount namespace is not available here");
+      QCOMPARE(m_namespaceExit, 0); return;
+    }
+    QFETCH(QString, stage);
+    QTemporaryDir dir; QVERIFY(dir.isValid()); TmpfsMount mount;
+    QVERIFY(mount.mount(dir.filePath("store"))); QVERIFY(QDir().mkpath(dir.filePath("input")));
+    const auto source = dir.filePath("input/new.png"); QVERIFY(writeFile(source));
+    StallingServer http; http.responseStatus = stage == "clean-answered" ? 503 : 0;
+    QVERIFY(http.listen());
+    const auto url = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    QProcess child; child.start(fixturePath(), {dir.filePath("input"), dir.filePath("store"), url, stage});
+    QVERIFY(child.waitForStarted());
+    QTRY_COMPARE_WITH_TIMEOUT(child.state(), QProcess::NotRunning, 12000);
+    QCOMPARE(child.exitStatus(), QProcess::NormalExit); QCOMPARE(child.exitCode(), 0);
+    QVERIFY(child.readAllStandardOutput().contains("clean-loop-returned"));
+    QCOMPARE(http.received, stage == "clean-answered" ? 1 : 0);
+    xerahs::watch::WatchFolders restarted(dir.filePath("store"));
+    QCOMPARE(restarted.loadError(), QString());
+    QVERIFY(!restarted.publicationPending(xerahs::watch::fingerprint(source)));
+    QVERIFY(!restarted.processed(xerahs::watch::fingerprint(source)));
   }
 
 private:

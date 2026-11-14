@@ -75,6 +75,13 @@ int main(int argc, char *argv[]) {
     std::fprintf(stdout, "processed %s %d\n", qPrintable(path), int(success));
     std::fflush(stdout);
   });
+  const auto mode = argc > 4 ? QByteArray(argv[4]) : QByteArray{};
+  QObject::connect(&app, &QCoreApplication::aboutToQuit, &service, &WatchFolderService::stop);
+  QMetaObject::Connection quitAtStage;
+  if (mode == "clean-preparation")
+    quitAtStage = QObject::connect(&service, SIGNAL(checkpointSettled()), &app, SLOT(quit()), Qt::DirectConnection);
+  else if (mode == "clean-answered")
+    quitAtStage = QObject::connect(&uploads, &FileUploadController::executionFinished, &app, [&] { app.exit(); });
   service.start();
   // The parent kills this process once the server has the first request.
   QTimer::singleShot(30000, &app, [] { QCoreApplication::quit(); });
@@ -85,6 +92,8 @@ int main(int argc, char *argv[]) {
     });
   }
   const auto result = app.exec();
+  QObject::disconnect(quitAtStage);
   service.stop(); service.finishCheckpoint();
+  if (mode.startsWith("clean-")) { std::fputs("clean-loop-returned\n", stdout); std::fflush(stdout); }
   return result;
 }

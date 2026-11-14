@@ -1179,6 +1179,10 @@ private slots:
     const auto storeFile = dir.filePath("store/watch-processed.json");
     if (QFileInfo::exists(storeFile)) QVERIFY(QFile::remove(storeFile));
     QVERIFY(QDir(storeFile).mkpath("."));
+    const auto rulesBefore = readFile(dir.filePath("store/watch-folders.json"));
+    const auto directoryBefore = QDir(storeFile).entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden);
+    auto attempts = std::make_shared<std::atomic_int>(0);
+    service.setCheckpointHook([attempts] { ++*attempts; });
     service.start(); scan(service);
     QVERIFY(writeFile(source));
     now = 2000;
@@ -1190,11 +1194,39 @@ private slots:
     bool reported = false;
     for (const auto &notice : notices) {
       const auto text = notice.at(0).toString();
-      if (text.contains("watch-store-write-failed") || text.contains("watch-store-read-failed")) reported = true;
+      if (text.contains("watch-store-write-failed")) reported = true;
     }
     QVERIFY(reported);
     // Zero HTTP requests: the intent is saved before the dispatch.
-    QCOMPARE(http.received, 0);
+    QTest::qWait(1500); QCOMPARE(http.received, 0);
+    QCOMPARE(attempts->load(), 1);
+    QVERIFY(writeFile(dir.filePath("input/second.png")));
+    scan(service); now += 3000; scan(service); QTest::qWait(100);
+    QCOMPARE(attempts->load(), 1); QCOMPARE(http.received, 0);
+    QVERIFY(QFileInfo(storeFile).isDir());
+    QCOMPARE(QDir(storeFile).entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden), directoryBefore);
+    QCOMPARE(readFile(dir.filePath("store/watch-folders.json")), rulesBefore);
+    QVERIFY(!store.processed(watch::fingerprint(source)));
+  }
+
+  void startupNoticeLimitsNamesAndFormatsTheRemainingCount() {
+    QTemporaryDir dir; QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto directory = dir.filePath("store"); watch::WatchFolders writer(directory);
+    for (int i = 0; i < 7; ++i) {
+      const auto file = dir.filePath(QString("input/private-%1.png").arg(i)); QVERIFY(writeFile(file));
+      const auto intent = writer.publicationIntent(watch::fingerprint(file));
+      QCOMPARE(writer.adoptIntent(intent, watch::WatchFolders::writeIntent(intent)), QString());
+    }
+    watch::WatchFolders restarted(directory); QWidget owner; FileUploadController uploads(portsFor(dir), &owner);
+    WatchFolderService service(restarted, uploads, [&] { return dir.filePath("captures"); });
+    QSignalSpy notices(&service, &WatchFolderService::notify); service.start(); service.stop();
+    QCOMPARE(notices.count(), 1);
+    const auto text = notices.first()[0].toString();
+    for (int i = 0; i < 5; ++i) QVERIFY(text.contains(QString("private-%1.png").arg(i)));
+    QVERIFY(!text.contains("private-5.png")); QVERIFY(!text.contains("private-6.png"));
+    QVERIFY(text.contains("private-4.png and 2 more may already have been uploaded."));
+    QVERIFY(!text.contains(dir.path())); QVERIFY(!text.contains("http"));
+    QVERIFY(!text.contains("retry. and"));
   }
 
   // CORE-025 P2/P3: a leftover sending record from an earlier process is

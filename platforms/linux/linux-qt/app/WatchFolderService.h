@@ -23,6 +23,7 @@ public:
   // Test seam: called on the worker before each directory enumeration.
   void setDiscoveryHook(std::function<void()> hook);
   void setCheckpointHook(std::function<void()> hook);
+  // Drain preparation, terminal reporting and the durable checkpoint of the pending file.
   void finishCheckpoint();
   bool discovering() const { return m_discovery.running(); }
   // CORE-025: the durable publication facts of the pending file, for tests and
