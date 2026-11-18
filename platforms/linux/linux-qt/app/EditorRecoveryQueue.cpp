@@ -70,7 +70,28 @@ void EditorRecoveryQueue::finish(const JobPtr &job, RecoveryJobResult result) {
   m_jobs.remove(job->id);
   if (job->done) job->done(std::move(result));
   emit jobFinished(job->id);
-  if (m_jobs.isEmpty()) emit idle();
+  // Continuations run after the signal so observers settle first. A
+  // continuation may submit new work before the idle check below, which then
+  // correctly reports a busy queue and keeps the waiters registered.
+  auto notify = std::move(job->notify); job->notify.clear();
+  for (auto &n : notify) n(job->diagnostic);
+  if (m_jobs.isEmpty()) {
+    auto waiters = std::move(m_idleWaiters); m_idleWaiters.clear();
+    emit idle();
+    for (auto &w : waiters) w();
+  }
+}
+void EditorRecoveryQueue::whenFinished(quint64 id, std::function<void(QString)> done) {
+  if (!done) return;
+  const auto job = m_jobs.value(id);
+  if (!job) { done(QStringLiteral("recovery-job-unavailable")); return; }
+  if (job->finished) { done(job->diagnostic); return; }
+  job->notify.push_back(std::move(done));
+}
+void EditorRecoveryQueue::whenIdle(std::function<void()> done) {
+  if (!done) return;
+  if (m_jobs.isEmpty()) { done(); return; }
+  m_idleWaiters.push_back(std::move(done));
 }
 QString EditorRecoveryQueue::wait(quint64 id) {
   const auto job = m_jobs.value(id);

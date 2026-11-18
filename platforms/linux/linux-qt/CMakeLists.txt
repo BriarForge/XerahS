@@ -1697,6 +1697,12 @@ target_link_libraries(editor-exit-test PRIVATE xerahs_editor_source xerahs_edito
 add_test(NAME editor-exit COMMAND editor-exit-test)
 set_tests_properties(editor-exit PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
+add_executable(editor-recovery-queue-test tests/EditorRecoveryQueueTest.cpp)
+set_target_properties(editor-recovery-queue-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-recovery-queue-test PRIVATE xerahs_editor_source Qt6::Widgets Qt6::Test)
+add_test(NAME editor-recovery-queue COMMAND editor-recovery-queue-test)
+set_tests_properties(editor-recovery-queue PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
 # Exercise the genuine missing-GStreamer ToolsFeature branch even on equipped hosts.
 add_executable(tools-feature-unavailable-test tests/ToolsFeatureUnavailableTest.cpp
   app/CommandRegistry.cpp app/CommandRegistry.h app/features/ToolsFeature.cpp app/features/ToolsFeature.h)
