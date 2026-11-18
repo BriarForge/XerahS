@@ -1673,32 +1673,61 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
   if (m_canvasOperationPending || m_closePending || m_outputPending || m_canvas->interactionActive()) { event->ignore(); return; }
   const QPointer<EditorWindow> guard(this); m_closePending = true;
   const auto closing = qScopeGuard([guard] { if (guard) guard->m_closePending = false; });
-  if (!m_session->dirty() && conveniencePreferencesFromPreferences(nativeEditorPreferences()).exitConfirmation) {
-    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Close editor"), EditorWindow::tr("Close this editor?"), QMessageBox::Close | QMessageBox::Cancel, this));
-    box->setDefaultButton(QMessageBox::Cancel); const int answer = box->exec();
-    if (box) box->setParent(nullptr);
-    delete box.data();
-    if (!guard || answer != QMessageBox::Close) { event->ignore(); return; }
-  }
-  if (m_session->dirty()) {
-    // ES-008: Save, Discard, Cancel.
-    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Unsaved changes"),
-                    EditorWindow::tr("Save changes to %1?").arg(m_path.isEmpty() ? EditorWindow::tr("Untitled image") : QFileInfo(m_path).fileName()),
-                    QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this));
-    box->setDefaultButton(QMessageBox::Save);
-    const auto choice = box->exec();
-    if (box) box->setParent(nullptr);
-    delete box.data();
-    if (!guard) { event->ignore(); return; }
-    switch (choice) {
-      case QMessageBox::Save: if (!save(false) || !guard || m_session->dirty()) { event->ignore(); return; } break;
-      case QMessageBox::Discard: break;
-      default: event->ignore(); return;
+  if (!m_closeConfirmed) {
+    if (!m_session->dirty() && conveniencePreferencesFromPreferences(nativeEditorPreferences()).exitConfirmation) {
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Close editor"), EditorWindow::tr("Close this editor?"), QMessageBox::Close | QMessageBox::Cancel, this));
+      box->setDefaultButton(QMessageBox::Cancel); const int answer = box->exec();
+      if (box) box->setParent(nullptr);
+      delete box.data();
+      if (!guard || answer != QMessageBox::Close) { event->ignore(); return; }
     }
+    if (m_session->dirty()) {
+      // ES-008: Save, Discard, Cancel.
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Unsaved changes"),
+                      EditorWindow::tr("Save changes to %1?").arg(m_path.isEmpty() ? EditorWindow::tr("Untitled image") : QFileInfo(m_path).fileName()),
+                      QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this));
+      box->setDefaultButton(QMessageBox::Save);
+      const auto choice = box->exec();
+      if (box) box->setParent(nullptr);
+      delete box.data();
+      if (!guard) { event->ignore(); return; }
+      switch (choice) {
+        case QMessageBox::Save: if (!save(false) || !guard || m_session->dirty()) { event->ignore(); return; } break;
+        case QMessageBox::Discard: break;
+        default: event->ignore(); return;
+      }
+    }
+    // The decision stands for the deferred completion: the re-entering close
+    // never asks again.
+    m_closeConfirmed = true;
   }
   if (!guard) { event->ignore(); return; }
-  discardRecovery(true);  // ES-018: finish removal before accepting a clean close or Discard
-  if (!guard) { event->ignore(); return; }
+  // ES-018: the recovery removal finishes before the close is accepted. A
+  // shutdown close (session commit, quit, signal exit) keeps the synchronous
+  // drain; a user close defers through the queue's owner-fenced idle
+  // continuation, so no nested loop runs on the GUI thread. A signal exit
+  // abandons a deferred close; the post-main-loop drain finishes the removal.
+  if (property("xerahsShutdownClose").toBool()) {
+    discardRecovery(true);
+    if (!guard) { event->ignore(); return; }
+  } else if (!m_recoveryDrained) {
+    discardRecovery();
+    if (EditorRecoveryQueue::instance().busy()) {
+      // The removal is outstanding: take no further input and accept the
+      // close only when the queue drains. A window deleted meanwhile
+      // abandons its acknowledgement; the removal still completes.
+      event->ignore();
+      setEnabled(false);
+      const QPointer<EditorWindow> owner(this);
+      EditorRecoveryQueue::instance().whenIdle([owner] {
+        if (!owner) return;
+        owner->m_recoveryDrained = true;
+        owner->close();  // re-enters closeEvent: confirmed and drained
+      });
+      return;
+    }
+    m_recoveryDrained = true;
+  }
   const auto diagnostic = m_windowState->remember();
   if (!diagnostic.isEmpty()) QMessageBox::warning(this, EditorWindow::tr("Window preferences not saved"), editorPreferenceDiagnosticMessage(diagnostic));
   event->accept();

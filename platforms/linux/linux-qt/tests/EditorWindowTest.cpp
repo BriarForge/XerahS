@@ -419,8 +419,12 @@ private slots:
           button->click(); QTimer::singleShot(0, [probe] { probe->gate.release(); });
         }
       }); discard.start(2);
-      QVERIFY(window->close());
-      QVERIFY(store.list().records.empty()); QCOMPARE(storedBytes(path), originalPng);
+      // The close defers behind the outstanding recovery removal; the gate
+      // release drains the queue and the deferred close then completes.
+      QVERIFY(!window->close());
+      QTRY_VERIFY_WITH_TIMEOUT(window.isNull() || !window->isVisible(), 5000);
+      QTRY_VERIFY_WITH_TIMEOUT(store.list().records.empty(), 5000);
+      QCOMPARE(storedBytes(path), originalPng);
       return;
     }
     // A second canvas edit is accepted while the first snapshot is still writing.
@@ -480,7 +484,10 @@ private slots:
       auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
       if (auto *button = box->button(QMessageBox::Discard)) button->click();
     }); discard.start(2);
-    QVERIFY(window->close()); discard.stop(); QVERIFY(store.list().records.empty());
+    // The clean close with Discard defers behind its recovery removal.
+    QVERIFY(!window->close()); discard.stop();
+    QTRY_VERIFY_WITH_TIMEOUT(!window->isVisible(), 5000);  // WA_DeleteOnClose is off: hidden, not deleted
+    QTRY_VERIFY_WITH_TIMEOUT(store.list().records.empty(), 5000);
     QCOMPARE(storedBytes(path), saved); QCOMPARE(storedBytes(path + ".xann"), sidecar);
   }
   // ES-018: separate recovery document, never the explicit save; disclosed and restorable.
@@ -505,7 +512,10 @@ private slots:
     trigger(*window, "undo"); QVERIFY(window->windowTitle().contains(" •")); QTRY_COMPARE(store.list().records.size(), size_t(1));
     QCOMPARE(storedBytes(path), savedPng); QCOMPARE(storedBytes(path + ".xann"), savedXann);
     QTimer discard; connect(&discard, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; for (auto *b : box->buttons()) if (box->buttonRole(b) == QMessageBox::DestructiveRole) { b->click(); return; } });
-    discard.start(5); window->close(); discard.stop(); QVERIFY(store.list().records.empty());
+    // The close with Discard defers behind its recovery removal, then completes.
+    discard.start(5); QVERIFY(!window->close()); discard.stop();
+    QTRY_VERIFY_WITH_TIMEOUT(window.isNull() || !window->isVisible(), 5000);
+    QTRY_VERIFY_WITH_TIMEOUT(store.list().records.empty(), 5000);
     QCOMPARE(storedBytes(path), savedPng); QCOMPARE(storedBytes(path + ".xann"), savedXann);
     // Simulated crash: the window is destroyed without closing, leaving its recovery document.
     window = EditorWindow::open(path); QVERIFY(window); window->show(); canvas = window->findChild<EditorCanvas *>();
@@ -2055,7 +2065,9 @@ private slots:
       auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box);
       box->button(QMessageBox::Discard)->click();
     });
-    QVERIFY(window->close()); QVERIFY(!window->isVisible());
+    // The close with Discard defers behind its recovery removal, then completes.
+    QVERIFY(!window->close());
+    QTRY_VERIFY_WITH_TIMEOUT(!window->isVisible(), 5000);
     QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
     QCOMPARE(nativeEditorPreferences().values.value("WindowWidth"), actual.value("WindowWidth"));
     QCOMPARE(nativeEditorPreferences().values.value("WindowHeight"), actual.value("WindowHeight"));
@@ -2709,7 +2721,10 @@ private slots:
     QCOMPARE(storedBytes(savedCapture), captureBytes); QVERIFY(!QFile::exists(savedCapture + ".xann"));
     saveUntitled(*window, destination); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
     QCOMPARE(loadSource(destination).image, original); QCOMPARE(storedBytes(savedCapture), captureBytes);
-    QVERIFY(!QFile::exists(destination + ".xann")); window->setAttribute(Qt::WA_DeleteOnClose, false); QVERIFY(window->close());
+    QVERIFY(!QFile::exists(destination + ".xann")); window->setAttribute(Qt::WA_DeleteOnClose, false);
+    // The close defers behind the save's recovery-record removal, then completes.
+    QVERIFY(!window->close());
+    QTRY_VERIFY_WITH_TIMEOUT(!window->isVisible(), 5000);
   }
 
   void cancelledOrFailedNewImagePreservesTheDirtySession_data() {
@@ -2803,7 +2818,10 @@ private slots:
     const auto annotated = loadSource(newPath); QVERIFY(annotated.document);
     QCOMPARE(annotated.document->annotations.size(), std::size_t(1)); QCOMPARE(annotated.image, fresh.image);
     QCOMPARE(annotated.image.colorSpace(), fresh.image.colorSpace());
-    window->setAttribute(Qt::WA_DeleteOnClose, false); QVERIFY(window->close());
+    window->setAttribute(Qt::WA_DeleteOnClose, false);
+    // The close defers behind the save's recovery-record removal, then completes.
+    QVERIFY(!window->close());
+    QTRY_VERIFY_WITH_TIMEOUT(!window->isVisible(), 5000);
   }
 
   void standaloneNewImageCanBeCancelledOrCreatedWithoutAnExistingFile() {

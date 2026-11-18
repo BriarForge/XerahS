@@ -28,6 +28,10 @@ QString closeEditorsForShutdown() {
   QList<QPointer<QWidget>> editors;
   for (auto *window : QApplication::topLevelWidgets())
     if (window->property("xerahsGuardEditorClose").toBool()) editors.append(window);
+  // A shutdown close keeps the synchronous recovery drain: the session
+  // commit, quit and signal-exit paths wait for the removal before accept.
+  for (const auto &editor : editors)
+    if (editor) editor->setProperty("xerahsShutdownClose", true);
   if (auto *modal = QApplication::activeModalWidget()) {
     editors.removeAll(modal); editors.prepend(modal);
   }

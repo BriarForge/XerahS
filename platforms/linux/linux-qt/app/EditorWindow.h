@@ -202,6 +202,10 @@ private:
   std::optional<QPoint> m_pointerPixel;
   bool m_canvasOperationPending = false;
   bool m_closePending = false;
+  // Close-path state: the user's Save/Discard/Close decision stands for the
+  // deferred completion, and the recovery removal is drained before accept.
+  bool m_closeConfirmed = false;
+  bool m_recoveryDrained = false;
   bool m_outputPending = false;
   QAction *m_retrySave = nullptr;
   NewImageHooks m_newImageHooks;

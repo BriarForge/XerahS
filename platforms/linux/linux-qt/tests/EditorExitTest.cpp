@@ -419,12 +419,15 @@ int recoveryExitChild(QApplication &app, int signal) {
   QObject::connect(&termination, &xerahs::shell::TerminationSignals::requested, &app, [](int received) {
     QCoreApplication::exit(xerahs::shell::TerminationSignals::exitStatus(received));
   });
-  bool closing = false, accepted = false, discarded = false;
+  bool closing = false, deferred = false, discarded = false;
   QTimer close, prompt;
   QObject::connect(&close, &QTimer::timeout, [&] {
     if (!probe->entered || closing) return;
     closing = true;
-    accepted = window->close();
+    // The user close defers behind the blocked recovery job: no nested
+    // loop runs on the GUI thread, and the signal abandons the deferred
+    // close for the post-exit drain to finish.
+    deferred = !window->close();
   }); close.start(2);
   QObject::connect(&prompt, &QTimer::timeout, [&] {
     auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
@@ -441,7 +444,11 @@ int recoveryExitChild(QApplication &app, int signal) {
   drainEditorRecovery();
   EditorRecoveryQueue::setWorkHookForTest({});
   delete window.data();
-  return accepted && discarded ? result : 94;
+  // The signal arrived while the deferred close was pending: the Discard
+  // decision stands, the deferred close is abandoned, and the post-exit
+  // drain finishes the removal (the parent asserts the empty store and the
+  // exit status).
+  return (deferred && discarded) ? result : 94;
 }
 }
 int main(int argc, char **argv) {

@@ -38,6 +38,8 @@ public:
   // Runs done once when the queue has no pending or active job: immediately if
   // it is already idle. A done that submits new work keeps the queue busy again.
   void whenIdle(std::function<void()> done);
+  // Whether any job is pending or active (a deferred close waits on this).
+  bool busy() const { return !m_jobs.isEmpty(); }
   static void setWorkHookForTest(std::function<void()>);
 
 signals:
