@@ -2,7 +2,7 @@
 #pragma once
 #include "watch/WatchFolders.h"
 #include "OwnedWork.h"
-#include <QFileSystemWatcher>
+#include <QThread>
 #include <QTimer>
 #include <QObject>
 #include "workflows/FileOperationExecution.h"
@@ -12,6 +12,8 @@
 
 namespace xerahs::app {
 class FileUploadController;
+// CORE-024: owns the platform file-watching registration on its own thread.
+class WatcherWorker;
 class WatchFolderService final : public QObject {
   Q_OBJECT
 public:
@@ -27,6 +29,9 @@ public:
   void setDispatchCheckHook(std::function<void(const QString &)> hook);
   // Test seam: called on the worker before the durable rules store write.
   void setRulesWriteHook(std::function<void()> hook);
+  // Test seam: called on the watcher thread with each desired watched set
+  // before the registration syscalls run.
+  void setWatcherApplyHook(std::function<void(const QStringList &)> hook);
   // Drain preparation, terminal reporting and the durable checkpoint of the pending file.
   void finishCheckpoint();
   bool discovering() const { return m_discovery.running(); }
@@ -80,7 +85,12 @@ private:
   FileUploadController &m_uploads;
   std::function<QString()> m_captures;
   watch::StabilityTracker m_stability;
-  QFileSystemWatcher m_watcher;
+  // CORE-024: the platform watcher lives on its own worker thread so the
+  // registration syscalls never run on the GUI thread. The GUI thread only
+  // posts the complete desired watched set; the worker diffs, applies and
+  // reports registration failures back through a queued invocation.
+  QThread m_watcherThread;
+  WatcherWorker *m_watcherWorker = nullptr;
   QTimer m_timer;
   QSet<QString> m_attempted, m_reported;
   QString m_pendingPath, m_pendingKey;
@@ -117,6 +127,7 @@ private:
   std::function<void(const QString &)> m_dispatchCheckHook;
   std::function<void()> m_discoveryHook;
   std::function<void()> m_rulesWriteHook;
+  std::function<void(const QStringList &)> m_watcherApplyHook;
   bool m_running = false;
   bool m_blocked = false;
 };

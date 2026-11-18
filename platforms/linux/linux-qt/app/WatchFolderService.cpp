@@ -8,16 +8,31 @@
 #include <QDir>
 #include <QEventLoop>
 #include <QFileInfo>
+#include <QFileSystemWatcher>
 #include <QSaveFile>
 #include <QUuid>
 
 namespace xerahs::app {
+// CORE-024: owns the platform watcher on the service's watcher thread. A plain
+// QObject (no signals of its own); everything crosses threads through queued
+// QMetaObject::invokeMethod with the worker or the service as context.
+class WatcherWorker final : public QObject {
+public:
+  explicit WatcherWorker(QObject *parent = nullptr) : QObject(parent), watcher(this) {}
+  QFileSystemWatcher watcher;
+};
 WatchFolderService::WatchFolderService(watch::WatchFolders &store, FileUploadController &uploads,
     std::function<QString()> captures, watch::StabilityTracker::Clock clock, QObject *parent)
     : QObject(parent), m_store(store), m_uploads(uploads), m_captures(std::move(captures)), m_stability(std::move(clock)) {
   m_timer.setInterval(500);
   connect(&m_timer, &QTimer::timeout, this, &WatchFolderService::rescan);
-  connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, [this] { rescan(); });
+  // The watcher lives on its own thread so registration never runs on the GUI
+  // thread; its events are delivered back here through a queued connection.
+  m_watcherWorker = new WatcherWorker;
+  connect(&m_watcherWorker->watcher, &QFileSystemWatcher::directoryChanged, this, [this] { rescan(); }, Qt::QueuedConnection);
+  connect(&m_watcherThread, &QThread::finished, m_watcherWorker, &QObject::deleteLater);
+  m_watcherWorker->moveToThread(&m_watcherThread);
+  m_watcherThread.start();
   connect(&m_uploads, &FileUploadController::executionFinished, this, [this](const QString &path, const QString &id, const QString &state, const QStringList &outputs) {
     if (path == m_pendingPath) {
       m_terminalState = state;
@@ -73,7 +88,8 @@ void WatchFolderService::stop() {
   // generation instead.
   m_running = false; ++m_publicationGeneration; m_timer.stop(); m_work.cancel(); m_fileStorage.cancel(); m_dispatch.cancel(); m_rulesStorage.cancel();
   ++m_discoveryGeneration; m_discovery.cancel(); m_rescanRequested = false;
-  if (!m_watcher.directories().isEmpty()) m_watcher.removePaths(m_watcher.directories());
+  // The watcher clears its registrations on its own thread.
+  QMetaObject::invokeMethod(m_watcherWorker, [worker = m_watcherWorker] { worker->watcher.removePaths(worker->watcher.directories()); }, Qt::QueuedConnection);
   m_uploads.cancel();
 }
 void WatchFolderService::setRules(const QVector<watch::Rule> &rules, std::function<void(const QString &)> done) {
@@ -113,7 +129,13 @@ void WatchFolderService::runRulesSave(const QVector<watch::Rule> &rules, std::fu
     }
   });
 }
-WatchFolderService::~WatchFolderService() { m_work.cancel(); m_discovery.cancel(); m_fileStorage.cancel(); m_dispatch.cancel(); m_rulesStorage.cancel(); }
+WatchFolderService::~WatchFolderService() {
+  m_work.cancel(); m_discovery.cancel(); m_fileStorage.cancel(); m_dispatch.cancel(); m_rulesStorage.cancel();
+  // The watcher thread is idle once the handles above are cancelled; join it
+  // before the member goes away.
+  m_watcherThread.quit();
+  m_watcherThread.wait();
+}
 void WatchFolderService::setBeforeRemoveHook(std::function<void(const QString &)> hook) { m_removeHook = std::move(hook); }
 void WatchFolderService::setExecutionWriter(workflows::WorkflowExecution::Writer writer) { m_executionWriter = std::move(writer); }
 namespace {
@@ -127,6 +149,7 @@ void WatchFolderService::setFileOperationHook(std::function<void(const QString &
 void WatchFolderService::setDiscoveryHook(std::function<void()> hook) { m_discoveryHook = std::move(hook); }
 void WatchFolderService::setDispatchCheckHook(std::function<void(const QString &)> hook) { m_dispatchCheckHook = std::move(hook); }
 void WatchFolderService::setRulesWriteHook(std::function<void()> hook) { m_rulesWriteHook = std::move(hook); }
+void WatchFolderService::setWatcherApplyHook(std::function<void(const QStringList &)> hook) { m_watcherApplyHook = std::move(hook); }
 // Copy/move runs on an owned worker; the GUI thread only snapshots inputs and receives the verdict.
 // WFCAT-004: the execution record's admission, start, step and terminal
 // persistence also run on owned work off the GUI thread. The pre-file fence is
@@ -509,16 +532,31 @@ void WatchFolderService::rescan() {
     for (const auto &candidate : result.candidates)
       if (m_stability.ready(candidate.path, candidate.key)) ready.append(candidate);
     m_stability.retain(result.files);
-    const auto watched = m_watcher.directories();
-    const QSet<QString> watchedSet(watched.begin(), watched.end());
-    QStringList remove, add;
-    for (const auto &path : watched) if (!result.directories.contains(path)) remove.append(path);
-    for (const auto &path : result.directories) if (!watchedSet.contains(path)) add.append(path);
-    if (!remove.isEmpty()) m_watcher.removePaths(remove);
-    if (!add.isEmpty()) for (const auto &path : m_watcher.addPaths(add)) {
-      report(path + ":watcher", "watch-notification-unavailable; periodic scanning remains active");
-      if (!guard || !m_running || generation != m_discoveryGeneration) return;
-    }
+    // CORE-024: the inotify registration runs on the watcher's own thread; the
+    // GUI thread only posts the complete desired watched set. The worker diffs
+    // against its own registrations and reports failures back, deduplicated by
+    // the service.
+    const QStringList desired(result.directories.cbegin(), result.directories.cend());
+    QMetaObject::invokeMethod(m_watcherWorker, [this, worker = m_watcherWorker, desired, generation, hook = m_watcherApplyHook] {
+      if (hook) hook(desired);
+      const auto watched = worker->watcher.directories();
+      const QSet<QString> desiredSet(desired.cbegin(), desired.cend());
+      QStringList remove;
+      for (const auto &path : watched) if (!desiredSet.contains(path)) remove.append(path);
+      if (!remove.isEmpty()) worker->watcher.removePaths(remove);
+      if (!desired.isEmpty()) {
+        const QSet<QString> watchedSet(watched.cbegin(), watched.cend());
+        QStringList add;
+        for (const auto &path : desired) if (!watchedSet.contains(path)) add.append(path);
+        if (!add.isEmpty()) for (const auto &path : worker->watcher.addPaths(add)) {
+          QMetaObject::invokeMethod(this, [this, path, generation] {
+            if (!m_running || generation != m_discoveryGeneration || m_reported.contains(path + ":watcher")) return;
+            m_reported.insert(path + ":watcher");
+            emit notify(QStringLiteral("watch-notification-unavailable; periodic scanning remains active"), false);
+          }, Qt::QueuedConnection);
+        }
+      }
+    }, Qt::QueuedConnection);
     if (m_pendingPath.isEmpty() && !m_checkpointing && !m_dispatching && !m_savingRules) selectNextCandidate(ready, generation, capturesFolder);
     if (guard && m_rescanRequested) rescan();
   });

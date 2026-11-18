@@ -763,6 +763,77 @@ private slots:
     service.stop();
   }
 
+  // CORE-024: inotify registration runs on the watcher's own thread. A stalled
+  // registration batch keeps the GUI responsive and the polling path working,
+  // with no registration-failure notices; a directory that vanished before the
+  // stalled batch applies reports its registration failure through the queued
+  // notify path.
+  void watcherRegistrationDoesNotBlockTheGui_data() {
+    QTest::addColumn<QString>("mode");
+    QTest::newRow("stall") << QString("stall");
+    QTest::newRow("apply-failure") << QString("apply-failure");
+  }
+  void watcherRegistrationDoesNotBlockTheGui() {
+    QFETCH(QString, mode);
+    QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures"); const auto source = dir.filePath("input/new.png");
+    QVERIFY(writeFile(source, "watcher registration fixture"));
+    qint64 now = 0; QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    struct Probe { std::atomic_int calls{0}; std::atomic_bool entered{false}, release{false}, onGui{false}, exited{false}; QStringList desired; };
+    const auto probe = std::make_shared<Probe>();
+    struct Release { std::shared_ptr<Probe> probe; ~Release() { probe->release = true; } } release{probe};
+    const auto gui = QThread::currentThread();
+    service.setWatcherApplyHook([probe, gui](const QStringList &desired) {
+      if (++probe->calls != 1) return;
+      probe->desired = desired;
+      probe->onGui = QThread::currentThread() == gui;
+      probe->entered = true;
+      // Bounded: a regression that returns registration to the GUI thread fails
+      // the off-GUI assertion instead of hanging the suite.
+      for (QDeadlineTimer stall(2000); !probe->release && !stall.hasExpired(); ) QThread::msleep(2);
+      probe->exited = true;
+    });
+    watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
+    QCOMPARE(saveRules(service, {rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed), notified(&service, &WatchFolderService::notify);
+    service.start(); scan(service);
+    scan(service); now = 2000; scan(service); now += 2000; scan(service);
+    QTRY_VERIFY_WITH_TIMEOUT(probe->entered.load(), 5000);
+    QVERIFY2(!probe->onGui.load(), "Watcher registration must run outside the GUI thread");
+    QVERIFY(probe->desired.contains(dir.filePath("input")));
+    int ticks = 0; QTimer timer; connect(&timer, &QTimer::timeout, [&] { ++ticks; }); timer.start(1);
+    if (mode == "apply-failure") {
+      // The watched directory vanishes while the batch is stalled; the source
+      // goes with it so the directory empties.
+      QVERIFY(QFile(source).remove());
+      QVERIFY(QDir().rmdir(dir.filePath("input")));
+      QTest::qWait(300);
+    } else {
+      // The polling path keeps working while the registration batch is stalled.
+      QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+      QCOMPARE(processed.first().at(1).toBool(), true);
+      QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 1);
+    }
+    QTRY_VERIFY(ticks >= 3);
+    bool registrationFailure = false;
+    for (const auto &note : notified) registrationFailure |= note.at(0).toString().contains("watch-notification-unavailable");
+    if (mode == "stall") QVERIFY(!registrationFailure);
+    probe->release = true;
+    QTRY_VERIFY(probe->exited.load());
+    if (mode == "apply-failure") {
+      QTRY_VERIFY_WITH_TIMEOUT([&] {
+        for (const auto &note : notified)
+          if (note.at(0).toString().contains("watch-notification-unavailable")) registrationFailure = true;
+        return registrationFailure;
+      }(), 5000);
+      QVERIFY(registrationFailure);
+    }
+    service.stop();
+  }
+
   void copyFailureIsAFailedExecutionNeverSucceeded() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
     const auto captures = dir.filePath("captures"); const auto source = dir.filePath("input/new.png");
