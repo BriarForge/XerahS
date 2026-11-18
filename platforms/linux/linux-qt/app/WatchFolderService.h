@@ -51,6 +51,7 @@ private:
   void startFileWork(const QString &path, const QString &key, const watch::Rule &rule);
   struct FileResult { QString error; bool read = false, copied = false; };
   void finishFileWork(const QString &path, const FileResult &result);
+  void startCopyWorker(const QString &path, const QString &key, bool move);
   void complete(const QString &path, bool success, const QString &error);
   // CORE-025 P2: durably record the send intent before any dispatch.
   void beginPublication(const QString &path, const QString &key, const QJsonObject &rule);
@@ -65,13 +66,16 @@ private:
   QTimer m_timer;
   QSet<QString> m_attempted, m_reported;
   QString m_pendingPath, m_pendingKey;
-  std::unique_ptr<workflows::WorkflowExecution> m_execution;
+  std::shared_ptr<workflows::WorkflowExecution> m_execution;
   workflows::WorkflowExecution::Writer m_executionWriter;
   QJsonObject m_terminalObservation;
   QString m_terminalState;  // shared terminal projection of the pending operation
   OwnedWork m_work;
   OwnedWork m_discovery;
   OwnedWork m_checkpoint;
+  // WFCAT-004: the watch execution record's admission/start and terminal
+  // step/finish persistence run on owned work off the GUI thread.
+  OwnedWork m_fileStorage;
   bool m_checkpointing = false;
   quint64 m_publicationGeneration = 0;
   int m_uploadAttempts = 0;

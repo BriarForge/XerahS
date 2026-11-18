@@ -352,6 +352,130 @@ private slots:
     service.stop();
   }
 
+  // WFCAT-004: watch execution persistence runs off the GUI thread. A stalled
+  // admission write keeps the GUI responsive with no file work; a stalled
+  // terminal write keeps the GUI responsive with the copy already committed and
+  // the completion withheld until the terminal record is durable.
+  void fileWorkExecutionPersistenceDoesNotBlockTheGui_data() {
+    QTest::addColumn<QString>("stage");
+    QTest::newRow("admission-write") << QString("admission");
+    QTest::newRow("terminal-write") << QString("terminal");
+  }
+  void fileWorkExecutionPersistenceDoesNotBlockTheGui() {
+    QFETCH(QString, stage);
+    QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures"); const auto source = dir.filePath("input/new.png");
+    QVERIFY(writeFile(source, "owned persistence fixture"));
+    qint64 now = 0; QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    NativeWorkflowExecutions executions(dir.filePath("executions"));
+    const auto writer = executions.writer();
+    struct Probe { std::atomic_int calls{0}; std::atomic_bool entered{false}, release{false}, onGui{false}, exited{false}; };
+    const auto probe = std::make_shared<Probe>();
+    struct Release { std::shared_ptr<Probe> probe; ~Release() { probe->release = true; } } release{probe};
+    const auto gui = QThread::currentThread();
+    // A successful copy writes: admission, start, read-file step, copy-file step, finish.
+    const int stallAt = stage == "admission" ? 1 : 5;
+    service.setExecutionWriter([&](const QString &id, const std::optional<QByteArray> &expected, const QByteArray &bytes) {
+      if (++probe->calls != stallAt) return writer(id, expected, bytes);
+      probe->onGui = QThread::currentThread() == gui;
+      probe->entered = true;
+      while (!probe->release) QThread::msleep(2);
+      probe->exited = true;
+      return writer(id, expected, bytes);
+    });
+    watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed), notified(&service, &WatchFolderService::notify);
+    service.start(); scan(service);
+    scan(service); now = 2000; scan(service); now += 2000; scan(service);
+    QTRY_VERIFY_WITH_TIMEOUT(probe->entered.load(), 5000);
+    QVERIFY2(!probe->onGui.load(), "Watch execution persistence must run outside the GUI thread");
+    int ticks = 0; QTimer timer; connect(&timer, &QTimer::timeout, [&] { ++ticks; }); timer.start(1);
+    QTRY_VERIFY(ticks >= 3);
+    // The stalled write withholds every completion, whichever side of the copy it is on.
+    QCOMPARE(processed.count(), 0); QCOMPARE(notified.count(), 0);
+    QCOMPARE(readFile(source), QByteArray("owned persistence fixture"));
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), stage == "admission" ? 0 : 1);
+    probe->release = true;
+    QTRY_VERIFY(probe->exited.load());
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QCOMPARE(processed.first().at(1).toBool(), true);
+    QCOMPARE(notified.count(), 1); QCOMPARE(notified.first().at(1).toBool(), true);
+    const auto key = watch::fingerprint(source);
+    QVERIFY(store.processed(key));
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 1);
+    const auto listing = executions.list(); QCOMPARE(listing.entries.size(), size_t(1));
+    const auto record = xerahs::workflows::parseWorkflowExecution(listing.entries.front().snapshot, listing.entries.front().id);
+    QVERIFY(record); QCOMPARE(record->state, QString("succeeded"));
+    service.stop();
+  }
+
+  // WFCAT-004: a stop or rule change that lands while the admission write is in
+  // flight never starts file work. The record settles cancelled, the source is
+  // untouched, nothing is processed, and the file stays discoverable.
+  void stopOrRuleChangeDuringAdmissionWriteCancelsWithoutFileWork_data() {
+    QTest::addColumn<QString>("interrupt");
+    QTest::newRow("stop") << QString("stop");
+    QTest::newRow("rules") << QString("rules");
+  }
+  void stopOrRuleChangeDuringAdmissionWriteCancelsWithoutFileWork() {
+    QFETCH(QString, interrupt);
+    QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures"); const auto source = dir.filePath("input/new.png");
+    QVERIFY(writeFile(source, "stop-during-admission fixture"));
+    qint64 now = 0; QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    NativeWorkflowExecutions executions(dir.filePath("executions"));
+    const auto writer = executions.writer();
+    struct Probe { std::atomic_int calls{0}; std::atomic_bool entered{false}, release{false}; };
+    const auto probe = std::make_shared<Probe>();
+    struct Release { std::shared_ptr<Probe> probe; ~Release() { probe->release = true; } } release{probe};
+    service.setExecutionWriter([&](const QString &id, const std::optional<QByteArray> &expected, const QByteArray &bytes) {
+      // Only the admission write of the first dispatch stalls.
+      if (++probe->calls != 1) return writer(id, expected, bytes);
+      probe->entered = true;
+      while (!probe->release) QThread::msleep(2);
+      return writer(id, expected, bytes);
+    });
+    watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed), notified(&service, &WatchFolderService::notify);
+    service.start(); scan(service);
+    scan(service); now = 2000; scan(service); now += 2000; scan(service);
+    QTRY_VERIFY_WITH_TIMEOUT(probe->entered.load(), 5000);
+    if (interrupt == "stop") service.stop();
+    else QCOMPARE(service.setRules({}), QString());
+    probe->release = true;
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QCOMPARE(processed.first().at(1).toBool(), false);
+    QCOMPARE(notified.count(), 1); QVERIFY(!notified.first().at(1).toBool());
+    // No file work ever started.
+    QCOMPARE(readFile(source), QByteArray("stop-during-admission fixture"));
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 0);
+    QVERIFY(!store.processed(watch::fingerprint(source)));
+    const auto listing = executions.list(); QCOMPARE(listing.entries.size(), size_t(1));
+    const auto record = xerahs::workflows::parseWorkflowExecution(listing.entries.front().snapshot, listing.entries.front().id);
+    QVERIFY(record);
+    QCOMPARE(record->state, QString("cancelled"));
+    QCOMPARE(record->steps.size(), 1);
+    QCOMPARE(record->steps.first().toObject().value("action").toString(), QString("copy-file"));
+    QCOMPARE(record->steps.first().toObject().value("state").toString(), QString("cancelled"));
+    // The file stays discoverable: after the interrupt is undone it is processed normally.
+    if (interrupt == "stop") service.start();
+    else QCOMPARE(service.setRules({rule}), QString());
+    scan(service); now += 3000; scan(service);
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 2, 7000);
+    QCOMPARE(processed.at(1).at(1).toBool(), true);
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 1);
+    QVERIFY(store.processed(watch::fingerprint(source)));
+    service.stop();
+  }
+
   void copyFailureIsAFailedExecutionNeverSucceeded() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
     const auto captures = dir.filePath("captures"); const auto source = dir.filePath("input/new.png");

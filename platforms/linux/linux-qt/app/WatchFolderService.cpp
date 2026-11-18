@@ -67,7 +67,7 @@ void WatchFolderService::start() {
   m_timer.start(); rescan();
 }
 void WatchFolderService::stop() {
-  m_running = false; ++m_publicationGeneration; m_timer.stop(); m_work.cancel();
+  m_running = false; ++m_publicationGeneration; m_timer.stop(); m_work.cancel(); m_fileStorage.cancel();
   ++m_discoveryGeneration; m_discovery.cancel(); m_rescanRequested = false;
   if (!m_watcher.directories().isEmpty()) m_watcher.removePaths(m_watcher.directories());
   m_uploads.cancel();
@@ -81,7 +81,7 @@ QString WatchFolderService::setRules(const QVector<watch::Rule> &rules) {
   }
   return error;
 }
-WatchFolderService::~WatchFolderService() { m_work.cancel(); m_discovery.cancel(); }
+WatchFolderService::~WatchFolderService() { m_work.cancel(); m_discovery.cancel(); m_fileStorage.cancel(); }
 void WatchFolderService::setBeforeRemoveHook(std::function<void(const QString &)> hook) { m_removeHook = std::move(hook); }
 void WatchFolderService::setExecutionWriter(workflows::WorkflowExecution::Writer writer) { m_executionWriter = std::move(writer); }
 namespace {
@@ -94,20 +94,48 @@ QJsonObject ruleSnapshot(const watch::Rule &rule) {
 void WatchFolderService::setFileOperationHook(std::function<void(const QString &)> hook) { m_fileHook = std::move(hook); }
 void WatchFolderService::setDiscoveryHook(std::function<void()> hook) { m_discoveryHook = std::move(hook); }
 // Copy/move runs on an owned worker; the GUI thread only snapshots inputs and receives the verdict.
+// WFCAT-004: the execution record's admission, start, step and terminal
+// persistence also run on owned work off the GUI thread. The pre-file fence is
+// preserved: a failed admission/start write still stops before any file work
+// starts, and the copy worker is launched only after admission and start are
+// durably recorded. A stop or rule change landing while that write is in flight
+// never starts file work; the record settles cancelled and the file stays
+// discoverable. The terminal observation, notice and history signals are
+// emitted only after the terminal write settled, keeping the durable terminal
+// observation. The execution record is shared with the worker lambdas instead
+// of unique, and one worker writes it at a time: the GUI thread never touches
+// it while a persistence worker runs.
 void WatchFolderService::startFileWork(const QString &sourcePath, const QString &key, const watch::Rule &rule) {
   const bool move = rule.action == watch::Action::Move;
-  m_execution = std::make_unique<workflows::WorkflowExecution>(QUuid::createUuid().toString(QUuid::WithoutBraces), QStringLiteral("watch-folder"),
+  m_execution = std::make_shared<workflows::WorkflowExecution>(QUuid::createUuid().toString(QUuid::WithoutBraces), QStringLiteral("watch-folder"),
       workflows::fileOperationSnapshot(move ? "move" : "copy", {}, {}, ruleSnapshot(rule)),
       m_executionWriter ? m_executionWriter : NativeWorkflowExecutions(NativeWorkflowExecutions::defaultDirectory()).writer());
-  if (!m_execution->admit() || !m_execution->start()) {
-    m_terminalObservation = m_execution->recordedObservation();
-    m_execution.reset();
-    m_blocked = true;
-    m_terminalState = QStringLiteral("permanent-failure");
-    qInfo().noquote() << "Workflow terminal" << actions::pipelineObservationText(m_terminalObservation);
-    complete(sourcePath, false, QStringLiteral("workflow-storage-unavailable: Watching stopped before file work; could not save the execution record."));
-    return;
-  }
+  const auto generation = m_publicationGeneration;
+  struct Admission { bool stored = false; QJsonObject observation; };
+  const auto execution = m_execution;
+  m_fileStorage = OwnedWork::run<Admission>(this,
+      [execution](const OwnedWork::Context &) { return Admission{execution->admit() && execution->start(), execution->recordedObservation()}; },
+      [this, path = sourcePath, key, move, generation](Admission admitted) {
+    if (!admitted.stored) {
+      m_terminalObservation = admitted.observation;
+      m_execution.reset();
+      m_blocked = true;
+      m_terminalState = QStringLiteral("permanent-failure");
+      qInfo().noquote() << "Workflow terminal" << actions::pipelineObservationText(m_terminalObservation);
+      complete(path, false, QStringLiteral("workflow-storage-unavailable: Watching stopped before file work; could not save the execution record."));
+      return;
+    }
+    // A stop or rule change that landed while the write was in flight never
+    // starts file work; the record settles cancelled and the file stays
+    // discoverable.
+    if (!m_running || generation != m_publicationGeneration) {
+      finishFileWork(path, {QStringLiteral("cancelled"), false, false});
+      return;
+    }
+    startCopyWorker(path, key, move);
+  });
+}
+void WatchFolderService::startCopyWorker(const QString &sourcePath, const QString &key, bool move) {
   const auto directory = m_captures();
   const auto hook = m_fileHook, removeHook = m_removeHook;
   const auto path = sourcePath;
@@ -141,38 +169,58 @@ void WatchFolderService::startFileWork(const QString &sourcePath, const QString 
   }), std::function<void(FileResult)>([this, path](const FileResult &result) { finishFileWork(path, result); }),
   std::function<void(qint64, qint64)>([this, path](qint64 done, qint64 total) { emit progress(path, done, total); }));
 }
+// WFCAT-004: the terminal step and finish persistence run on owned work off
+// the GUI thread; the terminal state, observation, notice and history signals
+// are emitted on the GUI thread only after the terminal write settled.
 void WatchFolderService::finishFileWork(const QString &path, const FileResult &result) {
   using namespace workflows;
-  const auto operation = m_execution ? m_execution->record().settings.value("operation").toString() : QStringLiteral("copy");
+  // All inputs are frozen on the GUI thread; the worker owns the record until
+  // its write settles.
+  const auto execution = m_execution;
+  const auto operation = execution ? execution->record().settings.value("operation").toString() : QStringLiteral("copy");
   const auto code = fileOperationDiagnostic(result.error);
   const bool cancelled = code == QLatin1String("cancelled");
-  bool stored = true;
-  const auto stepFailed = [&](const QString &action) {
-    if (!m_execution) return;
-    if (cancelled) stored = m_execution->step(action, QStringLiteral("cancelled")) && stored;
-    else stored = m_execution->step(action, QStringLiteral("failed"), code, classifyFileOperationFailure(code)) && stored;
-  };
-  if (m_execution) {
-    if (result.read) stored = m_execution->step(QStringLiteral("read-file"), QStringLiteral("succeeded")) && stored;
-    if (result.copied) stored = m_execution->step(QStringLiteral("copy-file"), QStringLiteral("succeeded")) && stored;
-    if (result.error.isEmpty() && operation == QLatin1String("move")) stored = m_execution->step(QStringLiteral("remove-source"), QStringLiteral("succeeded")) && stored;
-    else if (!result.error.isEmpty()) stepFailed(!result.read ? (code == QLatin1String("watch-copy-open-failed") ? "read-file" : "copy-file") : !result.copied ? "copy-file" : "remove-source");
-  }
-  const auto steps = m_execution ? m_execution->record().steps : QJsonArray{};
-  const auto terminal = fileOperationTerminal(m_execution ? m_execution->record().id : QString{}, operation, steps, result.error.isEmpty() ? QString{} : code, 0);
-  m_terminalState = m_execution ? terminal.state : (result.error.isEmpty() ? QStringLiteral("succeeded") : (result.copied ? QStringLiteral("partial") : cancelled ? QStringLiteral("cancelled") : QStringLiteral("permanent-failure")));
-  if (m_execution) { stored = m_execution->finish(terminal.state, terminal.diagnostic, terminal.outputs) && stored; m_terminalObservation = m_execution->recordedObservation(); m_execution.reset(); }
-  QString error = result.error;
-  if (!stored) {
-    m_blocked = true;
-    if (result.copied) m_terminalState = QStringLiteral("partial");
-    if (!error.isEmpty()) error += QLatin1Char('\n');
-    error += QStringLiteral("workflow-storage-unavailable: Watching stopped; could not save the execution record. Completed file work was retained.");
-  }
-  qInfo().noquote() << "Workflow terminal" << actions::pipelineObservationText(m_terminalObservation);
-  // CORE-025 P4: local copy and move are unchanged. They never enter the
-  // publication disposition path.
-  complete(path, result.error.isEmpty(), error);
+  struct TerminalPersistence { bool stored = true; QString state; QJsonObject observation; };
+  m_fileStorage = OwnedWork::run<TerminalPersistence>(this,
+      [execution, result, operation, code, cancelled](const OwnedWork::Context &) {
+    TerminalPersistence persisted;
+    bool stored = true;
+    const auto stepFailed = [&](const QString &action) {
+      if (!execution) return;
+      if (cancelled) stored = execution->step(action, QStringLiteral("cancelled")) && stored;
+      else stored = execution->step(action, QStringLiteral("failed"), code, classifyFileOperationFailure(code)) && stored;
+    };
+    if (execution) {
+      if (result.read) stored = execution->step(QStringLiteral("read-file"), QStringLiteral("succeeded")) && stored;
+      if (result.copied) stored = execution->step(QStringLiteral("copy-file"), QStringLiteral("succeeded")) && stored;
+      if (result.error.isEmpty() && operation == QLatin1String("move")) stored = execution->step(QStringLiteral("remove-source"), QStringLiteral("succeeded")) && stored;
+      else if (!result.error.isEmpty()) stepFailed(!result.read ? (code == QLatin1String("watch-copy-open-failed") ? "read-file" : "copy-file") : !result.copied ? "copy-file" : "remove-source");
+      const auto steps = execution->record().steps;
+      const auto terminal = fileOperationTerminal(execution->record().id, operation, steps, result.error.isEmpty() ? QString{} : code, 0);
+      persisted.state = terminal.state;
+      stored = execution->finish(terminal.state, terminal.diagnostic, terminal.outputs) && stored;
+      persisted.observation = execution->recordedObservation();
+    } else
+      persisted.state = result.error.isEmpty() ? QStringLiteral("succeeded")
+          : (result.copied ? QStringLiteral("partial") : cancelled ? QStringLiteral("cancelled") : QStringLiteral("permanent-failure"));
+    persisted.stored = stored;
+    return persisted;
+  }, [this, path, result, execution](TerminalPersistence persisted) {
+    if (execution) m_terminalObservation = persisted.observation;
+    m_execution.reset();
+    m_terminalState = persisted.state;
+    QString error = result.error;
+    if (!persisted.stored) {
+      m_blocked = true;
+      if (result.copied) m_terminalState = QStringLiteral("partial");
+      if (!error.isEmpty()) error += QLatin1Char('\n');
+      error += QStringLiteral("workflow-storage-unavailable: Watching stopped; could not save the execution record. Completed file work was retained.");
+    }
+    qInfo().noquote() << "Workflow terminal" << actions::pipelineObservationText(m_terminalObservation);
+    // CORE-025 P4: local copy and move are unchanged. They never enter the
+    // publication disposition path.
+    complete(path, result.error.isEmpty(), error);
+  });
 }
 // CORE-025 P2: the send intent is durably saved before any HTTP request is
 // issued. When the intent cannot be saved, no request is sent and watching
