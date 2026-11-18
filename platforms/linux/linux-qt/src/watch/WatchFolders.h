@@ -66,6 +66,11 @@ struct CheckpointIntent { QString path; QSet<QString> processed; QList<Publicati
 using IntentResult = CheckpointResult;
 struct SettleRequest { QString path; QSet<QString> processed; QList<PublicationRecord> publications; QString key; PublicationDisposition disposition; QByteArray expected; ParentMap parents; };
 using SettleResult = CheckpointResult;
+// CORE-024: the durable rules store write, prepared on the caller's thread and
+// written off it. `items` are the serialized rules plus the unreadable raw
+// entries; `rules` are the validated normalized rules adoption applies.
+struct RulesWrite { QString path; QJsonArray items; QVector<Rule> rules; QByteArray expected; };
+struct RulesWriteResult { QString error; QByteArray snapshot; };
 
 class WatchFolders {
 public:
@@ -74,6 +79,15 @@ public:
   QString loadError() const { return m_error; }
   QStringList diagnostics() const { return m_diagnostics; }
   QString saveRules(const QVector<Rule> &rules, const QString &captures);
+  // CORE-024: the split behind saveRules for callers that keep the write off the
+  // GUI thread. prepareRules validates and serializes on the caller's thread
+  // (stat-only; no file-content I/O) and freezes the write including the
+  // expected store snapshot; writeRules performs the durable write off the
+  // caller's thread; adoptRules applies the normalized rules and the new
+  // snapshot after the write settles.
+  QString prepareRules(const QVector<Rule> &rules, const QString &captures, RulesWrite *out);
+  static RulesWriteResult writeRules(const RulesWrite &write);
+  QString adoptRules(const RulesWrite &write, RulesWriteResult result);
   bool processed(const QString &key) const { return m_processed.contains(key); }
   // Publications still recorded as sending or unconfirmed, newest last.
   const QList<PublicationRecord> &publications() const { return m_publications; }

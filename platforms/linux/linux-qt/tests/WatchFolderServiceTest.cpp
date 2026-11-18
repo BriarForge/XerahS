@@ -55,6 +55,16 @@ void scan(WatchFolderService &service) {
   service.rescan();
   QTRY_VERIFY_WITH_TIMEOUT(!service.discovering(), 7000);
 }
+// CORE-024: rules saves settle asynchronously after the durable store write;
+// validation errors arrive synchronously. qWaitFor pumps events while really
+// waiting; a save that never settles returns the sentinel and fails the caller.
+QString saveRules(WatchFolderService &service, const QVector<watch::Rule> &rules) {
+  bool settled = false;
+  QString diagnostic = QStringLiteral("watch-rules-save-unsettled");
+  service.setRules(rules, [&](const QString &error) { diagnostic = error; settled = true; });
+  QTest::qWaitFor([&] { return settled; }, 7000);
+  return diagnostic;
+}
 class HttpFixture final : public QObject {
 public:
   QTcpServer server;
@@ -113,7 +123,7 @@ private slots:
     watch::WatchFolders store(dir.filePath("store")); qint64 now = 0;
     auto service = std::make_unique<WatchFolderService>(store, uploads, [&] { return captures; }, [&] { return now; });
     watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
-    QCOMPARE(service->setRules({rule}), QString());
+    QCOMPARE(saveRules(*service, {rule}), QString());
     struct Probe { std::atomic_bool entered{false}, release{false}, onGui{false}, exited{false}; };
     const auto probe = std::make_shared<Probe>();
     struct Release { std::shared_ptr<Probe> probe; ~Release() { probe->release = true; } } release{probe};
@@ -186,7 +196,7 @@ private slots:
     qint64 now = 0;
     auto service = std::make_unique<WatchFolderService>(store, uploads, [&] { return captures; }, [&] { return now; });
     watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
-    QCOMPARE(service->setRules({rule}), QString());
+    QCOMPARE(saveRules(*service, {rule}), QString());
     struct Probe { std::atomic_bool entered{false}, release{false}, onGui{false}, exited{false}; std::atomic_int calls{0}; };
     const auto probe = std::make_shared<Probe>();
     struct Release { std::shared_ptr<Probe> probe; ~Release() { probe->release = true; } } release{probe};
@@ -209,7 +219,7 @@ private slots:
     QTRY_VERIFY_WITH_TIMEOUT(ticks >= 3, 5000);
     QCOMPARE(probe->calls.load(), 1);
     if (interrupt == "destroy") service.reset();
-    else if (interrupt == "rules") QCOMPARE(service->setRules({}), QString());
+    else if (interrupt == "rules") QCOMPARE(saveRules(*service, {}), QString());
     else if (interrupt == "captures") captures = dir.filePath("input");
     else service->stop();
     probe->release = true;
@@ -221,7 +231,7 @@ private slots:
     if (!service) return;
     service->setDiscoveryHook({});
     captures = dir.filePath("captures");
-    if (interrupt == "rules") QCOMPARE(service->setRules({rule}), QString());
+    if (interrupt == "rules") QCOMPARE(saveRules(*service, {rule}), QString());
     service->start(); scan(*service);
     now = 2000; scan(*service);
     QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
@@ -252,7 +262,7 @@ private slots:
     if (removalFails) service.setBeforeRemoveHook([](const QString &path) { QFile::remove(path); });  // the later remove then fails
     watch::Rule rule; rule.path = dir.filePath("input"); rule.recursive = true; rule.filters = {"*.png"};
     rule.action = move ? watch::Action::Move : watch::Action::Copy;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy observed(&service, &WatchFolderService::terminalObserved), activity(&service, &WatchFolderService::activityChanged);
     TerminalLogCapture logs;
     QSignalSpy notified(&service, &WatchFolderService::notify);
@@ -326,7 +336,7 @@ private slots:
       return writer(id, expected, bytes);
     });
     watch::Rule rule; rule.path = dir.filePath("input"); rule.action = move ? watch::Action::Move : watch::Action::Copy;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy notified(&service, &WatchFolderService::notify), processed(&service, &WatchFolderService::processed);
     service.start(); scan(service); QVERIFY(writeFile(source, "retain actual file contents"));
     const auto key = watch::fingerprint(source);
@@ -390,7 +400,7 @@ private slots:
       return writer(id, expected, bytes);
     });
     watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed), notified(&service, &WatchFolderService::notify);
     service.start(); scan(service);
     scan(service); now = 2000; scan(service); now += 2000; scan(service);
@@ -446,13 +456,13 @@ private slots:
       return writer(id, expected, bytes);
     });
     watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed), notified(&service, &WatchFolderService::notify);
     service.start(); scan(service);
     scan(service); now = 2000; scan(service); now += 2000; scan(service);
     QTRY_VERIFY_WITH_TIMEOUT(probe->entered.load(), 5000);
     if (interrupt == "stop") service.stop();
-    else QCOMPARE(service.setRules({}), QString());
+    else QCOMPARE(saveRules(service, {}), QString());
     probe->release = true;
     QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
     QCOMPARE(processed.first().at(1).toBool(), false);
@@ -470,7 +480,7 @@ private slots:
     QCOMPARE(record->diagnostic, QString("cancelled"));
     // The file stays discoverable: after the interrupt is undone it is processed normally.
     if (interrupt == "stop") service.start();
-    else QCOMPARE(service.setRules({rule}), QString());
+    else QCOMPARE(saveRules(service, {rule}), QString());
     scan(service); now += 3000; scan(service);
     QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 2, 7000);
     QCOMPARE(processed.at(1).at(1).toBool(), true);
@@ -523,7 +533,7 @@ private slots:
     });
     watch::Rule rule; rule.path = dir.filePath("input");
     rule.action = stage == "intent" ? watch::Action::Upload : watch::Action::Copy;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed), notified(&service, &WatchFolderService::notify);
     service.start(); scan(service);
     scan(service); now = 2000; scan(service); now += 2000; scan(service);
@@ -578,13 +588,13 @@ private slots:
       while (!probe->release) QThread::msleep(2);
     });
     watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed), notified(&service, &WatchFolderService::notify);
     service.start(); scan(service);
     scan(service); now = 2000; scan(service); now += 2000; scan(service);
     QTRY_VERIFY_WITH_TIMEOUT(probe->entered.load(), 5000);
     if (interrupt == "stop") service.stop();
-    else QCOMPARE(service.setRules({}), QString());
+    else QCOMPARE(saveRules(service, {}), QString());
     probe->release = true;
     // The selection is abandoned: no dispatch, no record, no output, no attempt.
     QTest::qWait(300);
@@ -595,7 +605,7 @@ private slots:
     QCOMPARE(executions.list().entries.size(), size_t(0));
     // Once the interrupt is undone the file is discovered and processed normally.
     if (interrupt == "stop") service.start();
-    else QCOMPARE(service.setRules({rule}), QString());
+    else QCOMPARE(saveRules(service, {rule}), QString());
     scan(service); now += 3000; scan(service);
     QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
     QCOMPARE(processed.first().at(1).toBool(), true);
@@ -624,7 +634,7 @@ private slots:
       if (++hookCalls == 1) writeFile(path, "first replaced before dispatch");
     });
     watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed);
     service.start(); scan(service);
     scan(service); now = 2000; scan(service); now += 2000; scan(service);
@@ -648,6 +658,111 @@ private slots:
     service.stop();
   }
 
+  // CORE-024: the durable rules store write runs off the GUI thread. A stalled
+  // write keeps the GUI responsive, with nothing adopted and no diagnostic
+  // delivered until it settles; saves submitted while one is in flight queue
+  // and are applied in order once the earlier writes settle.
+  void rulesPersistenceDoesNotBlockTheGui() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    QVERIFY(QDir(dir.path()).mkpath("other"));
+    const auto input = dir.filePath("input"), other = dir.filePath("other");
+    qint64 now = 0; QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
+    struct Probe { std::atomic_int calls{0}; std::atomic_bool entered{false}, release{false}, onGui{false}, exited{false}; };
+    const auto probe = std::make_shared<Probe>();
+    struct Release { std::shared_ptr<Probe> probe; ~Release() { probe->release = true; } } release{probe};
+    const auto gui = QThread::currentThread();
+    // Only the second write stalls: the first is the setup save.
+    service.setRulesWriteHook([&] {
+      if (++probe->calls != 2) return;
+      probe->onGui = QThread::currentThread() == gui;
+      probe->entered = true;
+      for (QDeadlineTimer stall(2000); !probe->release && !stall.hasExpired(); ) QThread::msleep(2);
+      probe->exited = true;
+    });
+    watch::Rule first; first.path = input; first.action = watch::Action::Copy;
+    watch::Rule second; second.path = other; second.action = watch::Action::Move;
+    QCOMPARE(saveRules(service, {first}), QString());
+    QStringList settledOrder;
+    bool firstSave = false, secondSave = false;
+    service.setRules({first, second}, [&](const QString &error) { settledOrder << QStringLiteral("first"); firstSave = error.isEmpty(); });
+    QTRY_VERIFY_WITH_TIMEOUT(probe->entered.load(), 5000);
+    QVERIFY2(!probe->onGui.load(), "The rules store write must run outside the GUI thread");
+    int ticks = 0; QTimer timer; connect(&timer, &QTimer::timeout, [&] { ++ticks; }); timer.start(1);
+    QTRY_VERIFY(ticks >= 3);
+    // Nothing settles or is adopted while the write is stalled.
+    QCOMPARE(settledOrder, QStringList());
+    QCOMPARE(service.rules().size(), 1);
+    QCOMPARE(service.rules().first().path, input);
+    // A save submitted while one is in flight queues behind it.
+    service.setRules({second}, [&](const QString &error) { settledOrder << QStringLiteral("second"); secondSave = error.isEmpty(); });
+    QCOMPARE(settledOrder, QStringList());
+    probe->release = true;
+    QTRY_VERIFY(probe->exited.load());
+    QTRY_COMPARE_WITH_TIMEOUT(settledOrder, QStringList() << QStringLiteral("first") << QStringLiteral("second"), 7000);
+    QVERIFY(firstSave && secondSave);
+    // The queued snapshot replaced the earlier one, in submission order.
+    QCOMPARE(service.rules().size(), 1);
+    QCOMPARE(service.rules().first().path, other);
+    QCOMPARE(service.rules().first().action, watch::Action::Move);
+    watch::WatchFolders durable(dir.filePath("store"));
+    QVERIFY(durable.loadError().isEmpty());
+    QCOMPARE(durable.rules().size(), 1);
+    QCOMPARE(durable.rules().first().path, other);
+    service.stop();
+  }
+
+  // CORE-024: nothing new dispatches while a rules save is in flight, so a rule
+  // change still takes effect before any new file work.
+  void noFileWorkDispatchesWhileARulesSaveIsInFlight() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures"); const auto source = dir.filePath("input/new.png");
+    QVERIFY(writeFile(source, "rules in flight fixture"));
+    qint64 now = 0; QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    std::atomic_bool arm{false}, stalled{false}, release{false};
+    struct Release { std::atomic_bool *release; ~Release() { release->store(true); } } releaseGuard{&release};
+    service.setRulesWriteHook([&] {
+      if (!arm.load() || stalled.load()) return;
+      stalled = true;
+      while (!release.load()) QThread::msleep(2);
+    });
+    watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
+    QCOMPARE(saveRules(service, {rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed);
+    NativeWorkflowExecutions executions(dir.filePath("executions"));
+    service.setExecutionWriter(executions.writer());
+    service.start(); scan(service);
+    // The candidate is observed once (not yet stable); the stalled save then
+    // holds every later selection.
+    arm = true;
+    bool settled = false;
+    QString diagnostic = QStringLiteral("unsettled");
+    service.setRules({rule}, [&](const QString &error) { diagnostic = error; settled = true; });
+    QTRY_VERIFY_WITH_TIMEOUT(stalled.load(), 5000);
+    now = 2000; scan(service);
+    QTest::qWait(200);
+    QCOMPARE(processed.count(), 0);
+    QCOMPARE(executions.list().entries.size(), size_t(0));
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 0);
+    QVERIFY(!settled);
+    // The save settles; the held candidate dispatches and copies normally.
+    release = true;
+    QTRY_VERIFY_WITH_TIMEOUT(settled, 7000);
+    QCOMPARE(diagnostic, QString());
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QCOMPARE(processed.first().at(1).toBool(), true);
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 1);
+    QVERIFY(store.processed(watch::fingerprint(source)));
+    service.stop();
+  }
+
   void copyFailureIsAFailedExecutionNeverSucceeded() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
     const auto captures = dir.filePath("captures"); const auto source = dir.filePath("input/new.png");
@@ -658,7 +773,7 @@ private slots:
     NativeWorkflowExecutions executions(dir.filePath("executions")); service.setExecutionWriter(executions.writer());
     service.setFileOperationHook([](const QString &path) { QFile::remove(path); });  // vanishes mid-copy
     watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Move;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy observed(&service, &WatchFolderService::terminalObserved), activity(&service, &WatchFolderService::activityChanged);
     TerminalLogCapture logs;
     QSignalSpy notified(&service, &WatchFolderService::notify); QSignalSpy processed(&service, &WatchFolderService::processed);
@@ -692,7 +807,7 @@ private slots:
     watch::WatchFolders store(dir.filePath("store"));
     WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
     watch::Rule rule; rule.path = dir.filePath("input");
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy observed(&service, &WatchFolderService::terminalObserved), activity(&service, &WatchFolderService::activityChanged);
     TerminalLogCapture logs;
     QSignalSpy notified(&service, &WatchFolderService::notify); QSignalSpy processed(&service, &WatchFolderService::processed);
@@ -729,7 +844,7 @@ private slots:
       QMetaObject::invokeMethod(&service, [&] { service.stop(); }, Qt::BlockingQueuedConnection);
     });
     watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Move;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed), notified(&service, &WatchFolderService::notify);
     service.start(); scan(service);
     const QByteArray contents("completed copy must survive cancellation");
@@ -767,7 +882,7 @@ private slots:
     watch::Rule rule;
     rule.path = dir.filePath("input");
     rule.action = move ? watch::Action::Move : watch::Action::Copy;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed);
     service.start(); scan(service);
     QVERIFY(writeFile(source));
@@ -828,7 +943,7 @@ private slots:
     watch::Rule rule;
     rule.action = watch::Action::Copy;
     rule.path = dir.filePath("input");
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed);
     service.start(); scan(service);
     scan(service);
@@ -885,7 +1000,7 @@ private slots:
     WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
     watch::Rule rule;
     rule.path = dir.filePath("input");
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed);
     service.start(); scan(service);
     QVERIFY(writeFile(source));
@@ -940,7 +1055,7 @@ private slots:
       WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
       watch::Rule rule;
       rule.path = dir.filePath("input");
-      QCOMPARE(service.setRules({rule}), QString());
+      QCOMPARE(saveRules(service, {rule}), QString());
       QSignalSpy processed(&service, &WatchFolderService::processed);
       QSignalSpy idle(&uploads, &FileUploadController::finished);
       service.start(); scan(service);
@@ -1014,7 +1129,7 @@ private slots:
     rule.filters = {"*"};
     rule.recursive = true;
     rule.action = watch::Action::Copy;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed);
     service.start(); scan(service);
     now = 2000;
@@ -1066,7 +1181,7 @@ private slots:
     watch::Rule rule;
     rule.path = dir.filePath("input");
     rule.action = move ? watch::Action::Move : watch::Action::Copy;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed);
     QSignalSpy progress(&service, &WatchFolderService::progress);
     service.start(); scan(service);
@@ -1114,7 +1229,7 @@ private slots:
     watch::Rule rule;
     rule.path = dir.filePath("input");
     rule.action = watch::Action::Move;
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed);
     service.start(); scan(service);
     scan(service);
@@ -1159,7 +1274,7 @@ private slots:
       watch::Rule rule;
       rule.path = dir.filePath("input");
       rule.action = watch::Action::Move;
-      QCOMPARE(service->setRules({rule}), QString());
+      QCOMPARE(saveRules(*service, {rule}), QString());
       QSignalSpy processed(service.get(), &WatchFolderService::processed);
       spy = &processed;
       service->start(); scan(*service);
@@ -1201,9 +1316,10 @@ private slots:
     recursive->setChecked(true);
     action->setCurrentIndex(1);
     QTest::mouseClick(add, Qt::LeftButton);
+    QTRY_COMPARE(service.rules().size(), 1);
+    QTRY_VERIFY(add->isEnabled());
     QCOMPARE(error->text(), QString());
     QCOMPARE(list->count(), 1);
-    QCOMPARE(service.rules().size(), 1);
     QCOMPARE(service.rules().first().path, QFileInfo(dir.filePath("input")).canonicalFilePath());
     QCOMPARE(service.rules().first().filters, QStringList({"*.png", "*.jpg"}));
     QCOMPARE(service.rules().first().recursive, true);
@@ -1212,23 +1328,24 @@ private slots:
     list->setCurrentRow(0);
     list->setFocus();
     QTest::keyClick(list, Qt::Key_Space);
-    QCOMPARE(service.rules().first().enabled, false);
+    QTRY_COMPARE(service.rules().first().enabled, false);
     watch::WatchFolders disabled(dir.filePath("store"));
     QVERIFY(disabled.loadError().isEmpty());
     QCOMPARE(disabled.rules().first().enabled, false);
     list->setCurrentRow(0);
     QTest::keyClick(list, Qt::Key_Space);
-    QCOMPARE(service.rules().first().enabled, true);
+    QTRY_COMPARE(service.rules().first().enabled, true);
     watch::WatchFolders enabled(dir.filePath("store"));
     QCOMPARE(enabled.rules().first().enabled, true);
     QTest::mouseClick(add, Qt::LeftButton);
+    QTRY_VERIFY(!service.rules().isEmpty() && add->isEnabled());
     QCOMPARE(error->text(), QString("That folder overlaps a folder that is already watched. (watch-overlapping-roots)"));
     QCOMPARE(list->count(), 1);
     list->setCurrentRow(0);
     QTest::mouseClick(remove, Qt::LeftButton);
+    QTRY_VERIFY(service.rules().isEmpty());
+    QTRY_VERIFY(list->count() == 0);
     QCOMPARE(error->text(), QString());
-    QCOMPARE(list->count(), 0);
-    QVERIFY(service.rules().isEmpty());
     watch::WatchFolders removed(dir.filePath("store"));
     QVERIFY(removed.loadError().isEmpty());
     QVERIFY(removed.rules().isEmpty());
@@ -1262,7 +1379,7 @@ private slots:
     WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
     watch::Rule rule;
     rule.path = dir.filePath("input");
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed);
     QSignalSpy notices(&service, &WatchFolderService::notify);
     service.start(); scan(service);
@@ -1315,7 +1432,7 @@ private slots:
     WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
     watch::Rule rule;
     rule.path = dir.filePath("input");
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy processed(&service, &WatchFolderService::processed);
     service.start(); scan(service);
     QVERIFY(writeFile(source));
@@ -1339,7 +1456,7 @@ private slots:
     QWidget owner; FileUploadController uploads(ports, &owner);
     watch::WatchFolders store(dir.filePath("store")); qint64 now = 0;
     WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
-    watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(service.setRules({rule}), QString());
+    watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(saveRules(service, {rule}), QString());
     struct Gate { std::atomic_bool entered{false}, release{false}; };
     auto gate = std::make_shared<Gate>();
     struct Release { std::shared_ptr<Gate> gate; ~Release() { gate->release = true; } } release{gate};
@@ -1379,7 +1496,7 @@ private slots:
     {
       FileUploadController uploads(ports, &owner); watch::WatchFolders store(dir.filePath("store"));
       WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
-      watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(service.setRules({rule}), QString());
+      watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(saveRules(service, {rule}), QString());
       struct Gate { std::atomic_int jobs{0}; std::atomic_bool entered{false}, release{false}; };
       auto gate = std::make_shared<Gate>();
       struct Release { std::shared_ptr<Gate> gate; ~Release() { gate->release = true; } } release{gate};
@@ -1434,7 +1551,7 @@ private slots:
           [&](const QString &, UploadPublication, int sent, int replies, int acceptedReplies) { attempts = sent; answered = replies; accepted = acceptedReplies; });
       watch::WatchFolders store(dir.filePath("store"));
       WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
-      watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(service.setRules({rule}), QString());
+      watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(saveRules(service, {rule}), QString());
       QSignalSpy completed(&service, &WatchFolderService::processed), notices(&service, &WatchFolderService::notify);
       service.start(); scan(service); now += 2000; scan(service);
       QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 1, 7000);
@@ -1482,7 +1599,7 @@ private slots:
           [&](const QString &, UploadPublication, int sent, int replies) { attempts = sent; answered = replies; });
       watch::WatchFolders store(dir.filePath("store"));
       WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
-      watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(service.setRules({rule}), QString());
+      watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(saveRules(service, {rule}), QString());
       QSignalSpy completed(&service, &WatchFolderService::processed);
       service.start(); scan(service); now += 2000; scan(service);
       QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 1, 7000);
@@ -1524,7 +1641,7 @@ private slots:
     uploads.upload({other}); QTRY_COMPARE(http.received, 1);
     watch::WatchFolders store(dir.filePath("store")); qint64 now = 0;
     WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
-    watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(service.setRules({rule}), QString());
+    watch::Rule rule; rule.path = dir.filePath("input"); QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy completed(&service, &WatchFolderService::processed);
     const auto key = watch::fingerprint(source);
     service.start(); scan(service); now += 2000; scan(service);
@@ -1565,7 +1682,7 @@ private slots:
     WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
     watch::Rule rule;
     rule.path = dir.filePath("input");
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy notices(&service, &WatchFolderService::notify);
     // The store cannot be written, so the intent cannot be saved. The store
     // file is replaced by a directory, which is a real write failure.
@@ -1658,7 +1775,7 @@ private slots:
     WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
     watch::Rule rule;
     rule.path = dir.filePath("input");
-    QCOMPARE(service.setRules({rule}), QString());
+    QCOMPARE(saveRules(service, {rule}), QString());
     QSignalSpy notices(&service, &WatchFolderService::notify);
     service.start(); scan(service);
     now = 2000;

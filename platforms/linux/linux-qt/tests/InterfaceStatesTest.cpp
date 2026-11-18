@@ -1237,8 +1237,10 @@ private slots:
     QFile::setPermissions(denied, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
     path->setText(watched);
     add->click();
+    // CORE-024: a valid submission settles asynchronously; the settled state is
+    // the state the dialog now guarantees after the durable write.
     QVERIFY(error->text().isEmpty());
-    QCOMPARE(list->count(), 1);                                                                             // populated
+    QTRY_COMPARE(list->count(), 1);                                                                             // populated
     list->setCurrentRow(0);
     QVERIFY2(remove->isEnabled(), "a selected watch folder can be removed");                                // populated: Remove is armed
     QVERIFY2(list->item(0)->text().contains("watched"), qPrintable(list->item(0)->text()));
@@ -1249,8 +1251,8 @@ private slots:
     path->setText(second);
     add->click();
     QVERIFY(error->text().isEmpty());
-    QCOMPARE(list->count(), 2);
-    QVERIFY2(list->item(0)->text().contains("folder missing"), qPrintable(list->item(0)->text()));            // error: a missing folder stays visible
+    QTRY_COMPARE(list->count(), 2);
+    QTRY_VERIFY(list->item(0)->text().contains("folder missing"));                                          // error: a missing folder stays visible
   }
   // Effects: initial, empty, populated, loading, validation, failure, unavailable.
   // denied: n/a because the dialog asks for no permission; it edits an image already held in memory.

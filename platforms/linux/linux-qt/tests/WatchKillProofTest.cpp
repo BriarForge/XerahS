@@ -244,7 +244,9 @@ private slots:
       FileUploadController uploads(ports, &owner); watch::WatchFolders store(directory);
       WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
       watch::Rule watched, extra; watched.path = input; extra.path = other;
-      QCOMPARE(service.setRules({watched, extra}), QString());
+      bool rulesSettled = false;
+      service.setRules({watched, extra}, [&](const QString &error) { rulesSettled = error.isEmpty(); });
+      QTRY_VERIFY_WITH_TIMEOUT(rulesSettled, 7000);
       QSignalSpy completed(&service, &WatchFolderService::processed);
       service.start(); reconcile(service); now += 2000; reconcile(service);
       QTRY_COMPARE_WITH_TIMEOUT(completed.count(), 2, 7000);

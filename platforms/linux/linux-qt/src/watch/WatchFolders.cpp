@@ -268,25 +268,8 @@ CheckpointResult persistCheckpoint(const QString &path, const QByteArray &expect
   return {error, snapshot, std::move(processed), std::move(publications), std::move(retained.parents)};
 }
 // The watch rules store keeps version 1; CORE-025 P6 changes only the checkpoint store.
-QString writeRulesStore(const QString &path, const QJsonArray &items, QByteArray *snapshot) {
-  const auto store = rulesFile(path);
-  const auto read = store.read();
-  if (read.status == storage::StoreStatus::Unsafe) return "watch-store-unsafe";
-  if (read.status == storage::StoreStatus::ReadFailed || read.status == storage::StoreStatus::TooLarge) return "watch-store-read-failed";
-  if (read.status != storage::StoreStatus::Missing &&
-      (read.status != storage::StoreStatus::Ok || read.version != 1 || !read.document.value("items").isArray())) return "watch-store-invalid-version-or-data";
-  const auto parent = QFileInfo(path).absolutePath();
-  const QFileInfo dir(parent);
-  if ((dir.exists() && dir.ownerId() != uint(geteuid())) || !QDir().mkpath(parent)) return "watch-store-unsafe";
-  if (!QFile::setPermissions(parent, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner)) return "watch-store-permissions";
-  const auto status = store.write({{"items", items}}, 1, *snapshot, snapshot);
-  switch (status) {
-    case storage::StoreStatus::Ok: return {};
-    case storage::StoreStatus::Unsafe: return "watch-store-unsafe";
-    case storage::StoreStatus::TooLarge: return "watch-store-full";
-    default: return "watch-store-write-failed";
-  }
-}
+// Its durable write lives in WatchFolders::writeRules, split from validation so
+// callers can run it off the GUI thread.
 }
 WatchFolders::WatchFolders(QString directory) : m_directory(std::move(directory)) {
   QJsonArray rules, processed, publications; QJsonValue parents;
@@ -330,6 +313,14 @@ WatchFolders::WatchFolders(QString directory) : m_directory(std::move(directory)
   for (auto &record : m_publications) record.state = PublicationState::Unconfirmed;
 }
 QString WatchFolders::saveRules(const QVector<Rule> &rules, const QString &captures) {
+  RulesWrite write;
+  const auto prepared = prepareRules(rules, captures, &write);
+  if (!prepared.isEmpty()) return prepared;
+  return adoptRules(write, writeRules(write));
+}
+// CORE-024: validation and serialization on the caller's thread; the write
+// itself is a separate step so callers can keep it off the GUI thread.
+QString WatchFolders::prepareRules(const QVector<Rule> &rules, const QString &captures, RulesWrite *out) {
   if (!m_error.isEmpty()) return m_error;
   if (rules.size() + m_unreadable.size() > maximumWatchRules) return "watch-store-full";
   QJsonArray items; QVector<Rule> normalized; QSet<QString> roots; QSet<QUuid> ids;
@@ -359,9 +350,42 @@ QString WatchFolders::saveRules(const QVector<Rule> &rules, const QString &captu
     normalized.append(rule);
   }
   for (const auto &raw : m_unreadable) items.append(raw);
-  const auto error = writeRulesStore(QDir(m_directory).filePath("watch-folders.json"), items, &m_rulesSnapshot);
-  if (error.isEmpty()) m_rules = normalized;
-  return error;
+  out->path = QDir(m_directory).filePath("watch-folders.json");
+  out->items = items;
+  out->rules = normalized;
+  out->expected = m_rulesSnapshot;
+  return {};
+}
+// The durable rules write; safe off the GUI thread.
+RulesWriteResult WatchFolders::writeRules(const RulesWrite &write) {
+  RulesWriteResult result;
+  const auto store = rulesFile(write.path);
+  const auto read = store.read();
+  if (read.status == storage::StoreStatus::Unsafe) return {QStringLiteral("watch-store-unsafe"), {}};
+  if (read.status == storage::StoreStatus::ReadFailed || read.status == storage::StoreStatus::TooLarge)
+    return {QStringLiteral("watch-store-read-failed"), {}};
+  if (read.status != storage::StoreStatus::Missing &&
+      (read.status != storage::StoreStatus::Ok || read.version != 1 || !read.document.value("items").isArray()))
+    return {QStringLiteral("watch-store-invalid-version-or-data"), {}};
+  const auto parent = QFileInfo(write.path).absolutePath();
+  const QFileInfo dir(parent);
+  if ((dir.exists() && dir.ownerId() != uint(geteuid())) || !QDir().mkpath(parent))
+    return {QStringLiteral("watch-store-unsafe"), {}};
+  if (!QFile::setPermissions(parent, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner))
+    return {QStringLiteral("watch-store-permissions"), {}};
+  const auto status = store.write({{"items", write.items}}, 1, write.expected, &result.snapshot);
+  switch (status) {
+    case storage::StoreStatus::Ok: return result;
+    case storage::StoreStatus::Unsafe: return {QStringLiteral("watch-store-unsafe"), {}};
+    case storage::StoreStatus::TooLarge: return {QStringLiteral("watch-store-full"), {}};
+    default: return {QStringLiteral("watch-store-write-failed"), {}};
+  }
+}
+QString WatchFolders::adoptRules(const RulesWrite &write, RulesWriteResult result) {
+  if (!result.error.isEmpty()) return result.error;
+  m_rulesSnapshot = result.snapshot;
+  m_rules = write.rules;
+  return {};
 }
 QString WatchFolders::remember(const QString &key) {
   if (!m_error.isEmpty()) return m_error;

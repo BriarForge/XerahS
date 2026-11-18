@@ -25,6 +25,8 @@ public:
   void setCheckpointHook(std::function<void()> hook);
   // Test seam: called on the worker before each dispatch fingerprint check.
   void setDispatchCheckHook(std::function<void(const QString &)> hook);
+  // Test seam: called on the worker before the durable rules store write.
+  void setRulesWriteHook(std::function<void()> hook);
   // Drain preparation, terminal reporting and the durable checkpoint of the pending file.
   void finishCheckpoint();
   bool discovering() const { return m_discovery.running(); }
@@ -38,7 +40,12 @@ public:
   void start();
   void stop();
   void rescan();
-  QString setRules(const QVector<watch::Rule> &rules);
+  // CORE-024: watch rules persistence runs on owned work off the GUI thread.
+  // Validation errors reach done synchronously before this returns; the durable
+  // write's outcome reaches done on the GUI thread after the write settles and
+  // the store adopted the rules. A second save submitted while one is in flight
+  // is applied in submission order once the earlier writes settle.
+  void setRules(const QVector<watch::Rule> &rules, std::function<void(const QString &)> done = {});
   const QVector<watch::Rule> &rules() const { return m_store.rules(); }
   QString capturesFolder() const { return m_captures(); }
 signals:
@@ -51,6 +58,7 @@ private:
   Q_SIGNAL void checkpointSettled();
   struct Candidate { QString path, key; watch::Rule rule; };
   void settle(const QString &path, bool success, const QString &error, const QString &saved);
+  void runRulesSave(const QVector<watch::Rule> &rules, std::function<void(const QString &)> done);
   // The final dispatch fingerprint runs on owned work off the GUI thread; one
   // candidate is checked at a time and nothing is dispatched until the check
   // settles.
@@ -89,8 +97,13 @@ private:
   // CORE-024: the final dispatch fingerprint runs on owned work off the GUI
   // thread; one candidate is checked at a time.
   OwnedWork m_dispatch;
+  // CORE-024: the durable rules store write runs on owned work off the GUI
+  // thread; saves are serialized and applied in submission order.
+  OwnedWork m_rulesStorage;
   bool m_checkpointing = false;
   bool m_dispatching = false;
+  bool m_savingRules = false;
+  QVector<QPair<QVector<watch::Rule>, std::function<void(const QString &)>>> m_pendingRuleSaves;
   quint64 m_publicationGeneration = 0;
   int m_uploadAttempts = 0;
   int m_answeredAttempts = 0;
@@ -103,6 +116,7 @@ private:
   std::function<void(const QString &)> m_fileHook, m_removeHook;
   std::function<void(const QString &)> m_dispatchCheckHook;
   std::function<void()> m_discoveryHook;
+  std::function<void()> m_rulesWriteHook;
   bool m_running = false;
   bool m_blocked = false;
 };

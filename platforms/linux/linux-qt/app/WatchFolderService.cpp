@@ -71,21 +71,49 @@ void WatchFolderService::stop() {
   // persistence and dispatch-check writers do not, so their cancel() requests
   // just record intent, and each continuation decides from m_running and the
   // generation instead.
-  m_running = false; ++m_publicationGeneration; m_timer.stop(); m_work.cancel(); m_fileStorage.cancel(); m_dispatch.cancel();
+  m_running = false; ++m_publicationGeneration; m_timer.stop(); m_work.cancel(); m_fileStorage.cancel(); m_dispatch.cancel(); m_rulesStorage.cancel();
   ++m_discoveryGeneration; m_discovery.cancel(); m_rescanRequested = false;
   if (!m_watcher.directories().isEmpty()) m_watcher.removePaths(m_watcher.directories());
   m_uploads.cancel();
 }
-QString WatchFolderService::setRules(const QVector<watch::Rule> &rules) {
-  const auto error = m_store.saveRules(rules, m_captures());
-  if (error.isEmpty()) {
-    ++m_publicationGeneration;
-    ++m_discoveryGeneration; m_discovery.cancel();
-    m_reported.clear(); rescan();
-  }
-  return error;
+void WatchFolderService::setRules(const QVector<watch::Rule> &rules, std::function<void(const QString &)> done) {
+  if (m_savingRules) { m_pendingRuleSaves.append({rules, std::move(done)}); return; }
+  runRulesSave(rules, std::move(done));
 }
-WatchFolderService::~WatchFolderService() { m_work.cancel(); m_discovery.cancel(); m_fileStorage.cancel(); m_dispatch.cancel(); }
+// CORE-024: the GUI thread validates and snapshots the write; the durable store
+// write runs on owned work and the store adopts only after it settles, with the
+// same snapshot fence as the checkpoint writers. Nothing new dispatches while a
+// save is in flight, so a rule change still takes effect before any new file
+// work, and watching keeps running under the previously adopted rules if the
+// write fails.
+void WatchFolderService::runRulesSave(const QVector<watch::Rule> &rules, std::function<void(const QString &)> done) {
+  watch::RulesWrite write;
+  const auto diagnostic = m_store.prepareRules(rules, m_captures(), &write);
+  if (!diagnostic.isEmpty()) { if (done) done(diagnostic); return; }
+  m_savingRules = true;
+  const auto hook = m_rulesWriteHook;
+  m_rulesStorage = OwnedWork::run<watch::RulesWriteResult>(this,
+      [write, hook](const OwnedWork::Context &) {
+        if (hook) hook();
+        return watch::WatchFolders::writeRules(write);
+      },
+      [this, write, done = std::move(done)](watch::RulesWriteResult result) mutable {
+    m_savingRules = false;
+    const auto diagnostic = m_store.adoptRules(write, std::move(result));
+    if (diagnostic.isEmpty()) {
+      ++m_publicationGeneration;
+      ++m_discoveryGeneration; m_discovery.cancel();
+      m_reported.clear(); rescan();
+    }
+    if (done) done(diagnostic);
+    // A save queued behind this one is a complete snapshot; apply it in order.
+    if (!m_pendingRuleSaves.isEmpty()) {
+      auto next = m_pendingRuleSaves.takeFirst();
+      runRulesSave(next.first, std::move(next.second));
+    }
+  });
+}
+WatchFolderService::~WatchFolderService() { m_work.cancel(); m_discovery.cancel(); m_fileStorage.cancel(); m_dispatch.cancel(); m_rulesStorage.cancel(); }
 void WatchFolderService::setBeforeRemoveHook(std::function<void(const QString &)> hook) { m_removeHook = std::move(hook); }
 void WatchFolderService::setExecutionWriter(workflows::WorkflowExecution::Writer writer) { m_executionWriter = std::move(writer); }
 namespace {
@@ -98,6 +126,7 @@ QJsonObject ruleSnapshot(const watch::Rule &rule) {
 void WatchFolderService::setFileOperationHook(std::function<void(const QString &)> hook) { m_fileHook = std::move(hook); }
 void WatchFolderService::setDiscoveryHook(std::function<void()> hook) { m_discoveryHook = std::move(hook); }
 void WatchFolderService::setDispatchCheckHook(std::function<void(const QString &)> hook) { m_dispatchCheckHook = std::move(hook); }
+void WatchFolderService::setRulesWriteHook(std::function<void()> hook) { m_rulesWriteHook = std::move(hook); }
 // Copy/move runs on an owned worker; the GUI thread only snapshots inputs and receives the verdict.
 // WFCAT-004: the execution record's admission, start, step and terminal
 // persistence also run on owned work off the GUI thread. The pre-file fence is
@@ -490,7 +519,7 @@ void WatchFolderService::rescan() {
       report(path + ":watcher", "watch-notification-unavailable; periodic scanning remains active");
       if (!guard || !m_running || generation != m_discoveryGeneration) return;
     }
-    if (m_pendingPath.isEmpty() && !m_checkpointing && !m_dispatching) selectNextCandidate(ready, generation, capturesFolder);
+    if (m_pendingPath.isEmpty() && !m_checkpointing && !m_dispatching && !m_savingRules) selectNextCandidate(ready, generation, capturesFolder);
     if (guard && m_rescanRequested) rescan();
   });
 }

@@ -15,9 +15,11 @@
 #include "uploads/DestinationCatalog.h"
 #include <QApplication>
 #include <QCoreApplication>
+#include <QDeadlineTimer>
 #include <QDir>
 #include <QFile>
 #include <QTextStream>
+#include <QThread>
 #include <QTimer>
 #include <QUuid>
 #include <QWidget>
@@ -63,7 +65,18 @@ int main(int argc, char *argv[]) {
                              [] { return QDateTime::currentMSecsSinceEpoch(); });
   watch::Rule rule;
   rule.path = input;
-  if (!service.setRules({rule}).isEmpty()) {
+  // CORE-024: the rules write settles asynchronously off the GUI thread; wait
+  // for its diagnostic before the process does anything else.
+  bool rulesSettled = false;
+  QString rulesDiagnostic;
+  service.setRules({rule}, [&](const QString &error) { rulesDiagnostic = error; rulesSettled = true; });
+  // processEvents returns immediately on an empty queue, so a bare spin is not
+  // a wait; sleep between pump turns to give the worker a real time budget.
+  for (QDeadlineTimer deadline(5000); !rulesSettled && !deadline.hasExpired(); ) {
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, 20);
+    if (!rulesSettled) QThread::msleep(2);
+  }
+  if (!rulesSettled || !rulesDiagnostic.isEmpty()) {
     std::fputs("fixture: cannot write the watch rules\n", stderr);
     return 4;
   }

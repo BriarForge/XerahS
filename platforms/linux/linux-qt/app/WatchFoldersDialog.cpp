@@ -15,6 +15,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPushButton>
+#include <QPointer>
 #include <QRegularExpression>
 #include <QSignalBlocker>
 #include <QVBoxLayout>
@@ -81,21 +82,37 @@ WatchFoldersDialog::WatchFoldersDialog(WatchFolderService &service, QWidget *par
     remove->setEnabled(list->currentRow() >= 0);
   };
   refresh();
+  // CORE-024: the durable rules write runs off the GUI thread, so the outcome
+  // arrives after the click. The editing controls stay disabled until the write
+  // settles so a second edit cannot race the store, and a dialog closed
+  // mid-write drops its continuation safely.
+  const auto submit = [this, add, remove, list, error, refresh, &service](const QVector<watch::Rule> &rules, bool refreshAlways) {
+    // A new submission clears the previous diagnostic: it is stale until the
+    // write settles and reports its own outcome.
+    error->setText(QString());
+    add->setEnabled(false); remove->setEnabled(false); list->setEnabled(false);
+    const QPointer<WatchFoldersDialog> guard(this);
+    service.setRules(rules, [guard, add, remove, list, error, refresh, refreshAlways](const QString &diagnostic) {
+      if (!guard) return;
+      add->setEnabled(true); remove->setEnabled(list->currentRow() >= 0); list->setEnabled(true);
+      error->setText(watchMessage(diagnostic));
+      if (diagnostic.isEmpty() || refreshAlways) refresh();
+    });
+  };
   connect(browse, &QPushButton::clicked, this, [this, path] { const auto selected = QFileDialog::getExistingDirectory(this, tr("Watch folder")); if (!selected.isEmpty()) path->setText(selected); });
   connect(add, &QPushButton::clicked, this, [=, &service] {
     auto rules = service.rules(); watch::Rule rule; rule.path = path->text(); rule.filters = filters->text().split(QRegularExpression("[;\\s]+"), Qt::SkipEmptyParts);
     rule.recursive = recursive->isChecked(); rule.action = watch::Action(action->currentIndex()); rules.append(rule);
-    const auto diagnostic = service.setRules(rules); error->setText(watchMessage(diagnostic));
-    if (diagnostic.isEmpty()) refresh();
+    submit(rules, false);
   });
   connect(remove, &QPushButton::clicked, this, [=, &service] {
     const auto row = list->currentRow(); auto rules = service.rules();
     if (row < 0 || row >= rules.size()) { error->setText(tr("Select a watch folder to remove.")); return; }
-    rules.removeAt(row); const auto diagnostic = service.setRules(rules); error->setText(watchMessage(diagnostic)); if (diagnostic.isEmpty()) refresh();
+    rules.removeAt(row); submit(rules, false);
   });
   connect(list, &QListWidget::itemChanged, this, [=, &service](QListWidgetItem *item) {
     auto rules = service.rules(); const auto row = list->row(item); if (row < 0 || row >= rules.size()) return;
-    rules[row].enabled = item->checkState() == Qt::Checked; error->setText(watchMessage(service.setRules(rules))); refresh();
+    rules[row].enabled = item->checkState() == Qt::Checked; submit(rules, true);
   });
   connect(list, &QListWidget::currentRowChanged, this, [=](int row) { remove->setEnabled(row >= 0); });
 }
