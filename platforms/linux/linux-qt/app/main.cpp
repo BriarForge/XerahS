@@ -263,7 +263,7 @@ int main(int argc, char *argv[]) {
   reportLaunch(request, json, "started");
   dispatch(request);
   // ES-018: disclose and offer any editor recovery documents left by a crash.
-  QTimer::singleShot(0, &window, [] { xerahs::app::EditorWindow::offerRecovery(nullptr); });
+  QTimer::singleShot(0, &window, [] { xerahs::app::EditorWindow::offerRecovery(nullptr, [](int) {}); });
   const int result = terminationSignal ? xerahs::shell::TerminationSignals::exitStatus(terminationSignal) : app.exec();
   xerahs::app::drainEditorRecovery();
   xerahs::app::drainWatchFolders();

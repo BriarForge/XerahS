@@ -378,7 +378,9 @@ private slots:
         if (probe->entered && ticks >= 3) probe->gate.release();
         if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) box->defaultButton()->click();
       }); driver.start(2);
-      QCOMPARE(EditorWindow::offerRecovery(), 0);
+      int offered = -1;
+      EditorWindow::offerRecovery(nullptr, [&offered](int restored) { offered = restored; });
+      QTRY_COMPARE_WITH_TIMEOUT(offered, 0, 5000);
       QVERIFY(probe->entered); QVERIFY(!probe->onGui); QVERIFY(ticks >= 3);
       QVERIFY(!QFile::exists(badPath));
       QCOMPARE(store.list().records.size(), size_t(1));
@@ -514,12 +516,14 @@ private slots:
     // The restart notice discloses age and source; the default keeps the document untouched.
     bool shown = false; QString text;
     QTimer later; connect(&later, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; shown = true; text = box->text(); QVERIFY(box->defaultButton()); QCOMPARE(box->defaultButton()->text(), QString("Decide later")); box->defaultButton()->click(); });
-    later.start(5); QCOMPARE(EditorWindow::offerRecovery(), 0); later.stop();
+    later.start(5); int offered = -1; EditorWindow::offerRecovery(nullptr, [&offered](int restored) { offered = restored; });
+    QTRY_COMPARE_WITH_TIMEOUT(offered, 0, 5000); later.stop();
     QVERIFY(shown); QVERIFY(text.contains("less than a minute ago") || text.contains("minute")); QVERIFY(text.contains(QFileInfo(path).absoluteFilePath())); QVERIFY(text.contains("last explicit save was not changed"));
     QCOMPARE(store.list().records.size(), size_t(1));
     // Restore opens the same annotations as an unsaved editor; the explicit save stays byte-identical.
     QTimer restore; connect(&restore, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; for (auto *b : box->buttons()) if (b->text() == "Restore") { b->click(); return; } });
-    restore.start(5); QCOMPARE(EditorWindow::offerRecovery(), 1); restore.stop();
+    restore.start(5); offered = -1; EditorWindow::offerRecovery(nullptr, [&offered](int restored) { offered = restored; });
+    QTRY_COMPARE_WITH_TIMEOUT(offered, 1, 5000); restore.stop();
     EditorWindow *restored = nullptr; for (auto *top : QApplication::topLevelWidgets()) if (auto *e = qobject_cast<EditorWindow *>(top)) restored = e;
     QVERIFY(restored); QVERIFY(restored->windowTitle().contains(" •")); QVERIFY(restored->statusBar()->currentMessage().contains("Source:"));
     QCOMPARE(serializeDocument(restored->findChild<EditorCanvas *>()->annotationDocument()).value("annotations"), original);
@@ -529,7 +533,8 @@ private slots:
     // Discard deletes it.
     delete restored;
     QTimer drop; connect(&drop, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; for (auto *b : box->buttons()) if (b->text() == "Discard") { b->click(); return; } });
-    drop.start(5); QCOMPARE(EditorWindow::offerRecovery(), 0); drop.stop(); QVERIFY(store.list().records.empty());
+    drop.start(5); offered = -1; EditorWindow::offerRecovery(nullptr, [&offered](int restored) { offered = restored; });
+    QTRY_COMPARE_WITH_TIMEOUT(offered, 0, 5000); drop.stop(); QVERIFY(store.list().records.empty());
   }
   void restoreTakesOverOnlyItsSelectedRecovery_data() {
     QTest::addColumn<QString>("mode");
@@ -569,8 +574,10 @@ private slots:
     for (auto *top : QApplication::topLevelWidgets()) if (auto *editor = qobject_cast<EditorWindow *>(top)) previousEditors.insert(editor);
     int prompts = 0; QTimer answer;
     connect(&answer, &QTimer::timeout, [&] {
+      // A user cannot click a hidden notice: the just-decided box stays
+      // reachable as the active modal widget until its deferred deletion.
       auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
-      if (!box || box->objectName() != "editorRecoveryNotice") return;
+      if (!box || !box->isVisible() || box->objectName() != "editorRecoveryNotice") return;
       const bool restore = prompts++ == 0;
       if (restore && mode == "changed") {
         auto replacement = QJsonDocument::fromJson(original.value(selectedPath)).object();
@@ -581,7 +588,8 @@ private slots:
       }
       for (auto *button : box->buttons()) if (button->text() == (restore ? "Restore" : "Decide later")) { button->click(); return; }
     });
-    answer.start(1); QCOMPARE(EditorWindow::offerRecovery(), 1); answer.stop();
+    answer.start(1); int offered = -1; EditorWindow::offerRecovery(nullptr, [&offered](int restored) { offered = restored; });
+    QTRY_COMPARE_WITH_TIMEOUT(offered, 1, 5000); answer.stop();
     QCOMPARE(prompts, EditorRecoveryStore::kMaxRecords);
     EditorWindow *restored = nullptr;
     for (auto *top : QApplication::topLevelWidgets()) if (auto *editor = qobject_cast<EditorWindow *>(top); editor && !previousEditors.contains(editor)) restored = editor;

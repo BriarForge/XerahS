@@ -4,6 +4,8 @@
 #include "image-editor/ShapePainter.h"
 #include "EditorSaveDialog.h"
 #include "EffectsDialog.h"
+
+#include <atomic>
 #include "FileUploadResultDialog.h"
 
 #include "EditorCanvas.h"
@@ -1762,49 +1764,134 @@ QString EditorWindow::writeRecoveryNow() {
   return job ? EditorRecoveryQueue::instance().wait(job) : QString{};
 }
 
-int EditorWindow::offerRecovery(QWidget *parent) {
-  auto store = std::make_shared<EditorRecoveryStore>(EditorRecoveryStore::defaultDirectory());
-  auto listing = std::make_shared<RecoveryListing>();
-  const QPointer<QWidget> parentGuard(parent);
-  const auto job = EditorRecoveryQueue::instance().list(store, [listing](RecoveryListing result) { *listing = std::move(result); });
-  if (!EditorRecoveryQueue::instance().wait(job).isEmpty() || (parent && !parentGuard)) return 0;
-  int restored = 0;
-  for (const auto &record : listing->records) {
-    // A document held by an editor that is still running is not a crash leftover.
-    if (liveRecoveryIds().contains(record.id)) continue;
-    if (record.ownerPid != QCoreApplication::applicationPid() && processAlive(record.ownerPid)) continue;
-    if (parent && !parentGuard) return restored;
-    const QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, QStringLiteral("Recover unsaved editor session"), recoveryDisclosure(record, QDateTime::currentDateTimeUtc()), QMessageBox::NoButton, parent));
-    box->setObjectName(QStringLiteral("editorRecoveryNotice")); box->setTextFormat(Qt::PlainText);
-    box->setInformativeText(QStringLiteral("Restore opens the recovered work as an unsaved editor. Discard permanently deletes the recovery copy. Decide later keeps it."));
-    auto *restore = box->addButton(QStringLiteral("Restore"), QMessageBox::AcceptRole);
-    auto *discard = box->addButton(QStringLiteral("Discard"), QMessageBox::DestructiveRole);
-    auto *later = box->addButton(QStringLiteral("Decide later"), QMessageBox::RejectRole);
-    box->setDefaultButton(later); box->setEscapeButton(later);
-    box->exec();
-    if (!box || (parent && !parentGuard)) return restored;
-    const bool discardChosen = box->clickedButton() == discard, restoreChosen = box->clickedButton() == restore;
-    delete box.data();
-    if (discardChosen) {
-      const auto removal = EditorRecoveryQueue::instance().remove(store, record.id, {});
-      EditorRecoveryQueue::instance().wait(removal);
-      if (parent && !parentGuard) return restored;
-      continue;
+void EditorWindow::writeRecovery(std::function<void(QString)> done) {
+  if (!done) return;
+  const auto job = submitRecoveryWrite();
+  if (!job) { done(QString{}); return; }
+  // The queue outlives every window, so the continuation fires even when this
+  // editor closes before its write finishes; the flow that chained it continues.
+  EditorRecoveryQueue::instance().whenFinished(job, [done](QString diagnostic) { done(diagnostic); });
+}
+
+namespace {
+// ES-018: the restart-notice offer flow. One instance per offerRecovery call;
+// receiver-contexted timers and connections fence every continuation: a flow
+// that finished (or whose box handler fired after a late finish) is destroyed
+// and Qt drops its pending callbacks instead of delivering them.
+class RecoveryOfferFlow final : public QObject {
+public:
+  using TakeOver = std::function<QPointer<EditorWindow>(const RecoveryRecord &, QWidget *)>;
+  RecoveryOfferFlow(QWidget *parent, std::function<void(int)> done, std::shared_ptr<EditorRecoveryStore> store,
+                    std::vector<RecoveryRecord> records, TakeOver takeOver)
+      : QObject(QCoreApplication::instance()), m_parent(parent), m_store(std::move(store)),
+        m_records(std::move(records)), m_done(std::move(done)), m_takeOver(std::move(takeOver)) {}
+  void start() { step(); }
+
+private:
+  void step() {
+    while (m_index < m_records.size()) {
+      const auto record = m_records.at(m_index++);
+      // A document held by an editor that is still running is not a crash leftover.
+      if (liveRecoveryIds().contains(record.id)) continue;
+      if (record.ownerPid != QCoreApplication::applicationPid() && processAlive(record.ownerPid)) continue;
+      if (!parentAlive()) return finish();
+      // The notice is window-modal without exec(); its decision continues the
+      // flow from the next event-loop turn, never inside the box's own
+      // clicked/finished chain, so the decided box settles before the next.
+      auto *box = new QMessageBox(QMessageBox::Question, QStringLiteral("Recover unsaved editor session"),
+                                  recoveryDisclosure(record, QDateTime::currentDateTimeUtc()), QMessageBox::NoButton, m_parent);
+      box->setObjectName(QStringLiteral("editorRecoveryNotice")); box->setTextFormat(Qt::PlainText);
+      box->setInformativeText(QStringLiteral("Restore opens the recovered work as an unsaved editor. Discard permanently deletes the recovery copy. Decide later keeps it."));
+      auto *restore = box->addButton(QStringLiteral("Restore"), QMessageBox::AcceptRole);
+      auto *discard = box->addButton(QStringLiteral("Discard"), QMessageBox::DestructiveRole);
+      auto *later = box->addButton(QStringLiteral("Decide later"), QMessageBox::RejectRole);
+      box->setDefaultButton(later); box->setEscapeButton(later);
+      box->setAttribute(Qt::WA_DeleteOnClose);
+      // One decision per notice: a hidden box can still receive a second
+      // finished emission (a click racing its hidden-but-not-yet-deleted
+      // state, Escape racing a click) and must not decide twice. The choice
+      // is read while the box is alive, then handled on the next event-loop
+      // turn: creating or showing a window from inside the box's own
+      // clicked/finished chain corrupts that chain's modal bookkeeping.
+      const auto decided = std::make_shared<std::atomic_bool>(false);
+      const QPointer<RecoveryOfferFlow> guard(this);
+      QObject::connect(box, &QMessageBox::finished, this, [guard, box, decided, restore, discard, record](int) {
+        if (!guard || decided->exchange(true)) return;
+        const bool discardChosen = box->clickedButton() == discard, restoreChosen = box->clickedButton() == restore;
+        QTimer::singleShot(0, guard, [guard, record, discardChosen, restoreChosen] {
+          if (!guard) return;
+          if (!guard->parentAlive()) return guard->finish();
+          if (discardChosen) {
+            EditorRecoveryQueue::instance().remove(guard->m_store, record.id, [guard](QString) {
+              if (!guard) return;
+              if (!guard->parentAlive()) return guard->finish();
+              guard->advance();
+            });
+            return;
+          }
+          if (!restoreChosen) return guard->advance();
+          guard->restore(record);
+        });
+      });
+      box->open();
+      return;  // the decision continues the flow
     }
-    if (!restoreChosen) continue;
-    const QPointer<EditorWindow> window(fromCapturedDocument(record.document, parent));
-    if (!window) continue;  // the recovery document is kept
-    window->m_recoveryId = record.id;
-    window->m_recoveryStore = std::make_shared<EditorRecoveryStore>(store->forRecord(record.id));
-    liveRecoveryIds().insert(record.id);
-    window->m_recoverySource = record.sourcePath;
-    window->m_importMessage = recoveryDisclosure(record, QDateTime::currentDateTimeUtc());
-    window->show(); if (!window) continue;
-    window->refresh(); if (!window) continue;
-    window->writeRecoveryNow();
-    ++restored;
+    finish();  // every offered record is decided
   }
-  return restored;
+  void restore(const RecoveryRecord &record) {
+    const QPointer<EditorWindow> window(m_takeOver(record, m_parent));
+    if (!window) return advance();  // the recovery document is kept
+    window->show(); if (!window) return advance();
+    window->refresh(); if (!window) return advance();
+    ++m_restored;
+    // The queue outlives every window and flow, so the write continuation is
+    // guarded: a flow or editor that ended earlier just drops it.
+    const QPointer<RecoveryOfferFlow> guard(this);
+    window->writeRecovery([guard](QString) { if (guard) guard->advance(); });
+  }
+  void advance() { QTimer::singleShot(0, this, [this] { step(); }); }
+  bool parentAlive() const { return !m_parent || m_parentGuard; }
+  void finish() {
+    if (m_finished.exchange(true)) return;
+    const auto done = std::move(m_done); m_done = {};
+    deleteLater();
+    if (done) done(m_restored);
+  }
+  QWidget *m_parent = nullptr;
+  QPointer<QWidget> m_parentGuard;
+  std::shared_ptr<EditorRecoveryStore> m_store;
+  std::vector<RecoveryRecord> m_records;
+  std::function<void(int)> m_done;
+  TakeOver m_takeOver;
+  size_t m_index = 0;
+  int m_restored = 0;
+  std::atomic_bool m_finished{false};
+};
+}
+
+void EditorWindow::offerRecovery(QWidget *parent, std::function<void(int)> done) {
+  if (!done) return;
+  auto store = std::make_shared<EditorRecoveryStore>(EditorRecoveryStore::defaultDirectory());
+  const QPointer<QWidget> parentGuard(parent);
+  EditorRecoveryQueue::instance().list(store, [parent, parentGuard, done, store](RecoveryListing listing) {
+    if (!done) return;
+    // A destroyed parent still completes: the caller learns the restored count.
+    if (parent && !parentGuard) return done(0);
+    // Defined in EditorWindow's member context so it may adopt the restored
+    // window into the recovery bookkeeping (private state).
+    const auto takeOver = [store](const RecoveryRecord &record, QWidget *parentWindow) -> QPointer<EditorWindow> {
+      const QPointer<EditorWindow> window(EditorWindow::fromCapturedDocument(record.document, parentWindow));
+      if (!window) return {};
+      window->m_recoveryId = record.id;
+      window->m_recoveryStore = std::make_shared<EditorRecoveryStore>(store->forRecord(record.id));
+      liveRecoveryIds().insert(record.id);
+      window->m_recoverySource = record.sourcePath;
+      window->m_importMessage = recoveryDisclosure(record, QDateTime::currentDateTimeUtc());
+      return window;
+    };
+    auto *flow = new RecoveryOfferFlow(parent, done, std::move(store), std::move(listing.records), takeOver);
+    flow->start();
+  });
 }
 
 }  // namespace xerahs::app

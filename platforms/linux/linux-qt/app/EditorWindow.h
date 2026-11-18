@@ -23,6 +23,7 @@
 #include <QImage>
 #include <QMainWindow>
 
+#include <functional>
 #include <memory>
 #include <optional>
 
@@ -47,8 +48,7 @@ public:
   static EditorWindow *open(const QString &path, QWidget *parent = nullptr);
   static EditorWindow *createNew(QWidget *parent = nullptr);
   static EditorWindow *fromCapturedImage(const QImage &image, QWidget *parent = nullptr);
-  static EditorWindow *fromCapturedDocument(const xerahs::editor::AnnotationDocument &document, QWidget *parent = nullptr);
-  // Empty path invokes the native picker; recent-file actions pass an explicit path.
+  static EditorWindow *fromCapturedDocument(const xerahs::editor::AnnotationDocument &document, QWidget *parent = nullptr);  // Empty path invokes the native picker; recent-file actions pass an explicit path.
   bool openImage(const QString &path = {});
   // EC-003: explicit dialog, HTTPS by default, bounded download held in memory only.
   // Ends exactly where openImage does: validated source, dirty Save/Discard/Cancel,
@@ -75,12 +75,18 @@ public:
   // ES-018: restart notice for separate recovery documents. Each is disclosed
   // with its age and source and offered Restore / Discard / Decide later (the
   // default, which keeps it). Restoring opens an unsaved editor and never writes
-  // the explicit save. Returns the number of editors restored.
-  static int offerRecovery(QWidget *parent = nullptr);
+  // the explicit save. The loop runs on the event loop: window-modal notices
+  // without exec(), queue waits through whenFinished/whenIdle continuations.
+  // done receives the number of editors restored once every offered record is
+  // decided (also when the parent is destroyed mid-flow).
+  static void offerRecovery(QWidget *parent, std::function<void(int)> done);
   // Test seam: delay before a dirty change is written to its recovery document.
   static void setRecoveryDelay(int milliseconds);
   // Writes the recovery document now when the session is dirty; returns its diagnostic.
   QString writeRecoveryNow();
+  // The same write as an owner-fenced continuation: done receives the write
+  // diagnostic once the serialized queue finishes it (immediately for no job).
+  void writeRecovery(std::function<void(QString)> done);
 signals:
   // GUI-thread acknowledgement after checkpoint/partial receipt recording;
   // emitted while Save is busy. Reentrant Save is ignored; owner deletion is safe.
@@ -141,7 +147,10 @@ private:
   void applyCreationDefaults();
   void rememberAnnotationTool();
   void persistDrawingDefaults(quint64 expectedRevision);
+public:
+  // ES-018: the restart-notice flow shows a restored recovery document.
   void refresh();
+private:
   void updateStatusMessage();
   void scheduleRecovery();
   quint64 submitRecoveryWrite();
