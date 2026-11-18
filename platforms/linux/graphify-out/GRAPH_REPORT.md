@@ -1,17 +1,17 @@
 # Graph Report - linux  (2026-11-19)
 
 ## Corpus Check
-- 777 files · ~948,253 words
+- 777 files · ~948,491 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 15 file(s) not represented in the graph (top: .sxcu 5, .xml 4, (none) 2)
 
 ## Summary
-- 19198 nodes · 48692 edges · 582 communities (530 shown, 52 thin omitted)
+- 19198 nodes · 48693 edges · 582 communities (530 shown, 52 thin omitted)
 - Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 6855 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0fcb2015`
+- Built from commit: `6b88a879`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -2757,7 +2757,7 @@ Nodes (15): Category, Adjustments, Drawings, Filters, Manipulations, Effect, fak
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `QApplication` connect `QApplication` to `Native Linux CMake build`, `.color`, `qtest`, `LocalizationExpansionTest.cpp`, `QLabel`, `EditorWindowTest`, `serializeDocument`, `NativeWindowPlacementTest`, `.start`, `PointF`, `EditorSession`, `nativeEditorPreferenceRevision`, `AnnotationToolMatrixTest`, `ActionOutcome`, `CaptureHistoryWindow`, `AppContext`, `PortalScreenshotTest`, `RectanglePropertiesDialog`, `.portalSettingChanged`, `QrCodeDialog`, `LoadedSource`, `EffectsDialog`, `NativeText`, `HashCheckerDialog`, `EditorUrlOpenTest`, `ApplicationSettingsTest`, `ApplicationSettings.cpp`, `RegionCaptureNativeTest`, `runEditorUpload`, `Harness`, `QTimer`, `ShapeStyleTest`, `EditorPrintTest`, `runEditorCopy`, `ApplicationWindow.cpp`, `ImageInsertDialog`, `PreferenceDialogTest`, `.add`, `Application icon`, `NewImageDialogTest`, `NativeCaptureWorkflowsTest`, `CommandPalette`, `CanvasRotationDialog`, `EditorViewport`, `EditorRecoveryStore`, `EditorPinTest`, `UploadDestinationsDialogTest`, `.disabledReviewStaysInertUntilRecordingMakesItAvailable`, `serializePipelineJournal`, `WorkflowShortcutsTest`, `ImageComparisonDialog`, `readSxiePreset`, `AutoCaptureDialog`, `HttpFixture`, `Harness`, `validateCaptureFile`, `ModalDialogsTest`, `CommandPaletteTest.cpp`, `EditorTaskTest`, `CaptureRecoveryActions`, `CaptureHistoryTest`, `.imageRect`, `.attach`, `EditorPrintChoice`, `NativeEditorToolbar`, `EditorExitTest`, `CaptureSaveAsTest`, `EditorPrint.cpp`, `LegacyHistoryTest`, `publishWorkflowClipboard`, `OnboardingProgress.cpp`, `textRecognitionAvailable`, `ColorPickerDialogTest`, `ActionSelectionTest`, `HashCheckerDialogTest.cpp`, `createShellDispatcher`, `AnnotationObjectNavigatorTest`, `RecordingAdmissionTest`, `CapturePinPrintTest`, `CapturePairedSaveTest`, `FakePortal`, `EditorRecoveryQueue`, `CaptureScheduleDialogTest`, `RecordingAudioConsent`, `ScheduledCaptureTest`, `ApplicationWindowTest`, `ColorPickerDialog.cpp`, `CapturePipeline.cpp`, `ImageRecognitionDialog::ImageRecognitionDialog`, `automaticCaptureCondition`, `installWorkflows`, `Fixture`, `.setInitialImage`, `code`, `ImageInsertTest`, `annotationToolActions`, `main`, `RecordingFeature.cpp`, `RejectModal`, `viewPointInPixel`?**
-  _High betweenness centrality (0.081) - this node is a cross-community bridge._
+  _High betweenness centrality (0.075) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `QApplication` (e.g. with `Integration` and `Runtime API`) actually correct?**
   _`QApplication` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `public`, `m_choices`, `m_selected` to the rest of the system?**
@@ -2765,7 +2765,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Native Linux CMake build` be split into smaller, more focused modules?**
   _Cohesion score 0.025038035209737013 - nodes in this community are weakly interconnected._
 - **Why does `Native editor save and companion repair` connect `Native paired capture persistence` to `Linux contract scope audit`, `QTimer`?**
-  _High betweenness centrality (0.055) - this node is a cross-community bridge._
+  _High betweenness centrality (0.064) - this node is a cross-community bridge._
 - **Are the 9 inferred relationships involving `ParamValues` (e.g. with `deserializeParameters()` and `.handComputedPixels()`) actually correct?**
   _`ParamValues` has 9 INFERRED edges - model-reasoned connections that need verification._
 - **Should `EditorWindowTest` be split into smaller, more focused modules?**

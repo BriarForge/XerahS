@@ -1,6 +1,7 @@
 // CORE-024, CORE-025.
 #include "WatchFolderService.h"
 #include "actions/PipelineResultJson.h"
+#include <QCoreApplication>
 #include <QDebug>
 #include "FileUploadController.h"
 #include "OwnedWork.h"
@@ -421,16 +422,19 @@ void WatchFolderService::complete(const QString &path, bool success, const QStri
   });
 }
 void WatchFolderService::setCheckpointHook(std::function<void()> hook) { m_checkpointHook = std::move(hook); }
+// Drain preparation, terminal reporting and the durable checkpoint of the pending file.
+// CORE-024: the post-main-loop drain pumps queued continuations with flat
+// processEvents turns instead of a nested event loop: no re-entrant exec and no
+// interruption bail-out, and the sleep between turns gives the worker threads a
+// real time budget (a bare processEvents spin is not a wait; it returns
+// immediately on an empty queue). The exit condition is unchanged: the drain
+// ends when the pending operation settled, and it stays unbounded exactly like
+// the editor recovery queue's accepted post-main-loop drain.
 void WatchFolderService::finishCheckpoint() {
   const QPointer<WatchFolderService> owner(this);
   while (owner && (m_checkpointing || !m_pendingPath.isEmpty())) {
-    QEventLoop loop;
-    bool settled = false;
-    connect(this, &WatchFolderService::checkpointSettled, &loop, [&] { settled = true; loop.quit(); });
-    connect(this, &QObject::destroyed, &loop, &QEventLoop::quit);
-    loop.exec(QEventLoop::ExcludeUserInputEvents);
-    // Application exit interrupts nested loops; main drains again after exec.
-    if (!settled) return;
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, 20);
+    if (owner && (m_checkpointing || !m_pendingPath.isEmpty())) QThread::msleep(2);
   }
 }
 void WatchFolderService::settle(const QString &path, bool success, const QString &error, const QString &saved) {
