@@ -56,7 +56,10 @@ private:
   // settles.
   void selectNextCandidate(QVector<Candidate> ready, quint64 generation, const QString &capturesFolder);
   void startFileWork(const QString &path, const QString &key, const watch::Rule &rule);
-  struct FileResult { QString error; bool read = false, copied = false; };
+  struct FileResult { QString error; bool read = false, copied = false;
+    // WFCAT-006: set when the interrupt landed before any file work began, so
+    // the record settles cancelled with no step action.
+    bool beforeFileWork = false; };
   void finishFileWork(const QString &path, const FileResult &result);
   void startCopyWorker(const QString &path, const QString &key, bool move);
   void complete(const QString &path, bool success, const QString &error);

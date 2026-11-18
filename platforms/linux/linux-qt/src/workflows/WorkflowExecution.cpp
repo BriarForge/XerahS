@@ -199,9 +199,9 @@ bool WorkflowExecution::processing(const QString &pipelineId) {
   m_record.pipelineId = pipelineId; m_record.state = "processing";
   m_record.steps.append(QJsonObject{{"action", captureStep()}, {"state", "succeeded"}}); return persist();
 }
-bool WorkflowExecution::finish(const QString &state, const QString &diagnostic, const QStringList &outputs) {
+bool WorkflowExecution::finish(const QString &state, const QString &diagnostic, const QStringList &outputs, bool noSyntheticStep) {
   if (!m_expected || terminal(m_record.state) || !terminal(state)) return false;
-  if (m_record.steps.isEmpty() && state != "not-started") m_record.steps.append(QJsonObject{{"action", fileOperationSnapshot(m_record.settings) ? QStringLiteral("read-file") : captureStep()},
+  if (!noSyntheticStep && m_record.steps.isEmpty() && state != "not-started") m_record.steps.append(QJsonObject{{"action", fileOperationSnapshot(m_record.settings) ? QStringLiteral("read-file") : captureStep()},
       {"state", state == "permission-denied" || state == "cancelled" ? state : QStringLiteral("failed")}});
   m_record.outputs = outputs;
   m_record.state = state; m_record.diagnostic = safeDiagnostic(diagnostic) ? diagnostic : QStringLiteral("action-failed");

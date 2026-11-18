@@ -29,7 +29,10 @@ public:
   bool step(const QString &action, const QString &state, const QString &diagnostic = {},
       std::optional<xerahs::actions::FailureClass> failure = std::nullopt);
   bool processing(const QString &pipelineId);
-  bool finish(const QString &state, const QString &diagnostic = {}, const QStringList &outputs = {});
+  // noSyntheticStep: a bare terminal normally synthesizes a step so a record
+  // never claims an unnamed outcome. The one honest exception is work cancelled
+  // before it began: no step action ran, so no step action is recorded.
+  bool finish(const QString &state, const QString &diagnostic = {}, const QStringList &outputs = {}, bool noSyntheticStep = false);
   bool complete(const xerahs::actions::PipelineResult &pipeline);
   QJsonObject recordedObservation() const;
   const WorkflowExecutionRecord &record() const { return m_record; }

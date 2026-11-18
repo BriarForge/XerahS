@@ -67,6 +67,10 @@ void WatchFolderService::start() {
   m_timer.start(); rescan();
 }
 void WatchFolderService::stop() {
+  // Cooperative only: the copy and discovery workers poll cancelled(); the
+  // persistence and dispatch-check writers do not, so their cancel() requests
+  // just record intent, and each continuation decides from m_running and the
+  // generation instead.
   m_running = false; ++m_publicationGeneration; m_timer.stop(); m_work.cancel(); m_fileStorage.cancel(); m_dispatch.cancel();
   ++m_discoveryGeneration; m_discovery.cancel(); m_rescanRequested = false;
   if (!m_watcher.directories().isEmpty()) m_watcher.removePaths(m_watcher.directories());
@@ -127,10 +131,10 @@ void WatchFolderService::startFileWork(const QString &sourcePath, const QString 
       return;
     }
     // A stop or rule change that landed while the write was in flight never
-    // starts file work; the record settles cancelled and the file stays
-    // discoverable.
+    // starts file work; the record settles cancelled with no step action and
+    // the file stays discoverable.
     if (!m_running || generation != m_publicationGeneration) {
-      finishFileWork(path, {QStringLiteral("cancelled"), false, false});
+      finishFileWork(path, {QStringLiteral("cancelled"), false, false, /*beforeFileWork=*/true});
       return;
     }
     startCopyWorker(path, key, move);
@@ -192,14 +196,21 @@ void WatchFolderService::finishFileWork(const QString &path, const FileResult &r
       else stored = execution->step(action, QStringLiteral("failed"), code, classifyFileOperationFailure(code)) && stored;
     };
     if (execution) {
-      if (result.read) stored = execution->step(QStringLiteral("read-file"), QStringLiteral("succeeded")) && stored;
-      if (result.copied) stored = execution->step(QStringLiteral("copy-file"), QStringLiteral("succeeded")) && stored;
-      if (result.error.isEmpty() && operation == QLatin1String("move")) stored = execution->step(QStringLiteral("remove-source"), QStringLiteral("succeeded")) && stored;
-      else if (!result.error.isEmpty()) stepFailed(!result.read ? (code == QLatin1String("watch-copy-open-failed") ? "read-file" : "copy-file") : !result.copied ? "copy-file" : "remove-source");
-      const auto steps = execution->record().steps;
-      const auto terminal = fileOperationTerminal(execution->record().id, operation, steps, result.error.isEmpty() ? QString{} : code, 0);
-      persisted.state = terminal.state;
-      stored = execution->finish(terminal.state, terminal.diagnostic, terminal.outputs) && stored;
+      if (result.beforeFileWork) {
+        // WFCAT-006 accurate cancellation: the interrupt landed before any file
+        // work began, so no step action ran and none is recorded.
+        persisted.state = QStringLiteral("cancelled");
+        stored = execution->finish(QStringLiteral("cancelled"), QStringLiteral("cancelled"), {}, /*noSyntheticStep=*/true) && stored;
+      } else {
+        if (result.read) stored = execution->step(QStringLiteral("read-file"), QStringLiteral("succeeded")) && stored;
+        if (result.copied) stored = execution->step(QStringLiteral("copy-file"), QStringLiteral("succeeded")) && stored;
+        if (result.error.isEmpty() && operation == QLatin1String("move")) stored = execution->step(QStringLiteral("remove-source"), QStringLiteral("succeeded")) && stored;
+        else if (!result.error.isEmpty()) stepFailed(!result.read ? (code == QLatin1String("watch-copy-open-failed") ? "read-file" : "copy-file") : !result.copied ? "copy-file" : "remove-source");
+        const auto steps = execution->record().steps;
+        const auto terminal = fileOperationTerminal(execution->record().id, operation, steps, result.error.isEmpty() ? QString{} : code, 0);
+        persisted.state = terminal.state;
+        stored = execution->finish(terminal.state, terminal.diagnostic, terminal.outputs) && stored;
+      }
       persisted.observation = execution->recordedObservation();
     } else
       persisted.state = result.error.isEmpty() ? QStringLiteral("succeeded")
@@ -215,7 +226,8 @@ void WatchFolderService::finishFileWork(const QString &path, const FileResult &r
       m_blocked = true;
       if (result.copied) m_terminalState = QStringLiteral("partial");
       if (!error.isEmpty()) error += QLatin1Char('\n');
-      error += QStringLiteral("workflow-storage-unavailable: Watching stopped; could not save the execution record. Completed file work was retained.");
+      error += QStringLiteral("workflow-storage-unavailable: Watching stopped; could not save the execution record.");
+      if (!result.beforeFileWork) error += QStringLiteral(" Completed file work was retained.");
     }
     qInfo().noquote() << "Workflow terminal" << actions::pipelineObservationText(m_terminalObservation);
     // CORE-025 P4: local copy and move are unchanged. They never enter the

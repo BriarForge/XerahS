@@ -10,6 +10,7 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDeadlineTimer>
 #include <QDir>
 #include <QFile>
 #include <QLabel>
@@ -382,7 +383,9 @@ private slots:
       if (++probe->calls != stallAt) return writer(id, expected, bytes);
       probe->onGui = QThread::currentThread() == gui;
       probe->entered = true;
-      while (!probe->release) QThread::msleep(2);
+      // Bounded: on a regression that returns these writes to the GUI thread the
+      // stall ends and the onGui assertion fails instead of hanging the suite.
+      for (QDeadlineTimer stall(2000); !probe->release && !stall.hasExpired(); ) QThread::msleep(2);
       probe->exited = true;
       return writer(id, expected, bytes);
     });
@@ -462,9 +465,9 @@ private slots:
     const auto record = xerahs::workflows::parseWorkflowExecution(listing.entries.front().snapshot, listing.entries.front().id);
     QVERIFY(record);
     QCOMPARE(record->state, QString("cancelled"));
-    QCOMPARE(record->steps.size(), 1);
-    QCOMPARE(record->steps.first().toObject().value("action").toString(), QString("copy-file"));
-    QCOMPARE(record->steps.first().toObject().value("state").toString(), QString("cancelled"));
+    // WFCAT-006 accurate cancellation: no file was opened, so no step action ran.
+    QCOMPARE(record->steps.size(), 0);
+    QCOMPARE(record->diagnostic, QString("cancelled"));
     // The file stays discoverable: after the interrupt is undone it is processed normally.
     if (interrupt == "stop") service.start();
     else QCOMPARE(service.setRules({rule}), QString());
