@@ -1269,7 +1269,7 @@ add_executable(watch-folder-service-test tests/WatchFolderServiceTest.cpp)
 set_target_properties(watch-folder-service-test PROPERTIES AUTOMOC ON)
 target_link_libraries(watch-folder-service-test PRIVATE xerahs_watch_folders Qt6::Test)
 add_test(NAME watch-folder-service COMMAND watch-folder-service-test)
-set_tests_properties(watch-folder-service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+set_tests_properties(watch-folder-service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 60)
 
 # CORE-025 P7: the real process SIGKILL proof on a private tmpfs.
 add_executable(watch-kill-fixture tests/WatchKillFixture.cpp)

@@ -67,7 +67,7 @@ void WatchFolderService::start() {
   m_timer.start(); rescan();
 }
 void WatchFolderService::stop() {
-  m_running = false; ++m_publicationGeneration; m_timer.stop(); m_work.cancel(); m_fileStorage.cancel();
+  m_running = false; ++m_publicationGeneration; m_timer.stop(); m_work.cancel(); m_fileStorage.cancel(); m_dispatch.cancel();
   ++m_discoveryGeneration; m_discovery.cancel(); m_rescanRequested = false;
   if (!m_watcher.directories().isEmpty()) m_watcher.removePaths(m_watcher.directories());
   m_uploads.cancel();
@@ -81,7 +81,7 @@ QString WatchFolderService::setRules(const QVector<watch::Rule> &rules) {
   }
   return error;
 }
-WatchFolderService::~WatchFolderService() { m_work.cancel(); m_discovery.cancel(); m_fileStorage.cancel(); }
+WatchFolderService::~WatchFolderService() { m_work.cancel(); m_discovery.cancel(); m_fileStorage.cancel(); m_dispatch.cancel(); }
 void WatchFolderService::setBeforeRemoveHook(std::function<void(const QString &)> hook) { m_removeHook = std::move(hook); }
 void WatchFolderService::setExecutionWriter(workflows::WorkflowExecution::Writer writer) { m_executionWriter = std::move(writer); }
 namespace {
@@ -93,6 +93,7 @@ QJsonObject ruleSnapshot(const watch::Rule &rule) {
 }
 void WatchFolderService::setFileOperationHook(std::function<void(const QString &)> hook) { m_fileHook = std::move(hook); }
 void WatchFolderService::setDiscoveryHook(std::function<void()> hook) { m_discoveryHook = std::move(hook); }
+void WatchFolderService::setDispatchCheckHook(std::function<void(const QString &)> hook) { m_dispatchCheckHook = std::move(hook); }
 // Copy/move runs on an owned worker; the GUI thread only snapshots inputs and receives the verdict.
 // WFCAT-004: the execution record's admission, start, step and terminal
 // persistence also run on owned work off the GUI thread. The pre-file fence is
@@ -230,18 +231,31 @@ void WatchFolderService::beginPublication(const QString &path, const QString &ke
   const auto at = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
   const auto intent = m_store.publicationIntent(key, at);
   const auto hook = m_checkpointHook;
+  const auto dispatchHook = m_dispatchCheckHook;
   m_checkpointing = true;
-  m_checkpoint = OwnedWork::run<watch::IntentResult>(this,
-      [intent, hook](const OwnedWork::Context &) -> watch::IntentResult {
+  // CORE-024: the final re-check that the file was not replaced runs on the
+  // intent worker, after the intent write settles and before any dispatch; the
+  // GUI thread never hashes the file.
+  struct IntentCheck { watch::IntentResult result; bool matches = false; };
+  m_checkpoint = OwnedWork::run<IntentCheck>(this,
+      [intent, hook, dispatchHook, path, key](const OwnedWork::Context &) -> IntentCheck {
+    IntentCheck check;
     try {
       if (hook) hook();
-      return watch::WatchFolders::writeIntent(intent);
-    } catch (...) { return {QStringLiteral("watch-store-write-failed"), {}, {}, {}, {}}; }
-  }, [this, intent, path, rule, generation](watch::IntentResult result) {
+      check.result = watch::WatchFolders::writeIntent(intent);
+    } catch (...) { check.result = {QStringLiteral("watch-store-write-failed"), {}, {}, {}, {}}; }
+    // A failed intent never dispatches, so the re-check is only earned on success.
+    if (check.result.error.isEmpty()) {
+      if (dispatchHook) dispatchHook(path);
+      check.matches = watch::fingerprint(path) == key;
+    }
+    return check;
+  }, [this, intent, path, rule, generation](IntentCheck check) {
+    const auto &result = check.result;
     // CORE-025 P2: an intent that cannot be saved is always reported as
     // watch-store-write-failed, whichever store error caused it.
     const auto failed = !result.error.isEmpty();
-    const auto saved = failed ? QString() : m_store.adoptIntent(intent, std::move(result));
+    const auto saved = failed ? QString() : m_store.adoptIntent(intent, std::move(check.result));
     m_checkpointing = false;
     const QPointer<WatchFolderService> guard(this);
     if (!saved.isEmpty()) {
@@ -266,7 +280,8 @@ void WatchFolderService::beginPublication(const QString &path, const QString &ke
       return;
     }
     if (!guard) return;
-    if (!m_running || generation != m_publicationGeneration || watch::fingerprint(path) != m_pendingKey) {
+    // The worker's observation cannot authorize a file replaced before dispatch.
+    if (!m_running || generation != m_publicationGeneration || !check.matches) {
       writeSettlement(path, watch::PublicationDisposition::Released, QStringLiteral("cancelled"));
       return;
     }
@@ -384,7 +399,6 @@ void WatchFolderService::rescan() {
   if (!m_running || m_blocked) return;
   if (m_discovery.running()) { m_rescanRequested = true; return; }
   m_rescanRequested = false;
-  struct Candidate { QString path, key; watch::Rule rule; };
   struct Discovery {
     QSet<QString> directories, files;
     QVector<Candidate> candidates;
@@ -464,24 +478,48 @@ void WatchFolderService::rescan() {
       report(path + ":watcher", "watch-notification-unavailable; periodic scanning remains active");
       if (!guard || !m_running || generation != m_discoveryGeneration) return;
     }
-    if (m_pendingPath.isEmpty() && !m_checkpointing ) for (const auto &candidate : ready) {
-      const auto &key = candidate.key;
-      if (key.isEmpty() || m_store.processed(key) || m_attempted.contains(key)) continue;
-      // CORE-025 P2: a publication left over from an earlier process is
-      // unconfirmed and is never uploaded again automatically under this key.
-      if (m_store.publicationPending(key)) continue;
-      // The worker's observation cannot authorize a file replaced before dispatch.
-      if (watch::fingerprint(candidate.path) != key) continue;
-      m_pendingPath = candidate.path; m_pendingKey = key; m_attempted.insert(key);
+    if (m_pendingPath.isEmpty() && !m_checkpointing && !m_dispatching) selectNextCandidate(ready, generation, capturesFolder);
+    if (guard && m_rescanRequested) rescan();
+  });
+}
+// CORE-024: the final dispatch fingerprint runs on owned work off the GUI
+// thread; the GUI thread never hashes a candidate file. One candidate is
+// checked at a time, and nothing is dispatched until the check settles. A
+// stop, rule change or capture-folder change that lands while a check is in
+// flight abandons the selection; the file stays discoverable. A candidate
+// whose fingerprint no longer matches is refused exactly as before, and the
+// next ready candidate is checked instead.
+void WatchFolderService::selectNextCandidate(QVector<Candidate> ready, quint64 generation, const QString &capturesFolder) {
+  while (!ready.isEmpty()) {
+    const auto candidate = ready.takeFirst();
+    const auto &key = candidate.key;
+    if (key.isEmpty() || m_store.processed(key) || m_attempted.contains(key)) continue;
+    // CORE-025 P2: a publication left over from an earlier process is
+    // unconfirmed and is never uploaded again automatically under this key.
+    if (m_store.publicationPending(key)) continue;
+    m_dispatching = true;
+    const auto hook = m_dispatchCheckHook;
+    m_dispatch = OwnedWork::run<bool>(this,
+        [path = candidate.path, key, hook](const OwnedWork::Context &) {
+          // The worker's observation cannot authorize a file replaced before dispatch.
+          if (hook) hook(path);
+          return watch::fingerprint(path) == key;
+        },
+        [this, tail = ready, candidate, generation, capturesFolder](bool matches) {
+      m_dispatching = false;
+      // An interrupt that landed while the check was in flight ends the
+      // selection; the next rescan re-discovers the file.
+      if (!m_running || m_blocked || generation != m_discoveryGeneration || capturesFolder != m_captures()) return;
+      if (!matches) { selectNextCandidate(tail, generation, capturesFolder); return; }
+      m_pendingPath = candidate.path; m_pendingKey = candidate.key; m_attempted.insert(candidate.key);
       m_publicationAction = candidate.rule.action == watch::Action::Upload;
       m_uploadAttempts = 0; m_answeredAttempts = 0; m_acceptedAttempts = 0;
       if (candidate.rule.action == watch::Action::Upload) {
         // CORE-025 P2: the send intent is durably saved before any dispatch.
-        beginPublication(candidate.path, key, ruleSnapshot(candidate.rule));
-      } else startFileWork(candidate.path, key, candidate.rule);
-      break;
-    }
-    if (guard && m_rescanRequested) rescan();
-  });
+        beginPublication(candidate.path, candidate.key, ruleSnapshot(candidate.rule));
+      } else startFileWork(candidate.path, candidate.key, candidate.rule);
+    });
+    return;
+  }
 }
 }

@@ -23,6 +23,8 @@ public:
   // Test seam: called on the worker before each directory enumeration.
   void setDiscoveryHook(std::function<void()> hook);
   void setCheckpointHook(std::function<void()> hook);
+  // Test seam: called on the worker before each dispatch fingerprint check.
+  void setDispatchCheckHook(std::function<void(const QString &)> hook);
   // Drain preparation, terminal reporting and the durable checkpoint of the pending file.
   void finishCheckpoint();
   bool discovering() const { return m_discovery.running(); }
@@ -47,7 +49,12 @@ signals:
   void progress(const QString &path, qint64 done, qint64 total);
 private:
   Q_SIGNAL void checkpointSettled();
+  struct Candidate { QString path, key; watch::Rule rule; };
   void settle(const QString &path, bool success, const QString &error, const QString &saved);
+  // The final dispatch fingerprint runs on owned work off the GUI thread; one
+  // candidate is checked at a time and nothing is dispatched until the check
+  // settles.
+  void selectNextCandidate(QVector<Candidate> ready, quint64 generation, const QString &capturesFolder);
   void startFileWork(const QString &path, const QString &key, const watch::Rule &rule);
   struct FileResult { QString error; bool read = false, copied = false; };
   void finishFileWork(const QString &path, const FileResult &result);
@@ -76,7 +83,11 @@ private:
   // WFCAT-004: the watch execution record's admission/start and terminal
   // step/finish persistence run on owned work off the GUI thread.
   OwnedWork m_fileStorage;
+  // CORE-024: the final dispatch fingerprint runs on owned work off the GUI
+  // thread; one candidate is checked at a time.
+  OwnedWork m_dispatch;
   bool m_checkpointing = false;
+  bool m_dispatching = false;
   quint64 m_publicationGeneration = 0;
   int m_uploadAttempts = 0;
   int m_answeredAttempts = 0;
@@ -87,6 +98,7 @@ private:
   quint64 m_discoveryGeneration = 0;
   bool m_rescanRequested = false;
   std::function<void(const QString &)> m_fileHook, m_removeHook;
+  std::function<void(const QString &)> m_dispatchCheckHook;
   std::function<void()> m_discoveryHook;
   bool m_running = false;
   bool m_blocked = false;

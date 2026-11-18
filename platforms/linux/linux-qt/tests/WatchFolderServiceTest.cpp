@@ -476,6 +476,175 @@ private slots:
     service.stop();
   }
 
+  // CORE-024: the final dispatch fingerprint runs off the GUI thread. A stalled
+  // selection check keeps the GUI responsive with nothing dispatched; a stalled
+  // post-intent re-check keeps the GUI responsive with the intent durable and
+  // no request sent until the re-check settles.
+  void dispatchFingerprintDoesNotBlockTheGui_data() {
+    QTest::addColumn<QString>("stage");
+    QTest::newRow("selection-check") << QString("selection");
+    QTest::newRow("upload-intent-recheck") << QString("intent");
+  }
+  void dispatchFingerprintDoesNotBlockTheGui() {
+    QFETCH(QString, stage);
+    QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures"); const auto source = dir.filePath("input/new.png");
+    HttpFixture http;
+    UploadDestination destination;
+    if (stage == "intent") {
+      QVERIFY(http.server.listen(QHostAddress::LocalHost));
+      destination.id = QUuid::createUuid(); destination.name = "Watch fixture";
+      destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+      destination.body = BodyType::MultipartFormData; destination.fileFormName = "file"; destination.resultUrl = "{json:url}";
+    }
+    auto ports = portsFor(dir);
+    if (stage == "intent") { DestinationCatalog catalog(ports.catalogPath); QCOMPARE(catalog.add(destination), QString()); }
+    QVERIFY(writeFile(source, "dispatch fingerprint fixture"));
+    qint64 now = 0; QWidget owner;
+    FileUploadController uploads(ports, &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    struct Probe { std::atomic_int calls{0}; std::atomic_bool entered{false}, release{false}, onGui{false}, exited{false}; };
+    const auto probe = std::make_shared<Probe>();
+    struct Release { std::shared_ptr<Probe> probe; ~Release() { probe->release = true; } } release{probe};
+    const auto gui = QThread::currentThread();
+    // The selection check is the first dispatch fingerprint call; the upload
+    // path's post-intent re-check is the second.
+    const int stallAt = stage == "selection" ? 1 : 2;
+    service.setDispatchCheckHook([&](const QString &) {
+      if (++probe->calls != stallAt) return;
+      probe->onGui = QThread::currentThread() == gui;
+      probe->entered = true;
+      while (!probe->release) QThread::msleep(2);
+      probe->exited = true;
+    });
+    watch::Rule rule; rule.path = dir.filePath("input");
+    rule.action = stage == "intent" ? watch::Action::Upload : watch::Action::Copy;
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed), notified(&service, &WatchFolderService::notify);
+    service.start(); scan(service);
+    scan(service); now = 2000; scan(service); now += 2000; scan(service);
+    QTRY_VERIFY_WITH_TIMEOUT(probe->entered.load(), 5000);
+    QVERIFY2(!probe->onGui.load(), "The dispatch fingerprint must run outside the GUI thread");
+    int ticks = 0; QTimer timer; connect(&timer, &QTimer::timeout, [&] { ++ticks; }); timer.start(1);
+    QTRY_VERIFY(ticks >= 3);
+    // The stalled check withholds every completion: no dispatch happened yet.
+    QCOMPARE(processed.count(), 0); QCOMPARE(notified.count(), 0);
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 0);
+    if (stage == "intent") {
+      QCOMPARE(http.received, 0);
+      // The intent is already durable on disk while the re-check is stalled; the
+      // in-memory adoption happens when the stalled worker settles.
+      QVERIFY(watch::WatchFolders(dir.filePath("store")).publicationPending(watch::fingerprint(source)));
+    }
+    probe->release = true;
+    QTRY_VERIFY(probe->exited.load());
+    if (stage == "intent") QTRY_COMPARE_WITH_TIMEOUT(http.received, 1, 7000);
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QCOMPARE(processed.first().at(1).toBool(), true);
+    const auto key = watch::fingerprint(source);
+    QVERIFY(store.processed(key));
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), stage == "intent" ? 0 : 1);
+    service.stop();
+  }
+
+  // CORE-024: a stop or rule change that lands while the dispatch fingerprint is
+  // in flight abandons the selection; nothing is dispatched, the file is never
+  // attempted, and it is discovered again once the interrupt is undone.
+  void stopOrRuleChangeDuringDispatchCheckAbandonsSelection_data() {
+    QTest::addColumn<QString>("interrupt");
+    QTest::newRow("stop") << QString("stop");
+    QTest::newRow("rules") << QString("rules");
+  }
+  void stopOrRuleChangeDuringDispatchCheckAbandonsSelection() {
+    QFETCH(QString, interrupt);
+    QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures"); const auto source = dir.filePath("input/new.png");
+    QVERIFY(writeFile(source, "dispatch abandon fixture"));
+    qint64 now = 0; QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    NativeWorkflowExecutions executions(dir.filePath("executions"));
+    struct Probe { std::atomic_int calls{0}; std::atomic_bool entered{false}, release{false}; };
+    const auto probe = std::make_shared<Probe>();
+    struct Release { std::shared_ptr<Probe> probe; ~Release() { probe->release = true; } } release{probe};
+    service.setDispatchCheckHook([&](const QString &) {
+      if (++probe->calls != 1) return;
+      probe->entered = true;
+      while (!probe->release) QThread::msleep(2);
+    });
+    watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed), notified(&service, &WatchFolderService::notify);
+    service.start(); scan(service);
+    scan(service); now = 2000; scan(service); now += 2000; scan(service);
+    QTRY_VERIFY_WITH_TIMEOUT(probe->entered.load(), 5000);
+    if (interrupt == "stop") service.stop();
+    else QCOMPARE(service.setRules({}), QString());
+    probe->release = true;
+    // The selection is abandoned: no dispatch, no record, no output, no attempt.
+    QTest::qWait(300);
+    QCOMPARE(processed.count(), 0); QCOMPARE(notified.count(), 0);
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 0);
+    QCOMPARE(readFile(source), QByteArray("dispatch abandon fixture"));
+    QVERIFY(!store.processed(watch::fingerprint(source)));
+    QCOMPARE(executions.list().entries.size(), size_t(0));
+    // Once the interrupt is undone the file is discovered and processed normally.
+    if (interrupt == "stop") service.start();
+    else QCOMPARE(service.setRules({rule}), QString());
+    scan(service); now += 3000; scan(service);
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QCOMPARE(processed.first().at(1).toBool(), true);
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 1);
+    QVERIFY(store.processed(watch::fingerprint(source)));
+    service.stop();
+  }
+
+  // CORE-024: a file replaced while the dispatch fingerprint is in flight is
+  // refused and the next ready candidate dispatches instead; the replaced file
+  // is only picked up again under its new fingerprint.
+  void aFileReplacedDuringTheDispatchCheckIsRefusedAndTheNextCandidateDispatches() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures");
+    const auto first = dir.filePath("input/a.png"), second = dir.filePath("input/b.png");
+    QVERIFY(writeFile(first, "first original content"));
+    QVERIFY(writeFile(second, "second stable content"));
+    qint64 now = 0; QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    const auto firstKey = watch::fingerprint(first);
+    std::atomic_int hookCalls{0};
+    service.setDispatchCheckHook([&](const QString &path) {
+      // The first candidate is replaced before its hash runs.
+      if (++hookCalls == 1) writeFile(path, "first replaced before dispatch");
+    });
+    watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Copy;
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed);
+    service.start(); scan(service);
+    scan(service); now = 2000; scan(service); now += 2000; scan(service);
+    // The replaced candidate is refused; the untouched candidate copies.
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QCOMPARE(processed.first().at(0).toString(), second);
+    QCOMPARE(processed.first().at(1).toBool(), true);
+    QCOMPARE(readFile(first), QByteArray("first replaced before dispatch"));
+    QVERIFY(!store.processed(firstKey));
+    QVERIFY(store.processed(watch::fingerprint(second)));
+    const auto outputs = QDir(captures).entryList(QDir::Files);
+    QCOMPARE(outputs.size(), 1);
+    QCOMPARE(readFile(QDir(captures).filePath(outputs.first())), QByteArray("second stable content"));
+    // The replaced file is discovered again under its new fingerprint.
+    now += 3000; scan(service); now += 3000; scan(service);
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 2, 7000);
+    QCOMPARE(processed.at(1).at(0).toString(), first);
+    QCOMPARE(processed.at(1).at(1).toBool(), true);
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 2);
+    QVERIFY(store.processed(watch::fingerprint(first)));
+    service.stop();
+  }
+
   void copyFailureIsAFailedExecutionNeverSucceeded() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
     const auto captures = dir.filePath("captures"); const auto source = dir.filePath("input/new.png");
