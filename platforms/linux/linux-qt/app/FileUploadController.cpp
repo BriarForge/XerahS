@@ -146,46 +146,63 @@ void FileUploadController::startNext() {
     result.request = uploads::buildUploadRequest(*destination, input, *store, options);
     return result;
   }, [this](FilePreparation result) {
-    m_preparing = false;
     m_existingFile = result.existingFile;
     m_historyRecord.destinationName = result.destinationName;
     m_destinationId = result.destinationId;
     // WFCAT-002: every invocation owns one execution from admission, even a missing file.
-    m_execution = std::make_unique<workflows::WorkflowExecution>(m_historyRecord.taskId, m_historyRecord.origin,
+    m_execution = std::make_shared<workflows::WorkflowExecution>(m_historyRecord.taskId, m_historyRecord.origin,
         workflows::fileOperationSnapshot(QStringLiteral("upload"), m_destinationId, result.destinationName,
             m_rule.isEmpty() ? std::nullopt : std::optional<QJsonObject>(m_rule)),
         m_ports.executions ? m_ports.executions : NativeWorkflowExecutions(NativeWorkflowExecutions::defaultDirectory()).writer());
-    m_executionStored = m_execution->admit() && m_execution->start();
-    if (!m_executionStored) {
-      m_historyRecord.failureCode = QStringLiteral("workflow-storage-unavailable");
-      showFailure(m_currentName, QStringLiteral("workflow-storage-unavailable: The upload was not sent because its execution record could not be saved."));
-      return;
-    }
-    m_historyRecord.failureCode = result.request.code;
-    if (m_stop) { m_historyRecord.failureCode = "cancelled"; showFailure(m_currentName, QStringLiteral("cancelled")); return; }
-    if (!result.request.request) {
-      showFailure(m_currentName, result.request.errorMessage.isEmpty() ? result.request.code : result.request.errorMessage,
-                  result.missingDestination);
-      return;
-    }
-    m_sensitiveValues = result.request.request->sensitiveValues;
-    if (!m_execution->step(QStringLiteral("read-file"), QStringLiteral("succeeded"))) {
-      m_executionStored = false;
-      m_historyRecord.failureCode = QStringLiteral("workflow-storage-unavailable");
-      showFailure(m_currentName, QStringLiteral("workflow-storage-unavailable: The upload was not sent because its execution record could not be saved."));
-      return;
-    }
-    m_requestBuilt = true;
-    m_transferring = true;
-    // CORE-025 P1: the request is started here. A request that never reaches
-    // this point is unsent, not an unknown publication.
-    m_requestStarted = true;
-    m_executor->start(*result.request.request);
+    // WFCAT-004: admission, start and step persistence run on owned work off
+    // the GUI thread. The pre-HTTP fence is preserved: a failed write stops
+    // the upload before any request is sent, and the request is started only
+    // after the read-file step is durably recorded. m_preparing stays set
+    // through the chain, so a re-entering upload() queues behind it.
+    const QPointer<FileUploadController> guard(this);
+    const auto execution = m_execution;
+    OwnedWork::run<bool>(this, [execution](const OwnedWork::Context &) { return execution->admit() && execution->start(); },
+        [this, guard, result, execution](bool stored) {
+      if (!guard) return;
+      m_executionStored = stored;
+      if (!stored) { m_preparing = false; return storageFailedBeforeTransfer(); }
+      m_historyRecord.failureCode = result.request.code;
+      if (m_stop) { m_preparing = false; m_historyRecord.failureCode = "cancelled"; showFailure(m_currentName, QStringLiteral("cancelled")); return; }
+      if (!result.request.request) {
+        m_preparing = false;
+        showFailure(m_currentName, result.request.errorMessage.isEmpty() ? result.request.code : result.request.errorMessage,
+                    result.missingDestination);
+        return;
+      }
+      m_sensitiveValues = result.request.request->sensitiveValues;
+      OwnedWork::run<bool>(this, [execution](const OwnedWork::Context &) { return execution->step(QStringLiteral("read-file"), QStringLiteral("succeeded")); },
+          [this, guard, result](bool stepStored) {
+        if (!guard) return;
+        m_executionStored = stepStored && m_executionStored;
+        if (!stepStored) { m_preparing = false; return storageFailedBeforeTransfer(); }
+        // A cancel that landed while the step was writing is still before the
+        // transfer: the request is not sent.
+        if (m_stop) { m_preparing = false; m_historyRecord.failureCode = "cancelled"; showFailure(m_currentName, QStringLiteral("cancelled")); return; }
+        m_requestBuilt = true;
+        m_transferring = true;
+        m_preparing = false;
+        // CORE-025 P1: the request is started here. A request that never reaches
+        // this point is unsent, not an unknown publication.
+        m_requestStarted = true;
+        m_executor->start(*result.request.request);
+      });
+    });
   });
 }
 
+void FileUploadController::storageFailedBeforeTransfer() {
+  m_executionStored = false;
+  m_historyRecord.failureCode = QStringLiteral("workflow-storage-unavailable");
+  showFailure(m_currentName, QStringLiteral("workflow-storage-unavailable: The upload was not sent because its execution record could not be saved."));
+}
+
 void FileUploadController::recordCompletion(const uploads::UploadOutcome &outcome, std::function<void(QString)> done) {
-  if (!m_existingFile) { done({}); return; }
+  if (!m_existingFile) { m_preparing = false; done({}); return; }
   auto record = m_historyRecord;
   record.result = {outcome.url, outcome.thumbnailUrl, outcome.deletionUrl, outcome.errorMessage, outcome.attempts};
   // Response templates may echo credentials even into public receipt fields.
@@ -243,35 +260,62 @@ void FileUploadController::closeProgress() {
 
 // Commit the terminal state. An upload step reports success only after the
 // destination answered with a usable result; the execution then settles once.
-workflows::FileOperationNotice FileUploadController::settle(bool uploaded) {
+// WFCAT-004: the terminal step and finish persistence run on owned work off
+// the GUI thread; the observation, notice and terminal signals are emitted on
+// the GUI thread only after the terminal write settled (durable terminal
+// observation).
+void FileUploadController::settleAsync(bool uploaded, std::function<void(workflows::FileOperationNotice)> done) {
   using namespace workflows;
   const auto code = fileOperationDiagnostic(m_historyRecord.failureCode);
   const QString action = m_requestBuilt ? QStringLiteral("upload-file") : QStringLiteral("read-file");
-  std::optional<FileOperationTerminal> terminal;
-  if (m_execution) {
-    if (uploaded) m_executionStored = m_execution->step(QStringLiteral("upload-file"), QStringLiteral("succeeded")) && m_executionStored;
-    else if (code == QLatin1String("cancelled")) m_executionStored = m_execution->step(action, QStringLiteral("cancelled")) && m_executionStored;
-    else if (!(m_requestBuilt && workflows::uploadRemoteOutcomeUnknown(code, m_historyRecord.result.attempts)))
-      m_executionStored = m_execution->step(action, QStringLiteral("failed"), code, classifyFileOperationFailure(code, m_httpStatus)) && m_executionStored;
-    terminal = fileOperationTerminal(m_historyRecord.taskId, QStringLiteral("upload"), m_execution->record().steps, uploaded ? QString{} : code, m_requestBuilt ? m_historyRecord.result.attempts : 0);
-    m_executionStored = m_execution->finish(terminal->state, terminal->diagnostic, terminal->outputs) && m_executionStored;
+  const auto taskId = m_historyRecord.taskId, currentName = m_currentName;
+  const auto attempts = m_historyRecord.result.attempts;
+  const bool requestBuilt = m_requestBuilt;
+  const qint64 httpStatus = m_httpStatus;
+  // Hold the busy state through the terminal persistence and the journal write.
+  m_preparing = true;
+  const auto finishLocal = [this, uploaded, code, action, taskId, currentName, attempts, requestBuilt, httpStatus, done](const QJsonObject &observation) {
+    m_executionOutputs.clear();
+    for (const auto &output : observation.value("outputs").toArray()) m_executionOutputs.append(output.toString());
+    const auto state = observation.value("state").toString();
+    const auto text = actions::pipelineObservationText(observation);
+    const auto notice = workflows::fileOperationNotice(QStringLiteral("upload"), state, currentName);
+    const auto path = m_currentPath, id = m_historyRecord.taskId; const auto outputs = m_executionOutputs;
+    m_execution.reset();
+    qInfo().noquote() << "Workflow terminal" << text;
+    const QPointer<FileUploadController> guard(this);
+    emit activityChanged(text); if (!guard) return;
+    emit terminalObserved(observation); if (!guard) return;
+    emit notify(state == "succeeded" ? QStringLiteral("File upload completed") : QStringLiteral("File upload needs review"), text, state == "succeeded");
+    if (guard) emit executionFinished(path, id, state, outputs);
+    if (done) done(notice);
+  };
+  if (!m_execution) {
+    finishLocal(QJsonObject{{"task_id", m_historyRecord.taskId}, {"state", "outcome-unconfirmed"}, {"outputs", QJsonArray{}}});
+    return;
   }
-  m_terminalObservation = m_execution ? m_execution->recordedObservation() : QJsonObject{{"task_id", m_historyRecord.taskId}, {"state", "outcome-unconfirmed"}, {"outputs", QJsonArray{}}};
-  const auto state = m_terminalObservation.value("state").toString();
-  m_executionOutputs.clear();
-  for (const auto &output : m_terminalObservation.value("outputs").toArray()) m_executionOutputs.append(output.toString());
-  const auto text = actions::pipelineObservationText(m_terminalObservation);
-  const auto notice = workflows::fileOperationNotice(QStringLiteral("upload"), state, m_currentName);
-  const auto path = m_currentPath, id = m_historyRecord.taskId; const auto outputs = m_executionOutputs;
-  const auto observation = m_terminalObservation;
-  m_execution.reset();
-  qInfo().noquote() << "Workflow terminal" << text;
   const QPointer<FileUploadController> guard(this);
-  emit activityChanged(text); if (!guard) return notice;
-  emit terminalObserved(observation); if (!guard) return notice;
-  emit notify(state == "succeeded" ? QStringLiteral("File upload completed") : QStringLiteral("File upload needs review"), text, state == "succeeded");
-  if (guard) emit executionFinished(path, id, state, outputs);
-  return notice;
+  const auto execution = m_execution;
+  struct TerminalPersistence { bool stored = false; QJsonObject observation; };
+  OwnedWork::run<TerminalPersistence>(this,
+      [execution, uploaded, code, action, taskId, attempts, requestBuilt, httpStatus](const OwnedWork::Context &) {
+    bool stored = true;
+    if (uploaded) stored = execution->step(QStringLiteral("upload-file"), QStringLiteral("succeeded")) && stored;
+    else if (code == QLatin1String("cancelled")) stored = execution->step(action, QStringLiteral("cancelled")) && stored;
+    else if (!(requestBuilt && workflows::uploadRemoteOutcomeUnknown(code, attempts)))
+      stored = execution->step(action, QStringLiteral("failed"), code, classifyFileOperationFailure(code, httpStatus)) && stored;
+    const auto terminal = fileOperationTerminal(taskId, QStringLiteral("upload"), execution->record().steps, uploaded ? QString{} : code, requestBuilt ? attempts : 0);
+    stored = execution->finish(terminal.state, terminal.diagnostic, terminal.outputs) && stored;
+    return TerminalPersistence{stored, execution->recordedObservation()};
+  },
+      [this, guard, finishLocal](TerminalPersistence persisted) {
+    if (!guard) return;
+    // The observation is durable (or its write failed and stored reports
+    // it); emit only now, never before the terminal write settled.
+    m_executionStored = persisted.stored && m_executionStored;
+    m_terminalObservation = persisted.observation;
+    finishLocal(persisted.observation);
+  });
 }
 
 void FileUploadController::showFailure(const QString &fileName, const QString &message, bool missingDestination, const QString &detail) {
@@ -281,42 +325,44 @@ void FileUploadController::showFailure(const QString &fileName, const QString &m
   outcome.acceptedAttempts = m_acceptedAttempts;
   if (m_historyRecord.failureCode.isEmpty()) m_historyRecord.failureCode = "upload-failed";
   const QPointer<FileUploadController> guard(this);
-  const auto notice = settle(false);
-  if (!guard) return;
-  const auto storage = m_executionStored ? QString{} : QStringLiteral("workflow-storage-unavailable: Could not save the upload execution record.");
-  recordCompletion(outcome, [this, fileName, message, missingDestination, detail, notice, storage](const QString &historyError) {
-    // CORE-025: the publication facts are published before the completion, so
-    // the watch service can apply the disposition to this very attempt.
-    const QPointer<FileUploadController> owner(this);
-    emit publicationResolved(m_currentPath, publication(), m_uploadAttempts, m_answeredAttempts, m_acceptedAttempts);
-    if (!owner) return;
-    emit fileCompleted(m_currentPath, false, message);
-    closeProgress();
-    QStringList text{message}; if (!historyError.isEmpty()) text.append(historyError); if (!storage.isEmpty()) text.append(storage);
-    auto *dialog = new FileUploadResultDialog(fileName, text.join('\n'),
-        missingDestination ? m_ports.openDestinations : std::function<void()>{}, m_dialogParent, notice.headline + QLatin1Char('\n') + actions::pipelineObservationText(m_terminalObservation), detail);
-    dialog->show(); scheduleNext();
+  settleAsync(false, [this, guard, outcome, fileName, message, missingDestination, detail](workflows::FileOperationNotice notice) {
+    if (!guard) return;
+    const auto storage = m_executionStored ? QString{} : QStringLiteral("workflow-storage-unavailable: Could not save the upload execution record.");
+    recordCompletion(outcome, [this, fileName, message, missingDestination, detail, notice, storage](const QString &historyError) {
+      // CORE-025: the publication facts are published before the completion, so
+      // the watch service can apply the disposition to this very attempt.
+      const QPointer<FileUploadController> owner(this);
+      emit publicationResolved(m_currentPath, publication(), m_uploadAttempts, m_answeredAttempts, m_acceptedAttempts);
+      if (!owner) return;
+      emit fileCompleted(m_currentPath, false, message);
+      closeProgress();
+      QStringList text{message}; if (!historyError.isEmpty()) text.append(historyError); if (!storage.isEmpty()) text.append(storage);
+      auto *dialog = new FileUploadResultDialog(fileName, text.join('\n'),
+          missingDestination ? m_ports.openDestinations : std::function<void()>{}, m_dialogParent, notice.headline + QLatin1Char('\n') + actions::pipelineObservationText(m_terminalObservation), detail);
+      dialog->show(); scheduleNext();
+    });
   });
 }
 
 void FileUploadController::showSuccess(const QString &fileName, const uploads::UploadOutcome &outcome) {
   m_historyRecord.failureCode.clear();
   const QPointer<FileUploadController> guard(this);
-  const auto notice = settle(true);
-  if (!guard) return;
-  const auto storage = m_executionStored ? QString{} : QStringLiteral("workflow-storage-unavailable: Could not save the upload execution record.");
-  recordCompletion(outcome, [this, fileName, outcome, notice, storage](const QString &historyError) {
-    const QPointer<FileUploadController> owner(this);
-    emit publicationResolved(m_currentPath, UploadPublication::Acknowledged, m_uploadAttempts, m_answeredAttempts, m_acceptedAttempts);
-    if (!owner) return;
-    emit fileCompleted(m_currentPath, true, {});
-    closeProgress();
-    auto *dialog = new FileUploadResultDialog(fileName, outcome, m_dialogParent, notice.headline + QLatin1Char('\n') + actions::pipelineObservationText(m_terminalObservation));
-    dialog->show();
-    if (!historyError.isEmpty() || !storage.isEmpty()) {
-      auto *error = new FileUploadResultDialog(fileName, QStringList{historyError, storage}.join('\n').trimmed(), {}, m_dialogParent); error->show();
-    }
-    scheduleNext();
+  settleAsync(true, [this, guard, fileName, outcome](workflows::FileOperationNotice notice) {
+    if (!guard) return;
+    const auto storage = m_executionStored ? QString{} : QStringLiteral("workflow-storage-unavailable: Could not save the upload execution record.");
+    recordCompletion(outcome, [this, fileName, outcome, notice, storage](const QString &historyError) {
+      const QPointer<FileUploadController> owner(this);
+      emit publicationResolved(m_currentPath, UploadPublication::Acknowledged, m_uploadAttempts, m_answeredAttempts, m_acceptedAttempts);
+      if (!owner) return;
+      emit fileCompleted(m_currentPath, true, {});
+      closeProgress();
+      auto *dialog = new FileUploadResultDialog(fileName, outcome, m_dialogParent, notice.headline + QLatin1Char('\n') + actions::pipelineObservationText(m_terminalObservation));
+      dialog->show();
+      if (!historyError.isEmpty() || !storage.isEmpty()) {
+        auto *error = new FileUploadResultDialog(fileName, QStringList{historyError, storage}.join('\n').trimmed(), {}, m_dialogParent); error->show();
+      }
+      scheduleNext();
+    });
   });
 }
 

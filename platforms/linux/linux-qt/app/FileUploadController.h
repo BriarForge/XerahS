@@ -82,6 +82,14 @@ signals:
 private:
   void enqueue(const QStringList &paths, const QString &origin, const QJsonObject &rule = {});
   void startNext();
+  // WFCAT-004: the execution record's admission, start, step and terminal
+  // persistence run on owned work off the GUI thread. The pre-HTTP fence and
+  // the durable terminal observation are preserved: a failed write before the
+  // transfer stops the upload without sending, and the terminal observation is
+  // emitted only after the terminal write settled. done runs on the GUI thread
+  // with the notice the dialog shows.
+  void settleAsync(bool uploaded, std::function<void(workflows::FileOperationNotice)> done);
+  void storageFailedBeforeTransfer();
   void recordCompletion(const uploads::UploadOutcome &outcome, std::function<void(QString)> done);
   void showProgress(const QString &fileName);
   void closeProgress();
@@ -102,7 +110,7 @@ private:
   FileUploadHistoryRecord m_historyRecord;
   bool m_existingFile = false;
   QStringList m_sensitiveValues;
-  std::unique_ptr<workflows::WorkflowExecution> m_execution;
+  std::shared_ptr<workflows::WorkflowExecution> m_execution;
   QJsonObject m_rule;
   QString m_destinationId;
   bool m_requestBuilt = false, m_executionStored = true;
