@@ -1,17 +1,17 @@
 # Graph Report - product-contract  (2026-11-20)
 
 ## Corpus Check
-- 109 files · ~173,441 words
+- 112 files · ~175,175 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 16 file(s) not represented in the graph (top: .feature 16)
 
 ## Summary
-- 1395 nodes · 1674 edges · 67 communities (66 shown, 1 thin omitted)
+- 1423 nodes · 1700 edges · 72 communities (71 shown, 1 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b34fad25`
+- Built from commit: `9851b0d3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -80,8 +80,13 @@
 - EA-009: Step styles and reset semantics
 - APPROVAL-2026-11-20-EA-008-TEXT-BORDER.json
 - EA-008: regular Text border geometry
+- APPROVAL-2026-11-20-EU-009-010-011-BACKGROUND-MODEL-SUPPLY.json
 - CORE-013: encrypted Secret Service session negotiation
 - EO-004: Save As format disposition and quality/matte defaults
+- EU-009/010/011: background-removal model supply
+- MOB-013
+- MOB-004
+- Managed temporary upload artifact
 
 ## God Nodes (most connected - your core abstractions)
 1. `Filename deterministic acceptance vectors` - 55 edges
@@ -110,7 +115,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (67 total, 1 thin omitted)
+## Communities (72 total, 1 thin omitted)
 
 ### Community 0 - "REGION-CAPTURE-001 Interactive region capture"
 Cohesion: 0.06
@@ -133,12 +138,12 @@ Cohesion: 0.05
 Nodes (10): #AARRGGBB, COMPAT-XANN-001, Dirty state, Document, gzip, Rectangle annotation, Rendered image, SHA-256 (+2 more)
 
 ### Community 5 - "POST-CAPTURE-ACTIONS-001 Post-capture actions"
-Cohesion: 0.07
-Nodes (41): MOB-013, Process termination recovery, actions.json normative catalogue, Artifacts, Before-upload decline, Immutable selected action settings snapshot, Independent action failure continuation, Interrupted unknown remote outcome (+33 more)
+Cohesion: 0.09
+Nodes (33): actions.json normative catalogue, Artifacts, Before-upload decline, Immutable selected action settings snapshot, Independent action failure continuation, Linked bounded retry attempts, Ordered action results, PCA-001 (+25 more)
 
 ### Community 6 - "MOBILE-PLATFORM-001 Native mobile applications"
 Cohesion: 0.08
-Nodes (39): MOBILE-PLATFORM-001, Android 10 and iOS 17 baseline, Android intents iOS App Intents Shortcuts, Android MediaProjection consent, GPLv3 iOS licensing review, iOS screenshot and photo picker source, Keystore and this-device-only Keychain, MediaCodec and ReplayKit recording (+31 more)
+Nodes (35): MOBILE-PLATFORM-001, Android 10 and iOS 17 baseline, Android intents iOS App Intents Shortcuts, GPLv3 iOS licensing review, Keystore and this-device-only Keychain, MediaCodec and ReplayKit recording, MediaStore and add-only Photos saving, MOB-001 (+27 more)
 
 ### Community 7 - "SETTINGS-CATALOG-001 Application settings catalog"
 Cohesion: 0.08
@@ -368,6 +373,10 @@ Nodes (21): authority, identity, role, decision, decision_id, effects, activatio
 Cohesion: 0.40
 Nodes (4): Choice, EA-008: regular Text border geometry, Impact, Problem
 
+### Community 65 - "APPROVAL-2026-11-20-EU-009-010-011-BACKGROUND-MODEL-SUPPLY.json"
+Cohesion: 0.09
+Nodes (21): authority, identity, role, decision, decision_id, effects, activation_authorized, census_closed (+13 more)
+
 ### Community 66 - "CORE-013: encrypted Secret Service session negotiation"
 Cohesion: 0.40
 Nodes (4): Choice, CORE-013: encrypted Secret Service session negotiation, Impact, Problem
@@ -376,9 +385,25 @@ Nodes (4): Choice, CORE-013: encrypted Secret Service session negotiation, Impac
 Cohesion: 0.40
 Nodes (4): Choice, EO-004: Save As format disposition and quality/matte defaults, Impact, Problem
 
+### Community 68 - "EU-009/010/011: background-removal model supply"
+Cohesion: 0.33
+Nodes (5): Choice, EU-009/010/011: background-removal model supply, Impact, Problem, Sources (read 2026-11-20)
+
+### Community 69 - "MOB-013"
+Cohesion: 0.50
+Nodes (5): MOB-013, Process termination recovery, Interrupted unknown remote outcome, PCA-012, PCA-022
+
+### Community 70 - "MOB-004"
+Cohesion: 0.50
+Nodes (4): Android MediaProjection consent, iOS screenshot and photo picker source, MOB-004, MOB-005
+
+### Community 71 - "Managed temporary upload artifact"
+Cohesion: 1.00
+Nodes (3): Managed temporary upload artifact, PCA-006, PCA-019
+
 ## Knowledge Gaps
 - **282 isolated node(s):** `Capture result topology snapshot`, `Desktop physical coordinate space`, `DXGI WinRT Win32 capture`, `Half-open physical selection rectangle`, `IEEE754 floor epsilon mapping` (+277 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 899 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 921 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
@@ -395,6 +420,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `CORE-PLATFORM-001 Native platform capability foundation` be split into smaller, more focused modules?**
   _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._
 - **Why does `Document` connect `Document` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Conformance vector format`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SESSION-001`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
-  _High betweenness centrality (0.044) - this node is a cross-community bridge._
+  _High betweenness centrality (0.033) - this node is a cross-community bridge._
 - **Should `EDITOR-ANNOTATIONS-001 Annotation tools` be split into smaller, more focused modules?**
   _Cohesion score 0.046511627906976744 - nodes in this community are weakly interconnected._

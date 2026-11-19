@@ -163,6 +163,8 @@ add_library(xerahs_core STATIC
   src/tools/FileHash.h
   src/media/VideoConversion.cpp
   src/media/VideoConversion.h
+  src/background/BackgroundModels.cpp
+  src/background/BackgroundModels.h
 )
 target_include_directories(xerahs_core PUBLIC src)
 set_target_properties(xerahs_core PROPERTIES AUTOMOC ON)
@@ -566,6 +568,7 @@ add_executable(application-window-test tests/ApplicationWindowTest.cpp app/Appli
 set_target_properties(application-window-test PROPERTIES AUTOMOC ON)
 target_include_directories(application-window-test PRIVATE app)
 target_link_libraries(application-window-test PRIVATE xerahs_core Qt6::Widgets Qt6::Test)
+target_link_libraries(application-window-test PRIVATE xerahs_background_remover)
 add_test(NAME application-window COMMAND application-window-test)
 set_tests_properties(application-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(command-registry-test tests/CommandRegistryTest.cpp app/CommandRegistry.cpp app/CommandRegistry.h)
@@ -1259,6 +1262,38 @@ set_target_properties(file-hash-test PROPERTIES AUTOMOC ON)
 target_link_libraries(file-hash-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME file-hash COMMAND file-hash-test)
 
+# EDITOR-UTILITIES-001 / EU-009, EU-010: the background-removal model supply reads the
+# approved contract catalogue and validates model bytes without the network.
+add_executable(background-models-test tests/BackgroundModelsTest.cpp)
+set_target_properties(background-models-test PROPERTIES AUTOMOC ON)
+target_link_libraries(background-models-test PRIVATE xerahs_core Qt6::Test)
+target_compile_definitions(background-models-test PRIVATE
+  XERAHS_BACKGROUND_CATALOGUE="${XERAHS_REPO_ROOT}/product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json")
+add_test(NAME background-models COMMAND background-models-test)
+set_tests_properties(background-models PROPERTIES TIMEOUT 30)
+
+# EDITOR-UTILITIES-001 / EU-009, EU-010: the Background Remover window. The
+# approved contract catalogue is a compile-time path; tests inject their own
+# catalogue, store directory and file/confirm seams.
+add_library(xerahs_background_remover STATIC
+  app/BackgroundRemoverDialog.cpp
+  app/BackgroundRemoverDialog.h)
+set_target_properties(xerahs_background_remover PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_background_remover PUBLIC app)
+target_link_libraries(xerahs_background_remover PUBLIC xerahs_core Qt6::Widgets PRIVATE Qt6::Network)
+target_compile_definitions(xerahs_background_remover PRIVATE
+  XERAHS_BACKGROUND_CATALOGUE="${XERAHS_REPO_ROOT}/product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json")
+target_compile_options(xerahs_background_remover PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(xerahs_app PUBLIC xerahs_background_remover)
+
+add_executable(background-remover-dialog-test tests/BackgroundRemoverDialogTest.cpp)
+set_target_properties(background-remover-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(background-remover-dialog-test PRIVATE xerahs_background_remover Qt6::Network Qt6::Test)
+target_compile_definitions(background-remover-dialog-test PRIVATE
+  XERAHS_BACKGROUND_CATALOGUE="${XERAHS_REPO_ROOT}/product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json")
+add_test(NAME background-remover-dialog COMMAND background-remover-dialog-test)
+set_tests_properties(background-remover-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 60)
+
 add_executable(hash-checker-dialog-test tests/HashCheckerDialogTest.cpp)
 set_target_properties(hash-checker-dialog-test PROPERTIES AUTOMOC ON)
 target_link_libraries(hash-checker-dialog-test PRIVATE xerahs_hash_checker Qt6::Test)
@@ -1724,7 +1759,8 @@ add_executable(tools-feature-unavailable-test tests/ToolsFeatureUnavailableTest.
 set_target_properties(tools-feature-unavailable-test PROPERTIES AUTOMOC ON)
 target_include_directories(tools-feature-unavailable-test PRIVATE app)
 target_link_libraries(tools-feature-unavailable-test PRIVATE xerahs_color_picker xerahs_hash_checker
-  xerahs_icon_converter xerahs_video_converter_ui xerahs_qr_code xerahs_image_recognition Qt6::Test)
+  xerahs_icon_converter xerahs_video_converter_ui xerahs_qr_code xerahs_image_recognition
+  xerahs_background_remover Qt6::Test)
 add_test(NAME tools-feature-unavailable COMMAND tools-feature-unavailable-test)
 set_tests_properties(tools-feature-unavailable PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 

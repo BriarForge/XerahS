@@ -1,8 +1,14 @@
 # EDITOR-UTILITIES-001 Image utility suite
 
-Version: 0.1.0
+Version: 0.1.1
 
 Status: Approved by the human product owner on 2026-08-31; conformance required before activation
+
+Change 0.1.1 (2026-11-20): decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20
+approves the background-removal model supply and records it as product data in
+`background-model-catalogue.json` (model u2netp, Apache-2.0, pinned URL and
+checksums, tensor contract, preprocessing and mask policy). No requirement text
+changed; every requirement still reads exactly as approved 2026-08-31.
 
 ## Requirements
 

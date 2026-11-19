@@ -1,0 +1,48 @@
+{
+  "$schema": "../schemas/approval-record.schema.json",
+  "schema_version": 1,
+  "decision_id": "APPROVAL-2026-11-20-EU-009-010-011-BACKGROUND-MODEL-SUPPLY",
+  "recorded_on": "2026-11-20",
+  "authority": {
+    "role": "maintainer",
+    "identity": "The XerahS build loop under the maintainer's delegated owner-block authority (root AGENTS.md Stewardship); decided by agent opencode (GLM 5.3) with the sources recorded in decisions/EU-009-010-011-background-model-supply.md"
+  },
+  "source": {
+    "kind": "delegated-owner-block-decision",
+    "statement": "Decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20 approves the background-removal model supply that EU-009, EU-010 and EU-011 were blocked on. The approved model is u2netp, the lightweight U-2-Net salient-object-segmentation model (Qin et al., Pattern Recognition 2020), Apache-2.0 as released in the U-2-Net repository; it is consumed as the ONNX artifact pinned in capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json with the exact GitHub release URL, byte size 4574861, SHA-256 309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8 (computed from the fetched artifact) and the upstream MD5 8e83ca70e441ab06c318d82300c84806 (rembg's own pin, confirmed equal). The catalogue also records the artifact's tensor contract read from its bytes (input input.1 float32 [1,3,320,320], first output 1959 float32 [1,1,320,320]), the U-2-Net preprocessing (RGB 320x320, mean 0.485/0.456/0.406, std 0.229/0.224/0.225) and the first-output min-max mask policy. RMBG models were considered and rejected under the loop's licence policy because their weights are non-commercial. The inference runtime is approved for the next build: onnxruntime (MIT, packaged in Arch extra), dynamically linked and optional at build time exactly like libgcrypt; CPU is the device policy first, and Auto and GPU report honestly from the linked runtime. The download is never silent: the Background Remover window discloses upstream project, licence with URL, byte size, exact artifact URL and host, both checksums, the model store directory and that the one-time download is the only network activity (images are never uploaded), and it starts only after an explicit confirmation; the bytes are verified against the pinned size, SHA-256 and MD5 and their ONNX header against the catalogue tensor contract before the atomic rename into the store, and any failure discards the temporary file. Sources: the U-2-Net repository (Apache-2.0, u2netp 4.7 MB, 320x320 pretrained input, Pixelmator Pro uses U-2-Net for background removal), the MIT-licensed rembg tool (the pinned release URL and MD5, on-demand checksum-verified model downloads, the weights-carry-their-own-licences note and the BRIA non-commercial warning), the fetched artifact's own header, the Arch onnxruntime-cpu package page (MIT), and TechSmith Snagit's feature page (background removal is a stock capture-tool editing feature). No requirement text changed: every EU requirement still reads exactly as approved 2026-08-31; the capability gains only the approved model-supply data and its version bump to 0.1.1. The other fifteen packages carry forward to contract 0.4.5 unchanged in normative text from 0.4.4, where the 2026-11-20 EA-008 record approved them; the deciding agent verified that carry-forward by inspecting this commit's diff, which touches no other capability package. No ROOT constitution rule is changed."
+  },
+  "decision": "approved",
+  "scope": {
+    "contract_version": "0.4.5",
+    "packages": [
+      "FILENAME-GENERATION-001",
+      "POST-CAPTURE-ACTIONS-001",
+      "REGION-CAPTURE-001",
+      "EDITOR-SESSION-001",
+      "EDITOR-ANNOTATIONS-001",
+      "EDITOR-EFFECTS-001",
+      "EDITOR-CANVAS-001",
+      "EDITOR-OUTPUT-ACTIONS-001",
+      "EDITOR-SETTINGS-001",
+      "EDITOR-UTILITIES-001",
+      "SETTINGS-CATALOG-001",
+      "WORKFLOW-CATALOG-001",
+      "INTERFACE-CATALOG-001",
+      "CORE-PLATFORM-001",
+      "COMPATIBILITY-CATALOG-001",
+      "MOBILE-PLATFORM-001"
+    ]
+  },
+  "effects": {
+    "normative_contract": true,
+    "implementation_authorized": true,
+    "activation_authorized": false,
+    "census_closed": false,
+    "release_authorized": false
+  },
+  "remaining_gates": [
+    "EU-009's Auto/CPU/GPU device policy and EU-011's inference, preview and save are not built yet; the Background Remover's status rows say the inference engine is not linked in this build",
+    "live verification with the real 4.6 MB artifact, real CPU inference and visual-quality acceptance remain separate desktop qualification",
+    "conformance before activation; release requires Mike"
+  ]
+}

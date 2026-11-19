@@ -1,6 +1,6 @@
 # Product Contract manifest. Schema: schemas/manifest.schema.json.
 # Contract version is the product version native apps may claim.
-contract_version: 0.4.4
+contract_version: 0.4.5
 status: draft
 capabilities:
   - id: FILENAME-GENERATION-001
@@ -50,7 +50,7 @@ capabilities:
     requirements: [ESET-001, ESET-002, ESET-003, ESET-004, ESET-005, ESET-006, ESET-007, ESET-008, ESET-009, ESET-010, ESET-011, ESET-012, ESET-013, ESET-014, ESET-015, ESET-016]
   - id: EDITOR-UTILITIES-001
     path: capabilities/EDITOR-UTILITIES-001
-    version: 0.1.0
+    version: 0.1.1
     status: approved
     requirements: [EU-001, EU-002, EU-003, EU-004, EU-005, EU-006, EU-007, EU-008, EU-009, EU-010, EU-011, EU-012, EU-013, EU-014, EU-015, EU-016, EU-017, EU-018, EU-019]
   - id: SETTINGS-CATALOG-001
