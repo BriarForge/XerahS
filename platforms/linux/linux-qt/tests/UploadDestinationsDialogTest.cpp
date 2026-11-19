@@ -123,6 +123,62 @@ private slots:
     QCOMPARE(credentials.lookup(catalog.defaultId(), "Authorization").value, QStringLiteral("Client-ID super-secret-value"));
   }
 
+  void importReviewMarksChosenValuesAsKeyringSecrets() {
+    // Review fix A5: values the heuristic did not extract are shown at
+    // import; the ones the user marks are moved to the keyring and the
+    // destinations file keeps only {secret:} references.
+    const QByteArray reviewSxcu =
+        "{\"Version\":\"17.0.0\",\"Name\":\"Review\","
+        "\"RequestMethod\":\"POST\",\"RequestURL\":\"https://example.com/upload.php\","
+        "\"Headers\":{\"Authorization\":\"Client-ID super-secret-value\",\"X-Webhook\":\"tok_live_plain_value\"},"
+        "\"Body\":\"MultipartFormData\",\"FileFormName\":\"file\",\"URL\":\"{json:url}\"}";
+    DestinationCatalog catalog(m_dir.filePath(QStringLiteral("destinations.json")));
+    MemoryCredentialStore credentials;
+    auto p = ports();
+    QVector<ImportCandidate> offered;
+    p.reviewSecretCandidates = [&](QWidget *, const QVector<ImportCandidate> &candidates) {
+      offered = candidates;
+      return QVector<int>{0};
+    };
+    UploadDestinationsDialog dialog(catalog, credentials, p);
+    dialog.importFile(writeSxcu(reviewSxcu));
+    settle(dialog);
+    QVERIFY2(m_reports.isEmpty(), qPrintable(m_reports.join('\n')));
+    // The review saw exactly the non-extracted value, with its raw content.
+    QCOMPARE(offered.size(), 1);
+    QCOMPARE(offered.at(0).family, QStringLiteral("headers"));
+    QCOMPARE(offered.at(0).name, QStringLiteral("X-Webhook"));
+    QCOMPARE(offered.at(0).value, QStringLiteral("tok_live_plain_value"));
+    const auto id = catalog.defaultId();
+    QCOMPARE(credentials.lookup(id, "Authorization").value, QStringLiteral("Client-ID super-secret-value"));
+    QCOMPARE(credentials.lookup(id, "X-Webhook").value, QStringLiteral("tok_live_plain_value"));
+    const auto stored = catalog.find(id);
+    QVERIFY(stored);
+    for (const auto &field : stored->headers)
+      if (field.name == "X-Webhook") QCOMPARE(field.value, QStringLiteral("{secret:X-Webhook}"));
+    QFile saved(m_dir.filePath(QStringLiteral("destinations.json")));
+    QVERIFY(saved.open(QIODevice::ReadOnly));
+    const auto text = QString::fromUtf8(saved.readAll());
+    QVERIFY(!text.contains(QStringLiteral("tok_live_plain_value")));
+    QVERIFY(!text.contains(QStringLiteral("super-secret-value")));
+    QVERIFY(text.contains(QStringLiteral("{secret:X-Webhook}")));
+    const QStringList expectedSecrets{QStringLiteral("Authorization: stored"), QStringLiteral("X-Webhook: stored")};
+    QTRY_COMPARE(rows(dialog, "Secrets"), expectedSecrets);
+
+    // Without a review port the import keeps the old behavior: no review is
+    // forced on programs that embed the dialog, and the raw value stays in
+    // the destinations file - the residual risk the review accepts.
+    DestinationCatalog plain(m_dir.filePath(QStringLiteral("plain.json")));
+    MemoryCredentialStore plainCredentials;
+    UploadDestinationsDialog plainDialog(plain, plainCredentials, ports());
+    plainDialog.importFile(writeSxcu(reviewSxcu));
+    settle(plainDialog);
+    QVERIFY2(m_reports.isEmpty(), qPrintable(m_reports.join('\n')));
+    const auto plainStored = plain.find(plain.defaultId());
+    QVERIFY(plainStored);
+    for (const auto &field : plainStored->headers)
+      if (field.name == "X-Webhook") QCOMPARE(field.value, QStringLiteral("tok_live_plain_value"));  }
+
   void setSecretReplacesAndReportsKeyringFailure() {
     DestinationCatalog catalog(m_dir.filePath(QStringLiteral("destinations.json")));
     MemoryCredentialStore credentials;

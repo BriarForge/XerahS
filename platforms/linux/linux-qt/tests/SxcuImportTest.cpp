@@ -253,6 +253,72 @@ private slots:
     QCOMPARE(referencedSecret(result.destination.headers.at(0).value), std::optional<QString>(QStringLiteral("Authorization")));
   }
 
+  void importReviewListsNonExtractedValuesAndMarkingMovesThem() {
+    // Review fix A5: the name heuristic cannot know which values are
+    // private, so every non-extracted header/query/argument value is offered
+    // for marking, and marking moves the raw value into the secrets list.
+    auto result = importSxcu(QByteArray(
+        "{"
+        "\"Version\":\"17.0.0\","
+        "\"Name\":\"Example\","
+        "\"RequestMethod\":\"POST\","
+        "\"RequestURL\":\"https://example.com/upload.php\","
+        "\"Headers\":{\"Authorization\":\"Client-ID super-secret-value\",\"X-Webhook\":\"tok_live_plain_value\",\"Accept\":\"application/json\"},"
+        "\"Parameters\":{\"album\":\"shots\"},"
+        "\"Body\":\"MultipartFormData\","
+        "\"FileFormName\":\"file\",\"URL\":\"{json:url}\""
+        "}"));
+    QVERIFY(result.ok);
+    const auto hasCandidate = [&](const QString &family, const QString &name) {
+      for (const auto &candidate : result.candidates)
+        if (candidate.family == family && candidate.name == name) return true;
+      return false;
+    };
+    // Only the non-extracted values are offered; the extracted
+    // Authorization never appears with its raw value again.
+    QCOMPARE(result.candidates.size(), 3);
+    QVERIFY(hasCandidate("headers", "X-Webhook"));
+    QVERIFY(hasCandidate("headers", "Accept"));
+    QVERIFY(hasCandidate("query", "album"));
+    QVERIFY(!hasCandidate("headers", "Authorization"));
+    for (const auto &candidate : result.candidates)
+      if (candidate.name == "X-Webhook") QCOMPARE(candidate.value, QStringLiteral("tok_live_plain_value"));
+
+    // Refusals: unknown family, unknown name, already-extracted field.
+    QVERIFY(!markImportedSecret(&result, "headers", "Nope"));
+    QVERIFY(!markImportedSecret(&result, "cookies", "Accept"));
+    QVERIFY(!markImportedSecret(&result, "headers", "Authorization"));
+
+    // Marking moves the raw value into the secrets list and leaves a
+    // reference in the destination.
+    QVERIFY(markImportedSecret(&result, "headers", "X-Webhook"));
+    QCOMPARE(result.candidates.size(), 2);
+    QVERIFY(!hasCandidate("headers", "X-Webhook"));
+    const auto headerValue = [&](const QString &name) {
+      for (const auto &field : result.destination.headers)
+        if (field.name == name) return field.value;
+      return QString();
+    };
+    QCOMPARE(headerValue(QStringLiteral("X-Webhook")), QStringLiteral("{secret:X-Webhook}"));
+    QCOMPARE(headerValue(QStringLiteral("Authorization")), QStringLiteral("{secret:Authorization}"));
+    const auto marked = findSecret(result, QStringLiteral("X-Webhook"));
+    QVERIFY(marked);
+    QCOMPARE(marked->value, QStringLiteral("tok_live_plain_value"));
+    QVERIFY(hasWarning(result, QStringLiteral("secret-extracted"), QStringLiteral("X-Webhook")));
+    QVERIFY(!result.candidates.isEmpty());
+    // A second candidate can still be marked; existing refs stay intact.
+    QVERIFY(markImportedSecret(&result, "headers", "Accept"));
+    QCOMPARE(headerValue(QStringLiteral("Accept")), QStringLiteral("{secret:Accept}"));
+    QVERIFY(findSecret(result, QStringLiteral("Accept")));
+    // The stored destination never contains the marked raw values.
+    const auto text = QString::fromUtf8(writeDestination(result.destination));
+    QVERIFY(!text.contains(QStringLiteral("tok_live_plain_value")));
+    QVERIFY(!text.contains(QStringLiteral("application/json")));
+    QVERIFY(text.contains(QStringLiteral("{secret:X-Webhook}")));
+    QVERIFY(text.contains(QStringLiteral("{secret:Accept}")));
+    QVERIFY(validateDestination(result.destination).isEmpty());
+  }
+
   void rejectsUnusableInput() {
     QCOMPARE(importSxcu(QByteArray("{")).code, QStringLiteral("invalid-json"));
     QVERIFY(!importSxcu(QByteArray("[]")).ok);

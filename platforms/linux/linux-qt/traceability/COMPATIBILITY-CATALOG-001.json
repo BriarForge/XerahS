@@ -761,7 +761,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "SXCU uses data-only parsing, isolated secret extraction and explicit native review before catalog mutation; full legacy template/regex/body/script/network authority compatibility and human qualification remain incomplete.",
+      "note": "SXCU uses data-only parsing, isolated secret extraction and explicit native review before catalog mutation; full legacy template/regex/body/script/network authority compatibility and human qualification remain incomplete. Review fix A5 (ROOT-SECURITY-001) landed 2026-11-19: the import result carries every non-extracted header/query/argument value as a candidate, and the native import review shows them once with a mark-as-secret choice; marked values move into the keyring as {secret:} references and unmarked values import unchanged - the residual risk that a private value is left unmarked is accepted per the review. Evidence: SxcuImportTest::importReviewListsNonExtractedValuesAndMarkingMovesThem and UploadDestinationsDialogTest::importReviewMarksChosenValuesAsKeyringSecrets, both red against the pre-fix behavior. Full legacy template compatibility and human qualification remain incomplete, so the row stays partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -776,7 +776,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 44,
-        "coverage": "SXCU uses data-only parsing, isolated secret extraction and explicit native review before catalog mutation; full legacy template/regex/body/script/network authority compatibility and human qualification remain incomplete.",
+        "coverage": "SXCU uses data-only parsing, isolated secret extraction and explicit native review before catalog mutation; full legacy template/regex/body/script/network authority compatibility and human qualification remain incomplete. Review fix A5 (ROOT-SECURITY-001) landed 2026-11-19: the import result carries every non-extracted header/query/argument value as a candidate, and the native import review shows them once with a mark-as-secret choice; marked values move into the keyring as {secret:} references and unmarked values import unchanged - the residual risk that a private value is left unmarked is accepted per the review. Evidence: SxcuImportTest::importReviewListsNonExtractedValuesAndMarkingMovesThem and UploadDestinationsDialogTest::importReviewMarksChosenValuesAsKeyringSecrets, both red against the pre-fix behavior. Full legacy template compatibility and human qualification remain incomplete, so the row stays partial.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
@@ -794,20 +794,48 @@
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.cpp",
             "sha256": "dac89b879c080e5d246f72793bf4e29cc0a6d763f07d8d9c2332e57f287d24a7"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "561084fcf45fecc2f948575ee88468420a95f1938c095c5b090d5c149e600355"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.h",
+            "sha256": "9a403ec56268d213b6a9a1d1c8b99a3d42e1d650bcc87b5ec4fa5ed4252999de"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
+            "sha256": "2a7e3186a194b1022da9fd5194005f724191ce0f273f3e0dbbb9f8903f030f88"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.h",
+            "sha256": "781bcef2e39730e5ebbfffadba7a8cb3384e0a796bb685a2c0f01838e5a884ec"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
-            "sha256": "627e179818960f8acdf4ff5bf9d233f3b0e319665dac6c5c114c1c1bb8bd0d42",
+            "sha256": "4417500f07b2d0dcf517561d27e6e7b55e4fc85dd98ade25b6d59e6aa17a94e9",
             "method": "criticalMetadataCannotBeAccepted",
             "line": 33
           },
           {
             "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
-            "sha256": "627e179818960f8acdf4ff5bf9d233f3b0e319665dac6c5c114c1c1bb8bd0d42",
+            "sha256": "4417500f07b2d0dcf517561d27e6e7b55e4fc85dd98ade25b6d59e6aa17a94e9",
             "method": "importsCurrentUploaderAndExtractsSecrets",
             "line": 96
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "4417500f07b2d0dcf517561d27e6e7b55e4fc85dd98ade25b6d59e6aa17a94e9",
+            "method": "importReviewListsNonExtractedValuesAndMarkingMovesThem",
+            "line": 256
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+            "sha256": "c3d78e4c65c149101984f6438b670542e1d75bbb44977f58c87bff97d9686721",
+            "method": "importReviewMarksChosenValuesAsKeyringSecrets",
+            "line": 126
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",

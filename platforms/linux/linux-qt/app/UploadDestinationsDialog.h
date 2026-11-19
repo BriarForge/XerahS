@@ -26,6 +26,9 @@ struct UploadDestinationsPorts {
   std::function<bool(QWidget *, const QString &destinationName)> confirmRemove;
   std::function<bool(QWidget *, const QString &destinationName)> confirmDefault;
   std::function<void(QWidget *, const QString &message)> report;
+  // Review fix A5: shows the import's non-extracted header/query/argument
+  // values and returns the candidate indexes the user marked as secrets.
+  std::function<QVector<int>(QWidget *, const QVector<uploads::ImportCandidate> &)> reviewSecretCandidates;
   std::function<QNetworkAccessManager *(QObject *)> connectionNetwork;
   // Production supplies these owners so retired workers outlive a closed window.
   // Borrowed test stores must otherwise outlive their outstanding work.

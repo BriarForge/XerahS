@@ -6,6 +6,8 @@
 #include <QSet>
 #include <QUrl>
 
+#include <algorithm>
+
 namespace xerahs::uploads {
 namespace {
 
@@ -345,6 +347,17 @@ SxcuImportResult importSxcu(const QByteArray &bytes) {
   result.destination = std::move(destination);
   result.secrets = std::move(bag.secrets);
   result.warnings = std::move(bag.warnings);
+  // Review fix A5: every non-extracted header/query/argument value is
+  // reported so the import surface can offer it for explicit marking.
+  const auto appendCandidates = [&result](const char *family, const QVector<Field> &fields) {
+    for (const auto &field : fields) {
+      if (field.value.isEmpty() || referencedSecret(field.value)) continue;
+      result.candidates.append({QLatin1String(family), field.name, field.value});
+    }
+  };
+  appendCandidates("headers", result.destination.headers);
+  appendCandidates("query", result.destination.query);
+  appendCandidates("arguments", result.destination.arguments);
   result.quarantine = std::move(quarantine);
   result.report.add(ImportDisposition::Retained, original.size() - result.quarantine.size());
   if (result.destination.name != original.value("Name").toString() && original.value("Name").isString())
@@ -369,6 +382,33 @@ SxcuImportResult importSxcu(const QByteArray &bytes) {
   // RequestType is a legacy alias; when both are present only RequestMethod wins.
   if (hasMethod && hasType) result.report.add(ImportDisposition::Ignored);
   return result;
+}
+
+// Review fix A5: the importer's name heuristic cannot know which values are
+// credentials, so the import surface shows every non-extracted value and the
+// user decides. Marking moves the whole raw value into the secrets list and
+// leaves a {secret:<ref>} reference in the destination.
+bool markImportedSecret(SxcuImportResult *import, const QString &family, const QString &name) {
+  if (!import || !import->ok) return false;
+  QVector<Field> *fields = nullptr;
+  if (family == QLatin1String("headers")) fields = &import->destination.headers;
+  else if (family == QLatin1String("query")) fields = &import->destination.query;
+  else if (family == QLatin1String("arguments")) fields = &import->destination.arguments;
+  if (!fields) return false;
+  const auto field = std::find_if(fields->begin(), fields->end(), [&](const Field &entry) { return entry.name == name; });
+  if (field == fields->end() || field->value.isEmpty() || referencedSecret(field->value)) return false;
+  Bag bag;
+  for (const auto &secret : import->secrets) bag.used.insert(secret.name);
+  scanSyntax(&bag, field->value);
+  const auto ref = allocate(&bag, name);
+  import->secrets.append({ref, field->value});
+  field->value = QStringLiteral("{secret:%1}").arg(ref);
+  warn(&bag, QStringLiteral("secret-extracted"), ref);
+  import->warnings += bag.warnings;
+  import->candidates.erase(std::remove_if(import->candidates.begin(), import->candidates.end(),
+                                          [&](const ImportCandidate &candidate) { return candidate.family == family && candidate.name == name; }),
+                           import->candidates.end());
+  return true;
 }
 
 }  // namespace xerahs::uploads

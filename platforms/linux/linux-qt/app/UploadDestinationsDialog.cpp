@@ -74,6 +74,42 @@ UploadDestinationsPorts nativeUploadDestinationsPorts() {
                                  QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
   };
   ports.report = [](QWidget *parent, const QString &message) { QMessageBox::warning(parent, QCoreApplication::translate("UploadDestinationsDialog", "Upload destinations"), message); };
+  // Review fix A5: the import review surface. Every non-extracted
+  // header/query/argument value is shown once; the user ticks the ones that
+  // are secrets, and marking stores them in the keyring instead of the
+  // destinations file. Untouched values are imported unchanged.
+  ports.reviewSecretCandidates = [](QWidget *parent, const QVector<uploads::ImportCandidate> &candidates) {
+    QDialog review(parent);
+    review.setWindowTitle(QCoreApplication::translate("UploadDestinationsDialog", "Review values to keep private"));
+    review.setModal(true);
+    auto *layout = new QVBoxLayout(&review);
+    auto *explanation = new QLabel(QCoreApplication::translate("UploadDestinationsDialog",
+        "These imported values are not saved as secrets. Tick any that are private; they will be moved to your keyring. Everything else is imported unchanged."),
+        &review);
+    explanation->setWordWrap(true); explanation->setTextFormat(Qt::PlainText); layout->addWidget(explanation);
+    auto *list = new QListWidget(&review);
+    list->setObjectName(QStringLiteral("secretCandidateList"));
+    for (int i = 0; i < candidates.size(); ++i) {
+      const auto &candidate = candidates.at(i);
+      auto *item = new QListWidgetItem(QStringLiteral("%1 %2: %3").arg(candidate.family, candidate.name,
+                                                                        candidate.value.left(120)), list);
+      item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+      item->setCheckState(Qt::Unchecked);
+      item->setToolTip(candidate.value);
+      item->setData(Qt::UserRole, i);
+    }
+    list->selectAll();
+    layout->addWidget(list);
+    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &review);
+    QObject::connect(buttons, &QDialogButtonBox::accepted, &review, &QDialog::accept);
+    QObject::connect(buttons, &QDialogButtonBox::rejected, &review, &QDialog::reject);
+    layout->addWidget(buttons);
+    QVector<int> chosen;
+    if (review.exec() != QDialog::Accepted) return chosen;
+    for (int row = 0; row < list->count(); ++row)
+      if (auto *item = list->item(row); item->checkState() == Qt::Checked) chosen.append(item->data(Qt::UserRole).toInt());
+    return chosen;
+  };
   return ports;
 }
 
@@ -246,10 +282,21 @@ void UploadDestinationsDialog::importFile(const QString &path) {
     m_importReport->setText(report.summary());
     m_ports.report(this, tr("The file could not be opened.\n") + report.summary()); return;
   }
-  const auto import = uploads::importSxcu(file.read(kMaxSxcuBytes + 1));
+  auto import = uploads::importSxcu(file.read(kMaxSxcuBytes + 1));
   m_importReport->setText(import.report.summary());
   if (!import.ok || import.acceptanceBlocked) {
     m_ports.report(this, codeText(import.ok ? QStringLiteral("import-critical-unsupported") : import.code) + "\n" + import.report.summary()); return;
+  }
+  // Review fix A5: the name heuristic cannot know which values are private,
+  // so the non-extracted values are shown once and the user marks the ones
+  // that are secrets before anything is stored.
+  if (!import.candidates.isEmpty() && m_ports.reviewSecretCandidates) {
+    const auto candidates = import.candidates;
+    const auto chosen = m_ports.reviewSecretCandidates(this, candidates);
+    for (const int index : chosen) {
+      if (index < 0 || index >= candidates.size()) continue;
+      markImportedSecret(&import, candidates.at(index).family, candidates.at(index).name);
+    }
   }
   auto *catalog = &m_catalog;
   auto *credentials = &m_credentials;

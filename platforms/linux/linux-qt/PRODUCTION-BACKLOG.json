@@ -1010,6 +1010,22 @@
         "platforms/linux/linux-qt/app/SecretServiceCredentialStore.h",
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "COMPCAT-011",
+        "CORE-013",
+        "SETCAT-007"
+      ],
+      "outcome": "Review fix A5 of the completed ROOT-SECURITY-001 review is landed: the .sxcu importer now returns every non-extracted header/query/argument value as an import candidate, and the destinations window shows those values once at import with a mark-as-secret choice (native review dialog, injectable reviewSecretCandidates port). markImportedSecret moves a marked value into the secrets list and leaves a {secret:} reference in the destination, so the destinations file never keeps a marked value; untouched values import unchanged and the residual risk that a user declines to mark a private-looking value is accepted per the review. Both regression tests (importReviewListsNonExtractedValuesAndMarkingMovesThem, importReviewMarksChosenValuesAsKeyringSecrets) are red against the pre-fix behavior; SxcuImport 18/18, destinations dialog 10/10. All three rows stay partial - COMPCAT-011 for the remaining legacy template compatibility and human qualification, CORE-013/SETCAT-007 for the remaining .sxie import (B) record and fixes and the independent second-model review of the A3 session crypto code.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+        "platforms/linux/linux-qt/src/uploads/SxcuImport.h",
+        "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
+        "platforms/linux/linux-qt/app/UploadDestinationsDialog.h",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp"
+      ]
     }
   ],
   "audit_method": "All 16 capabilities /345 IDs revalidated against current source and tests; unchanged bodies compared to the previous complete review, changed paths and approved contracts inspected. Existing suite passes but direct current-production HTTP probe exposes the P1 2xx/truncated-body accounting gap. No release or security acceptance inferred.",
