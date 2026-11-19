@@ -40,6 +40,12 @@ EffectPreset failAt(const QString &code, qsizetype index) {
   p.report.addRecord(index, QStringLiteral("effect-step"), QString(), compatibility::ImportDisposition::Rejected, code);
   return p;
 }
+// Review fix B2: property keys and parameter names come from untrusted
+// preset files; diagnostics that embed them stay bounded so a file cannot
+// push unbounded text through any reporting surface.
+QString boundedKey(const QString &key) {
+  return key.size() <= 64 ? key : key.left(64);
+}
 bool traversal(const QString &path) {
   QString portable = path; portable.replace('\\', '/');
   for (const auto &part : portable.split('/')) if (part == ".." || part == ".") return true;
@@ -63,13 +69,17 @@ bool unsafeLegacyStep(const QJsonObject &object) {
   return unsafeExtras(object, known);
 }
 bool validateAsset(const QByteArray &bytes) {
+  // Review fix B4: header-only validation - the full decode is the resource
+  // a malicious preset would demand, so only the format and declared size
+  // are inspected here; a truncated body surfaces at actual use.
+  // Review fix B5: only the bounded, animation-free png and jpeg decoders
+  // are accepted for embedded assets.
   QBuffer buffer; buffer.setData(bytes); if (!buffer.open(QIODevice::ReadOnly)) return false;
   QImageReader reader(&buffer); reader.setAutoTransform(false);
-  if (!QList<QByteArray>{"png", "jpeg", "bmp", "gif", "webp"}.contains(reader.format())) return false;
+  if (!QList<QByteArray>{"png", "jpeg"}.contains(reader.format())) return false;
   const auto size = reader.size();
-  if (!size.isValid() || size.width() > 8192 || size.height() > 8192 || qint64(size.width()) * size.height() > 16 * 1024 * 1024) return false;
-  const auto image = reader.read();
-  return !image.isNull() && image.size() == size;
+  return size.isValid() && size.width() > 0 && size.height() > 0 &&
+         size.width() <= 8192 && size.height() <= 8192 && qint64(size.width()) * size.height() <= 16 * 1024 * 1024;
 }
 void validateStep(PresetStep &step, const EffectRegistry &registry, const QMap<QString, QByteArray> &assets) {
   const auto *effect = registry.find(step.id);
@@ -259,7 +269,7 @@ void mapStep(PresetStep &step, const Mapping &mapping, const EffectRegistry &reg
   if (step.id.isEmpty()) {
     step.diagnostics.append("preset-effect-unsupported");
     for (auto it = step.legacy.begin(); it != step.legacy.end(); ++it)
-      if (it.key() != "$type" && it.key() != "Enabled") step.diagnostics.append("preset-property-unsupported:" + it.key());
+      if (it.key() != "$type" && it.key() != "Enabled") step.diagnostics.append("preset-property-unsupported:" + boundedKey(it.key()));
     return;
   }
   step.parameters = mapping.defaults;
@@ -278,7 +288,7 @@ void mapStep(PresetStep &step, const Mapping &mapping, const EffectRegistry &reg
     }
   }
   for (auto it = step.legacy.begin(); it != step.legacy.end(); ++it)
-    if (!known.contains(it.key())) step.diagnostics.append("preset-property-unsupported:" + it.key());
+    if (!known.contains(it.key())) step.diagnostics.append("preset-property-unsupported:" + boundedKey(it.key()));
   if (step.id == "resize_image") {
     const double w = step.parameters.value("width").toDouble(), h = step.parameters.value("height").toDouble();
     step.parameters.insert("maintain_aspect_ratio", (w == 0) != (h == 0));
@@ -362,8 +372,11 @@ QByteArray writeXsiePreset(const EffectPreset &preset, const EffectRegistry &reg
       for (auto it = canonical.begin(); it != canonical.end(); ++it) params.insert(it.key(), it.value());
     }
     QJsonObject entry = s.extra;
+    // Review fix B2: diagnostics are derived at read time from the registry,
+    // so they are never serialized - a written preset carries no reporting
+    // text of its own.
     const QJsonObject fields{{"id", s.id}, {"parameters", params}, {"seed", QString::number(s.seed)},
-        {"enabled", s.enabled}, {"supported", s.supported}, {"legacy", s.legacy}, {"diagnostics", QJsonArray::fromStringList(s.diagnostics)}};
+        {"enabled", s.enabled}, {"supported", s.supported}, {"legacy", s.legacy}};
     for (auto it = fields.begin(); it != fields.end(); ++it) entry.insert(it.key(), it.value());
     steps.append(entry);
   }
@@ -415,7 +428,9 @@ EffectPreset readXsiePreset(const QByteArray &bytes, const EffectRegistry &regis
     s.enabled = o.value("enabled").toBool(); s.legacy = o.value("legacy").toObject();
     if (unsafeLegacyStep(s.legacy)) return failAt("preset-unsafe-content", index);
     if (traversal(s.legacy.value("ImageLocation").toString())) return failAt("preset-path-traversal", index);
-    for (const auto &d : o.value("diagnostics").toArray()) s.diagnostics.append(d.toString());
+    // Review fix B2: diagnostics are recomputed from the registry, never
+    // copied from the file - a preset cannot fabricate the app's own
+    // reporting text.
     const auto params = o.value("parameters").toObject();
     s.parameters = params.toVariantMap();
     const auto *schema = registry.find(s.id); QStringList knownParams;
@@ -432,8 +447,12 @@ EffectPreset readXsiePreset(const QByteArray &bytes, const EffectRegistry &regis
         if (resolved.ok()) { s.parameters = resolved.values;
           for (auto it = params.begin(); it != params.end(); ++it) if (!knownParams.contains(it.key())) s.parameters.insert(it.key(), it.value().toVariant());
           validateStep(s, registry, p.assets); }
-        else s.diagnostics.append(resolved.error + ":" + resolved.parameter);
+        else s.diagnostics.append(resolved.error + ":" + boundedKey(resolved.parameter));
       } else s.diagnostics.append("preset-effect-unsupported");
+    } else if (!registry.find(s.id)) {
+      // Review fix B2: a step the registry cannot serve names itself; the
+      // file's own text never reaches the diagnostics.
+      s.diagnostics.append("preset-effect-unsupported");
     }
     p.report.add(s.supported ? ImportDisposition::Retained : ImportDisposition::Quarantined);
     if (!s.supported) p.report.addRecord(index, QStringLiteral("effect-step"), QString(), ImportDisposition::Quarantined, QStringLiteral("unsupported-effect"));

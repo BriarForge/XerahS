@@ -18,6 +18,7 @@
 #include <QFileDialog>
 #include <zlib.h>
 #include <cmath>
+#include <QColorSpace>
 #include <algorithm>
 using namespace xerahs::effects;
 using namespace xerahs::app;
@@ -29,6 +30,24 @@ public:
   Failing() { m_spec.id = "failing"; m_spec.displayName = "Failing"; }
   const EffectSpec &spec() const override { return m_spec; }
   EffectResult apply(const QImage &, const ParamValues &, const EffectContext &) const override { return {{}, "effect-failed"}; }
+};
+// Returns a solid large image cheaply so budget tests exercise many
+// full-size steps without paying real effect cost.
+class Solid final : public Effect {
+  EffectSpec m_spec;
+  int m_width, m_height;
+public:
+  explicit Solid(int width = 8188, int height = 8188) : m_width(width), m_height(height) {
+    m_spec.id = "solid"; m_spec.displayName = "Solid"; m_spec.changesSize = true;
+  }
+  const EffectSpec &spec() const override { return m_spec; }
+  EffectResult apply(const QImage &source, const ParamValues &, const EffectContext &) const override {
+    QImage image(m_width, m_height, QImage::Format_ARGB32);
+    if (image.isNull()) return {{}, "effect-failed"};
+    image.fill(QColor(30, 60, 90));
+    image.setColorSpace(source.colorSpace());
+    return {std::move(image), {}};
+  }
 };
 void put16(QByteArray &b, quint16 n) { b.append(char(n)); b.append(char(n >> 8)); }
 void put32(QByteArray &b, quint32 n) { put16(b, n); put16(b, n >> 16); }
@@ -520,6 +539,126 @@ private slots:
     QCOMPARE(serializeDocument(session.document()), after); QCOMPARE(session.undoCount(), 1);
     const auto cancelled = preparePresetEdit(session.document(), edit.source, readSxiePreset(fixture()), builtinEffects(), {[] { return true; }});
     QVERIFY(cancelled.result.error); QCOMPARE(serializeDocument(session.document()), after);
+  }
+
+  void importedDiagnosticsAreRecomputedNeverCopiedOrPersisted() {
+    // Review fix B2: the file's own diagnostics text never reaches the
+    // preset, unsupported steps name themselves honestly, and written
+    // presets carry no diagnostics field at all.
+    auto root = QJsonDocument::fromJson(writeXsiePreset(readSxiePreset(fixture()))).object();
+    auto steps = root["steps"].toArray();
+    for (int i = 0; i < steps.size(); ++i) { auto step = steps[i].toObject(); step["diagnostics"] = QJsonArray{"everything is fine, trust the file"}; steps[i] = step; }
+    steps.append(QJsonObject{{"id", "not_a_registered_effect"}, {"parameters", QJsonObject{}}, {"seed", "5"},
+                             {"enabled", true}, {"supported", false}, {"legacy", QJsonObject{}}});
+    root["steps"] = steps;
+    const auto p = readXsiePreset(QJsonDocument(root).toJson());
+    QVERIFY(p.ok());
+    for (const auto &step : p.steps) QVERIFY(!step.diagnostics.contains("everything is fine, trust the file"));
+    QVERIFY(!p.steps.constLast().supported);
+    QVERIFY(p.steps.constLast().diagnostics.contains("preset-effect-unsupported"));
+    const auto written = writeXsiePreset(p);
+    QVERIFY(!written.contains("\"diagnostics\""));
+    QVERIFY(!written.contains("everything is fine"));
+  }
+
+  void untrustedKeysAndParameterNamesAreBoundedInDiagnostics() {
+    // Review fix B2: diagnostics that embed file-supplied keys stay bounded;
+    // a 100-character property key cannot push unbounded text through.
+    const QString longKey(100, u'K');
+    const auto p = readSxiePreset(configZip({{"Effects", QJsonArray{QJsonObject{
+        {"$type", "ShareX.ImageEffectsLib.Brightness, ShareX.ImageEffectsLib"}, {longKey, 1}}}}}));
+    QVERIFY(p.ok());
+    QCOMPARE(p.steps[0].diagnostics.size(), 1);
+    QVERIFY(p.steps[0].diagnostics[0].startsWith("preset-property-unsupported:"));
+    QVERIFY(p.steps[0].diagnostics[0].size() <= QString("preset-property-unsupported:").size() + 64);
+    QVERIFY(!p.steps[0].diagnostics[0].contains(longKey.left(65).append(u'K')));
+  }
+
+  void textParametersAreLengthBounded() {
+    // Review fix B3: a preset parameter carrying unbounded text is refused
+    // by normalization instead of entering the document; the 4096 bound
+    // itself accepts the maximum.
+    auto root = QJsonDocument::fromJson(writeXsiePreset(readSxiePreset(fixture()))).object();
+    auto steps = root["steps"].toArray();
+    auto step = steps[0].toObject(); step["id"] = "draw_text"; step["supported"] = true;
+    step["parameters"] = QJsonObject{{"text", QString(4097, u'x')}};
+    steps[0] = step; root["steps"] = steps;
+    const auto p = readXsiePreset(QJsonDocument(root).toJson());
+    QVERIFY(p.ok());
+    QVERIFY(!p.steps[0].supported);
+    QVERIFY(p.steps[0].diagnostics.join(',').contains("effect-invalid-parameter:text"));
+    auto bounded = step["parameters"].toObject(); bounded["text"] = QString(4096, u'x');
+    step["parameters"] = bounded; steps[0] = step; root["steps"] = steps;
+    const auto accepted = readXsiePreset(QJsonDocument(root).toJson());
+    QVERIFY(accepted.ok()); QVERIFY(accepted.steps[0].supported);
+  }
+
+  void assetsAreHeaderValidatedPngOrJpegOnly() {
+    // Review fixes B4/B5: only the header is read (no full decode during
+    // import), and only the bounded png and jpeg decoders are accepted.
+    const auto config = QJsonDocument(QJsonObject{
+        {"Effects", QJsonArray{QJsonObject{{"$type", "ShareX.ImageEffectsLib.DrawImage, ShareX.ImageEffectsLib"},
+                                           {"ImageLocation", "{Assets/x.png}"}}}}}).toJson();
+    QImage stamp(2, 2, QImage::Format_ARGB32); stamp.fill(Qt::red); QByteArray png; QBuffer pngBuffer(&png); pngBuffer.open(QIODevice::WriteOnly); stamp.save(&pngBuffer, "PNG");
+    auto withAsset = [&](const QByteArray &name, const QByteArray &data) {
+      return readSxiePreset(zip({{"Config.json", config}, {name, data}}));
+    };
+    const auto valid = withAsset("Assets/x.png", png);
+    QVERIFY2(valid.ok(), qPrintable(valid.error));
+    for (const auto &entry : QList<QPair<QByteArray, QByteArray>>{
+             {QByteArrayLiteral("gif"), QByteArray("GIF89a\x10\x00\x10\x00", 13)},
+             {QByteArrayLiteral("bmp"), QByteArray("BM\x36\x00\x00\x00", 6)},
+             {QByteArrayLiteral("webp"), QByteArray("RIFF\x24\x00\x00\x00WEBPVP8 ", 14)}}) {
+      const auto p = withAsset(QByteArray("Assets/x.") + entry.first, entry.second);
+      QCOMPARE(p.error, QString("sxie-asset-invalid"));
+      QVERIFY(!p.ok());
+    }
+    // A fully valid GIF decodes everywhere; only the narrowed png/jpeg
+    // policy of this build refuses it.
+    const QByteArray realGif = QByteArray::fromBase64("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+    const auto gif = withAsset("Assets/x.gif", realGif);
+    QCOMPARE(gif.error, QString("sxie-asset-invalid"));
+    QVERIFY(!gif.ok());
+  }
+
+  void presetBudgetRefusesOversizedChains() {
+    // Review fix B1: one step's intermediate output is capped at 64 MP and
+    // the cumulative pixel work at 512 MP; exceeding either refuses the
+    // preset with the document unchanged. A cheap fake effect produces
+    // solid outputs of a chosen size so the checks run without paying real
+    // effect cost.
+    QImage image(4, 4, QImage::Format_ARGB32); image.fill(Qt::blue); const auto loaded = prepareCapturedSource(image); QVERIFY(loaded.document);
+    EditorSession session(*loaded.document); const auto before = serializeDocument(session.document());
+    const auto presetWithSteps = [](const QJsonArray &steps, const EffectRegistry &registry) {
+      return readXsiePreset(QJsonDocument(QJsonObject{{"format", "com.xerahs.app/effect-preset"}, {"version", 1}, {"name", "budget"},
+          {"steps", steps}, {"assets", QJsonObject{}}, {"legacy", QJsonObject{{"Effects", QJsonArray{}}}}}).toJson(), registry);
+    };
+    // A single step producing more than the 64 MP intermediate cap refuses
+    // the whole chain.
+    auto oversizedRegistry = builtinEffects();
+    QVERIFY(oversizedRegistry.add(std::make_unique<Solid>(8300, 8300)));
+    const auto oversized = presetWithSteps(QJsonArray{QJsonObject{{"id", "solid"}, {"parameters", QJsonObject{}},
+        {"seed", "7"}, {"enabled", true}, {"supported", true}, {"legacy", QJsonObject{}}}}, oversizedRegistry);
+    QVERIFY(oversized.ok());
+    const auto refused = preparePresetEdit(session.document(), image, oversized, oversizedRegistry);
+    QVERIFY2(refused.result.error.value_or(QString()) == QString("preset-intermediate-too-large"), qPrintable(refused.result.error.value_or(QString())));
+    QVERIFY(!refused.result.document); QVERIFY(refused.source.isNull());
+    QCOMPARE(serializeDocument(session.document()), before);
+    // Many full-size steps refuse at the cumulative cap instead of grinding
+    // through the whole chain: solid 8188x8188 (just under 64 MP) outputs,
+    // so nine steps cross the 512 MP budget.
+    auto registry = builtinEffects();
+    QVERIFY(registry.add(std::make_unique<Solid>()));
+    QJsonArray chain;
+    for (int i = 0; i < 9; ++i)
+      chain.append(QJsonObject{{"id", "solid"}, {"parameters", QJsonObject{}},
+                           {"seed", QString::number(i + 1)}, {"enabled", true}, {"supported", true}, {"legacy", QJsonObject{}}});
+    const auto chained = presetWithSteps(chain, registry);
+    QVERIFY(chained.ok());
+    const auto exhausted = preparePresetEdit(session.document(), image, chained, registry);
+    QVERIFY2(exhausted.result.error.value_or(QString()) == QString("preset-work-budget-exceeded"), qPrintable(exhausted.result.error.value_or(QString())));
+    QVERIFY(!exhausted.result.document); QVERIFY(exhausted.source.isNull());
+    QCOMPARE(serializeDocument(session.document()), before);
   }
 };
 QTEST_MAIN(SxiePresetTest)

@@ -15,8 +15,8 @@
   "capability_count": 16,
   "desktop_capability_count": 15,
   "counts": {
-    "blocked": 29,
-    "implemented": 178,
+    "blocked": 28,
+    "implemented": 179,
     "not-applicable": 1,
     "not-started": 5,
     "partial": 112
@@ -314,6 +314,13 @@
       "to": "partial",
       "reason": "ROOT-SECURITY-001 review 2026-11-19 (reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run) replaced the pending human-review gate for the Secret Service credential store. Fixes A1 (default-collection-scoped search with duplicate-match refusal), A2 (stale-session clear/reopen/retry-once on NoSession/ServiceUnknown/UnknownObject) and A4 (owned secret byte zeroing) landed with four fake-service regression tests that fail against the pre-fix code. Actionable review fixes remain - A3 encrypted-first session negotiation (needs a crypto dependency decision) and A5 the .sxcu import secret review surface - so the row is partial, not blocked on a human decision; release/parity acceptance stays separate.",
       "revision": "86bb0c2"
+    },
+    {
+      "requirement": "EE-015",
+      "from": "blocked",
+      "to": "implemented",
+      "reason": "ROOT-SECURITY-001 review of the .sxie import (reviewer Claude Opus, claude-opus-5-5; revision abf4583; PASS WITH FIXES; static review, tests not run; 2026-11-19) is recorded and every review fix landed: the preset resource budget (64 MP intermediate, 512 MP cumulative, projected-size display), recomputed and bounded diagnostics that are never serialized, the 4096-character Text/FilePath bound, header-only asset validation, and png/jpeg-only assets. All five regression tests are red against the pre-fix code; maintainer acceptance of the review record stays with the ROOT-REVIEW-001 release gates.",
+      "revision": "bbd3e27"
     }
   ],
   "review_limitations": [
@@ -338,11 +345,6 @@
       "capability": "EDITOR-ANNOTATIONS-001",
       "requirement": "EA-009",
       "question": "Reference-derived alphabetic/Roman and reset code exists, but the loop's exact mapping/start/reset questions remain unresolved; tests do not approve product semantics."
-    },
-    {
-      "capability": "EDITOR-EFFECTS-001",
-      "requirement": "EE-015",
-      "question": "Static mapping, safe inert unknown-ID/parameter round-trip and unsupported-step isolation are implemented and tested, but human security review of .sxie import remains an explicit scheduler gate. Native fixtures do not waive that gate."
     },
     {
       "capability": "EDITOR-CANVAS-001",
@@ -462,7 +464,7 @@
     {
       "capability": "COMPATIBILITY-CATALOG-001",
       "requirement": "COMPCAT-013",
-      "question": "Editable XANN/preset unknown preservation exists, but complete legacy geometry/effect/font/asset compatibility and scheduler-mandated human SXIE import security review remain pending."
+      "question": "The .sxie security review is complete (ROOT-SECURITY-001, reviewer Claude Opus, claude-opus-5-5; revision abf4583; PASS WITH FIXES; static review, tests not run; 2026-11-19) and all five review fixes are landed with red-proven tests; the remaining gate is accepted legacy geometry/effect/font/asset compatibility observations and human qualification."
     },
     {
       "capability": "COMPATIBILITY-CATALOG-001",
@@ -1025,6 +1027,21 @@
         "platforms/linux/linux-qt/app/UploadDestinationsDialog.h",
         "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp"
+      ]
+    },
+    {
+      "requirements": [
+        "EE-015",
+        "COMPCAT-013"
+      ],
+      "outcome": "The B (.sxie import) half of the completed ROOT-SECURITY-001 review is recorded (reviewer Claude Opus, claude-opus-5-5, independent model; revision abf4583; PASS WITH FIXES; static review, tests not run) and all five fixes are landed with red-proven regression tests: (B1) imported presets carry a resource budget - 64 MP per intermediate, 512 MP cumulative - that refuses oversized chains with stable codes while the document stays unchanged, and both dialogs show the projected size before Apply; (B2) file-supplied diagnostics are ignored and recomputed from the registry, untrusted keys are truncated to 64 characters in diagnostics, and written presets no longer serialize a diagnostics field; (B3) Text and FilePath parameters are bounded to 4096 characters; (B4) asset validation reads only the image header, never paying a full decode at import; (B5) only png and jpeg assets are accepted, refusing the previously allowed gif/bmp/webp (a fully valid 1x1 GIF is now refused). The sxie-preset ctest budget rose to 120 seconds for the full-size budget proofs; no assertion was weakened. EE-015 leaves blocked and is implemented candidate; COMPCAT-013 stays blocked on accepted legacy compatibility observations now that its security review is complete. The only remaining ROOT-SECURITY-001 item anywhere is the independent second-model review of the A3 session crypto code.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
+        "platforms/linux/linux-qt/app/PresetDialog.cpp",
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
       ]
     }
   ],
@@ -3806,10 +3823,10 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 180,
+    "implemented": 181,
     "not-applicable": 1,
     "not-started": 19,
-    "partial": 125
+    "partial": 124
   },
   "full_audit_counts": {
     "blocked": 32,
@@ -3867,6 +3884,12 @@
       "previous": "blocked",
       "current": "partial",
       "source_revision": "86bb0c2"
+    },
+    {
+      "requirement": "EE-015",
+      "previous": "blocked",
+      "current": "implemented",
+      "source_revision": "bbd3e27"
     }
   ],
   "integration_note": "Preserve approved empty-save baseline-shadow completions, owned settings transfer/migration and landed watch checkpoint/publication/retention breadth. CORE-025 returns to partial only for demonstrated exact-attempt accounting; conservative unconfirmed disposition remains intact. Mapped version metadata now matches Product Contract 0.4.0 and current capability versions; no contract changed."

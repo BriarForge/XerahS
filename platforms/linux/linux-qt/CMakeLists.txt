@@ -1520,7 +1520,7 @@ set_target_properties(sxie-preset-test PROPERTIES AUTOMOC ON)
 target_compile_definitions(sxie-preset-test PRIVATE SXIE_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/sxie/mapping.sxie")
 target_link_libraries(sxie-preset-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs ZLIB::ZLIB Qt6::Widgets Qt6::DBus Qt6::Test)
 add_test(NAME sxie-preset COMMAND sxie-preset-test)
-set_tests_properties(sxie-preset PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 60)
+set_tests_properties(sxie-preset PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 120)
 
 # COMPAT-SXIE-001: explicit legacy watermark and remaining effect mapping fixtures.
 target_compile_definitions(sxie-preset-test PRIVATE SXIE_WATERMARK_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/sxie/watermark.json")

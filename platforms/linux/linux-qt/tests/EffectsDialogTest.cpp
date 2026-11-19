@@ -106,6 +106,8 @@ private slots:
     QVERIFY(!canvas->isEnabled()); QVERIFY(!action->isEnabled());
     dialog->findChild<QLineEdit *>("effectsSearch")->setText("brightness");
     QTRY_VERIFY(!dialog->previewImage().isNull());
+    // Review fix B1: the produced size is shown before Apply commits it.
+    QVERIFY(dialog->findChild<QLabel *>("effectsStatus")->text().contains("Projected size:"));
     QCOMPARE(serializeDocument(canvas->annotationDocument()), before);
     dialog->reject(); QTRY_VERIFY(!dialog);
     QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QVERIFY(!undo->isEnabled());

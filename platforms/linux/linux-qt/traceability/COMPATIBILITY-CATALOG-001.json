@@ -890,7 +890,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Editable XANN/preset unknown preservation exists, but complete legacy geometry/effect/font/asset compatibility and scheduler-mandated human SXIE import security review remain pending.",
+      "note": "Editable XANN/preset unknown preservation exists. ROOT-SECURITY-001 review 2026-11-19 - reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run - is recorded for the .sxie import, replacing the pending human-review gate, and all five review fixes landed with red-proven regression tests: (B1) imported presets carry an explicit resource budget - one step's intermediate output is capped at 64 MP and the cumulative pixel work at 512 MP, refusing the chain with preset-intermediate-too-large or preset-work-budget-exceeded while the document stays unchanged, and the preset dialog shows the projected source size and caps while the effects dialog shows the produced size before Apply (presetBudgetRefusesOversizedChains; the sxie-preset ctest budget rose to 120s for the full-size budget proofs); (B2) file-supplied diagnostics are ignored and recomputed from the registry, untrusted property keys and parameter names are truncated to 64 characters in every diagnostic, and written presets no longer serialize a diagnostics field at all (importedDiagnosticsAreRecomputedNeverCopiedOrPersisted, untrustedKeysAndParameterNamesAreBoundedInDiagnostics - both red against the pre-fix code); (B3) Text and FilePath parameters are bounded to 4096 characters in normalize (textParametersAreLengthBounded, red against the pre-fix code); (B4) asset validation reads only the image header - no full decode during import; (B5) only the bounded, animation-free png and jpeg decoders are accepted, refusing the previously allowed gif/bmp/webp headers (assetsAreHeaderValidatedPngOrJpegOnly, including a fully valid 1x1 GIF that the pre-fix code accepted). The budget caps are the loop's decision within the review's latitude ('e.g. 64 MP'), chosen so real 1-5 step presets on sources up to 24 MP stay far inside. Maintainer acceptance of the completed review record stays with ROOT-REVIEW-001 release gates. The remaining blocker for this row is the accepted legacy geometry/effect/font/asset compatibility observations and human qualification, not the security review.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -903,13 +903,13 @@
         "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
       ],
       "waiting_on": [
-        "Mike: human security review of SXIE import; legacy compatibility observations."
+        "Mike: accepted legacy compatibility observations and qualification."
       ],
       "audit": {
         "classification": "blocked",
         "spec_line": 52,
         "remaining_human_decision": "SXIE import security review and accepted legacy/cross-platform format fixtures remain pending.",
-        "coverage": "Editable XANN/preset unknown preservation exists, but complete legacy geometry/effect/font/asset compatibility and scheduler-mandated human SXIE import security review remain pending.",
+        "coverage": "Editable XANN/preset unknown preservation exists. ROOT-SECURITY-001 review 2026-11-19 - reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run - is recorded for the .sxie import, replacing the pending human-review gate, and all five review fixes landed with red-proven regression tests: (B1) imported presets carry an explicit resource budget - one step's intermediate output is capped at 64 MP and the cumulative pixel work at 512 MP, refusing the chain with preset-intermediate-too-large or preset-work-budget-exceeded while the document stays unchanged, and the preset dialog shows the projected source size and caps while the effects dialog shows the produced size before Apply (presetBudgetRefusesOversizedChains; the sxie-preset ctest budget rose to 120s for the full-size budget proofs); (B2) file-supplied diagnostics are ignored and recomputed from the registry, untrusted property keys and parameter names are truncated to 64 characters in every diagnostic, and written presets no longer serialize a diagnostics field at all (importedDiagnosticsAreRecomputedNeverCopiedOrPersisted, untrustedKeysAndParameterNamesAreBoundedInDiagnostics - both red against the pre-fix code); (B3) Text and FilePath parameters are bounded to 4096 characters in normalize (textParametersAreLengthBounded, red against the pre-fix code); (B4) asset validation reads only the image header - no full decode during import; (B5) only the bounded, animation-free png and jpeg decoders are accepted, refusing the previously allowed gif/bmp/webp headers (assetsAreHeaderValidatedPngOrJpegOnly, including a fully valid 1x1 GIF that the pre-fix code accepted). The budget caps are the loop's decision within the review's latitude ('e.g. 64 MP'), chosen so real 1-5 step presets on sources up to 24 MP stay far inside. Maintainer acceptance of the completed review record stays with ROOT-REVIEW-001 release gates. The remaining blocker for this row is the accepted legacy geometry/effect/font/asset compatibility observations and human qualification, not the security review.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
@@ -938,16 +938,22 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
-            "sha256": "7a3ab0242b18cce00eab1c87c27bc64d703804c38f2b8767e36ccc00bd89de52",
+            "sha256": "67dbc6fcbed68649bb34481ef3cf3655cb73e640ba70ee9711cd4c7d046f5f85",
             "method": "failingStepIsLocatedByIndexWithoutPayload",
             "line": 113
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+            "sha256": "67dbc6fcbed68649bb34481ef3cf3655cb73e640ba70ee9711cd4c7d046f5f85",
+            "method": "presetBudgetRefusesOversizedChains",
+            "line": 624
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "XANN shapes/assets and SXIE/preset import have native fixtures and unknown preservation. Complete field compatibility, resources, all selected legacy effects and accepted observations remain.",
-      "blocked_reason": "Editable XANN/preset unknown preservation exists, but complete legacy geometry/effect/font/asset compatibility and scheduler-mandated human SXIE import security review remain pending."
+      "blocked_reason": "The .sxie security review is complete (PASS WITH FIXES, 2026-11-19) and its fixes are landed and tested; accepted legacy compatibility observations and human qualification remain pending."
     },
     "COMPCAT-014": {
       "status": "not-started",

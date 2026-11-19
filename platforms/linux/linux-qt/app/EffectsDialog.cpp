@@ -518,7 +518,10 @@ void EffectsDialog::run(bool apply) {
     } else {
       m_previewImage = std::move(result.preview);
       m_preview->setPixmap(QPixmap::fromImage(result.thumbnail));
-      m_status->setText(tr("Preview only. Apply commits one undo step."));
+      // Review fix B1: the produced size is shown before Apply commits it.
+      m_status->setText(tr("Preview only. Apply commits one undo step. Projected size: %1x%2 (%3 MP).")
+                            .arg(result.edit.source.width()).arg(result.edit.source.height())
+                            .arg(qreal(qint64(result.edit.source.width()) * result.edit.source.height()) / (1024 * 1024), 0, 'f', 1));
       if (!m_lists.diagnostic.isEmpty()) showError(m_lists.diagnostic);
       emit previewChanged();
     }

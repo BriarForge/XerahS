@@ -15,11 +15,22 @@
 #include <QTemporaryFile>
 namespace xerahs::app {
 using namespace xerahs::effects;
+namespace {
+// Review fix B1 (ROOT-SECURITY-001): imported presets run every enabled
+// step at full resolution, so the chain carries an explicit resource
+// budget. One step's intermediate output is capped at 64 megapixels, and
+// the cumulative pixel work across the chain at 512 megapixels; exceeding
+// either refuses the preset with the document unchanged. Real presets run a
+// handful of steps on sources far below these bounds.
+constexpr qint64 kPresetIntermediatePixelCap = qint64(64) * 1024 * 1024;
+constexpr qint64 kPresetCumulativePixelCap = qint64(512) * 1024 * 1024;
+}
 PreparedCanvasEdit preparePresetEdit(const editor::AnnotationDocument &document, const QImage &source,
     const EffectPreset &preset, const EffectRegistry &registry, const EffectContext &context) {
   PreparedCanvasEdit edit; edit.result.document = document; edit.source = source;
   if (!preset.ok()) { edit.result.error = preset.error; edit.result.document.reset(); return edit; }
   bool any = false;
+  qint64 cumulative = 0;
   for (const auto &step : preset.steps) {
     if (!step.supported || !step.enabled) continue;
     const auto *effect = registry.find(step.id);
@@ -41,6 +52,12 @@ PreparedCanvasEdit preparePresetEdit(const editor::AnnotationDocument &document,
     }
     edit = prepareEffectEdit(*edit.result.document, edit.source, *effect, parameters, control);
     if (edit.result.error) { const auto error = edit.result.error; edit = {}; edit.result.error = error; return edit; }
+    // The budget refuses the chain the moment a step's output or the
+    // cumulative work crosses its cap; the document stays unchanged.
+    const qint64 pixels = qint64(edit.source.width()) * edit.source.height();
+    cumulative += pixels;
+    if (pixels > kPresetIntermediatePixelCap) { edit = {}; edit.result.error = "preset-intermediate-too-large"; return edit; }
+    if (cumulative > kPresetCumulativePixelCap) { edit = {}; edit.result.error = "preset-work-budget-exceeded"; return edit; }
     if (!assetKey.isEmpty()) {
       auto operations = edit.result.document->extra.value("effectOperations").toArray();
       auto operation = operations.last().toObject();
@@ -107,7 +124,15 @@ void PresetDialog::setPreset(EffectPreset preset) {
     any |= step.supported && step.enabled && !unavailable;
   }
   m_canApply = m_preset.ok() && any; m_apply->setEnabled(m_canApply); m_export->setEnabled(m_preset.ok());
-  status(m_preset.error, (m_preset.ok() ? (m_list->count() == 0 ? tr("This preset has no steps, so there is nothing to apply.") : tr("Apply runs supported, enabled steps in order as one undo step. Unsupported data is retained for export.")) : tr("The preset could not be read. The document is unchanged.")) + "\n" + m_preset.report.detailedSummary());
+  // Review fix B1: the projection the budget will enforce - the source size
+  // the enabled steps run on, and the caps that refuse oversized chains.
+  const auto enabledSteps = std::count_if(m_preset.steps.cbegin(), m_preset.steps.cend(),
+                                           [](const PresetStep &step) { return step.supported && step.enabled; });
+  const qint64 sourcePixels = qint64(m_source.width()) * m_source.height();
+  const QString projection = tr("%1 enabled step(s) run on a %2x%3 source (%4 MP); intermediate outputs are capped at 64 MP and total work at 512 MP.")
+                                 .arg(enabledSteps).arg(m_source.width()).arg(m_source.height())
+                                 .arg(qreal(sourcePixels) / (1024 * 1024), 0, 'f', 1);
+  status(m_preset.error, (m_preset.ok() ? (m_list->count() == 0 ? tr("This preset has no steps, so there is nothing to apply.") : tr("Apply runs supported, enabled steps in order as one undo step. Unsupported data is retained for export.")) : tr("The preset could not be read. The document is unchanged.")) + "\n" + projection + "\n" + m_preset.report.detailedSummary());
 }
 void PresetDialog::accept() {
   if (m_busy || !m_apply->isEnabled()) return;
@@ -119,7 +144,14 @@ void PresetDialog::accept() {
   }, [this, revision](PreparedCanvasEdit edit) {
     if (revision != m_revision || m_work.cancelled()) return;
     m_busy = false; m_apply->setEnabled(m_canApply); m_export->setEnabled(true);
-    if (edit.result.error) { status(*edit.result.error, edit.result.error->startsWith("effect-unavailable") ? tr("A required font or native rendering resource is unavailable. The document is unchanged.") : tr("The preset failed. The document is unchanged.")); return; }
+    if (edit.result.error) {
+      const QString text = *edit.result.error == "preset-intermediate-too-large"
+          ? tr("The preset needs more than 64 megapixels in one step, so it was refused. The document is unchanged.")
+          : *edit.result.error == "preset-work-budget-exceeded"
+                ? tr("The preset needs more total work than the 512-megapixel budget allows, so it was refused. The document is unchanged.")
+                : edit.result.error->startsWith("effect-unavailable") ? tr("A required font or native rendering resource is unavailable. The document is unchanged.")
+                                                                      : tr("The preset failed. The document is unchanged.");
+      status(*edit.result.error, text); return; }
     const QPointer<PresetDialog> owner(this);
     const bool committed = m_commit && m_commit(std::move(edit));
     if (!owner) return;

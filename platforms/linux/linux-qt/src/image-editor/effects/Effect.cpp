@@ -44,7 +44,10 @@ bool normalize(const ParamSpec &spec, const QVariant &value, QVariant &normalize
   case ParamKind::Enum:
     return value.typeId() == QMetaType::QString && spec.choices.contains(value.toString());
   case ParamKind::Text:
-  case ParamKind::FilePath: return value.typeId() == QMetaType::QString;
+  case ParamKind::FilePath:
+    // Review fix B3: untrusted preset files supply these strings; a bound
+    // keeps one parameter from carrying unbounded text into the document.
+    return value.typeId() == QMetaType::QString && value.toString().size() <= 4096;
   }
   return false;
 }

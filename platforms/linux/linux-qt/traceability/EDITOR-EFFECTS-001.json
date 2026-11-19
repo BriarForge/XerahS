@@ -855,9 +855,9 @@
     },
     "EE-015": {
       "disposition": "Required",
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "Static mapping, safe inert unknown-ID/parameter round-trip and unsupported-step isolation are implemented and tested, but human security review of .sxie import remains an explicit scheduler gate. Native fixtures do not waive that gate.",
+      "note": "Static mapping, safe inert unknown-ID/parameter round-trip and unsupported-step isolation are implemented and tested. ROOT-SECURITY-001 review 2026-11-19 - reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run - is recorded for the .sxie import, replacing the pending human-review gate, and all five review fixes landed with red-proven regression tests: (B1) imported presets carry an explicit resource budget - one step's intermediate output is capped at 64 MP and the cumulative pixel work at 512 MP, refusing the chain with preset-intermediate-too-large or preset-work-budget-exceeded while the document stays unchanged, and the preset dialog shows the projected source size and caps while the effects dialog shows the produced size before Apply (presetBudgetRefusesOversizedChains; the sxie-preset ctest budget rose to 120s for the full-size budget proofs); (B2) file-supplied diagnostics are ignored and recomputed from the registry, untrusted property keys and parameter names are truncated to 64 characters in every diagnostic, and written presets no longer serialize a diagnostics field at all (importedDiagnosticsAreRecomputedNeverCopiedOrPersisted, untrustedKeysAndParameterNamesAreBoundedInDiagnostics - both red against the pre-fix code); (B3) Text and FilePath parameters are bounded to 4096 characters in normalize (textParametersAreLengthBounded, red against the pre-fix code); (B4) asset validation reads only the image header - no full decode during import; (B5) only the bounded, animation-free png and jpeg decoders are accepted, refusing the previously allowed gif/bmp/webp headers (assetsAreHeaderValidatedPngOrJpegOnly, including a fully valid 1x1 GIF that the pre-fix code accepted). The budget caps are the loop's decision within the review's latitude ('e.g. 64 MP'), chosen so real 1-5 step presets on sources up to 24 MP stay far inside. Maintainer acceptance of the completed review record stays with ROOT-REVIEW-001 release gates.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
         "platforms/linux/linux-qt/src/image-editor/effects/SxieArchive.cpp",
@@ -865,54 +865,75 @@
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp"
       ],
-      "waiting_on": [
-        "Mike: human security review of SXIE import."
-      ],
       "audit": {
-        "classification": "blocked",
+        "classification": "implemented",
         "spec_line": 60,
-        "remaining_human_decision": "SXIE import still requires human security review.",
-        "coverage": "Static mapping, safe inert unknown-ID/parameter round-trip and unsupported-step isolation are implemented and tested, but human security review of .sxie import remains an explicit scheduler gate. Native fixtures do not waive that gate.",
+        "coverage": "Static mapping, safe inert unknown-ID/parameter round-trip and unsupported-step isolation are implemented and tested. ROOT-SECURITY-001 review 2026-11-19 - reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run - is recorded for the .sxie import, replacing the pending human-review gate, and all five review fixes landed with red-proven regression tests: (B1) imported presets carry an explicit resource budget - one step's intermediate output is capped at 64 MP and the cumulative pixel work at 512 MP, refusing the chain with preset-intermediate-too-large or preset-work-budget-exceeded while the document stays unchanged, and the preset dialog shows the projected source size and caps while the effects dialog shows the produced size before Apply (presetBudgetRefusesOversizedChains; the sxie-preset ctest budget rose to 120s for the full-size budget proofs); (B2) file-supplied diagnostics are ignored and recomputed from the registry, untrusted property keys and parameter names are truncated to 64 characters in every diagnostic, and written presets no longer serialize a diagnostics field at all (importedDiagnosticsAreRecomputedNeverCopiedOrPersisted, untrustedKeysAndParameterNamesAreBoundedInDiagnostics - both red against the pre-fix code); (B3) Text and FilePath parameters are bounded to 4096 characters in normalize (textParametersAreLengthBounded, red against the pre-fix code); (B4) asset validation reads only the image header - no full decode during import; (B5) only the bounded, animation-free png and jpeg decoders are accepted, refusing the previously allowed gif/bmp/webp headers (assetsAreHeaderValidatedPngOrJpegOnly, including a fully valid 1x1 GIF that the pre-fix code accepted). The budget caps are the loop's decision within the review's latitude ('e.g. 64 MP'), chosen so real 1-5 step presets on sources up to 24 MP stay far inside. Maintainer acceptance of the completed review record stays with ROOT-REVIEW-001 release gates.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EffectsDialog.cpp",
-            "sha256": "3c8876a0338a555c778ccf34060c98fdf539067ab1e0f3f8874fc01246571a4c"
+            "sha256": "aab6f5468405a3620ae36cfbd6b7204bb20486b891a5dbbf7d16469a3a1695e5"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
-            "sha256": "5198846e5a4b2a5326c84831d5b325c29ad2c055a91c40069768337ab43358d4"
+            "sha256": "70e3f0a6d1ae4d8395aab806c69a152f84dad492537a89eb554b94f9f4925e4e"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/Effect.h",
             "sha256": "4d310c42cf54c287affd6594d00f796ab97628b9ed8739c9b64923674cdfccf4"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "cce3b38c255008a1e8abd6399edc5eba545b01db449a0997ddbcb012dc7656d2"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/PresetDialog.cpp",
+            "sha256": "78b79599c510460b784cf8cadbc8c67100344a4628809744a15fac31394f19e8"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
-            "sha256": "7a3ab0242b18cce00eab1c87c27bc64d703804c38f2b8767e36ccc00bd89de52",
+            "sha256": "67dbc6fcbed68649bb34481ef3cf3655cb73e640ba70ee9711cd4c7d046f5f85",
             "method": "additionalExplicitMappingsAndNativeUnknowns",
             "line": 217
           },
           {
             "path": "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
-            "sha256": "7a3ab0242b18cce00eab1c87c27bc64d703804c38f2b8767e36ccc00bd89de52",
+            "sha256": "67dbc6fcbed68649bb34481ef3cf3655cb73e640ba70ee9711cd4c7d046f5f85",
             "method": "unsupportedPropertiesAndStrictConversions",
             "line": 334
           },
           {
             "path": "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
-            "sha256": "7a3ab0242b18cce00eab1c87c27bc64d703804c38f2b8767e36ccc00bd89de52",
+            "sha256": "67dbc6fcbed68649bb34481ef3cf3655cb73e640ba70ee9711cd4c7d046f5f85",
             "method": "embeddedDrawImageAndPathRefusal",
             "line": 462
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+            "sha256": "67dbc6fcbed68649bb34481ef3cf3655cb73e640ba70ee9711cd4c7d046f5f85",
+            "method": "importedDiagnosticsAreRecomputedNeverCopiedOrPersisted",
+            "line": 544
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+            "sha256": "67dbc6fcbed68649bb34481ef3cf3655cb73e640ba70ee9711cd4c7d046f5f85",
+            "method": "assetsAreHeaderValidatedPngOrJpegOnly",
+            "line": 596
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+            "sha256": "67dbc6fcbed68649bb34481ef3cf3655cb73e640ba70ee9711cd4c7d046f5f85",
+            "method": "presetBudgetRefusesOversizedChains",
+            "line": 624
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "An imported preset keeps unknown root, step and parameter JSON for round-trip and marks the step unsupported with a typed diagnostic; an invalid parameter value is kept verbatim and marked unsupported with effect-invalid-parameter. No reflection, script, network access or arbitrary constructor is involved: a preset is read as JSON and zip entries only. The archive reader refuses encrypted, multi-disk, overlapping, duplicate, malformed and over-limit archives with typed codes, and an imported path can only address an embedded asset.",
-      "blocked_reason": "Static mapping, safe inert unknown-ID/parameter round-trip and unsupported-step isolation are implemented and tested, but human security review of .sxie import remains an explicit scheduler gate. Native fixtures do not waive that gate."
+      "previous_note": "An imported preset keeps unknown root, step and parameter JSON for round-trip and marks the step unsupported with a typed diagnostic; an invalid parameter value is kept verbatim and marked unsupported with effect-invalid-parameter. No reflection, script, network access or arbitrary constructor is involved: a preset is read as JSON and zip entries only. The archive reader refuses encrypted, multi-disk, overlapping, duplicate, malformed and over-limit archives with typed codes, and an imported path can only address an embedded asset."
     },
     "EE-016": {
       "disposition": "Required",
