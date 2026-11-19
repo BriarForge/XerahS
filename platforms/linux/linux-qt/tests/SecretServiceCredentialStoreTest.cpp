@@ -35,6 +35,10 @@ public:
   int unlockCalls = 0, secretReads = 0, sessionCalls = 0;
   QString session;
   QStringList pendingUnlock;
+  // When set, the next GetSecrets fails with this error name once.
+  QString secretsErrorOnce;
+  // When set, the next OpenSession fails with this error name once.
+  QString openSessionErrorOnce;
 
   QString introspect(const QString &) const override { return {}; }
 
@@ -45,15 +49,19 @@ public:
     const auto error = [&](const QString &name) { connection.send(message.createErrorReply(name, QStringLiteral("fake"))); return true; };
     if (member == "OpenSession") {
       ++sessionCalls;
+      if (!openSessionErrorOnce.isEmpty()) { const auto name = openSessionErrorOnce; openSessionErrorOnce.clear(); return error(name); }
       if (args.value(0).toString() != "plain") return error("org.freedesktop.DBus.Error.NotSupported");
       session = kRoot + "/session/1";
       return reply({QVariant::fromValue(QDBusVariant(QString())), QVariant::fromValue(QDBusObjectPath(session))});
     }
     if (member == "ReadAlias") return reply({QVariant::fromValue(QDBusObjectPath(noDefault ? "/" : kCollection))});
     if (member == "SearchItems") {
+      // Collection-scoped search: only items under the called collection match.
       const auto wanted = qdbus_cast<Attributes>(args.value(0));
+      const QString collection = message.path() + QLatin1Char('/');
       QList<QDBusObjectPath> unlocked, locked;
       for (auto it = items.cbegin(); it != items.cend(); ++it) {
+        if (!it.key().startsWith(collection)) continue;
         bool match = true;
         for (auto w = wanted.cbegin(); w != wanted.cend(); ++w) match = match && it->attributes.value(w.key()) == w.value();
         if (match) (it->locked ? locked : unlocked).append(QDBusObjectPath(it.key()));
@@ -91,6 +99,7 @@ public:
     if (member == "Dismiss") { ++dismissCalls; return reply(QVariantList{}); }
     if (member == "GetSecrets") {
       ++secretReads;
+      if (!secretsErrorOnce.isEmpty()) { const auto name = secretsErrorOnce; secretsErrorOnce.clear(); return error(name); }
       if (qdbus_cast<QDBusObjectPath>(args.value(1)).path() != session) return error("org.freedesktop.Secret.Error.NoSession");
       SecretMap secrets;
       for (const auto &path : qdbus_cast<QList<QDBusObjectPath>>(args.value(0))) {
@@ -108,7 +117,7 @@ public:
       QString path;
       if (args.value(2).toBool())
         for (auto it = items.cbegin(); it != items.cend(); ++it) if (it->attributes == attributes) path = it.key();
-      if (path.isEmpty()) path = kCollection + "/" + QString::number(nextItem++);
+      if (path.isEmpty()) path = message.path() + "/" + QString::number(nextItem++);
       items[path] = FakeItem{attributes, properties.value("org.freedesktop.Secret.Item.Label").toString(), secret.value, false};
       return reply({QVariant::fromValue(QDBusObjectPath(path)), QVariant::fromValue(QDBusObjectPath("/"))});
     }
@@ -133,6 +142,10 @@ class SecretServiceCredentialStoreTest : public QObject {
   SecretServiceCredentialStore store(int promptTimeoutMs = 2000) { return SecretServiceCredentialStore(m_client, m_service, promptTimeoutMs); }
   void addLockedItem(const QString &name, const QByteArray &value) {
     m_fake->items[kCollection + "/locked"] = FakeItem{{{"xdg:schema", kSecretSchema}, {"destination", m_destination.toString(QUuid::WithoutBraces)}, {"name", name}}, "x", value, true};
+  }
+  // Plants a look-alike item under an arbitrary collection path.
+  void plant(const QString &path, const QString &name, const QString &value) {
+    m_fake->items[path] = FakeItem{{{"xdg:schema", kSecretSchema}, {"destination", m_destination.toString(QUuid::WithoutBraces)}, {"name", name}}, QStringLiteral("planted"), value.toUtf8(), false};
   }
 
 private slots:
@@ -247,6 +260,73 @@ private slots:
     m_fake->collectionLocked = true;
     m_fake->promptReply = FakeSecretService::PromptReply::Dismiss;
     QCOMPARE(secrets.store(m_destination, "token", "w").status, CredentialStatus::Denied);
+  }
+
+  void plantedLookAlikesInOtherCollectionsAreInvisible() {
+    // Review fix A1: search is scoped to the default alias collection, so an
+    // item another application planted with our attributes outside that
+    // collection is never read, and it is left untouched.
+    const QString other = QStringLiteral("/org/freedesktop/secrets/collection/other");
+    plant(other + "/1", "token", QStringLiteral("impostor"));
+    auto secrets = store();
+    QCOMPARE(secrets.lookup(m_destination, "token").status, CredentialStatus::NotFound);
+    QCOMPARE(secrets.availability(m_destination, "token"), CredentialStatus::NotFound);
+    QVERIFY(secrets.remove(m_destination, "token").status == CredentialStatus::NotFound);
+    QVERIFY(m_fake->items.contains(other + "/1"));
+    // The same item inside the default collection is the one that is read.
+    plant(kCollection + "/2", "token", QStringLiteral("real"));
+    QCOMPARE(secrets.lookup(m_destination, "token").value, QStringLiteral("real"));
+  }
+
+  void duplicateMatchesInTheDefaultCollectionAreRefused() {
+    // Two items with identical attributes inside the trusted collection are
+    // ambiguous: reads and probes refuse instead of guessing; removal clears
+    // both so the store becomes usable again.
+    plant(kCollection + "/1", "token", QStringLiteral("one"));
+    plant(kCollection + "/2", "token", QStringLiteral("two"));
+    auto secrets = store();
+    QCOMPARE(secrets.lookup(m_destination, "token").status, CredentialStatus::Unavailable);
+    QVERIFY(secrets.lookup(m_destination, "token").value.isEmpty());
+    QCOMPARE(secrets.availability(m_destination, "token"), CredentialStatus::Unavailable);
+    QVERIFY(secrets.remove(m_destination, "token").ok());
+    QVERIFY(m_fake->items.isEmpty());
+    QCOMPARE(secrets.lookup(m_destination, "token").status, CredentialStatus::NotFound);
+  }
+
+  void serviceRestartDropsTheSessionAndTheStoreRecoversOnce() {
+    // Review fix A2: after a service restart the old session object is gone.
+    // The store clears it under the session mutex, negotiates a fresh session
+    // and retries the read once; later calls reuse the recovered session.
+    auto secrets = store();
+    QVERIFY(secrets.store(m_destination, "token", "v").ok());
+    QCOMPARE(secrets.lookup(m_destination, "token").value, QStringLiteral("v"));
+    QCOMPARE(m_fake->sessionCalls, 1);
+    m_fake->session = kRoot + "/session/2";
+    QCOMPARE(secrets.lookup(m_destination, "token").value, QStringLiteral("v"));
+    QCOMPARE(m_fake->sessionCalls, 2);
+    QCOMPARE(secrets.lookup(m_destination, "token").value, QStringLiteral("v"));
+    QCOMPARE(m_fake->sessionCalls, 2);
+    // Storing recovers the same way.
+    m_fake->session = kRoot + "/session/3";
+    QVERIFY(secrets.store(m_destination, "token", "rotated").ok());
+    QCOMPARE(secrets.lookup(m_destination, "token").value, QStringLiteral("rotated"));
+  }
+
+  void staleSessionIsRetriedOnceAndNeverLoops() {
+    auto secrets = store();
+    QVERIFY(secrets.store(m_destination, "token", "v").ok());
+    // A scripted UnknownObject once: the store recovers transparently.
+    m_fake->secretsErrorOnce = QStringLiteral("org.freedesktop.DBus.Error.UnknownObject");
+    QCOMPARE(secrets.lookup(m_destination, "token").value, QStringLiteral("v"));
+    QVERIFY(m_fake->secretsErrorOnce.isEmpty());
+    // A stale session whose reopen also fails is terminal after exactly one
+    // retry: the store reports unavailable instead of retrying in a loop.
+    m_fake->session = kRoot + "/session/9";
+    m_fake->openSessionErrorOnce = QStringLiteral("org.freedesktop.DBus.Error.ServiceUnknown");
+    const int sessionCalls = m_fake->sessionCalls;
+    QCOMPARE(secrets.lookup(m_destination, "token").status, CredentialStatus::Unavailable);
+    QVERIFY(m_fake->openSessionErrorOnce.isEmpty());
+    QCOMPARE(m_fake->sessionCalls, sessionCalls + 1);
   }
 
   void missingServiceOrCollectionIsUnavailable() {

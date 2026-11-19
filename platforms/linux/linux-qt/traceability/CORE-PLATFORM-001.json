@@ -810,24 +810,20 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only.",
+      "note": "Upload credentials live only in the desktop Secret Service through the typed store; destination JSON never holds secrets. ROOT-SECURITY-001 review 2026-11-19 - reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run. Review fixes landed 2026-11-19: (A1) item search is scoped to the default alias collection, so look-alike items planted in other collections are invisible and untouched, and several matches inside the trusted collection make reads and probes refuse with Unavailable instead of guessing while removal clears them; (A2) a stale session after a service restart is cleared under the session mutex, reopened and retried exactly once on NoSession/ServiceUnknown/UnknownObject for reads and stores; (A4) owned secret QByteArrays are zeroed after use, behavior-neutral hardening with no external assertion because the bytes are function-local. The four new regression tests (plantedLookAlikesInOtherCollectionsAreInvisible, duplicateMatchesInTheDefaultCollectionAreRefused, serviceRestartDropsTheSessionAndTheStoreRecoversOnce, staleSessionIsRetriedOnceAndNeverLoops) fail against the pre-fix code and all 16 fake-service tests pass. Remaining review fixes before this row leaves partial: (A3) dh-ietf1024-sha256-aes128-cbc-pkcs7-first session negotiation, which needs a crypto dependency decision, and (A5) the .sxcu import secret review surface; release/parity acceptance stays separate.",
       "evidence": [
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
       ],
-      "waiting_on": [
-        "Mike: human security review of Secret Service credential handling."
-      ],
       "audit": {
-        "classification": "blocked",
+        "classification": "partial",
         "spec_line": 57,
-        "remaining_human_decision": "Secret Service credential-store human security review remains pending.",
-        "coverage": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only.",
+        "coverage": "Upload credentials live only in the desktop Secret Service through the typed store; destination JSON never holds secrets. ROOT-SECURITY-001 review 2026-11-19 - reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run. Review fixes landed 2026-11-19: (A1) item search is scoped to the default alias collection, so look-alike items planted in other collections are invisible and untouched, and several matches inside the trusted collection make reads and probes refuse with Unavailable instead of guessing while removal clears them; (A2) a stale session after a service restart is cleared under the session mutex, reopened and retried exactly once on NoSession/ServiceUnknown/UnknownObject for reads and stores; (A4) owned secret QByteArrays are zeroed after use, behavior-neutral hardening with no external assertion because the bytes are function-local. The four new regression tests fail against the pre-fix code and all 16 fake-service tests pass. Remaining review fixes before this row leaves partial: (A3) dh-ietf1024-sha256-aes128-cbc-pkcs7-first session negotiation, which needs a crypto dependency decision, and (A5) the .sxcu import secret review surface; release/parity acceptance stays separate.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
+            "sha256": "0241179250de627eb146d88331d1b118c1b280901c15fc02d9f80c09c47f6fa1"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
@@ -836,6 +832,14 @@
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
             "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/SecretServiceCredentialStore.cpp",
+            "sha256": "d8cb5f45d3c22094244c135987812cd6bbfb1f743aa688f09be62816e297e63f"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/SecretServiceCredentialStore.h",
+            "sha256": "856015fbf39e0b9103521b84448e174a95aff38edc4bd83191b1994bff006312"
           }
         ],
         "test_anchors": [
@@ -844,13 +848,18 @@
             "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
             "line": 82
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+            "sha256": "a70a856f7ef5e16814d68ed6afe8b2c76950b47521c3081a48fd37af66d102b3",
+            "method": "plantedLookAlikesInOtherCollectionsAreInvisible",
+            "line": 265
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "SecretServiceCredentialStore and uploads::CredentialStore provide private keyring references, explicit connection/storage and fake-service tests. Human security review, complete revocation/failure/legacy migration and native keyring qualification remain.",
-      "blocked_reason": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only."
+      "previous_note": "SecretServiceCredentialStore and uploads::CredentialStore provide private keyring references, explicit connection/storage and fake-service tests. Human security review, complete revocation/failure/legacy migration and native keyring qualification remain."
     },
     "CORE-014": {
       "status": "partial",

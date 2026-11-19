@@ -42,6 +42,22 @@ CredentialStatus statusFor(const QDBusError &error) {
   return CredentialStatus::Unavailable;
 }
 
+// The service can restart while the application runs; the session object it
+// handed out then no longer exists. These names mean the cached session is
+// stale, not that the credential is missing or refused.
+bool staleSessionError(const QString &name) {
+  return name == QStringLiteral("org.freedesktop.Secret.Error.NoSession") ||
+         name == QStringLiteral("org.freedesktop.DBus.Error.ServiceUnknown") ||
+         name == QStringLiteral("org.freedesktop.DBus.Error.UnknownObject");
+}
+
+// Owned secret bytes are wiped as soon as their last owned copy is consumed.
+// QByteArray is copy-on-write: filling detaches, so only our own copy is touched.
+void zeroSecretBytes(QByteArray *bytes) {
+  if (!bytes->isEmpty()) bytes->fill('\0');
+  bytes->clear();
+}
+
 Attributes attributesFor(const QUuid &destinationId, const QString &name) {
   Attributes attributes{{QStringLiteral("xdg:schema"), kSecretSchema},
                         {QStringLiteral("destination"), destinationId.toString(QUuid::WithoutBraces)}};
@@ -139,8 +155,33 @@ CredentialStatus SecretServiceCredentialStore::unlock(const QList<QDBusObjectPat
   return prompt(promptPath);
 }
 
+QDBusObjectPath SecretServiceCredentialStore::currentSession() const {
+  const std::lock_guard<std::mutex> lock(m_sessionMutex);
+  return m_session;
+}
+
+void SecretServiceCredentialStore::resetSession() const {
+  const std::lock_guard<std::mutex> lock(m_sessionMutex);
+  m_session = QDBusObjectPath();
+}
+
+// Item search is scoped to the default alias collection: items carry only
+// ordinary attributes, so another application could plant look-alikes. Only
+// the collection our own store() writes into is trusted (review fix A1).
+CredentialStatus SecretServiceCredentialStore::defaultCollection(QDBusObjectPath *collection) const {
+  auto alias = QDBusMessage::createMethodCall(m_service, kServicePath, kServiceInterface, QStringLiteral("ReadAlias"));
+  alias << QStringLiteral("default");
+  const QDBusReply<QDBusObjectPath> reply = m_bus.call(alias);
+  if (!reply.isValid()) return statusFor(reply.error());
+  if (reply.value().path() == kNoPrompt) return CredentialStatus::Unavailable;
+  *collection = reply.value();
+  return CredentialStatus::Ok;
+}
+
 CredentialStatus SecretServiceCredentialStore::search(const Attributes &attributes, QList<QDBusObjectPath> &items, bool allowUnlock) const {
-  auto call = QDBusMessage::createMethodCall(m_service, kServicePath, kServiceInterface, QStringLiteral("SearchItems"));
+  QDBusObjectPath collection;
+  if (const auto status = defaultCollection(&collection); status != CredentialStatus::Ok) return status;
+  auto call = QDBusMessage::createMethodCall(m_service, collection.path(), kCollectionInterface, QStringLiteral("SearchItems"));
   call << QVariant::fromValue(attributes);
   const auto reply = m_bus.call(call);
   if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().size() != 2) return statusFor(QDBusError(reply));
@@ -165,19 +206,32 @@ CredentialStatus SecretServiceCredentialStore::deleteItems(const QList<QDBusObje
 CredentialResult SecretServiceCredentialStore::store(const QUuid &destinationId, const QString &name, const QString &value) {
   if (destinationId.isNull() || name.isEmpty()) return {CredentialStatus::Denied, {}};
   if (const auto status = openSession(); status != CredentialStatus::Ok) return {status, {}};
-  auto alias = QDBusMessage::createMethodCall(m_service, kServicePath, kServiceInterface, QStringLiteral("ReadAlias"));
-  alias << QStringLiteral("default");
-  const QDBusReply<QDBusObjectPath> collection = m_bus.call(alias);
-  if (!collection.isValid()) return {statusFor(collection.error()), {}};
-  if (collection.value().path() == kNoPrompt) return {CredentialStatus::Unavailable, {}};
-  if (const auto status = unlock({collection.value()}); status != CredentialStatus::Ok) return {status, {}};
+  QDBusObjectPath collection;
+  if (const auto status = defaultCollection(&collection); status != CredentialStatus::Ok) return {status, {}};
+  if (const auto status = unlock({collection}); status != CredentialStatus::Ok) return {status, {}};
 
   const QVariantMap properties{{kItemInterface + QStringLiteral(".Label"), QStringLiteral("XerahS upload secret (%1)").arg(name)},
                                {kItemInterface + QStringLiteral(".Attributes"), QVariant::fromValue(attributesFor(destinationId, name))}};
-  const SecretValue secret{m_session, {}, value.toUtf8(), QStringLiteral("text/plain; charset=utf8")};
-  auto call = QDBusMessage::createMethodCall(m_service, collection.value().path(), kCollectionInterface, QStringLiteral("CreateItem"));
+  QByteArray plain = value.toUtf8();
+  SecretValue secret{currentSession(), {}, plain, QStringLiteral("text/plain; charset=utf8")};
+  auto call = QDBusMessage::createMethodCall(m_service, collection.path(), kCollectionInterface, QStringLiteral("CreateItem"));
   call << properties << QVariant::fromValue(secret) << true;
-  const auto reply = m_bus.call(call);
+  auto reply = m_bus.call(call);
+  // A restarted service no longer knows the session; reopen once and retry
+  // instead of failing the save (review fix A2). One retry, never a loop.
+  if (reply.type() == QDBusMessage::ErrorMessage && staleSessionError(QDBusError(reply).name())) {
+    resetSession();
+    if (openSession() == CredentialStatus::Ok) {
+      secret.session = currentSession();
+      call.setArguments({QVariant::fromValue(properties), QVariant::fromValue(secret), QVariant(true)});
+      reply = m_bus.call(call);
+    }
+  }
+  // The secret leaves only through the D-Bus call; wipe our owned copies
+  // (review fix A4). plain and secret.value may share one buffer until the
+  // first fill detaches, so both are wiped in order.
+  zeroSecretBytes(&secret.value);
+  zeroSecretBytes(&plain);
   if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().size() != 2) return {statusFor(QDBusError(reply)), {}};
   return {prompt(qdbus_cast<QDBusObjectPath>(reply.arguments().at(1))), {}};
 }
@@ -186,7 +240,11 @@ CredentialStatus SecretServiceCredentialStore::availability(const QUuid &destina
   if (destinationId.isNull() || name.isEmpty()) return CredentialStatus::Denied;
   QList<QDBusObjectPath> items;
   const auto status = search(attributesFor(destinationId, name), items, false);
-  return status != CredentialStatus::Ok ? status : items.isEmpty() ? CredentialStatus::NotFound : CredentialStatus::Ok;
+  if (status != CredentialStatus::Ok) return status;
+  if (items.isEmpty()) return CredentialStatus::NotFound;
+  // Several matching items in the trusted collection are ambiguous; no guess.
+  if (items.size() > 1) return CredentialStatus::Unavailable;
+  return CredentialStatus::Ok;
 }
 CredentialResult SecretServiceCredentialStore::lookup(const QUuid &destinationId, const QString &name) const { return readSecret(destinationId, name, true); }
 CredentialResult SecretServiceCredentialStore::lookupWithoutPrompt(const QUuid &destinationId, const QString &name) const { return readSecret(destinationId, name, false); }
@@ -196,15 +254,38 @@ CredentialResult SecretServiceCredentialStore::readSecret(const QUuid &destinati
   QList<QDBusObjectPath> items;
   if (const auto status = search(attributesFor(destinationId, name), items, allowUnlock); status != CredentialStatus::Ok) return {status, {}};
   if (items.isEmpty()) return {CredentialStatus::NotFound, {}};
+  // Several matching items inside the trusted collection cannot be told
+  // apart; refuse instead of returning whichever the service listed first.
+  if (items.size() > 1) return {CredentialStatus::Unavailable, {}};
+  return readItemSecret(items.first());
+}
+
+CredentialResult SecretServiceCredentialStore::readItemSecret(const QDBusObjectPath &item) const {
   auto call = QDBusMessage::createMethodCall(m_service, kServicePath, kServiceInterface, QStringLiteral("GetSecrets"));
-  call << QVariant::fromValue(QList<QDBusObjectPath>{items.first()}) << QVariant::fromValue(m_session);
-  const auto reply = m_bus.call(call);
+  call << QVariant::fromValue(QList<QDBusObjectPath>{item}) << QVariant::fromValue(currentSession());
+  auto reply = m_bus.call(call);
+  // A restarted service no longer knows the session; reopen once and retry
+  // instead of failing the read (review fix A2). One retry, never a loop.
+  if (reply.type() == QDBusMessage::ErrorMessage && staleSessionError(QDBusError(reply).name())) {
+    resetSession();
+    if (openSession() == CredentialStatus::Ok) {
+      call.setArguments({QVariant::fromValue(QList<QDBusObjectPath>{item}), QVariant::fromValue(currentSession())});
+      reply = m_bus.call(call);
+    }
+  }
   if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().size() != 1) return {statusFor(QDBusError(reply)), {}};
-  const auto secrets = qdbus_cast<SecretMap>(reply.arguments().at(0));
-  const auto found = secrets.constFind(items.first());
+  SecretMap secrets = qdbus_cast<SecretMap>(reply.arguments().at(0));
+  const auto found = secrets.constFind(item);
   // A locked item is left out of the reply instead of raising an error.
-  if (found == secrets.cend()) return {CredentialStatus::Denied, {}};
-  return {CredentialStatus::Ok, QString::fromUtf8(found->value)};
+  if (found == secrets.cend()) {
+    for (auto it = secrets.begin(); it != secrets.end(); ++it) zeroSecretBytes(&it.value().value);
+    return {CredentialStatus::Denied, {}};
+  }
+  const QString value = QString::fromUtf8(found->value);
+  // The reply bytes are ours alone now; wipe them before they go out of scope
+  // (review fix A4).
+  for (auto it = secrets.begin(); it != secrets.end(); ++it) zeroSecretBytes(&it.value().value);
+  return {CredentialStatus::Ok, value};
 }
 
 CredentialResult SecretServiceCredentialStore::remove(const QUuid &destinationId, const QString &name) {

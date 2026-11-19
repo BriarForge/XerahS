@@ -15,11 +15,11 @@
   "capability_count": 16,
   "desktop_capability_count": 15,
   "counts": {
-    "blocked": 31,
+    "blocked": 29,
     "implemented": 178,
     "not-applicable": 1,
     "not-started": 5,
-    "partial": 110
+    "partial": 112
   },
   "capabilities": [
     {
@@ -300,6 +300,20 @@
       "to": "implemented",
       "reason": "Recognition-gate reconciliation 2026-11-19 (decision EU-004-RECOGNITION-GATE-2026-11-19): Mike's recorded 2026-11-02 dependency approval (DEPENDENCIES.md, 'Approve both') governs recognition activation, the 2026-11-14 scheduler prohibition no longer applies, and the current loop prompt lists this reconciliation as the top backlog item. The existing Screen/Region/File real-decoder, dialog/portal, pipeline-privacy and dependency-absent tests stand as implemented candidate evidence. Live-desktop portal qualification, accessibility acceptance and release/parity gates remain separate.",
       "revision": "abf4583"
+    },
+    {
+      "requirement": "CORE-013",
+      "from": "blocked",
+      "to": "partial",
+      "reason": "ROOT-SECURITY-001 review 2026-11-19 (reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run) replaced the pending human-review gate for the Secret Service credential store. Fixes A1 (default-collection-scoped search with duplicate-match refusal), A2 (stale-session clear/reopen/retry-once on NoSession/ServiceUnknown/UnknownObject) and A4 (owned secret byte zeroing) landed with four fake-service regression tests that fail against the pre-fix code. Actionable review fixes remain - A3 encrypted-first session negotiation (needs a crypto dependency decision) and A5 the .sxcu import secret review surface - so the row is partial, not blocked on a human decision; release/parity acceptance stays separate.",
+      "revision": "86bb0c2"
+    },
+    {
+      "requirement": "SETCAT-007",
+      "from": "blocked",
+      "to": "partial",
+      "reason": "ROOT-SECURITY-001 review 2026-11-19 (reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run) replaced the pending human-review gate for the Secret Service credential store. Fixes A1 (default-collection-scoped search with duplicate-match refusal), A2 (stale-session clear/reopen/retry-once on NoSession/ServiceUnknown/UnknownObject) and A4 (owned secret byte zeroing) landed with four fake-service regression tests that fail against the pre-fix code. Actionable review fixes remain - A3 encrypted-first session negotiation (needs a crypto dependency decision) and A5 the .sxcu import secret review surface - so the row is partial, not blocked on a human decision; release/parity acceptance stays separate.",
+      "revision": "86bb0c2"
     }
   ],
   "review_limitations": [
@@ -367,11 +381,6 @@
     },
     {
       "capability": "SETTINGS-CATALOG-001",
-      "requirement": "SETCAT-007",
-      "question": "Native credential-store code exists; scheduler-mandated human Secret Service security review remains pending."
-    },
-    {
-      "capability": "SETTINGS-CATALOG-001",
       "requirement": "SETCAT-008",
       "question": "An explicit verified legacy plaintext-secret migration/removal flow and secure-store approval are still required; ordinary settings import does not migrate secrets."
     },
@@ -414,11 +423,6 @@
       "capability": "CORE-PLATFORM-001",
       "requirement": "CORE-011",
       "question": "Human product owner must approve signed release provenance/update channel/install/rollback policy; no approved update implementation exists."
-    },
-    {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-013",
-      "question": "Human security review of Secret Service credential store is explicitly pending; native code and tests are candidate evidence only."
     },
     {
       "capability": "CORE-PLATFORM-001",
@@ -979,6 +983,18 @@
         "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
         "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
+      ]
+    },
+    {
+      "requirements": [
+        "CORE-013",
+        "SETCAT-007"
+      ],
+      "outcome": "ROOT-SECURITY-001 independent security review of the Secret Service credential store is recorded (reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run; 2026-11-19), replacing 'human security review pending' in the traceability rows. Review fixes A1/A2/A4 landed: lookups and probes search only the default alias collection so look-alikes planted in other collections are invisible, several matches inside the trusted collection refuse with Unavailable while removal clears them, a stale session after a service restart is cleared under the session mutex and retried exactly once for reads and stores, and owned secret QByteArrays are zeroed after use. Four new fake-service regression tests (planted second collection, duplicate refusal, restart recovery, one-retry bound) fail against the pre-fix code; the store suite passes 16/16. Remaining review fixes: A3 dh-ietf1024-sha256-aes128-cbc-pkcs7-first session negotiation (crypto dependency decision) and A5 the .sxcu import secret review surface; the .sxie import review record and its fixes (B) are still to be recorded by the slice that lands them.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/SecretServiceCredentialStore.cpp",
+        "platforms/linux/linux-qt/app/SecretServiceCredentialStore.h",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp"
       ]
     }
   ],
@@ -3809,6 +3825,18 @@
       "previous": "blocked",
       "current": "implemented",
       "source_revision": "abf4583"
+    },
+    {
+      "requirement": "CORE-013",
+      "previous": "blocked",
+      "current": "partial",
+      "source_revision": "86bb0c2"
+    },
+    {
+      "requirement": "SETCAT-007",
+      "previous": "blocked",
+      "current": "partial",
+      "source_revision": "86bb0c2"
     }
   ],
   "integration_note": "Preserve approved empty-save baseline-shadow completions, owned settings transfer/migration and landed watch checkpoint/publication/retention breadth. CORE-025 returns to partial only for demonstrated exact-attempt accounting; conservative unconfirmed disposition remains intact. Mapped version metadata now matches Product Contract 0.4.0 and current capability versions; no contract changed."

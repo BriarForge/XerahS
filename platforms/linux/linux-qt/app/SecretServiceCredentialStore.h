@@ -40,8 +40,12 @@ public:
 private:
   using Status = uploads::CredentialStatus;
   Status openSession() const;
+  QDBusObjectPath currentSession() const;
+  void resetSession() const;
+  Status defaultCollection(QDBusObjectPath *collection) const;
   Status search(const QMap<QString, QString> &attributes, QList<QDBusObjectPath> &items, bool allowUnlock = true) const;
   uploads::CredentialResult readSecret(const QUuid &, const QString &, bool allowUnlock) const;
+  uploads::CredentialResult readItemSecret(const QDBusObjectPath &item) const;
   Status unlock(const QList<QDBusObjectPath> &objects) const;
   Status prompt(const QDBusObjectPath &path, QDBusVariant *result = nullptr) const;
   Status deleteItems(const QList<QDBusObjectPath> &items) const;
