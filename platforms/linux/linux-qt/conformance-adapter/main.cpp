@@ -6,6 +6,7 @@
 #include "actions/PipelineResultJson.h"
 #include "capture/RegionGeometry.h"
 #include "capture/RegionSession.h"
+#include "capture/ScrollStitch.h"
 #include "image-editor/AnnotationRenderer.h"
 #include "image-editor/EditorSession.h"
 #include "image-editor/EditorViewport.h"
@@ -878,6 +879,21 @@ QJsonObject runEditorSettings(const QString &operation, const QJsonObject &input
 // disposition and retention rules live in the production helpers and are not
 // reimplemented here.
 QJsonObject runCorePlatform(const QString &operation, const QJsonObject &input) {
+  if (operation == u"scroll-join-disposition") {
+    // CORE-015: the decided threshold policy lives in the production
+    // helper; the adapter only translates JSON into its inputs.
+    xerahs::capture::ScrollJoinFacts facts;
+    facts.informativeRows = input.value(u"informative_rows").toInt();
+    facts.agreeingRows = input.value(u"agreeing_rows").toInt();
+    facts.bestOffset = input.value(u"best_offset").toInt();
+    facts.runnerUpAgreement = input.value(u"runner_up_agreement").toDouble();
+    xerahs::capture::ScrollStitchOptions options;
+    if (const auto threshold = input.value(u"confidence_threshold"); threshold.isDouble())
+      options.confidenceThreshold = threshold.toDouble();
+    const auto decision = xerahs::capture::scrollJoinDecision(facts, options);
+    return QJsonObject{{QStringLiteral("disposition"),
+                        decision.accepted ? QStringLiteral("accepted") : QStringLiteral("refused")}};
+  }
   if (operation == u"watch-publication-disposition") {
     xerahs::watch::PublicationFacts facts;
     facts.requestStarted = input.value(u"request_started").toBool();

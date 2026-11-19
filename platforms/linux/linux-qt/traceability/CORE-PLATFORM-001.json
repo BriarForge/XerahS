@@ -954,28 +954,24 @@
       "previous_note": "Region/full-screen/monitor/active-window commands now use shared capture admission and frozen output. Window discovery and portal/controller tests exist. Native per-monitor mixed-scale/HDR/cursor target qualification remains. Audit 2026-11-04: Shared screenshot paths now freeze the approved Qt topology before acquisition and reject bitmap dimension mismatch with capture-topology-mismatch. RegionCaptureNativeTest proves fake mixed-scale region and validated last-region capture through native production workers/outputs; full-screen/monitor/active-window retain their existing ports. CORE-014 stays partial for its remaining complete source/platform scope. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome."
     },
     "CORE-015": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist.",
+      "note": "Native scrolling selection, bounded capture/stitch, cancellation/partial outcome and settings exist with ScrollCapture/ScrollStitch tests. Decided 2026-11-20 (CORE-015-SCROLL-THRESHOLD-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.2, CORE-PLATFORM-001 0.6.1, approval record APPROVAL-2026-11-20-CORE-015-SCROLL-THRESHOLD): the scroll alignment confidence threshold is 0.95 with the 15% ambiguity margin - a join is accepted only when at least 95% of informative overlap rows agree and the best offset beats its runner-up, repeating content scales confidence down instead of guessing, and thin overlaps below 8 informative rows carry no evidence. The references converge on a 5%-difference budget (ShareX's byte-identical row runs, ScrollingCaptureManager.CombineImages; long-shot-rs rows identical when at most 5% of pixels differ, src/stitch.rs width/20), so the bar keeps the no-seamless-claim promise on the conservative side of both. The join decision now runs in one production seam (xerahs::capture::scrollJoinDecision) shared by the stitcher, the conformance adapter and eight published scroll-join-disposition vectors in CORE-PLATFORM-001/test-vectors.json (CORE conformance 39/39; the vectors are red against the pre-change adapter's unsupported-operation answer), and ScrollStitchTest::decidedJoinDispositionMatchesTheApprovedThreshold asserts the same dispositions natively. Live compositor qualification of real scrolling capture remains the separate physical gate; release requires Mike.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ScrollCaptureTest.cpp",
         "platforms/linux/linux-qt/tests/ScrollStitchTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
-      ],
-      "waiting_on": [
-        "Mike: approve scrolling alignment threshold; no new threshold is inferred."
+        "platforms/linux/linux-qt/tests/ScrollStitchTest.cpp"
       ],
       "audit": {
-        "classification": "blocked",
+        "classification": "implemented",
         "spec_line": 68,
-        "remaining_human_decision": "What approved scroll-alignment threshold replaces kScrollAlignmentThreshold?",
-        "coverage": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist.",
+        "coverage": "Native scrolling selection, bounded capture/stitch, cancellation/partial outcome and settings exist with ScrollCapture/ScrollStitch tests. Decided 2026-11-20 (CORE-015-SCROLL-THRESHOLD-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.2, CORE-PLATFORM-001 0.6.1, approval record APPROVAL-2026-11-20-CORE-015-SCROLL-THRESHOLD): the scroll alignment confidence threshold is 0.95 with the 15% ambiguity margin - a join is accepted only when at least 95% of informative overlap rows agree and the best offset beats its runner-up, repeating content scales confidence down instead of guessing, and thin overlaps below 8 informative rows carry no evidence. The references converge on a 5%-difference budget (ShareX's byte-identical row runs, ScrollingCaptureManager.CombineImages; long-shot-rs rows identical when at most 5% of pixels differ, src/stitch.rs width/20), so the bar keeps the no-seamless-claim promise on the conservative side of both. The join decision now runs in one production seam (xerahs::capture::scrollJoinDecision) shared by the stitcher, the conformance adapter and eight published scroll-join-disposition vectors in CORE-PLATFORM-001/test-vectors.json (CORE conformance 39/39; the vectors are red against the pre-change adapter's unsupported-operation answer), and ScrollStitchTest::decidedJoinDispositionMatchesTheApprovedThreshold asserts the same dispositions natively. Live compositor qualification of real scrolling capture remains the separate physical gate; release requires Mike.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
+            "sha256": "0241179250de627eb146d88331d1b118c1b280901c15fc02d9f80c09c47f6fa1"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
@@ -984,6 +980,14 @@
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
             "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/capture/ScrollStitch.cpp",
+            "sha256": "1a594142dde2771d84741e9de3e211136d0b1b40b27f39a7072548ec7bb11012"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/capture/ScrollStitch.h",
+            "sha256": "85a6baba69d9425765daec5e9672df8a4208f962c27196122010e460ccf82b7c"
           }
         ],
         "test_anchors": [
@@ -992,13 +996,18 @@
             "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
             "line": 82
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ScrollStitchTest.cpp",
+            "sha256": "c4d6a1ec4d1ef3d19e99acefe7e83132e94b8ead5991c0dcaace8f56a83835c1",
+            "method": "decidedJoinDispositionMatchesTheApprovedThreshold",
+            "line": 166
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "Native scrolling selection, bounded capture/stitch, cancellation/partial outcome and settings exist with ScrollCapture/ScrollStitch tests. kScrollAlignmentThreshold is a placeholder; product-owner threshold approval and live compositor qualification remain.",
-      "blocked_reason": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist."
+      "previous_note": "Native scrolling selection, bounded capture/stitch, cancellation/partial outcome and settings exist with ScrollCapture/ScrollStitch tests. kScrollAlignmentThreshold is a placeholder; product-owner threshold approval and live compositor qualification remain."
     },
     "CORE-016": {
       "status": "partial",

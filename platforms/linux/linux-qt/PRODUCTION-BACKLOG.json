@@ -15,8 +15,8 @@
   "capability_count": 16,
   "desktop_capability_count": 15,
   "counts": {
-    "blocked": 28,
-    "implemented": 180,
+    "blocked": 27,
+    "implemented": 181,
     "not-applicable": 1,
     "not-started": 5,
     "partial": 111
@@ -328,6 +328,13 @@
       "to": "implemented",
       "reason": "Decided 2026-11-19 (EO-004-SAVE-AS-DEFAULTS-2026-11-19, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.1 with a full sixteen-package approval record whose carry-forward was verified by the commit diff): format-disposition.json is reconciled from draft-selection-pending to decided with the confirmed PNG/JPEG/WebP set and researched defaults - JPEG/WebP quality 90 (ShareX TaskSettings.cs, GIMP plug-ins/file-jpeg/jpeg.c quality 0.9) and JPEG matte #FFFFFF (ShareX TaskHelpers.cs FillBackground(Color.White)). The Save As dialog prefills the decided values, stays user-overridable and still refuses emptied fields; the three dialog tests are red against the pre-decision code. WebP lossless exposure and the export color-profile/metadata policy are recorded deferred follow-ups.",
       "revision": "fb02037"
+    },
+    {
+      "requirement": "CORE-015",
+      "from": "blocked",
+      "to": "implemented",
+      "reason": "Decided 2026-11-20 (CORE-015-SCROLL-THRESHOLD-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.2 with a full sixteen-package approval record whose carry-forward was verified by the commit diff): the scroll alignment confidence threshold is 0.95 with the 15% ambiguity margin, grounded in the references' 5%-difference budget (ShareX's byte-identical row runs; long-shot-rs rows identical when at most 5% of pixels differ). The value the placeholder held is approved unchanged, so no runtime behavior changes; the join decision runs in one production seam shared by the stitcher, the adapter and eight published scroll-join-disposition vectors (CORE conformance 39/39, vectors red against the pre-change adapter), with the same dispositions asserted natively. Live compositor qualification remains the separate physical gate.",
+      "revision": "9eb4f5c"
     }
   ],
   "review_limitations": [
@@ -432,11 +439,6 @@
       "capability": "CORE-PLATFORM-001",
       "requirement": "CORE-011",
       "question": "Human product owner must approve signed release provenance/update channel/install/rollback policy; no approved update implementation exists."
-    },
-    {
-      "capability": "CORE-PLATFORM-001",
-      "requirement": "CORE-015",
-      "question": "Approved scroll alignment threshold is unresolved; kScrollAlignmentThreshold remains the explicit placeholder even though scrolling code/tests exist."
     },
     {
       "capability": "CORE-PLATFORM-001",
@@ -1062,6 +1064,21 @@
         "product-contract/reviews/APPROVAL-2026-11-19-EO-004-SAVE-AS-DEFAULTS.json",
         "platforms/linux/linux-qt/app/EditorSaveDialog.cpp",
         "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp"
+      ]
+    },
+    {
+      "requirements": [
+        "CORE-015"
+      ],
+      "outcome": "Decided and landed 2026-11-20: the scroll alignment confidence threshold is 0.95 with the 15% ambiguity margin (decision CORE-015-SCROLL-THRESHOLD-2026-11-20; ShareX's byte-identical row runs and long-shot-rs's 5%-per-row difference budget both support the 5% disagreement bar, keeping CORE-015's no-seamless-claim promise conservative). The value the placeholder held is approved unchanged, so no runtime behavior changes; the join decision is refactored into one production seam (xerahs::capture::scrollJoinDecision) shared by the stitcher, the conformance adapter and eight new scroll-join-disposition vectors in CORE-PLATFORM-001/test-vectors.json (CORE conformance 39/39; the vectors are red against the pre-change adapter's unsupported-operation answer). ScrollStitchTest::decidedJoinDispositionMatchesTheApprovedThreshold asserts the same dispositions natively and the whole existing scroll suite passes unchanged. Contract 0.4.2, CORE-PLATFORM-001 0.6.1, decision record decisions/CORE-015-scroll-threshold.md, approval record with verified fifteen-package carry-forward. CORE-015 leaves blocked as implemented candidate; live compositor qualification remains the separate physical gate.",
+      "evidence": [
+        "product-contract/capabilities/CORE-PLATFORM-001/test-vectors.json",
+        "product-contract/decisions/CORE-015-scroll-threshold.md",
+        "product-contract/reviews/APPROVAL-2026-11-20-CORE-015-SCROLL-THRESHOLD.json",
+        "platforms/linux/linux-qt/src/capture/ScrollStitch.h",
+        "platforms/linux/linux-qt/src/capture/ScrollStitch.cpp",
+        "platforms/linux/linux-qt/tests/ScrollStitchTest.cpp",
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
       ]
     }
   ],
@@ -3843,10 +3860,10 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 182,
+    "implemented": 183,
     "not-applicable": 1,
     "not-started": 19,
-    "partial": 123
+    "partial": 122
   },
   "full_audit_counts": {
     "blocked": 32,
@@ -3916,6 +3933,12 @@
       "previous": "partial",
       "current": "implemented",
       "source_revision": "fb02037"
+    },
+    {
+      "requirement": "CORE-015",
+      "previous": "blocked",
+      "current": "implemented",
+      "source_revision": "9eb4f5c"
     }
   ],
   "integration_note": "Preserve approved empty-save baseline-shadow completions, owned settings transfer/migration and landed watch checkpoint/publication/retention breadth. CORE-025 returns to partial only for demonstrated exact-attempt accounting; conservative unconfirmed disposition remains intact. Mapped version metadata now matches Product Contract 0.4.0 and current capability versions; no contract changed."

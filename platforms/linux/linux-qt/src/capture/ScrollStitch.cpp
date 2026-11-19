@@ -12,7 +12,6 @@ namespace {
 constexpr int kSignatureColumns = 64;     // columns sampled per row
 constexpr int kRowTolerance = 3;          // mean gray difference below which two rows agree
 constexpr int kInformativeContrast = 12;  // max-min gray range that makes a row evidence
-constexpr double kAmbiguityMargin = 0.15; // best must beat the runner-up by this much
 
 struct Signature {
   int rows = 0;
@@ -46,7 +45,7 @@ bool rowsAgree(const unsigned char *a, const unsigned char *b) {
   return sum <= kRowTolerance * kSignatureColumns;
 }
 
-struct Score { double value = 0; int informative = 0; };
+struct Score { double value = 0; int informative = 0; int matched = 0; };
 
 // Frame B row y corresponds to frame A row y + d. Rows in [top, bottom) of
 // the content band take part.
@@ -57,7 +56,7 @@ Score scoreOffset(const Signature &a, const Signature &b, int d, int top, int bo
     ++informative;
     if (rowsAgree(b.row(y), a.row(y + d))) ++matched;
   }
-  return {informative ? double(matched) / informative : 0.0, informative};
+  return {informative ? double(matched) / informative : 0.0, informative, matched};
 }
 
 }  // namespace
@@ -73,6 +72,20 @@ QString scrollStatusCode(ScrollStatus status) {
     case ScrollStatus::Cancelled: return QStringLiteral("scroll-cancelled");
   }
   return {};
+}
+
+ScrollJoinDecision scrollJoinDecision(const ScrollJoinFacts &facts, const ScrollStitchOptions &options) {
+  // The decided CORE-015 disposition (CORE-015-SCROLL-THRESHOLD-2026-11-20).
+  // Thin overlaps carry no evidence and a frame that never scrolled cannot
+  // be aligned to anything.
+  if (facts.bestOffset <= 0 || facts.informativeRows < options.minInformativeRows || facts.informativeRows < 1)
+    return {0.0, false};
+  const double agreement = double(facts.agreeingRows) / facts.informativeRows;
+  if (facts.agreeingRows < 0 || facts.agreeingRows > facts.informativeRows || agreement < 0.0 || agreement > 1.0)
+    return {0.0, false};
+  // Ambiguous content (repeating rows) scales confidence down instead of guessing.
+  const double confidence = agreement * std::min(1.0, (agreement - facts.runnerUpAgreement) / kScrollAmbiguityMargin);
+  return {confidence, confidence >= options.confidenceThreshold};
 }
 
 ScrollStitcher::ScrollStitcher(ScrollStitchOptions options) : m_options(options) {
@@ -154,16 +167,22 @@ ScrollStatus ScrollStitcher::add(const QImage &input) {
 
   double best = 0, runnerUp = 0; int bestOffset = 0;
   std::vector<double> scores(span, 0.0);
+  std::vector<Score> detail(span, Score{});
   for (int d = 1; d <= span - m_options.minOverlapRows; ++d) {
-    const Score s = scoreOffset(a, b, d, contentTop, contentBottom);
-    scores[d] = s.informative >= m_options.minInformativeRows ? s.value : 0.0;
+    detail[d] = scoreOffset(a, b, d, contentTop, contentBottom);
+    scores[d] = detail[d].informative >= m_options.minInformativeRows ? detail[d].value : 0.0;
     if (scores[d] > best) { best = scores[d]; bestOffset = d; }  // ties keep the smaller offset
   }
   for (int d = 1; d <= span - m_options.minOverlapRows; ++d)
     if (std::abs(d - bestOffset) > 1) runnerUp = std::max(runnerUp, scores[d]);
-  // Ambiguous content (repeating rows) scales confidence down instead of guessing.
-  const double confidence = bestOffset ? best * std::min(1.0, (best - runnerUp) / kAmbiguityMargin) : 0.0;
-  if (confidence < m_options.confidenceThreshold) {
+  // The decided CORE-015 disposition runs in the shared production helper,
+  // the conformance adapter and the published vectors alike. The facts are
+  // the exact matched/informative counts at the best offset.
+  const Score &bestScore = detail[bestOffset];
+  const auto decision = scrollJoinDecision(
+      {bestScore.informative, bestScore.matched, bestOffset, runnerUp}, m_options);
+  const double confidence = decision.confidence;
+  if (!decision.accepted) {
     m_joins.push_back({index, bestOffset, confidence, false});
     return finish(ScrollStatus::LowConfidence);
   }

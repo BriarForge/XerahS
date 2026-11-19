@@ -1,6 +1,6 @@
 # CORE-PLATFORM-001 Native platform capability foundation
 
-Version: 0.6.0
+Version: 0.6.1
 
 Status: Approved by the human product owner on 2026-08-31 and 2026-09-28 (0.4.0 Linux editions; 0.5.0 mobile targets); the CORE-025 watch-publication and retention subsection was approved by the maintainer on 2026-11-14 and is conformance-required before activation
 

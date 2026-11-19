@@ -2,9 +2,10 @@
   "schema_version": 2,
   "capability": "CORE-PLATFORM-001",
   "comparison": "subset",
-  "notes": "watch-publication-disposition uses request_started, attempts, http_response_on_every_attempt, http_2xx_on_any_attempt (missing means false), succeeded and restart_with_sending. First match: restart -> unconfirmed; success -> processed; started and any 2xx -> unconfirmed; started and every response with no 2xx -> released; other started -> unconfirmed; unsent -> released. watch-retain takes ordered keys, optional sending_keys (default empty), recorded_parents map path->{device,inode}, and files containing key,parent,before,fingerprint,after. Missing parent observations are null. Identity components are decimal strings. Apply P5 R0-R5 against the frozen recorded map; output ordered kept keys and the surviving/adopted parents map. A nomination must be stable, fingerprint-identical and unanimous for its parent, and cannot authorize pruning in this write. Expected results are the maintainer policy, not derived from the implementation.",
+  "notes": "watch-publication-disposition uses request_started, attempts, http_response_on_every_attempt, http_2xx_on_any_attempt (missing means false), succeeded and restart_with_sending. First match: restart -> unconfirmed; success -> processed; started and any 2xx -> unconfirmed; started and every response with no 2xx -> released; other started -> unconfirmed; unsent -> released. watch-retain takes ordered keys, optional sending_keys (default empty), recorded_parents map path->{device,inode}, and files containing key,parent,before,fingerprint,after. Missing parent observations are null. Identity components are decimal strings. Apply P5 R0-R5 against the frozen recorded map; output ordered kept keys and the surviving/adopted parents map. A nomination must be stable, fingerprint-identical and unanimous for its parent, and cannot authorize pruning in this write. Expected results are the maintainer policy, not derived from the implementation. scroll-join-disposition uses informative_rows, agreeing_rows, best_offset, runner_up_agreement and the optional confidence_threshold (missing means the decided 0.95). A join is accepted only when at least 95% of the informative overlap rows agree and the best offset beats its runner-up by the decided 15% ambiguity margin (repeating content scales confidence down instead of guessing); thin overlaps (fewer than 8 informative rows) and a best_offset of 0 carry no evidence. Decided by CORE-015-SCROLL-THRESHOLD-2026-11-20: the 0.95 bar keeps the 5%-difference budget the leading references use (ShareX's byte-identical row runs; long-shot-rs rows identical when at most 5% of pixels differ) so a result is never claimed seamless below it.",
   "requirement_ids": [
-    "CORE-025"
+    "CORE-025",
+    "CORE-015"
   ],
   "vectors": [
     {
@@ -1020,6 +1021,135 @@
           "key-b"
         ],
         "parents": {}
+      }
+    },
+    {
+      "id": "scroll-join-agreement-exactly-at-threshold",
+      "operation": "scroll-join-disposition",
+      "requirements": [
+        "CORE-015"
+      ],
+      "input": {
+        "informative_rows": 100,
+        "agreeing_rows": 95,
+        "best_offset": 40,
+        "runner_up_agreement": 0.5
+      },
+      "expected": {
+        "disposition": "accepted"
+      }
+    },
+    {
+      "id": "scroll-join-agreement-below-threshold",
+      "operation": "scroll-join-disposition",
+      "requirements": [
+        "CORE-015"
+      ],
+      "input": {
+        "informative_rows": 100,
+        "agreeing_rows": 94,
+        "best_offset": 40,
+        "runner_up_agreement": 0.4
+      },
+      "expected": {
+        "disposition": "refused"
+      }
+    },
+    {
+      "id": "scroll-join-thin-overlap-is-not-evidence",
+      "operation": "scroll-join-disposition",
+      "requirements": [
+        "CORE-015"
+      ],
+      "input": {
+        "informative_rows": 7,
+        "agreeing_rows": 7,
+        "best_offset": 30,
+        "runner_up_agreement": 0.0
+      },
+      "expected": {
+        "disposition": "refused"
+      }
+    },
+    {
+      "id": "scroll-join-repeating-content-scales-down-not-guess",
+      "operation": "scroll-join-disposition",
+      "requirements": [
+        "CORE-015"
+      ],
+      "input": {
+        "informative_rows": 100,
+        "agreeing_rows": 100,
+        "best_offset": 40,
+        "runner_up_agreement": 0.92
+      },
+      "expected": {
+        "disposition": "refused"
+      }
+    },
+    {
+      "id": "scroll-join-clear-margin-on-perfect-agreement",
+      "operation": "scroll-join-disposition",
+      "requirements": [
+        "CORE-015"
+      ],
+      "input": {
+        "informative_rows": 100,
+        "agreeing_rows": 100,
+        "best_offset": 40,
+        "runner_up_agreement": 0.7
+      },
+      "expected": {
+        "disposition": "accepted"
+      }
+    },
+    {
+      "id": "scroll-join-no-offset-carries-no-evidence",
+      "operation": "scroll-join-disposition",
+      "requirements": [
+        "CORE-015"
+      ],
+      "input": {
+        "informative_rows": 100,
+        "agreeing_rows": 100,
+        "best_offset": 0,
+        "runner_up_agreement": 0.0
+      },
+      "expected": {
+        "disposition": "refused"
+      }
+    },
+    {
+      "id": "scroll-join-impossible-counts-are-refused",
+      "operation": "scroll-join-disposition",
+      "requirements": [
+        "CORE-015"
+      ],
+      "input": {
+        "informative_rows": 100,
+        "agreeing_rows": 101,
+        "best_offset": 40,
+        "runner_up_agreement": 0.0
+      },
+      "expected": {
+        "disposition": "refused"
+      }
+    },
+    {
+      "id": "scroll-join-configured-looser-threshold-is-honored",
+      "operation": "scroll-join-disposition",
+      "requirements": [
+        "CORE-015"
+      ],
+      "input": {
+        "informative_rows": 100,
+        "agreeing_rows": 94,
+        "best_offset": 40,
+        "runner_up_agreement": 0.4,
+        "confidence_threshold": 0.9
+      },
+      "expected": {
+        "disposition": "accepted"
       }
     }
   ]

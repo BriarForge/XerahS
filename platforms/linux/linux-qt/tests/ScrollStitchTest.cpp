@@ -163,6 +163,35 @@ private slots:
     QCOMPARE(ScrollStitcher().add(QImage()), ScrollStatus::Invalid);
   }
 
+  void decidedJoinDispositionMatchesTheApprovedThreshold() {
+    // Decision CORE-015-SCROLL-THRESHOLD-2026-11-20: a join is accepted only
+    // when at least 95% of the informative overlap rows agree and the best
+    // offset beats its runner-up clearly. The same production helper runs
+    // in the stitcher, the conformance adapter and the published vectors.
+    const auto decided = [](ScrollJoinFacts facts) { return scrollJoinDecision(facts); };
+    // Exactly at the threshold, with an unambiguous runner-up: accepted.
+    QVERIFY(decided({100, 95, 40, 0.5}).accepted);
+    QCOMPARE(decided({100, 95, 40, 0.5}).confidence, 0.95);
+    // One row short of the threshold: refused, never a seamless claim.
+    QVERIFY(!decided({100, 94, 40, 0.4}).accepted);
+    QVERIFY(decided({100, 94, 40, 0.4}).confidence < kScrollAlignmentThreshold);
+    // Thin overlaps carry no evidence.
+    QVERIFY(!decided({7, 7, 30, 0.0}).accepted);
+    // Repeating content: a runner-up within the 15% margin scales confidence
+    // down instead of guessing, even at perfect agreement.
+    QVERIFY(!decided({100, 100, 40, 0.92}).accepted);
+    // A clear margin on perfect agreement: accepted.
+    QVERIFY(decided({100, 100, 40, 0.70}).accepted);
+    QCOMPARE(decided({100, 100, 40, 0.70}).confidence, 1.0);
+    // No offset found, or impossible counts: refused with zero confidence.
+    QCOMPARE(decided({100, 100, 0, 0.0}).confidence, 0.0);
+    QVERIFY(!decided({100, 101, 40, 0.0}).accepted);
+    QVERIFY(!decided({100, -1, 40, 0.0}).accepted);
+    // A stricter or looser configured threshold is honored by the helper.
+    ScrollStitchOptions looser = {}; looser.confidenceThreshold = 0.90;
+    QVERIFY(scrollJoinDecision({100, 94, 40, 0.4}, looser).accepted);
+    QVERIFY(!scrollJoinDecision({100, 89, 40, 0.0}, looser).accepted);
+  }
   void resultIsDeterministic() {
     const auto page = tallPage(900);
     const auto frames = framesAt(page, {0, 150, 321, 454, 600}, 300);
