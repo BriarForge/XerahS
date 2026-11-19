@@ -40,7 +40,10 @@ public:
 private:
   using Status = uploads::CredentialStatus;
   Status openSession() const;
+  Status openPlainSessionLocked() const;
+  Status negotiateAesSession(QDBusObjectPath *session, QByteArray *key, bool *notSupported) const;
   QDBusObjectPath currentSession() const;
+  QByteArray currentSessionKey() const;
   void resetSession() const;
   Status defaultCollection(QDBusObjectPath *collection) const;
   Status search(const QMap<QString, QString> &attributes, QList<QDBusObjectPath> &items, bool allowUnlock = true) const;
@@ -54,6 +57,8 @@ private:
   QString m_service;
   int m_promptTimeoutMs;
   mutable QDBusObjectPath m_session;
+  // Empty for a plain session; 16 bytes for the negotiated AES session key.
+  mutable QByteArray m_sessionKey;
   mutable std::mutex m_sessionMutex;
 };
 

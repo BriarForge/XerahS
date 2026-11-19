@@ -465,7 +465,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Uploader secrets are referenced only through the CredentialStore seam into the desktop Secret Service; settings JSON never holds them. ROOT-SECURITY-001 review 2026-11-19 - reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run. Review fixes landed 2026-11-19: (A1) credential lookups are scoped to the default alias collection with duplicate-match refusal, (A2) a stale session after a service restart is reopened and retried exactly once, and (A4) owned secret bytes are zeroed after use; the four new fake-service regression tests fail against the pre-fix code and the store suite passes 16/16. Remaining review fixes before this row leaves partial: (A3) encrypted-first session negotiation, which needs a crypto dependency decision, and (A5) the .sxcu import secret review surface; full settings/provider secret coverage and release acceptance stay separate.",
+      "note": "Uploader secrets are referenced only through the CredentialStore seam into the desktop Secret Service; settings JSON never holds them. ROOT-SECURITY-001 review 2026-11-19 - reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run. Review fixes landed 2026-11-19: (A1) credential lookups are scoped to the default alias collection with duplicate-match refusal, (A2) a stale session after a service restart is reopened and retried exactly once, and (A4) owned secret bytes are zeroed after use; the four new fake-service regression tests fail against the pre-fix code and the store suite passes 16/16. (A3) Review fix A3 landed 2026-11-19 (decision CORE-013-ENCRYPTED-SECRET-SESSION-2026-11-19, libgcrypt 1.12.4, LGPL-2.1+, optional at build time): the store negotiates dh-ietf1024-sha256-aes128-cbc-pkcs7 first and falls back to plain only on an explicit NotSupported, exactly as libsecret does - same 1024-bit MODP group, USG MPI bytes, zero-padded shared secret, RFC 5869 HKDF-SHA256 (no salt, no info) to the 16-byte AES key, AES-128-CBC with PKCS#7 and the IV in the secret structure's parameters. Secrets now cross the session bus only as ciphertext; a corrupted or undecryptable reply is refused whole (negotiatesEncryptedSessionFirst, notSupportedServiceFallsBackToPlain, corruptCiphertextIsRefusedWhole - all red against the pre-fix code - prove the two independent implementations of the published algorithm agree; the fake service implements the daemon side itself). A build without libgcrypt keeps the plain-only transport. Remaining review fixes before this row leaves partial: (A5) the .sxcu import secret review surface, plus the .sxie import (B) record and fixes. Full settings/provider secret coverage, live daemon interoperation and the independent second-model review of the new crypto code are separate gates.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
@@ -477,7 +477,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 34,
-        "coverage": "Uploader secrets are referenced only through the CredentialStore seam into the desktop Secret Service; settings JSON never holds them. ROOT-SECURITY-001 review 2026-11-19 - reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run. Review fixes landed 2026-11-19: (A1) credential lookups are scoped to the default alias collection with duplicate-match refusal, (A2) a stale session after a service restart is reopened and retried exactly once, and (A4) owned secret bytes are zeroed after use; the four new fake-service regression tests fail against the pre-fix code and the store suite passes 16/16. Remaining review fixes before this row leaves partial: (A3) encrypted-first session negotiation, which needs a crypto dependency decision, and (A5) the .sxcu import secret review surface; full settings/provider secret coverage and release acceptance stay separate.",
+        "coverage": "Uploader secrets are referenced only through the CredentialStore seam into the desktop Secret Service; settings JSON never holds them. ROOT-SECURITY-001 review 2026-11-19 - reviewer Claude Opus (claude-opus-5-5), independent model; revision abf4583; PASS WITH FIXES; static review, tests not run. Review fixes landed 2026-11-19: (A1) credential lookups are scoped to the default alias collection with duplicate-match refusal, (A2) a stale session after a service restart is reopened and retried exactly once, and (A4) owned secret bytes are zeroed after use; the four new fake-service regression tests fail against the pre-fix code and the store suite passes 16/16. (A3) Review fix A3 landed 2026-11-19 (decision CORE-013-ENCRYPTED-SECRET-SESSION-2026-11-19, libgcrypt 1.12.4, LGPL-2.1+, optional at build time): the store negotiates dh-ietf1024-sha256-aes128-cbc-pkcs7 first and falls back to plain only on an explicit NotSupported, exactly as libsecret does - same 1024-bit MODP group, USG MPI bytes, zero-padded shared secret, RFC 5869 HKDF-SHA256 (no salt, no info) to the 16-byte AES key, AES-128-CBC with PKCS#7 and the IV in the secret structure's parameters. Secrets now cross the session bus only as ciphertext; a corrupted or undecryptable reply is refused whole (negotiatesEncryptedSessionFirst, notSupportedServiceFallsBackToPlain, corruptCiphertextIsRefusedWhole - all red against the pre-fix code - prove the two independent implementations of the published algorithm agree; the fake service implements the daemon side itself). A build without libgcrypt keeps the plain-only transport. Remaining review fixes before this row leaves partial: (A5) the .sxcu import secret review surface, plus the .sxie import (B) record and fixes. Full settings/provider secret coverage, live daemon interoperation and the independent second-model review of the new crypto code are separate gates.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
@@ -494,11 +494,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/SecretServiceCredentialStore.cpp",
-            "sha256": "d8cb5f45d3c22094244c135987812cd6bbfb1f743aa688f09be62816e297e63f"
+            "sha256": "2b8c3b208fa918fde2905cd639f0f9b3acf7f668059b9a8f300567c57a5de2c7"
           },
           {
             "path": "platforms/linux/linux-qt/app/SecretServiceCredentialStore.h",
-            "sha256": "856015fbf39e0b9103521b84448e174a95aff38edc4bd83191b1994bff006312"
+            "sha256": "76e439cb4fb47d4472ba9ff920c609328453b2eec3c9f1e734bbc6e5cd238d19"
           }
         ],
         "test_anchors": [
@@ -510,9 +510,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
-            "sha256": "a70a856f7ef5e16814d68ed6afe8b2c76950b47521c3081a48fd37af66d102b3",
+            "sha256": "c3f2bca3259b74b915b798e1830dbd2a71e162069e21866de57b1d8181a554a3",
             "method": "plantedLookAlikesInOtherCollectionsAreInvisible",
             "line": 265
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+            "sha256": "c3f2bca3259b74b915b798e1830dbd2a71e162069e21866de57b1d8181a554a3",
+            "method": "negotiatesEncryptedSessionFirst",
+            "line": 512
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",

@@ -191,11 +191,22 @@ add_library(xerahs_window_discovery STATIC app/WindowDiscovery.cpp app/WindowDis
 target_link_libraries(xerahs_window_discovery PUBLIC xerahs_core Qt6::Network Qt6::Gui)
 
 # CORE-013: desktop Secret Service transport for upload credentials.
+# libgcrypt is optional: without it the store negotiates only the plain
+# session algorithm and explains nothing else changes; distributions that
+# want encrypted sessions install libgcrypt and rebuild.
+pkg_check_modules(XERAHS_GCRYPT QUIET IMPORTED_TARGET libgcrypt>=1.8)
 add_library(xerahs_secret_service STATIC app/SecretServiceCredentialStore.cpp app/SecretServiceCredentialStore.h)
 set_target_properties(xerahs_secret_service PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_secret_service PUBLIC app)
 target_link_libraries(xerahs_secret_service PUBLIC xerahs_core Qt6::DBus)
 target_compile_options(xerahs_secret_service PRIVATE -Wall -Wextra -Wpedantic)
+if(TARGET PkgConfig::XERAHS_GCRYPT)
+  target_compile_definitions(xerahs_secret_service PRIVATE XERAHS_GCRYPT)
+  target_link_libraries(xerahs_secret_service PRIVATE PkgConfig::XERAHS_GCRYPT)
+  message(STATUS "Secret Service sessions: encrypted-first negotiation enabled (libgcrypt ${XERAHS_GCRYPT_VERSION})")
+else()
+  message(STATUS "Secret Service sessions: plain only; optional libgcrypt >=1.8 is not installed")
+endif()
 
 add_library(xerahs_native_instance STATIC app/NativeInstance.cpp app/NativeInstance.h)
 set_target_properties(xerahs_native_instance PROPERTIES AUTOMOC ON)
@@ -1065,6 +1076,10 @@ endif()
 add_executable(secret-service-credential-store-test tests/SecretServiceCredentialStoreTest.cpp)
 set_target_properties(secret-service-credential-store-test PROPERTIES AUTOMOC ON)
 target_link_libraries(secret-service-credential-store-test PRIVATE xerahs_secret_service Qt6::Test)
+if(TARGET PkgConfig::XERAHS_GCRYPT)
+  target_compile_definitions(secret-service-credential-store-test PRIVATE XERAHS_GCRYPT)
+  target_link_libraries(secret-service-credential-store-test PRIVATE PkgConfig::XERAHS_GCRYPT)
+endif()
 add_test(NAME secret-service-credential-store COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:secret-service-credential-store-test>)
 set_tests_properties(secret-service-credential-store PROPERTIES TIMEOUT 30)

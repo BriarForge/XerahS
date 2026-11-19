@@ -996,6 +996,20 @@
         "platforms/linux/linux-qt/app/SecretServiceCredentialStore.h",
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "CORE-013",
+        "SETCAT-007"
+      ],
+      "outcome": "Review fix A3 of the completed ROOT-SECURITY-001 review is landed (decision CORE-013-ENCRYPTED-SECRET-SESSION-2026-11-19, decided by the loop under its delegated dependency authority): the Secret Service store negotiates dh-ietf1024-sha256-aes128-cbc-pkcs7 first through libgcrypt (1.12.4 checked, LGPL-2.1+, optional at build time; plain-only transport without it) and falls back to the plain session only on an explicit NotSupported, exactly as libsecret does. Secrets cross the session bus only as AES-128-CBC/PKCS#7 ciphertext with the IV in the parameters field; a corrupted or undecryptable reply is refused whole. Three new regression tests are red against the pre-fix code: negotiatesEncryptedSessionFirst (encrypted-first negotiation, ciphertext-only transport, sessionCalls==1), notSupportedServiceFallsBackToPlain (fallback only on NotSupported, two negotiations, plaintext transport on the fallback) and corruptCiphertextIsRefusedWhole (Denied, no partial value, intact reads still work). The fake service implements the daemon side of the exchange independently, so the suite proves the two implementations of the published algorithm agree; live gnome-keyring/KeePassXC interoperation and the ROOT-SECURITY-001 independent second-model review of the new crypto code remain separate gates. Both rows stay partial for the remaining review fixes: A5 the .sxcu import secret review surface, and the .sxie import (B) record and fixes.",
+      "evidence": [
+        "product-contract/decisions/CORE-013-encrypted-secret-session.md",
+        "platforms/linux/linux-qt/DEPENDENCIES.md",
+        "platforms/linux/linux-qt/app/SecretServiceCredentialStore.cpp",
+        "platforms/linux/linux-qt/app/SecretServiceCredentialStore.h",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp"
+      ]
     }
   ],
   "audit_method": "All 16 capabilities /345 IDs revalidated against current source and tests; unchanged bodies compared to the previous complete review, changed paths and approved contracts inspected. Existing suite passes but direct current-production HTTP probe exposes the P1 2xx/truncated-body accounting gap. No release or security acceptance inferred.",
