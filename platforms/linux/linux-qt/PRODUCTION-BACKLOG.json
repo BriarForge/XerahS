@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 26,
-    "implemented": 182,
+    "implemented": 183,
     "not-applicable": 1,
     "not-started": 5,
-    "partial": 111
+    "partial": 110
   },
   "capabilities": [
     {
@@ -342,6 +342,13 @@
       "to": "implemented",
       "reason": "Decided 2026-11-20 (EA-009-STEP-STYLES-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.3 with a full sixteen-package approval record whose carry-forward was verified by the commit diff): alphabetic is bijective base 26 (1 -> A, 27 -> AA), Roman is greedy subtractive without a 3999 cap (4000 -> MMMM), non-positive values render as plain digits in every style, reset affects only future allocation with existing steps keeping their labels (Snagit Restart Sequence), and the start is a floor bounded 1..10 with next = max(highest non-retired + 1, start). Mapping matched case for case to ShareX's StepTypeFormatter; stable values after deletion are the SPEC-mandated divergence from ShareX's renumber-on-delete. The native code and AnnotationShapesTest already implemented exactly these semantics, so no runtime behavior changes; the decision publishes the capability's first test-vectors.json (20 vectors through the conformance adapter, red against the pre-change adapter, 20/20 after). EA-008's Text border geometry question remains open.",
       "revision": "3b069ce"
+    },
+    {
+      "requirement": "EA-008",
+      "from": "partial",
+      "to": "implemented",
+      "reason": "Decided 2026-11-20 (EA-008-TEXT-BORDER-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.4 with a full sixteen-package approval record whose carry-forward was verified by the commit diff): a regular Text border strokes the text box - a rounded rectangle around the text area, corner radius 4, border colour at max(1, stroke width), after the background fill and behind the text - following the reference DrawText (background, rounded-rectangle border stroke, then text; CornerRadius default 4; the offset DrawTextShadow duplicate is a separate unported feature). The earlier glyph-outline candidate matched no reference surface and is replaced; textBorderColor keeps its name, parsing, persistence, alpha semantics and edit/history behavior. Region discriminators (border pixels on edges no glyph reaches; text pixels exactly unchanged) are red against the glyph-outline code and green after; full suite 183/183. The SpeechBalloon's separate balloonBorderColor outline is untouched.",
+      "revision": "b34fad2"
     }
   ],
   "review_limitations": [
@@ -1094,6 +1101,18 @@
         "product-contract/reviews/APPROVAL-2026-11-20-EA-009-STEP-STYLES.json",
         "platforms/linux/linux-qt/conformance-adapter/main.cpp",
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp"
+      ]
+    },
+    {
+      "requirements": [
+        "EA-008"
+      ],
+      "outcome": "Decided and landed 2026-11-20: the regular Text border geometry is the reference's text-box outline (decision EA-008-TEXT-BORDER-2026-11-20). The border strokes a rounded rectangle around the text area - corner radius 4, border colour at max(1, stroke width), centred on the box edge, after the background fill and behind the text - and never outlines glyphs; the reference's only glyph-level extra is the separate offset DrawTextShadow duplicate, which the SPEC does not require and this slice does not add. The native glyph-outline candidate (paintOutlinedText) matched no reference surface - the reference DrawText strokes the box and the reference TextAnnotation has no outline at all - so it is replaced by paintTextBoxBorder; the textBorderColor field keeps its name, parsing, persistence, alpha semantics and edit/history behavior. EditorCanvasTest::textBorderStrokesTheTextBoxPerTheDecidedGeometry pins the decided geometry with region discriminators (top/side-edge border pixels where no glyph reaches; text pixels exactly unchanged), proven red against the pre-change code via a saved patch, green after; full suite 183/183 with the SpeechBalloon outline untouched. Contract 0.4.4, EDITOR-ANNOTATIONS-001 0.1.2, decision record decisions/EA-008-text-border.md, approval record with verified fifteen-package carry-forward. Physical/editor target qualification remains separate.",
+      "evidence": [
+        "product-contract/decisions/EA-008-text-border.md",
+        "product-contract/reviews/APPROVAL-2026-11-20-EA-008-TEXT-BORDER.json",
+        "platforms/linux/linux-qt/src/image-editor/ShapePainter.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
       ]
     }
   ],
@@ -3875,10 +3894,10 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 184,
+    "implemented": 185,
     "not-applicable": 1,
     "not-started": 19,
-    "partial": 121
+    "partial": 120
   },
   "full_audit_counts": {
     "blocked": 32,
@@ -3960,6 +3979,12 @@
       "previous": "blocked",
       "current": "implemented",
       "source_revision": "3b069ce"
+    },
+    {
+      "requirement": "EA-008",
+      "previous": "partial",
+      "current": "implemented",
+      "source_revision": "b34fad2"
     }
   ],
   "integration_note": "Preserve approved empty-save baseline-shadow completions, owned settings transfer/migration and landed watch checkpoint/publication/retention breadth. CORE-025 returns to partial only for demonstrated exact-attempt accounting; conservative unconfirmed disposition remains intact. Mapped version metadata now matches Product Contract 0.4.0 and current capability versions; no contract changed."

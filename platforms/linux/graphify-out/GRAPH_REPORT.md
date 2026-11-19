@@ -1,17 +1,17 @@
 # Graph Report - linux  (2026-11-20)
 
 ## Corpus Check
-- 777 files · ~961,447 words
+- 777 files · ~962,240 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 15 file(s) not represented in the graph (top: .sxcu 5, .xml 4, (none) 2)
 
 ## Summary
-- 19281 nodes · 48932 edges · 592 communities (531 shown, 61 thin omitted)
+- 19281 nodes · 48930 edges · 592 communities (531 shown, 61 thin omitted)
 - Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 6893 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3b069ceb`
+- Built from commit: `b34fad25`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -56,7 +56,7 @@
 - RectanglePropertiesDialog
 - CaptureSchedule
 - RecordingController
-- render
+- EffectRegionTest
 - PortalColorPicker
 - runPipeline
 - Linux ImageEditor
@@ -296,7 +296,7 @@
 - UrlDownloadTest
 - CaptureSaveAsTest
 - Guarded native keyboard transforms
-- AnnotationTransform.cpp
+- applyCanvasOperation
 - PinWindow.cpp
 - FileOperationTerminal
 - runEditorCopy
@@ -675,8 +675,8 @@ Cohesion: 0.03
 Nodes (84): xerahs_effects, add(), registerMoreAdjustmentEffects(), add(), registerDrawingEffects(), Category, Adjustments, Drawings (+76 more)
 
 ### Community 9 - "Argb"
-Cohesion: 0.06
-Nodes (15): Argb, renderDocument(), solidImage(), applyCanvasOperation(), nextStepValue(), AnnotationShapesTest, document(), same() (+7 more)
+Cohesion: 0.03
+Nodes (54): Argb, ArgbImage, height, pixels, width, Box, bottom, left (+46 more)
 
 ### Community 10 - "serializeDocument"
 Cohesion: 0.02
@@ -723,8 +723,8 @@ Cohesion: 0.09
 Nodes (10): applyCrop(), CaptureAnnotationTest, QTemporaryDir, cropPixels(), dialog(), pixels(), receipt(), rectangle() (+2 more)
 
 ### Community 21 - "PointF"
-Cohesion: 0.04
-Nodes (64): chooseDecorationDefaults(), chooseRectangle(), chooseRectangleCreation(), chooseRectangleProperties(), RectanglePropertiesDialog::RectanglePropertiesDialog(), historyOutput(), PointF, x (+56 more)
+Cohesion: 0.05
+Nodes (52): chooseDecorationDefaults(), chooseRectangle(), chooseRectangleCreation(), chooseRectangleProperties(), RectanglePropertiesDialog::RectanglePropertiesDialog(), historyOutput(), PointF, x (+44 more)
 
 ### Community 22 - "CORE-007 Linux partial"
 Cohesion: 0.05
@@ -736,7 +736,7 @@ Nodes (66): CanvasCropHooks, beforePrepare, AnnotationObjectNavigator, CaptureAn
 
 ### Community 24 - "EditorSession"
 Cohesion: 0.03
-Nodes (54): annotationId(), EditorSession, EditorSession::changeSelected(), m_checkpoint, m_contentDefaults, m_editDiagnostic, m_history, m_nextStateId (+46 more)
+Nodes (52): annotationId(), EditorSession, EditorSession::changeSelected(), m_checkpoint, m_contentDefaults, m_editDiagnostic, m_history, m_nextStateId (+44 more)
 
 ### Community 25 - "initializeNativeEditorPreferences"
 Cohesion: 0.05
@@ -798,9 +798,9 @@ Nodes (21): CaptureSchedule, m_attempts, m_busy, m_delayRemaining, m_delaySecond
 Cohesion: 0.04
 Nodes (27): pipeline, RecordingController, m_audioActive, m_bus, m_clock, m_deadline, m_devices, m_elapsed (+19 more)
 
-### Community 40 - "render"
-Cohesion: 0.05
-Nodes (42): ArgbImage, height, pixels, width, Box, bottom, left, right (+34 more)
+### Community 40 - "EffectRegionTest"
+Cohesion: 0.16
+Nodes (5): effect(), EffectRegionTest, noise(), outsideness(), same()
 
 ### Community 41 - "PortalColorPicker"
 Cohesion: 0.06
@@ -1135,8 +1135,8 @@ Cohesion: 0.11
 Nodes (28): boundedKey(), choice(), components(), convertProperty(), defaultEffectSeed(), fail(), failAt(), font() (+20 more)
 
 ### Community 124 - "ShapePainter.cpp"
-Cohesion: 0.07
-Nodes (41): addClassicCap(), borderPen(), bounds(), boxBlur(), color(), decodeAsset(), drawBox(), drawLineParts() (+33 more)
+Cohesion: 0.05
+Nodes (61): RectangleAnnotation, content, end, extra, id, start, style, visible (+53 more)
 
 ### Community 125 - "WatchFolderServiceTest"
 Cohesion: 0.12
@@ -1758,9 +1758,9 @@ Nodes (12): captureSaveAsTarget(), SaveAsTarget, diagnostic, path, bytes(), Capt
 Cohesion: 0.10
 Nodes (26): Bounded UUID receipt replay, Atomic group deletion, ES-014 ES-030 legacy sidecar alias policy, Exact Undo Redo restoration, Guarded native annotation deletion, Native deletion verification, QStatusBar teardown regression, Weak-owner refresh guards (+18 more)
 
-### Community 280 - "AnnotationTransform.cpp"
-Cohesion: 0.16
-Nodes (13): angularDistance(), cosSin(), directionDegrees(), finite(), mirrorAssetPng(), normalize(), ShapeTransformResult, error (+5 more)
+### Community 280 - "applyCanvasOperation"
+Cohesion: 0.15
+Nodes (5): applyCanvasOperation(), CanvasOperationsTest, document(), rectangle(), withSource()
 
 ### Community 281 - "PinWindow.cpp"
 Cohesion: 0.11
@@ -2763,8 +2763,8 @@ Cohesion: 0.40
 Nodes (4): UploadPublication, Acknowledged, Unknown, Unsent
 
 ## Knowledge Gaps
-- **5368 isolated node(s):** `public`, `m_choices`, `m_selected`, `m_selector`, `m_error` (+5363 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 8621 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **5369 isolated node(s):** `public`, `m_choices`, `m_selected`, `m_selector`, `m_error` (+5364 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 8622 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **61 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
@@ -2775,11 +2775,11 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 2 inferred relationships involving `QApplication` (e.g. with `Integration` and `Runtime API`) actually correct?**
   _`QApplication` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `public`, `m_choices`, `m_selected` to the rest of the system?**
-  _5368 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _5369 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Native Linux CMake build` be split into smaller, more focused modules?**
   _Cohesion score 0.02285335102853351 - nodes in this community are weakly interconnected._
 - **Why does `Native editor save and companion repair` connect `Native paired capture persistence` to `qtest`, `cmath`, `Linux contract scope audit`?**
-  _High betweenness centrality (0.090) - this node is a cross-community bridge._
+  _High betweenness centrality (0.099) - this node is a cross-community bridge._
 - **Are the 9 inferred relationships involving `ParamValues` (e.g. with `deserializeParameters()` and `.handComputedPixels()`) actually correct?**
   _`ParamValues` has 9 INFERRED edges - model-reasoned connections that need verification._
 - **Should `EditorWindowTest` be split into smaller, more focused modules?**

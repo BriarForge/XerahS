@@ -397,10 +397,10 @@
       "previous_note": "Freehand stores ordered fractional path points. Gesture commit simplifies once with RDP at 0.5 document px, retaining corners over 30 degrees (src/image-editor/FreehandPath.h, documented in src/image-editor/README.md); first/last samples and order are preserved. Canvas and exporter share paintShape with a non-cosmetic round-cap/round-join pen in document units; tests compare coverage at 0.5x/2x/3x and against the export render. XANN round-trip and one-step undo are covered. The contract requires a documented tolerance without fixing its value; the 0.5 px tolerance, 30 degree corner threshold and 4 px corner reach are the documented Linux values. Cross-platform agreement on these values belongs to parity review, not this implementation status. Simplification is iterative, so long strokes cannot exhaust the stack."
     },
     "EA-008": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native Text/SpeechBalloon creation/edit offers commit/cancel, multiline/font/size/bold/italic/alignment/text/fill/balloon-border/tail with frozen style/history tests. Regular Text uses glyph-outline candidate code, but the exact Text-border geometry/thickness question is still unapproved in shared loop state; no reference mapping is accepted as product authority.",
+      "note": "Native Text/SpeechBalloon creation/edit offers commit/cancel, multiline/font/size/bold/italic/alignment/text/fill/balloon-border/tail with frozen style/history tests. Regular Text border geometry decided 2026-11-20 (EA-008-TEXT-BORDER-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.4, EDITOR-ANNOTATIONS-001 0.1.2, approval record APPROVAL-2026-11-20-EA-008-TEXT-BORDER): the border strokes the text box - a rounded rectangle around the text area with corner radius 4, drawn with the border colour at max(1, stroke width), centred on the box edge, after the background fill and behind the text - and never outlines glyphs. Source: the reference DrawText (ShareX.ImageEffectsLib/Drawings/DrawText.cs: background, then the rounded-rectangle border stroke with BorderColor at max(1, BorderSize) and CornerRadius default 4, then the text; its only glyph-level extra is the separate offset DrawTextShadow duplicate, not required by the SPEC and not added; the reference TextAnnotation carries no outline at all). The earlier glyph-outline candidate matched no reference surface and is replaced: textBorderColor keeps its name, parsing, persistence, alpha semantics and edit/history behavior, and the pixels it drives are the decided box outline. EditorCanvasTest::textBorderStrokesTheTextBoxPerTheDecidedGeometry pins the geometry with region discriminators (border pixels on the top and side edges where no glyph reaches; text pixels exactly unchanged), proven red against the pre-change glyph-outline code via a saved patch, green after; full suite 183/183. The SpeechBalloon's separate balloonBorderColor body/tail outline is untouched. Physical/editor target qualification and release acceptance remain separate gates.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -409,9 +409,9 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 37,
-        "coverage": "Native Text/SpeechBalloon creation/edit offers commit/cancel, multiline/font/size/bold/italic/alignment/text/fill/balloon-border/tail with frozen style/history tests. Regular Text uses glyph-outline candidate code, but the exact Text-border geometry/thickness question is still unapproved in shared loop state; no reference mapping is accepted as product authority.",
+        "coverage": "Native Text/SpeechBalloon creation/edit offers commit/cancel, multiline/font/size/bold/italic/alignment/text/fill/balloon-border/tail with frozen style/history tests. Regular Text border geometry decided 2026-11-20 (EA-008-TEXT-BORDER-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.4, EDITOR-ANNOTATIONS-001 0.1.2, approval record APPROVAL-2026-11-20-EA-008-TEXT-BORDER): the border strokes the text box - a rounded rectangle around the text area with corner radius 4, drawn with the border colour at max(1, stroke width), centred on the box edge, after the background fill and behind the text - and never outlines glyphs. Source: the reference DrawText (ShareX.ImageEffectsLib/Drawings/DrawText.cs: background, then the rounded-rectangle border stroke with BorderColor at max(1, BorderSize) and CornerRadius default 4, then the text; its only glyph-level extra is the separate offset DrawTextShadow duplicate, not required by the SPEC and not added; the reference TextAnnotation carries no outline at all). The earlier glyph-outline candidate matched no reference surface and is replaced: textBorderColor keeps its name, parsing, persistence, alpha semantics and edit/history behavior, and the pixels it drives are the decided box outline. EditorCanvasTest::textBorderStrokesTheTextBoxPerTheDecidedGeometry pins the geometry with region discriminators (border pixels on the top and side edges where no glyph reaches; text pixels exactly unchanged), proven red against the pre-change glyph-outline code via a saved patch, green after; full suite 183/183. The SpeechBalloon's separate balloonBorderColor body/tail outline is untouched. Physical/editor target qualification and release acceptance remain separate gates.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
@@ -424,24 +424,34 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/ShapePainter.cpp",
-            "sha256": "338cf2b3d3f112d68a7760adc5d7b6ed282844c74b9c267649abc0d310cf7e6b"
+            "sha256": "e281e45ebd1b9f4f0aad96542547bf27ebd1d67c9b6a9e24f547cabf1aef93b9"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
             "sha256": "5bee73e6d358f5920e1430789c4c61494d4ca5f715c9177d62807cd892b9eead"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/ShapePainter.cpp",
+            "sha256": "e281e45ebd1b9f4f0aad96542547bf27ebd1d67c9b6a9e24f547cabf1aef93b9"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
-            "sha256": "ba16fea0fe319a739c7a541cc51214e0c1b20218ffc6f7a59eb469f0abfed641",
+            "sha256": "da605baae2501fde752f23e03b6312bb72300785d4449684d7abbe0fce8c1ff7",
             "method": "textCreationCommitsFormattedSnapshotOnce",
             "line": 242
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
-            "sha256": "ba16fea0fe319a739c7a541cc51214e0c1b20218ffc6f7a59eb469f0abfed641",
+            "sha256": "da605baae2501fde752f23e03b6312bb72300785d4449684d7abbe0fce8c1ff7",
             "method": "textBorderRendersAnOutlineBehindTheLettersAndStaysInertElsewhere",
+            "line": 778
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+            "sha256": "da605baae2501fde752f23e03b6312bb72300785d4449684d7abbe0fce8c1ff7",
+            "method": "textBorderStrokesTheTextBoxPerTheDecidedGeometry",
             "line": 778
           }
         ],

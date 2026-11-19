@@ -215,32 +215,20 @@ QFont textFont(QFont font, const RectangleAnnotation &shape) {
 }
 
 
-// EA-008: the reference draws Text with an outline behind the letters: the glyph outlines stroked with the
-// annotation's border colour and thickness, then filled with the text colour on top. One layout supplies
-// both the outline and the fill so they cannot drift apart.
-void paintOutlinedText(QPainter &painter, const QRectF &box, const QString &text, Qt::Alignment alignment,
-                       const QColor &fill, const QColor &border, double thickness) {
-  QTextLayout layout(text, painter.font());
-  QTextOption option(alignment | Qt::AlignTop); option.setWrapMode(QTextOption::WordWrap);
-  layout.setTextOption(option);
-  double y = 0;
-  layout.beginLayout();
-  for (QTextLine line = layout.createLine(); line.isValid(); line = layout.createLine()) {
-    line.setLineWidth(box.width()); line.setPosition({0, y}); y += line.height();
-  }
-  layout.endLayout();
-  QPainterPath outline;
-  for (const QGlyphRun &run : layout.glyphRuns()) {
-    const QRawFont raw = run.rawFont(); const auto indexes = run.glyphIndexes(); const auto positions = run.positions();
-    for (qsizetype i = 0; i < indexes.size(); ++i) outline.addPath(raw.pathForGlyph(indexes[i]).translated(positions[i] + box.topLeft()));
-  }
+// EA-008, decided 2026-11-20 (EA-008-TEXT-BORDER-2026-11-20): a regular Text
+// border strokes the text box - a rounded rectangle around the text area,
+// corner radius 4, drawn with the border colour at max(1, stroke width) -
+// following the reference DrawText (ShareX.ImageEffectsLib/Drawings/DrawText.cs),
+// which fills the background, strokes the box border, then draws the text, and
+// never outlines glyphs. The SpeechBalloon keeps its separate balloonBorderColor
+// body/tail outline, which proceeds independently.
+void paintTextBoxBorder(QPainter &painter, const QRectF &box, const QColor &border, double thickness) {
+  QPainterPath path;
+  path.addRoundedRect(box, 4.0, 4.0);
   painter.save();
-  painter.setClipRect(box.adjusted(-thickness, -thickness, thickness, thickness), Qt::IntersectClip);
   painter.setBrush(Qt::NoBrush);
-  painter.setPen(QPen(border, thickness, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-  painter.drawPath(outline);
-  painter.setPen(fill);
-  layout.draw(&painter, box.topLeft());
+  painter.setPen(QPen(border, std::max(1.0, thickness), Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+  painter.drawPath(path);
   painter.restore();
 }
 
@@ -563,11 +551,9 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
     const QRectF textBox = box.adjusted(pad, pad, -pad, -pad);
     const auto alignment = Qt::Alignment(horizontalAlignment(shape.content, Qt::AlignLeft));
     if (shape.content.textBorderColor && qAlpha(*shape.content.textBorderColor) > 0 && style.strokeWidth > 0)
-      paintOutlinedText(painter, textBox, shape.content.text, alignment, textColor, color(*shape.content.textBorderColor), style.strokeWidth);
-    else {
-      painter.setPen(textColor);
-      painter.drawText(textBox, int(alignment | Qt::AlignTop) | Qt::TextWordWrap, shape.content.text);
-    }
+      paintTextBoxBorder(painter, box, color(*shape.content.textBorderColor), style.strokeWidth);
+    painter.setPen(textColor);
+    painter.drawText(textBox, int(alignment | Qt::AlignTop) | Qt::TextWordWrap, shape.content.text);
   } else if (type == shape::step) {
     const QColor fill = qAlpha(style.fillColor) > 0 ? color(style.fillColor) : color(style.strokeColor);
     painter.setPen(Qt::NoPen);

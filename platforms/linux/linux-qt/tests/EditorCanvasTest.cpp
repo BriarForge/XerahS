@@ -775,8 +775,12 @@ private slots:
       QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), previous); QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), saved);
     }
   }
-  void textBorderRendersAnOutlineBehindTheLettersAndStaysInertElsewhere() {
-    // EA-008 reference semantics (OutlinedTextControl): stroke colour/width outline behind the text colour.
+  void textBorderStrokesTheTextBoxPerTheDecidedGeometry() {
+    // EA-008 decided geometry (EA-008-TEXT-BORDER-2026-11-20, from the reference DrawText):
+    // the border strokes the text box - a rounded rectangle around the text area,
+    // corner radius 4, border colour at max(1, stroke width) - after the background
+    // fill and behind the text. It never outlines glyphs; the SpeechBalloon keeps
+    // its separate balloonBorderColor outline.
     auto doc = document(); doc.createdAt = doc.modifiedAt = "2026-11-03T00:00:00Z";
     auto white = image(); QBuffer buffer(&doc.sourceImagePng); QVERIFY(buffer.open(QIODevice::WriteOnly)); QVERIFY(white.save(&buffer, "PNG"));
     RectangleAnnotation text; text.id = QUuid::createUuid(); text.start = {100, 100}; text.end = {400, 250};
@@ -791,14 +795,22 @@ private slots:
     };
     const auto legacyRed = count(text, 0xFFFF0000); QVERIFY(legacyRed > 500); QCOMPARE(count(text, 0xFF0000FF), 0);
     auto bordered = text; bordered.content.textBorderColor = 0xFF0000FF;
-    QVERIFY(count(bordered, 0xFF0000FF) > 200);                      // the outline is drawn
-    QVERIFY(count(bordered, 0xFFFF0000) > 200);                      // the text colour stays on top
-    QVERIFY(count(bordered, 0xFFFF0000) <= legacyRed);               // the outline never replaces more than the letters' own edge
-    QCOMPARE(count(bordered, 0xFF0000FF, QRect(0, 0, 800, 90)), 0);  // nothing outside the text box plus the stroke
-    auto half = bordered; half.content.textBorderColor = 0x800000FF; QVERIFY(count(half, 0xFF0000FF) == 0);  // alpha applies; no opaque outline pixel
+    // Box top edge, above every glyph: the border stroke is centred on y=100, so
+    // y in [98..102] holds border pixels where no letter reaches.
+    QVERIFY(count(bordered, 0xFF0000FF, QRect(120, 98, 260, 5)) > 100);
+    // Left edge, left of every glyph at mid height: same decided perimeter.
+    QVERIFY(count(bordered, 0xFF0000FF, QRect(98, 180, 5, 40)) > 40);
+    // Right edge, right of every glyph at mid height.
+    QVERIFY(count(bordered, 0xFF0000FF, QRect(397, 180, 5, 40)) > 40);
+    // The border never covers the letters: the text pixels are exactly the legacy ones.
+    QCOMPARE(count(bordered, 0xFFFF0000), legacyRed);
+    // The stroke is centred on the box edge: nothing above it beyond half the width.
+    QCOMPARE(count(bordered, 0xFF0000FF, QRect(0, 0, 800, 96)), 0);
+    auto half = bordered; half.content.textBorderColor = 0x800000FF; QVERIFY(count(half, 0xFF0000FF) == 0);  // alpha applies; no opaque border pixel
     auto transparent = bordered; transparent.content.textBorderColor = 0x000000FF;                           // zero alpha draws nothing
     QCOMPARE(count(transparent, 0xFF0000FF), 0); QCOMPARE(count(transparent, 0xFFFF0000), legacyRed);
-    // Another family keeps the same-named field as opaque data and draws no outline.
+    auto thin = bordered; thin.style.strokeWidth = 0; QCOMPARE(count(thin, 0xFF0000FF), 0);                  // a zero width never draws
+    // Another family keeps the same-named field as opaque data and draws no border.
     auto ellipse = bordered; ellipse.content.type = shape::rectangle; ellipse.content.textBorderColor.reset(); QCOMPARE(count(ellipse, 0xFF0000FF), 0);
     auto payload = serializeDocument(doc); auto objects = payload.value("annotations").toArray();
     auto object = serializeAnnotationList({text})[0].toObject(); object.insert("textBorderColor", "#GG000000"); objects = QJsonArray{object}; payload.insert("annotations", objects);
