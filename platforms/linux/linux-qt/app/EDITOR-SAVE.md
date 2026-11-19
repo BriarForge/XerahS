@@ -129,20 +129,24 @@ retry authority for editor saves.
 
 ## Recorded format clarification and next work
 
-EO-004-LINUX-2026-10-14 remains pending with the human product owner. The approved
-specification requires the reachable PNG/JPEG/WebP set, but
-`format-disposition.json` still declares draft selection and does not decide
-default quality, WebP lossless selection, JPEG transparent-pixel flattening or
-export profile/metadata policy. Concrete decisions requested are: confirm that
-set; choose JPEG/WebP quality defaults and whether WebP exposes lossless;
-require an explicitly chosen opaque JPEG background or approve a documented
-default; and decide original-profile versus explicit export-profile handling.
-For example, a half-transparent red pixel saved to JPEG over white or black
-produces different opaque pixels, so a native encoder default cannot become
-the shared expected behavior. Shared scenarios/vectors must record the decision.
-This is a clarification, not a format waiver or approval of this PNG candidate.
+EO-004 is decided (EO-004-SAVE-AS-DEFAULTS-2026-11-19, resolved by the build loop
+under the maintainer's delegated owner-block authority; see
+`product-contract/decisions/EO-004-save-as-defaults.md` and the reconciled
+`format-disposition.json`). The approved specification's reachable
+PNG/JPEG/WebP set is confirmed; JPEG and WebP quality default to 90
+(ShareX TaskSettings.cs ImageJPEGQuality/ImageWebPQuality = 90; GIMP's JPEG
+export default quality 0.9 in plug-ins/file-jpeg/jpeg.c), and the JPEG
+transparent-pixel background defaults to white (#FFFFFF, ShareX's
+TaskHelpers.cs FillBackground(Color.White)) - the recorded "documented
+default" alternative: the values prefill the Save As fields and remain
+user-overridable, and an emptied field is still refused. They are not sticky
+per-user settings; remembered quality/matte stays tied to the separately
+blocked SETCAT/ESET settings-ledger semantics. Recorded deferred follow-ups,
+not v1 requirements: WebP lossless exposure and the export
+color-profile/metadata policy (unchanged with the EO-014 profile work). The
+half-transparent red pixel example above now has a decided answer: over the
+prefilled white it produces the pink opaque pixel, and over a user-entered
+black it produces the dark red one, with the matte recorded per save.
 
-Next implement explicit PNG/JPEG/WebP save options and compatible persistence
-under EO-004/005/006 using the decided policies. Continue the specified format
-surface and independent contract work while clarification is pending, keeping
-all other domains in CONTRACT-AUDIT.md in scope.
+Next: continue the specified format surface and independent contract work.
+Release acceptance and activation remain separate gates.

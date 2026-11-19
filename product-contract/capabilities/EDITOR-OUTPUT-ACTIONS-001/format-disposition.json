@@ -1,10 +1,21 @@
 {
   "schema_version": 1,
-  "status": "draft-selection-pending-product-owner-approval",
+  "status": "decided",
+  "decision": {
+    "decision_id": "EO-004-SAVE-AS-DEFAULTS-2026-11-19",
+    "recorded_on": "2026-11-19",
+    "resolved_by": "the build loop under the maintainer's delegated owner-block authority (agent opencode, GLM 5.3)",
+    "record": "../decisions/EO-004-save-as-defaults.md",
+    "summary": "The approved SPEC's reachable set is confirmed: PNG, JPEG and WebP. Defaults: JPEG quality 90 and WebP quality 90 follow ShareX TaskSettings.cs (ImageJPEGQuality = 90, ImageWebPQuality = 90) and GIMP's JPEG export default (plug-ins/file-jpeg/jpeg.c, quality 0.9); the JPEG transparent-pixel background default is white (#FFFFFF) following ShareX's flatten path (TaskHelpers.cs, FillBackground(Color.White)). The values prefill the Save As fields and stay user-overridable; they are not silently sticky settings.",
+    "deferred": [
+      "WebP lossless exposure: v1 Save As offers quality-controlled lossy WebP only, as this record's webp row already states; a lossless control is a recorded follow-up, not a v1 requirement.",
+      "Export color-profile/metadata policy: outside this record's fields; deferred unchanged with the EO-014 profile work."
+    ]
+  },
   "user_facing_save_as": [
     { "format": "png", "disposition": "preserve", "alpha": true, "quality_control": false },
-    { "format": "jpeg", "disposition": "preserve", "alpha": false, "quality_control": true },
-    { "format": "webp", "disposition": "preserve", "alpha": true, "quality_control": true }
+    { "format": "jpeg", "disposition": "preserve", "alpha": false, "quality_control": true, "default_quality": 90, "default_matte": "#FFFFFF" },
+    { "format": "webp", "disposition": "preserve", "alpha": true, "quality_control": true, "default_quality": 90 }
   ],
   "not_selected_from_static_evidence": [
     { "format": "avif", "reason": "encoder/changelog evidence conflicts with reachable Save As evidence" },

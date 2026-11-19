@@ -1789,7 +1789,12 @@ private slots:
     window->show(); drawRectangle(*window->findChild<EditorCanvas *>()); int encodes = 0; EditorSaveHooks hooks;
     hooks.encode = [&](const QImage &image, QIODevice *device) { ++encodes; return image.save(device, "PNG"); }; window->setSaveHooks(hooks);
     QTimer timer; bool reported = false;
-    connect(&timer, &QTimer::timeout, [&] { auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget()); if (picker && picker->objectName() == "editorSaveAsDialog") { reported = true; QVERIFY(picker->selectedNameFilter().startsWith("JPEG")); QVERIFY(picker->findChild<QLineEdit *>("editorSaveQuality")->text().isEmpty()); picker->reject(); } });
+    connect(&timer, &QTimer::timeout, [&] { auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget()); if (picker && picker->objectName() == "editorSaveAsDialog") { reported = true; QVERIFY(picker->selectedNameFilter().startsWith("JPEG"));
+      // EO-004 decided defaults (decision EO-004-SAVE-AS-DEFAULTS-2026-11-19)
+      // prefill the fields; cancel still keeps every file unchanged.
+      QCOMPARE(picker->findChild<QLineEdit *>("editorSaveQuality")->text(), QString("90"));
+      QCOMPARE(picker->findChild<QLineEdit *>("editorSaveJpegMatte")->text(), QString("#FFFFFF"));
+      picker->reject(); } });
     timer.start(5); trigger(*window, "saveImage"); timer.stop(); QVERIFY(reported); QCOMPARE(encodes, 0); QCOMPARE(storedBytes(path), original);
     QVERIFY(!QFile::exists(path + ".xann")); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
   }

@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 28,
-    "implemented": 179,
+    "implemented": 180,
     "not-applicable": 1,
     "not-started": 5,
-    "partial": 112
+    "partial": 111
   },
   "capabilities": [
     {
@@ -321,6 +321,13 @@
       "to": "implemented",
       "reason": "ROOT-SECURITY-001 review of the .sxie import (reviewer Claude Opus, claude-opus-5-5; revision abf4583; PASS WITH FIXES; static review, tests not run; 2026-11-19) is recorded and every review fix landed: the preset resource budget (64 MP intermediate, 512 MP cumulative, projected-size display), recomputed and bounded diagnostics that are never serialized, the 4096-character Text/FilePath bound, header-only asset validation, and png/jpeg-only assets. All five regression tests are red against the pre-fix code; maintainer acceptance of the review record stays with the ROOT-REVIEW-001 release gates.",
       "revision": "bbd3e27"
+    },
+    {
+      "requirement": "EO-004",
+      "from": "partial",
+      "to": "implemented",
+      "reason": "Decided 2026-11-19 (EO-004-SAVE-AS-DEFAULTS-2026-11-19, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.1 with a full sixteen-package approval record whose carry-forward was verified by the commit diff): format-disposition.json is reconciled from draft-selection-pending to decided with the confirmed PNG/JPEG/WebP set and researched defaults - JPEG/WebP quality 90 (ShareX TaskSettings.cs, GIMP plug-ins/file-jpeg/jpeg.c quality 0.9) and JPEG matte #FFFFFF (ShareX TaskHelpers.cs FillBackground(Color.White)). The Save As dialog prefills the decided values, stays user-overridable and still refuses emptied fields; the three dialog tests are red against the pre-decision code. WebP lossless exposure and the export color-profile/metadata policy are recorded deferred follow-ups.",
+      "revision": "fb02037"
     }
   ],
   "review_limitations": [
@@ -1042,6 +1049,19 @@
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    {
+      "requirements": [
+        "EO-004"
+      ],
+      "outcome": "Decided and landed 2026-11-19: format-disposition.json is reconciled to decided (the approved SPEC's PNG/JPEG/WebP set confirmed) with researched defaults - JPEG quality 90 and WebP quality 90 (ShareX TaskSettings.cs ImageJPEGQuality/ImageWebPQuality = 90; GIMP JPEG export default 0.9) and JPEG matte #FFFFFF (ShareX TaskHelpers.cs FillBackground(Color.White)). The native Save As dialog prefills quality 90 and the white matte so saving JPEG or WebP needs no typed values; the fields stay user-overridable, emptied fields are still refused, and the defaults are not sticky settings (sticky quality/matte remains tied to the separately blocked SETCAT/ESET ledger semantics). Contract 0.4.1, EDITOR-OUTPUT-ACTIONS-001 0.1.1, decision record decisions/EO-004-save-as-defaults.md, approval record with verified fifteen-package carry-forward. Three dialog tests red against the pre-decision dialog; EditorSaveDialog 6/6; WebP lossless exposure and export profile/metadata policy recorded deferred.",
+      "evidence": [
+        "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/format-disposition.json",
+        "product-contract/decisions/EO-004-save-as-defaults.md",
+        "product-contract/reviews/APPROVAL-2026-11-19-EO-004-SAVE-AS-DEFAULTS.json",
+        "platforms/linux/linux-qt/app/EditorSaveDialog.cpp",
+        "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp"
       ]
     }
   ],
@@ -3823,10 +3843,10 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 181,
+    "implemented": 182,
     "not-applicable": 1,
     "not-started": 19,
-    "partial": 124
+    "partial": 123
   },
   "full_audit_counts": {
     "blocked": 32,
@@ -3890,6 +3910,12 @@
       "previous": "blocked",
       "current": "implemented",
       "source_revision": "bbd3e27"
+    },
+    {
+      "requirement": "EO-004",
+      "previous": "partial",
+      "current": "implemented",
+      "source_revision": "fb02037"
     }
   ],
   "integration_note": "Preserve approved empty-save baseline-shadow completions, owned settings transfer/migration and landed watch checkpoint/publication/retention breadth. CORE-025 returns to partial only for demonstrated exact-attempt accounting; conservative unconfirmed disposition remains intact. Mapped version metadata now matches Product Contract 0.4.0 and current capability versions; no contract changed."

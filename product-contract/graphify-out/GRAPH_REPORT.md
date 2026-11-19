@@ -1,17 +1,17 @@
 # Graph Report - product-contract  (2026-11-19)
 
 ## Corpus Check
-- 99 files · ~168,897 words
+- 102 files · ~170,121 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 16 file(s) not represented in the graph (top: .feature 16)
 
 ## Summary
-- 1282 nodes · 1570 edges · 57 communities (56 shown, 1 thin omitted)
+- 1314 nodes · 1599 edges · 68 communities (67 shown, 1 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `abf4583f`
+- Built from commit: `fb020375`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -46,7 +46,7 @@
 - APPROVAL-2026-10-08-LINUX-HYPRLAND-TOOLKIT.json
 - APPROVAL-2026-11-12-FILENAME-WIDE-SAMPLING.json
 - Product Contract governance
-- Filename deterministic acceptance vectors
+- FILENAME-GENERATION-001 Filename generation
 - Product Contract manifest
 - APPROVAL-2026-11-14-ES-EMPTY-SAVE-BASELINE.json
 - Post-capture pipeline state machine
@@ -66,12 +66,23 @@
 - EDITOR-SESSION-001
 - CORE-025: watch publication disposition and retention
 - EU-004: recognition dependency gate reconciliation
+- APPROVAL-2026-11-19-EO-004-SAVE-AS-DEFAULTS.json
+- FN-026
+- FN-023
 - Schemas
 - Decisions
 - baseline-deltas.yaml
 - EDITOR-CANVAS-001
 - EDITOR-EFFECTS-001
 - Waivers
+- Filename deterministic acceptance vectors
+- Region-capture state machine
+- FN-021
+- FN-002
+- FN-022
+- FN-012
+- CORE-013: encrypted Secret Service session negotiation
+- EO-004: Save As format disposition and quality/matte defaults
 
 ## God Nodes (most connected - your core abstractions)
 1. `Filename deterministic acceptance vectors` - 55 edges
@@ -100,11 +111,11 @@
 ## Import Cycles
 - None detected.
 
-## Communities (57 total, 1 thin omitted)
+## Communities (68 total, 1 thin omitted)
 
 ### Community 0 - "REGION-CAPTURE-001 Interactive region capture"
-Cohesion: 0.05
-Nodes (62): REGION-CAPTURE-001, Atomic last-region persistence, Capture result topology snapshot, Cross-monitor source-pixel composition, Desktop physical coordinate space, Documented HDR wide-gamut conversion, DXGI WinRT Win32 capture, Exactly-once terminal capture result (+54 more)
+Cohesion: 0.06
+Nodes (49): Atomic last-region persistence, Capture result topology snapshot, Cross-monitor source-pixel composition, Desktop physical coordinate space, Documented HDR wide-gamut conversion, DXGI WinRT Win32 capture, Exactly-once terminal capture result, Explicit cursor inclusion (+41 more)
 
 ### Community 1 - "CORE-PLATFORM-001 Native platform capability foundation"
 Cohesion: 0.04
@@ -222,9 +233,9 @@ Nodes (21): authority, identity, role, decision, decision_id, effects, activatio
 Cohesion: 0.10
 Nodes (16): Capability manifest, Contract backlog tracker, Contract-first change workflow, Contract linter, Graphify explain, Graph-first navigation, Graphify path, Graphify query (+8 more)
 
-### Community 30 - "Filename deterministic acceptance vectors"
-Cohesion: 0.05
-Nodes (95): FILENAME-GENERATION-001, Atomic name reservation counter, Cryptographic rejection sampling, Deterministic non-committing preview, FILENAME-GENERATION-001 Filename generation, FN-001, FN-002, FN-003 (+87 more)
+### Community 30 - "FILENAME-GENERATION-001 Filename generation"
+Cohesion: 0.15
+Nodes (19): FILENAME-GENERATION-001, Deterministic non-committing preview, FILENAME-GENERATION-001 Filename generation, FN-001, FN-010, FN-015, FN-017, FN-018 (+11 more)
 
 ### Community 31 - "Product Contract manifest"
 Cohesion: 0.11
@@ -302,6 +313,18 @@ Nodes (10): Activation qualification follow-up, Binding amendment, 2026-11-14, C
 Cohesion: 0.40
 Nodes (4): Choice, EU-004: recognition dependency gate reconciliation, Impact, Problem
 
+### Community 50 - "APPROVAL-2026-11-19-EO-004-SAVE-AS-DEFAULTS.json"
+Cohesion: 0.09
+Nodes (21): authority, identity, role, decision, decision_id, effects, activation_authorized, census_closed (+13 more)
+
+### Community 51 - "FN-026"
+Cohesion: 0.18
+Nodes (17): FN-009, FN-016, FN-019, FN-026, Random-file read permission, brace-after-plain-token-is-literal, invalid-repeat-does-not-consume-counter, non-numeric-repeat (+9 more)
+
+### Community 52 - "FN-023"
+Cohesion: 0.22
+Nodes (15): FN-011, FN-013, FN-014, FN-023, Portable filename finalization, blank-pattern-text-mode, extension-exceeds-max-length, extension-is-not-a-token (+7 more)
+
 ### Community 53 - "Schemas"
 Cohesion: 0.40
 Nodes (5): approval-record.schema.json, backlog.schema.json, manifest.schema.json, parity-ledger.schema.json, Schemas
@@ -326,25 +349,57 @@ Nodes (3): EDITOR-EFFECTS-001, effect-catalog-selection.json, effect-catalog-sel
 Cohesion: 0.67
 Nodes (3): D-REL-001 release waiver policy, Time-bound platform waiver, Waivers
 
+### Community 60 - "Filename deterministic acceptance vectors"
+Cohesion: 0.26
+Nodes (13): Atomic name reservation counter, FN-004, FN-007, FN-025, blank-pattern-does-not-advance-counter, counter-base36, counter-hex-padding, counter-once (+5 more)
+
+### Community 61 - "Region-capture state machine"
+Cohesion: 0.37
+Nodes (13): REGION-CAPTURE-001, Region-capture state machine, Region state authorizing, Region state cancelled, Region state completed, Region state confirming, Region state created, Region state failed (+5 more)
+
+### Community 62 - "FN-021"
+Cohesion: 0.36
+Nodes (10): Cryptographic rejection sampling, FN-008, FN-021, guid-lower-and-upper, random-alphanumeric-with-rejection, random-digits-with-rejection, random-emoji, random-hex-both-cases (+2 more)
+
+### Community 63 - "FN-002"
+Cohesion: 0.39
+Nodes (8): FN-002, FN-003, FN-020, calendar-names-and-week, twelve-hour, twelve-hour-midnight-and-milliseconds, twelve-hour-noon, unix-seconds
+
+### Community 64 - "FN-022"
+Cohesion: 0.38
+Nodes (7): FN-005, FN-006, FN-022, text-mode-environment-unchanged, url-mode-percent-encoding, window-metadata, window-title-trim-space-and-sanitize
+
+### Community 65 - "FN-012"
+Cohesion: 0.53
+Nodes (6): FN-012, FN-024, path-mode-components, path-mode-rejects-absolute, path-mode-rejects-drive, path-mode-rejects-traversal
+
+### Community 66 - "CORE-013: encrypted Secret Service session negotiation"
+Cohesion: 0.40
+Nodes (4): Choice, CORE-013: encrypted Secret Service session negotiation, Impact, Problem
+
+### Community 67 - "EO-004: Save As format disposition and quality/matte defaults"
+Cohesion: 0.40
+Nodes (4): Choice, EO-004: Save As format disposition and quality/matte defaults, Impact, Problem
+
 ## Knowledge Gaps
 - **282 isolated node(s):** `Capture result topology snapshot`, `Desktop physical coordinate space`, `DXGI WinRT Win32 capture`, `Half-open physical selection rectangle`, `IEEE754 floor epsilon mapping` (+277 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 811 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 836 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Product Contract` connect `INTERFACE-CATALOG-001 Native and agent interfaces` to `REGION-CAPTURE-001 Interactive region capture`, `POST-CAPTURE-ACTIONS-001 Post-capture actions`, `MOBILE-PLATFORM-001 Native mobile applications`, `SETTINGS-CATALOG-001 Application settings catalog`, `WORKFLOW-CATALOG-001 Workflow and action catalog`, `Filename deterministic acceptance vectors`?**
-  _High betweenness centrality (0.079) - this node is a cross-community bridge._
+- **Why does `Product Contract` connect `Product Contract` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Contract approval review — 2026-08-31`, `Document`, `Conformance vector format`, `backlog.json`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract completion status`, `Native implementation readiness`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
+  _High betweenness centrality (0.058) - this node is a cross-community bridge._
 - **What connects `Capture result topology snapshot`, `Desktop physical coordinate space`, `DXGI WinRT Win32 capture` to the rest of the system?**
   _282 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `REGION-CAPTURE-001 Interactive region capture` be split into smaller, more focused modules?**
-  _Cohesion score 0.05129561078794289 - nodes in this community are weakly interconnected._
-- **Why does `Product Contract` connect `Product Contract` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Contract approval review — 2026-08-31`, `Document`, `Conformance vector format`, `backlog.json`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract completion status`, `Native implementation readiness`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
-  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+  _Cohesion score 0.05612244897959184 - nodes in this community are weakly interconnected._
+- **Why does `Product Contract` connect `INTERFACE-CATALOG-001 Native and agent interfaces` to `REGION-CAPTURE-001 Interactive region capture`, `POST-CAPTURE-ACTIONS-001 Post-capture actions`, `MOBILE-PLATFORM-001 Native mobile applications`, `SETTINGS-CATALOG-001 Application settings catalog`, `WORKFLOW-CATALOG-001 Workflow and action catalog`, `FILENAME-GENERATION-001 Filename generation`?**
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._
 - **Should `CORE-PLATFORM-001 Native platform capability foundation` be split into smaller, more focused modules?**
   _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._
-- **Why does `FILENAME-GENERATION-001 Filename generation` connect `Filename deterministic acceptance vectors` to `INTERFACE-CATALOG-001 Native and agent interfaces`, `Product Contract reviews`, `Product Contract manifest`?**
-  _High betweenness centrality (0.050) - this node is a cross-community bridge._
+- **Why does `Document` connect `Document` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Conformance vector format`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SESSION-001`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
+  _High betweenness centrality (0.046) - this node is a cross-community bridge._
 - **Should `EDITOR-ANNOTATIONS-001 Annotation tools` be split into smaller, more focused modules?**
   _Cohesion score 0.046511627906976744 - nodes in this community are weakly interconnected._

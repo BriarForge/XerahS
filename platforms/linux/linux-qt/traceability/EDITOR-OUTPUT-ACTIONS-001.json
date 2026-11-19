@@ -242,10 +242,10 @@
       }
     },
     "EO-004": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "PNG/JPEG/WebP native encoding and explicit quality/matte behavior exist, but format-disposition.json is still draft-selection-pending-product-owner-approval.",
+      "note": "PNG/JPEG/WebP native encoding and explicit quality/matte behavior exist. Decided 2026-11-19 (EO-004-SAVE-AS-DEFAULTS-2026-11-19, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.1, EDITOR-OUTPUT-ACTIONS-001 0.1.1, approval record APPROVAL-2026-11-19-EO-004-SAVE-AS-DEFAULTS): format-disposition.json is reconciled to decided with the confirmed PNG/JPEG/WebP set; JPEG and WebP quality default to 90 (ShareX TaskSettings.cs ImageJPEGQuality/ImageWebPQuality = 90; GIMP JPEG export default quality 0.9, plug-ins/file-jpeg/jpeg.c) and the JPEG transparent-pixel background defaults to white #FFFFFF (ShareX TaskHelpers.cs FillBackground(Color.White)) - the documented-default alternative the recorded question offered. The Save As dialog prefills quality 90 and matte #FFFFFF so saving needs no typed values, the fields stay user-overridable, and emptied fields are still refused; the defaults are not sticky settings. Red-proven in EditorSaveDialogTest (formatsRequireValidQualityAndOpaqueMatteWithMatchingExtension, jpegSavesWithTheDecidedWhiteMatteDefaultWithoutTyping, webpKeepsAlphaAndSavesWithTheDecidedDefaultWithoutTyping - all three red against the pre-decision dialog). Recorded deferred follow-ups, not v1 requirements: WebP lossless exposure and export color-profile/metadata policy. Release acceptance and activation remain separate gates.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -260,9 +260,9 @@
         "Mike: approve format-disposition.json alpha/quality/overwrite semantics before activation."
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 18,
-        "coverage": "PNG/JPEG/WebP native encoding and explicit quality/matte behavior exist, but format-disposition.json is still draft-selection-pending-product-owner-approval.",
+        "coverage": "PNG/JPEG/WebP native encoding and explicit quality/matte behavior exist. Decided 2026-11-19 (EO-004-SAVE-AS-DEFAULTS-2026-11-19, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.1, EDITOR-OUTPUT-ACTIONS-001 0.1.1, approval record APPROVAL-2026-11-19-EO-004-SAVE-AS-DEFAULTS): format-disposition.json is reconciled to decided with the confirmed PNG/JPEG/WebP set; JPEG and WebP quality default to 90 (ShareX TaskSettings.cs ImageJPEGQuality/ImageWebPQuality = 90; GIMP JPEG export default quality 0.9, plug-ins/file-jpeg/jpeg.c) and the JPEG transparent-pixel background defaults to white #FFFFFF (ShareX TaskHelpers.cs FillBackground(Color.White)) - the documented-default alternative the recorded question offered. The Save As dialog prefills quality 90 and matte #FFFFFF so saving needs no typed values, the fields stay user-overridable, and emptied fields are still refused; the defaults are not sticky settings. Red-proven in EditorSaveDialogTest (formatsRequireValidQualityAndOpaqueMatteWithMatchingExtension, jpegSavesWithTheDecidedWhiteMatteDefaultWithoutTyping, webpKeepsAlphaAndSavesWithTheDecidedDefaultWithoutTyping - all three red against the pre-decision dialog). Recorded deferred follow-ups, not v1 requirements: WebP lossless exposure and export color-profile/metadata policy. Release acceptance and activation remain separate gates.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
@@ -272,7 +272,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "635e6ef5e8a799b28fe8ea718e5ac45fcc84c54a9dcea2ccd36dd5307fae959f"
+            "sha256": "48f644c4e90c45b601638fd51d98493991fc54dbe8f6df0e3970bfe24d522721"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
@@ -289,6 +289,10 @@
           {
             "path": "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
             "sha256": "c4fb74375689b9863b9a0d3c2e6324a96a6e3292fe6c559ceb2131c61984fadf"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorSaveDialog.cpp",
+            "sha256": "ac12a75cc33e82ed23add34fe2960238d3cbe000e0e40e8d7cdbd3f46f7026a4"
           }
         ],
         "test_anchors": [
@@ -303,6 +307,12 @@
             "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
             "method": "qualityChangesActualEncodingAndFailuresKeepPreviousPairs",
             "line": 132
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+            "sha256": "3b17821388025ebf750f4bffc39eac4f138f8397241f0b4aa5e36f8d1f4ceb83",
+            "method": "jpegSavesWithTheDecidedWhiteMatteDefaultWithoutTyping",
+            "line": 40
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
