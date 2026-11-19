@@ -1,0 +1,290 @@
+{
+  "schema_version": 2,
+  "capability": "EDITOR-ANNOTATIONS-001",
+  "comparison": "subset",
+  "requirement_ids": [
+    "EA-009"
+  ],
+  "notes": "step-format uses value and style (numeric, uppercaseLetter, lowercaseLetter, uppercaseRoman, lowercaseRoman; either spelling, case-insensitive) and returns the decided display label: bijective spreadsheet-style letters (1=A, 26=Z, 27=AA, 52=AZ, 703=AAA), greedy subtractive Roman with no cap (3999=MMMCMXCIX, 4000=MMMM), and non-positive values rendered as plain decimal digits in every style. step-allocation uses highest (the highest non-retired step value, default 0), start (the explicit starting value, default 1, clamped to 1..10) and reset (default false) and returns the decided next allocated value: max(highest + 1, start) when reset is false, or start when reset is true, because reset retires the existing sequence so existing steps keep their labels while only future allocation restarts. Decided by EA-009-STEP-STYLES-2026-11-20 (ShareX StepTypeFormatter; Snagit Restart sequence), expected values come from that decision.",
+  "vectors": [
+    {
+      "id": "step-format-one-maps-to-letter-a",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 1,
+        "style": "uppercaseLetter"
+      },
+      "expected": {
+        "label": "A"
+      }
+    },
+    {
+      "id": "step-format-lowercase-one-maps-to-a",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 1,
+        "style": "lowercaseLetter"
+      },
+      "expected": {
+        "label": "a"
+      }
+    },
+    {
+      "id": "step-format-zero-renders-as-digits-in-every-style",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 0,
+        "style": "uppercaseRoman"
+      },
+      "expected": {
+        "label": "0"
+      }
+    },
+    {
+      "id": "step-format-negative-renders-as-digits",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": -5,
+        "style": "lowercaseLetter"
+      },
+      "expected": {
+        "label": "-5"
+      }
+    },
+    {
+      "id": "step-format-z-then-bijective-rollover",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 26,
+        "style": "uppercaseLetter"
+      },
+      "expected": {
+        "label": "Z"
+      }
+    },
+    {
+      "id": "step-format-rollover-continues-double-letter",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 27,
+        "style": "uppercaseLetter"
+      },
+      "expected": {
+        "label": "AA"
+      }
+    },
+    {
+      "id": "step-format-rollover-az",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 52,
+        "style": "lowercaseLetter"
+      },
+      "expected": {
+        "label": "az"
+      }
+    },
+    {
+      "id": "step-format-rollover-triple-letter-a",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 703,
+        "style": "uppercaseLetter"
+      },
+      "expected": {
+        "label": "AAA"
+      }
+    },
+    {
+      "id": "step-format-roman-subtractive-four",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 4,
+        "style": "uppercaseRoman"
+      },
+      "expected": {
+        "label": "IV"
+      }
+    },
+    {
+      "id": "step-format-roman-lowercase-nine",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 9,
+        "style": "lowercaseRoman"
+      },
+      "expected": {
+        "label": "ix"
+      }
+    },
+    {
+      "id": "step-format-roman-max-classical",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 3999,
+        "style": "uppercaseRoman"
+      },
+      "expected": {
+        "label": "MMMCMXCIX"
+      }
+    },
+    {
+      "id": "step-format-roman-above-classical-continues-with-m",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 4000,
+        "style": "uppercaseRoman"
+      },
+      "expected": {
+        "label": "MMMM"
+      }
+    },
+    {
+      "id": "step-format-style-spelling-is-case-insensitive",
+      "operation": "step-format",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "value": 1994,
+        "style": "UppercaseLetter"
+      },
+      "expected": {
+        "label": "BXR"
+      }
+    },
+    {
+      "id": "step-allocation-empty-document-starts-at-one",
+      "operation": "step-allocation",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {},
+      "expected": {
+        "next": 1
+      }
+    },
+    {
+      "id": "step-allocation-explicit-start-on-empty-document",
+      "operation": "step-allocation",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "start": 4
+      },
+      "expected": {
+        "next": 4
+      }
+    },
+    {
+      "id": "step-allocation-one-past-highest-wins-over-lower-start",
+      "operation": "step-allocation",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "highest": 7,
+        "start": 4
+      },
+      "expected": {
+        "next": 8
+      }
+    },
+    {
+      "id": "step-allocation-start-floors-a-low-highest",
+      "operation": "step-allocation",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "highest": 2,
+        "start": 10
+      },
+      "expected": {
+        "next": 10
+      }
+    },
+    {
+      "id": "step-allocation-reset-restarts-future-allocation-only",
+      "operation": "step-allocation",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "highest": 7,
+        "start": 3,
+        "reset": true
+      },
+      "expected": {
+        "next": 3,
+        "retired": 1
+      }
+    },
+    {
+      "id": "step-allocation-reset-without-explicit-start-uses-one",
+      "operation": "step-allocation",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "highest": 7,
+        "reset": true
+      },
+      "expected": {
+        "next": 1,
+        "retired": 1
+      }
+    },
+    {
+      "id": "step-allocation-start-is-clamped-to-the-decided-bound",
+      "operation": "step-allocation",
+      "requirements": [
+        "EA-009"
+      ],
+      "input": {
+        "highest": 0,
+        "start": 99
+      },
+      "expected": {
+        "next": 10
+      }
+    }
+  ]
+}

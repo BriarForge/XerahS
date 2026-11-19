@@ -1,17 +1,17 @@
 # Graph Report - product-contract  (2026-11-20)
 
 ## Corpus Check
-- 104 files · ~171,153 words
+- 107 files · ~172,625 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 16 file(s) not represented in the graph (top: .feature 16)
 
 ## Summary
-- 1341 nodes · 1624 edges · 62 communities (61 shown, 1 thin omitted)
+- 1368 nodes · 1649 edges · 65 communities (64 shown, 1 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9eb4f5c6`
+- Built from commit: `3b069ceb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -75,6 +75,9 @@
 - EDITOR-CANVAS-001
 - EDITOR-EFFECTS-001
 - Waivers
+- APPROVAL-2026-11-20-EA-009-STEP-STYLES.json
+- Region-capture state machine
+- EA-009: Step styles and reset semantics
 - CORE-013: encrypted Secret Service session negotiation
 - EO-004: Save As format disposition and quality/matte defaults
 
@@ -105,11 +108,11 @@
 ## Import Cycles
 - None detected.
 
-## Communities (62 total, 1 thin omitted)
+## Communities (65 total, 1 thin omitted)
 
 ### Community 0 - "REGION-CAPTURE-001 Interactive region capture"
-Cohesion: 0.05
-Nodes (62): REGION-CAPTURE-001, Atomic last-region persistence, Capture result topology snapshot, Cross-monitor source-pixel composition, Desktop physical coordinate space, Documented HDR wide-gamut conversion, DXGI WinRT Win32 capture, Exactly-once terminal capture result (+54 more)
+Cohesion: 0.06
+Nodes (49): Atomic last-region persistence, Capture result topology snapshot, Cross-monitor source-pixel composition, Desktop physical coordinate space, Documented HDR wide-gamut conversion, DXGI WinRT Win32 capture, Exactly-once terminal capture result, Explicit cursor inclusion (+41 more)
 
 ### Community 1 - "CORE-PLATFORM-001 Native platform capability foundation"
 Cohesion: 0.04
@@ -343,6 +346,18 @@ Nodes (3): EDITOR-EFFECTS-001, effect-catalog-selection.json, effect-catalog-sel
 Cohesion: 0.67
 Nodes (3): D-REL-001 release waiver policy, Time-bound platform waiver, Waivers
 
+### Community 60 - "APPROVAL-2026-11-20-EA-009-STEP-STYLES.json"
+Cohesion: 0.09
+Nodes (21): authority, identity, role, decision, decision_id, effects, activation_authorized, census_closed (+13 more)
+
+### Community 61 - "Region-capture state machine"
+Cohesion: 0.37
+Nodes (13): REGION-CAPTURE-001, Region-capture state machine, Region state authorizing, Region state cancelled, Region state completed, Region state confirming, Region state created, Region state failed (+5 more)
+
+### Community 62 - "EA-009: Step styles and reset semantics"
+Cohesion: 0.40
+Nodes (4): Choice, EA-009: Step styles and reset semantics, Impact, Problem
+
 ### Community 66 - "CORE-013: encrypted Secret Service session negotiation"
 Cohesion: 0.40
 Nodes (4): Choice, CORE-013: encrypted Secret Service session negotiation, Impact, Problem
@@ -353,23 +368,23 @@ Nodes (4): Choice, EO-004: Save As format disposition and quality/matte defaults
 
 ## Knowledge Gaps
 - **282 isolated node(s):** `Capture result topology snapshot`, `Desktop physical coordinate space`, `DXGI WinRT Win32 capture`, `Half-open physical selection rectangle`, `IEEE754 floor epsilon mapping` (+277 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 857 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 878 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Product Contract` connect `INTERFACE-CATALOG-001 Native and agent interfaces` to `REGION-CAPTURE-001 Interactive region capture`, `POST-CAPTURE-ACTIONS-001 Post-capture actions`, `MOBILE-PLATFORM-001 Native mobile applications`, `SETTINGS-CATALOG-001 Application settings catalog`, `WORKFLOW-CATALOG-001 Workflow and action catalog`, `Filename deterministic acceptance vectors`?**
-  _High betweenness centrality (0.070) - this node is a cross-community bridge._
+  _High betweenness centrality (0.067) - this node is a cross-community bridge._
 - **What connects `Capture result topology snapshot`, `Desktop physical coordinate space`, `DXGI WinRT Win32 capture` to the rest of the system?**
   _282 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `REGION-CAPTURE-001 Interactive region capture` be split into smaller, more focused modules?**
-  _Cohesion score 0.05129561078794289 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05612244897959184 - nodes in this community are weakly interconnected._
 - **Why does `Product Contract` connect `Product Contract` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Contract approval review — 2026-08-31`, `Document`, `Conformance vector format`, `backlog.json`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract completion status`, `Native implementation readiness`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
-  _High betweenness centrality (0.058) - this node is a cross-community bridge._
+  _High betweenness centrality (0.055) - this node is a cross-community bridge._
 - **Should `CORE-PLATFORM-001 Native platform capability foundation` be split into smaller, more focused modules?**
   _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._
-- **Why does `FILENAME-GENERATION-001 Filename generation` connect `Filename deterministic acceptance vectors` to `INTERFACE-CATALOG-001 Native and agent interfaces`, `Product Contract reviews`, `Product Contract manifest`?**
-  _High betweenness centrality (0.045) - this node is a cross-community bridge._
+- **Why does `Document` connect `Document` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Conformance vector format`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SESSION-001`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
+  _High betweenness centrality (0.040) - this node is a cross-community bridge._
 - **Should `EDITOR-ANNOTATIONS-001 Annotation tools` be split into smaller, more focused modules?**
   _Cohesion score 0.046511627906976744 - nodes in this community are weakly interconnected._

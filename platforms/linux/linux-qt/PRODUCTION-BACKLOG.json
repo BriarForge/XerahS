@@ -15,8 +15,8 @@
   "capability_count": 16,
   "desktop_capability_count": 15,
   "counts": {
-    "blocked": 27,
-    "implemented": 181,
+    "blocked": 26,
+    "implemented": 182,
     "not-applicable": 1,
     "not-started": 5,
     "partial": 111
@@ -335,6 +335,13 @@
       "to": "implemented",
       "reason": "Decided 2026-11-20 (CORE-015-SCROLL-THRESHOLD-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.2 with a full sixteen-package approval record whose carry-forward was verified by the commit diff): the scroll alignment confidence threshold is 0.95 with the 15% ambiguity margin, grounded in the references' 5%-difference budget (ShareX's byte-identical row runs; long-shot-rs rows identical when at most 5% of pixels differ). The value the placeholder held is approved unchanged, so no runtime behavior changes; the join decision runs in one production seam shared by the stitcher, the adapter and eight published scroll-join-disposition vectors (CORE conformance 39/39, vectors red against the pre-change adapter), with the same dispositions asserted natively. Live compositor qualification remains the separate physical gate.",
       "revision": "9eb4f5c"
+    },
+    {
+      "requirement": "EA-009",
+      "from": "blocked",
+      "to": "implemented",
+      "reason": "Decided 2026-11-20 (EA-009-STEP-STYLES-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.3 with a full sixteen-package approval record whose carry-forward was verified by the commit diff): alphabetic is bijective base 26 (1 -> A, 27 -> AA), Roman is greedy subtractive without a 3999 cap (4000 -> MMMM), non-positive values render as plain digits in every style, reset affects only future allocation with existing steps keeping their labels (Snagit Restart Sequence), and the start is a floor bounded 1..10 with next = max(highest non-retired + 1, start). Mapping matched case for case to ShareX's StepTypeFormatter; stable values after deletion are the SPEC-mandated divergence from ShareX's renumber-on-delete. The native code and AnnotationShapesTest already implemented exactly these semantics, so no runtime behavior changes; the decision publishes the capability's first test-vectors.json (20 vectors through the conformance adapter, red against the pre-change adapter, 20/20 after). EA-008's Text border geometry question remains open.",
+      "revision": "3b069ce"
     }
   ],
   "review_limitations": [
@@ -354,11 +361,6 @@
       "capability": "EDITOR-SESSION-001",
       "requirement": "ES-020",
       "question": "Explicit output authority and private temporary storage exist; approved configured editor temp/recovery retention and secure-delete limits are still an unanswered policy gate."
-    },
-    {
-      "capability": "EDITOR-ANNOTATIONS-001",
-      "requirement": "EA-009",
-      "question": "Reference-derived alphabetic/Roman and reset code exists, but the loop's exact mapping/start/reset questions remain unresolved; tests do not approve product semantics."
     },
     {
       "capability": "EDITOR-CANVAS-001",
@@ -1079,6 +1081,19 @@
         "platforms/linux/linux-qt/src/capture/ScrollStitch.cpp",
         "platforms/linux/linux-qt/tests/ScrollStitchTest.cpp",
         "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
+    },
+    {
+      "requirements": [
+        "EA-009"
+      ],
+      "outcome": "Decided and landed 2026-11-20: Step style mapping and reset/start semantics are approved (decision EA-009-STEP-STYLES-2026-11-20). Alphabetic is bijective spreadsheet-style base 26 in both casings (1 -> A, 26 -> Z, 27 -> AA, 703 -> AAA); Roman is greedy subtractive with the standard table in both casings and no cap (3999 -> MMMCMXCIX, 4000 -> MMMM); 0 and negatives render as plain decimal digits; reset affects only future allocation (existing steps keep labels, next is the explicit start again, start floored and clamped 1..10, next = max(highest non-retired + 1, start)); values stay stable after deletion/reorder/undo/redo/reload per the SPEC. Sources: ShareX StepTypeFormatter (matched case for case) and Snagit's Step Tool Restart Sequence documentation. No runtime behavior changes - the native code and AnnotationShapesTest already implemented exactly these semantics; the decision publishes EDITOR-ANNOTATIONS-001's first test-vectors.json with 20 step-format/step-allocation vectors running the production helpers through a new conformance-adapter dispatch (red against the pre-change adapter's unsupported-capability answer, 20/20 after). Contract 0.4.3, EDITOR-ANNOTATIONS-001 0.1.1, approval record with verified fifteen-package carry-forward. EA-008's separate Text border geometry question remains open.",
+      "evidence": [
+        "product-contract/capabilities/EDITOR-ANNOTATIONS-001/test-vectors.json",
+        "product-contract/decisions/EA-009-step-styles.md",
+        "product-contract/reviews/APPROVAL-2026-11-20-EA-009-STEP-STYLES.json",
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp"
       ]
     }
   ],
@@ -3860,10 +3875,10 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 183,
+    "implemented": 184,
     "not-applicable": 1,
     "not-started": 19,
-    "partial": 122
+    "partial": 121
   },
   "full_audit_counts": {
     "blocked": 32,
@@ -3939,6 +3954,12 @@
       "previous": "blocked",
       "current": "implemented",
       "source_revision": "9eb4f5c"
+    },
+    {
+      "requirement": "EA-009",
+      "previous": "blocked",
+      "current": "implemented",
+      "source_revision": "3b069ce"
     }
   ],
   "integration_note": "Preserve approved empty-save baseline-shadow completions, owned settings transfer/migration and landed watch checkpoint/publication/retention breadth. CORE-025 returns to partial only for demonstrated exact-attempt accounting; conservative unconfirmed disposition remains intact. Mapped version metadata now matches Product Contract 0.4.0 and current capability versions; no contract changed."

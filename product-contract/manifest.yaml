@@ -1,6 +1,6 @@
 # Product Contract manifest. Schema: schemas/manifest.schema.json.
 # Contract version is the product version native apps may claim.
-contract_version: 0.4.2
+contract_version: 0.4.3
 status: draft
 capabilities:
   - id: FILENAME-GENERATION-001
@@ -25,7 +25,7 @@ capabilities:
     requirements: [ES-001, ES-002, ES-003, ES-004, ES-005, ES-006, ES-007, ES-008, ES-009, ES-010, ES-011, ES-012, ES-013, ES-014, ES-015, ES-016, ES-017, ES-018, ES-019, ES-020, ES-021, ES-022, ES-023, ES-024, ES-025, ES-026, ES-027, ES-028, ES-029, ES-030]
   - id: EDITOR-ANNOTATIONS-001
     path: capabilities/EDITOR-ANNOTATIONS-001
-    version: 0.1.0
+    version: 0.1.1
     status: approved
     requirements: [EA-001, EA-002, EA-003, EA-004, EA-005, EA-006, EA-007, EA-008, EA-009, EA-010, EA-011, EA-012, EA-013, EA-014, EA-015, EA-016, EA-017, EA-018, EA-019, EA-020]
   - id: EDITOR-EFFECTS-001

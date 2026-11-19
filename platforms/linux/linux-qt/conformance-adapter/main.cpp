@@ -12,6 +12,7 @@
 #include "image-editor/EditorViewport.h"
 #include "image-editor/EditorPreferences.h"
 #include "image-editor/ImageComparison.h"
+#include "image-editor/ShapePainter.h"
 #include "EditorCanvasOperations.h"
 #include "NewImageSource.h"
 #include <QBuffer>
@@ -875,6 +876,36 @@ QJsonObject runEditorSettings(const QString &operation, const QJsonObject &input
 
 }  // namespace
 
+// EA-009: the adapter only translates JSON into production calls. The step
+// mapping and allocation rules live in the production helpers and are not
+// reimplemented here.
+QJsonObject runEditorAnnotations(const QString &operation, const QJsonObject &input) {
+  if (operation == u"step-format") {
+    const auto style = ed::parseStepStyle(input.value(u"style").toString());
+    if (!style) return adapterError(QStringLiteral("invalid step style"));
+    return QJsonObject{{QStringLiteral("label"), ed::formatStepValue(input.value(u"value").toInteger(), *style)}};
+  }
+  if (operation == u"step-allocation") {
+    ed::AnnotationDocument document = blankDocument(64, 64);
+    const qint64 highest = input.value(u"highest").toInteger(0);
+    if (highest > 0) {
+      ed::RectangleAnnotation step;
+      step.id = QUuid::createUuid();
+      step.start = {2, 2}; step.end = {18, 18};
+      step.content.type = ed::shape::step;
+      step.content.stepValue = highest;
+      document.annotations.emplace_back(step);
+    }
+    ed::StepSequence sequence;
+    if (const auto start = input.value(u"start"); start.isDouble()) sequence.start = start.toInteger();
+    const bool reset = input.value(u"reset").toBool(false);
+    if (reset) ed::resetStepSequence(sequence, document);
+    return QJsonObject{{QStringLiteral("next"), ed::nextStepValue(document, sequence)},
+                       {QStringLiteral("retired"), static_cast<qint64>(sequence.retired.size())}};
+  }
+  return adapterError(QStringLiteral("unsupported operation: ") + operation);
+}
+
 // CORE-025: the adapter only translates JSON into production calls. The
 // disposition and retention rules live in the production helpers and are not
 // reimplemented here.
@@ -980,6 +1011,10 @@ int main(int argc, char *argv[]) {
   }
   if (capability == u"CORE-PLATFORM-001") {
     writeJson(runCorePlatform(operation, input));
+    return 0;
+  }
+  if (capability == u"EDITOR-ANNOTATIONS-001") {
+    writeJson(runEditorAnnotations(operation, input));
     return 0;
   }
   writeJson(adapterError(QStringLiteral("unsupported capability: ") + capability));

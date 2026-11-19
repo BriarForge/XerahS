@@ -1,6 +1,6 @@
 # EDITOR-ANNOTATIONS-001 Annotation tools
 
-Version: 0.1.0
+Version: 0.1.1
 
 Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
