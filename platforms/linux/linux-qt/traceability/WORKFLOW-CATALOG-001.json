@@ -684,11 +684,11 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Represented image/media tools have accepted formats, parameters and cancellation tests; full workflow-ledger media/metadata family matrix is incomplete and recognition dependencies remain user-blocked.",
+      "note": "Represented image/media tools have accepted formats, parameters and cancellation tests; the full workflow-ledger media/metadata family matrix is incomplete. Recognition-gate reconciliation 2026-11-19: the zxing-cpp/Tesseract recognition dependencies are approved (DEPENDENCIES.md, Mike 2026-11-02, decision EU-004-RECOGNITION-GATE-2026-11-19) and the native OCR/QR pipeline flows carry real tests (CaptureRecognitionTest); the remaining matrix breadth is what keeps this row partial.",
       "audit": {
         "classification": "partial",
         "spec_line": 42,
-        "coverage": "Represented image/media tools have accepted formats, parameters and cancellation tests; full workflow-ledger media/metadata family matrix is incomplete and recognition dependencies remain user-blocked.",
+        "coverage": "Represented image/media tools have accepted formats, parameters and cancellation tests; the full workflow-ledger media/metadata family matrix is incomplete. Recognition-gate reconciliation 2026-11-19: the zxing-cpp/Tesseract recognition dependencies are approved (DEPENDENCIES.md, Mike 2026-11-02, decision EU-004-RECOGNITION-GATE-2026-11-19) and the native OCR/QR pipeline flows carry real tests (CaptureRecognitionTest); the remaining matrix breadth is what keeps this row partial.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"

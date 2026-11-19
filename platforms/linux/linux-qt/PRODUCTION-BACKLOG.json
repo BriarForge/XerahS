@@ -15,8 +15,8 @@
   "capability_count": 16,
   "desktop_capability_count": 15,
   "counts": {
-    "blocked": 32,
-    "implemented": 177,
+    "blocked": 31,
+    "implemented": 178,
     "not-applicable": 1,
     "not-started": 5,
     "partial": 110
@@ -293,6 +293,13 @@
       "to": "partial",
       "reason": "Canonical root authorization, readiness and duplicate checkpoints remain implemented paths. New publication/retention work persists send intent before HTTP; holds successful-but-unusable accepted responses and unknown outcomes across restart; preserves process-lifetime answered-failure attempts; uses parent identity/fingerprint/identity observations and snapshot-fenced worker adoption; reads legacy stores and writes checkpoint v2. Named store/service/protocol and real-process tmpfs kill/mount tests exercise the policy, with independent shared vectors for pure dispositions and retention. However, P1 exact response accounting is incomplete: an HTTP 200 reply followed by a truncated-body RemoteHostClosedError is reported by current UploadExecutor with answeredAttempts=0, acceptedAttempts=0 and httpStatus=0, despite QNetworkReply carrying status 200. A separately compiled current-production loopback probe reproduces this; the contract requires that 2xx attempt to count as answered and accepted. The disposition remains conservatively unconfirmed, so no duplicate-publication failure is claimed. CORE-025 is partial until that accounting boundary has a regression and fix. Cross-boot/removable/network/FUSE identity qualification and activation/release remain separate gates.",
       "revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
+    },
+    {
+      "requirement": "EU-004",
+      "from": "blocked",
+      "to": "implemented",
+      "reason": "Recognition-gate reconciliation 2026-11-19 (decision EU-004-RECOGNITION-GATE-2026-11-19): Mike's recorded 2026-11-02 dependency approval (DEPENDENCIES.md, 'Approve both') governs recognition activation, the 2026-11-14 scheduler prohibition no longer applies, and the current loop prompt lists this reconciliation as the top backlog item. The existing Screen/Region/File real-decoder, dialog/portal, pipeline-privacy and dependency-absent tests stand as implemented candidate evidence. Live-desktop portal qualification, accessibility acceptance and release/parity gates remain separate.",
+      "revision": "abf4583"
     }
   ],
   "review_limitations": [
@@ -332,11 +339,6 @@
       "capability": "EDITOR-SETTINGS-001",
       "requirement": "ESET-001",
       "question": "Full accepted per-field contract names/defaults/migration/privacy/dispositions/downstream effects remain absent; reference defaults are not product approval."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-004",
-      "question": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate."
     },
     {
       "capability": "EDITOR-UTILITIES-001",
@@ -963,6 +965,20 @@
         "platforms/linux/linux-qt/tests/WatchKillProofTest.cpp",
         "platforms/linux/linux-qt/tests/WatchKillFixture.cpp",
         "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp"
+      ]
+    },
+    {
+      "requirements": [
+        "EU-004"
+      ],
+      "outcome": "Recognition-gate reconciliation 2026-11-19: Mike's recorded 2026-11-02 zxing-cpp 3.1.1/Tesseract 5.5.3 approval in DEPENDENCIES.md governs, the stale scheduler prohibition is retired (decision EU-004-RECOGNITION-GATE-2026-11-19), and EU-004 is reclassified implemented (candidate) on the existing real-decoder evidence: native Image File/Screen/Region modes with portal/file consent, bounded validation, zero/one/multiple distinct decoded values, transparent-pixel matte, explicit-only copy, owned cancellation/close, dependency-absent explicit-unavailable paths, and pipeline OCR/QR flows that keep pixels and text out of receipts. Live-desktop portal qualification, accessibility and release/parity gates remain separate.",
+      "evidence": [
+        "product-contract/decisions/EU-004-recognition-dependency-gate.md",
+        "platforms/linux/linux-qt/DEPENDENCIES.md",
+        "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
       ]
     }
   ],
@@ -3721,15 +3737,15 @@
     },
     {
       "id": "watch-shutdown-nested-loop",
-      "classification": "source finding",
+      "classification": "resolved source finding (2026-11-19)",
       "production": "platforms/linux/linux-qt/app/WatchFolderService.cpp:298-308",
-      "finding": "finishCheckpoint uses nested QEventLoop to await pending publication/checkpoint; clean-exit fixtures exercise draining but do not eliminate this architectural gap."
+      "finding": "finishCheckpoint previously used a nested QEventLoop to await pending publication/checkpoint. The 2026-11-18 abf4583 change replaced it with a flat QPointer-guarded sleep-punctuated processEvents drain: no re-entrant exec, unchanged exit condition, and a real time budget for worker threads. The drain-mode, release-drain, queued-upload-release and real-process kill suites pass unchanged (183/183)."
     },
     {
       "id": "remaining-watch-gui-boundaries",
-      "classification": "source finding",
+      "classification": "resolved source finding (2026-11-19)",
       "production": "platforms/linux/linux-qt/app/WatchFolderService.cpp:setRules,startFileWork,finishFileWork,rescan; FileUploadController.cpp:startNext,settle",
-      "finding": "Checkpoint serialization/stat/retention is worker-owned, but rules writes, execution admission/steps/terminal writes, watcher add/remove and final fingerprint remain synchronous GUI callbacks."
+      "finding": "Every boundary listed in this finding moved off the GUI thread by the completed 2026-11-18 watch GUI boundary set: file-upload execution writes (2478b4e), watch copy/move execution admission/start/step/terminal writes with an accurate zero-step pre-file-work cancellation record (85c40ca, b56f0ff), the final dispatch fingerprint at both dispatch sites (d8110ef), rules persistence through the prepare/write/adopt seam (0fcb201), watcher registration onto the watcher worker thread (6b88a87), and the flattened shutdown drain (abf4583). Off-GUI assertions proven against temporary synchronous red builds; full suite 183/183."
     },
     "All four scoped SPEC files are byte-identical to the prior 54ec4db audit. Every one of the 78 desktop rows retained its conservative classification after current evidence continuity checks; all 20 mobile-only IDs remain outside Linux desktop scope.",
     "All scoped production/test anchor files match their frozen current-audit hashes except the shared conformance-adapter main.cpp. Its filename-generation and region-capture production dispatch/function bodies are unchanged; the diff only adds editor empty-shadow fields and CORE-025 watch adapters.",
@@ -3744,10 +3760,10 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 177,
+    "implemented": 180,
     "not-applicable": 1,
     "not-started": 19,
-    "partial": 128
+    "partial": 125
   },
   "full_audit_counts": {
     "blocked": 32,
@@ -3787,6 +3803,12 @@
       "previous": "partial",
       "current": "implemented",
       "source_revision": "e8bc3a9"
+    },
+    {
+      "requirement": "EU-004",
+      "previous": "blocked",
+      "current": "implemented",
+      "source_revision": "abf4583"
     }
   ],
   "integration_note": "Preserve approved empty-save baseline-shadow completions, owned settings transfer/migration and landed watch checkpoint/publication/retention breadth. CORE-025 returns to partial only for demonstrated exact-attempt accounting; conservative unconfirmed disposition remains intact. Mapped version metadata now matches Product Contract 0.4.0 and current capability versions; no contract changed."

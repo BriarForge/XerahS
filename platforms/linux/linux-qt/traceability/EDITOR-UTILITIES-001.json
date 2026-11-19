@@ -220,9 +220,9 @@
     },
     "EU-004": {
       "disposition": "Required",
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate.",
+      "note": "Native Scan QR codes supports Image File, Screen and Region. File input uses the native picker and bounded raster loader; screen capture reuses the desktop permission transport; region selection uses the actual native retained-image crop dialog. Local ZXing returns zero, one or multiple decoded values, including Unicode and repeated values, without changing source pixels or uploading; Copy is explicit. Native decoder and actual dialog/crop tests cover file integrity, explicit Copy, permission failure, cancellation, source bounds and late-result/close behavior, and the dependency-absent build keeps an explicit unavailable path. Recognition-gate reconciliation 2026-11-19: Mike's recorded 2026-11-02 dependency approval (DEPENDENCIES.md, 'Approve both') governs; the stale scheduler prohibition that downgraded this row is retired by decision EU-004-RECOGNITION-GATE-2026-11-19 and the real-decoder evidence stands. Live-desktop portal qualification, accessibility acceptance and release/parity gates remain separate.",
       "evidence": [
         "platforms/linux/linux-qt/app/QrRecognition.cpp",
         "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
@@ -234,9 +234,9 @@
         "platforms/linux/linux-qt/DEPENDENCIES.md"
       ],
       "audit": {
-        "classification": "blocked",
+        "classification": "implemented",
         "spec_line": 18,
-        "coverage": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate.",
+        "coverage": "Native Scan QR codes supports Image File, Screen and Region. File input uses the native picker and bounded raster loader; screen capture reuses the desktop permission transport; region selection uses the actual native retained-image crop dialog. Local ZXing returns zero, one or multiple decoded values, including Unicode and repeated values, without changing source pixels or uploading; Copy is explicit. Native decoder and actual dialog/crop tests cover file integrity, explicit Copy, permission failure, cancellation, source bounds and late-result/close behavior, and the dependency-absent build keeps an explicit unavailable path. Recognition-gate reconciliation 2026-11-19: Mike's recorded 2026-11-02 dependency approval (DEPENDENCIES.md, 'Approve both') governs; the stale scheduler prohibition that downgraded this row is retired by decision EU-004-RECOGNITION-GATE-2026-11-19 and the real-decoder evidence stands. Live-desktop portal qualification, accessibility acceptance and release/parity gates remain separate.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
@@ -274,8 +274,7 @@
         "scope": "Installed zxing-cpp 3.1.1 and Tesseract 5.5.3 for local processing, explicit unavailable messages when missing",
         "evidence": "platforms/linux/linux-qt/DEPENDENCIES.md",
         "supersedes": "Older loop/audit question requesting the same dependency approval; no new approval inferred."
-      },
-      "blocked_reason": "Screen/Region/File recognition code and real-decoder/portal tests exist, but this scheduler explicitly still prohibits QR scanning and labels zxing-cpp unapproved; preserve evidence without waiving that gate."
+      }
     },
     "EU-005": {
       "disposition": "Required",
