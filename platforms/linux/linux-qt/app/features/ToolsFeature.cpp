@@ -2,6 +2,7 @@
 #include "features/ToolsFeature.h"
 
 #include "AppContext.h"
+#include "BackgroundRemoverDialog.h"
 #include "ColorPickerDialog.h"
 #include "HashCheckerDialog.h"
 #include "ImageRecognitionDialog.h"
@@ -60,6 +61,13 @@ void installToolDialogs(CommandRegistry &commands, const std::function<QWidget *
   addDialog<IconConverterDialog>(commands,
       CommandSpec{QStringLiteral("icon-converter"), QStringLiteral("Icon converter…"), CommandGroup::Tools, toolSurfaces(false)},
       [parent] { return new IconConverterDialog(parentWidget(parent)); });
+  // EU-001/EU-009/EU-010: the Background Remover window is reachable from the
+  // start surface; the inference engine lands separately and the window's
+  // status rows say so.
+  addDialog<BackgroundRemoverDialog>(commands,
+      CommandSpec{QStringLiteral("background-remover"), QStringLiteral("Background remover…"),
+                  CommandGroup::Tools, toolSurfaces(false)},
+      [parent] { return new BackgroundRemoverDialog(parentWidget(parent)); });
 #ifdef XERAHS_VIDEO_CONVERTER
   static GstElementAvailability availability;
   addDialog<VideoConverterDialog>(commands,

@@ -15,11 +15,11 @@
   "capability_count": 16,
   "desktop_capability_count": 15,
   "counts": {
-    "blocked": 26,
-    "implemented": 183,
+    "blocked": 23,
+    "implemented": 184,
     "not-applicable": 1,
-    "not-started": 5,
-    "partial": 110
+    "not-started": 6,
+    "partial": 111
   },
   "capabilities": [
     {
@@ -112,9 +112,10 @@
       "capability": "EDITOR-UTILITIES-001",
       "requirements": 19,
       "counts": {
-        "blocked": 5,
-        "implemented": 7,
-        "partial": 7
+        "blocked": 3,
+        "implemented": 8,
+        "not-started": 1,
+        "partial": 8
       },
       "trace": "traceability/EDITOR-UTILITIES-001.json"
     },
@@ -349,6 +350,24 @@
       "to": "implemented",
       "reason": "Decided 2026-11-20 (EA-008-TEXT-BORDER-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.4 with a full sixteen-package approval record whose carry-forward was verified by the commit diff): a regular Text border strokes the text box - a rounded rectangle around the text area, corner radius 4, border colour at max(1, stroke width), after the background fill and behind the text - following the reference DrawText (background, rounded-rectangle border stroke, then text; CornerRadius default 4; the offset DrawTextShadow duplicate is a separate unported feature). The earlier glyph-outline candidate matched no reference surface and is replaced; textBorderColor keeps its name, parsing, persistence, alpha semantics and edit/history behavior. Region discriminators (border pixels on edges no glyph reaches; text pixels exactly unchanged) are red against the glyph-outline code and green after; full suite 183/183. The SpeechBalloon's separate balloonBorderColor outline is untouched.",
       "revision": "b34fad2"
+    },
+    {
+      "requirement": "EU-009",
+      "from": "blocked",
+      "to": "partial",
+      "reason": "Decided 2026-11-20 (EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; contract 0.4.5, EDITOR-UTILITIES-001 0.1.1): the u2netp model (U-2-Net, Apache-2.0) is approved with a pinned artifact URL, byte size, SHA-256 and MD5 and a catalogue tensor contract. The model half is implemented (candidate): explicit model selection, strict catalogue load, bounded ONNX header parsing with tensor-contract validation, provenance verification before adoption, and model/device/setup/inference status rows, all tested offscreen. The Auto/CPU/GPU device policy and live inference remain partial pending the approved onnxruntime build."
+    },
+    {
+      "requirement": "EU-010",
+      "from": "blocked",
+      "to": "implemented",
+      "reason": "Decided and landed 2026-11-20 (EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20): the Background Remover discloses every supply fact (upstream, licence+URL, size, exact URL and host with the CDN-redirect caveat, both checksums, the store directory, and that the one-time download is the only network activity with images never uploaded), downloads only after an explicit confirmation, verifies the bytes against the pinned size, SHA-256 and MD5 and their ONNX header against the catalogue tensor contract before the atomic store rename, and discards the temporary file on any failure (tampered, oversize, cancelled, close-while-busy) with stable kebab-case ids. Proven offscreen against local file artifacts and a loopback stall server; the pinned checksums were verified against the fetched 4,574,861-byte artifact. Implemented candidate, not release acceptance."
+    },
+    {
+      "requirement": "EU-011",
+      "from": "blocked",
+      "to": "not-started",
+      "reason": "The recorded blocker (no approved model/licence) is resolved by decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20 (approved u2netp supply plus the onnxruntime MIT runtime for the next build), but no preview, save or inference code exists yet, so the row is open work rather than a waiting decision. The utility's inference row honestly reports that no engine is linked in this build."
     }
   ],
   "review_limitations": [
@@ -378,21 +397,6 @@
       "capability": "EDITOR-SETTINGS-001",
       "requirement": "ESET-001",
       "question": "Full accepted per-field contract names/defaults/migration/privacy/dispositions/downstream effects remain absent; reference defaults are not product approval."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-009",
-      "question": "No approved local model/provenance/tensor/device/setup policy authorizes background removal."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-010",
-      "question": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists."
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-011",
-      "question": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract."
     },
     {
       "capability": "EDITOR-UTILITIES-001",
@@ -1114,6 +1118,15 @@
         "platforms/linux/linux-qt/src/image-editor/ShapePainter.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "EU-001",
+        "EU-009",
+        "EU-010",
+        "EU-011"
+      ],
+      "outcome": "Decided and landed 2026-11-20 (decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20, contract 0.4.5, EDITOR-UTILITIES-001 0.1.1, carry-forward approval APPROVAL-2026-11-20-EU-009-010-011-BACKGROUND-MODEL-SUPPLY): the background-removal model supply is approved and built. The approved model is u2netp (U-2-Net, Apache-2.0), pinned by URL, byte size 4574861, SHA-256 309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8 and the upstream MD5 8e83ca70e441ab06c318d82300c84806, with the tensor contract read from the artifact's own header (input input.1 float32 [1,3,320,320], first output 1959 float32 [1,1,320,320]). RMBG was rejected as non-commercial; onnxruntime (MIT, Arch extra) is the approved optional-build runtime for the inference slice. Native surface: the Background Remover window is command-reachable (EU-001), lists the approved model with every EU-010 disclosure on screen, downloads only after an explicit confirmation, verifies size+SHA-256+MD5+ONNX-header+tensor-contract before the atomic store rename, discards tampered/oversize/cancelled bytes with stable kebab-case ids, validates user-supplied local models with honest unverified-provenance reporting, and shows model/device/setup/inference rows that state the inference engine is not linked in this build (CPU policy first; Auto/GPU arrive with the runtime). Tests: background-models 10/10 and background-remover-dialog 12/12, full suite 185/185; integrity, opt-in and tensor-contract rules each proven red by disabling the check and watching the matching tests fail; no test touches the network. Remaining: EU-011 inference/preview/save and EU-009's device policy (approved runtime not yet linked), plus live desktop qualification with the real artifact."
     }
   ],
   "audit_method": "All 16 capabilities /345 IDs revalidated against current source and tests; unchanged bodies compared to the previous complete review, changed paths and approved contracts inspected. Existing suite passes but direct current-production HTTP probe exposes the P1 2xx/truncated-body accounting gap. No release or security acceptance inferred.",
@@ -3894,10 +3907,10 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 185,
+    "implemented": 186,
     "not-applicable": 1,
-    "not-started": 19,
-    "partial": 120
+    "not-started": 17,
+    "partial": 121
   },
   "full_audit_counts": {
     "blocked": 32,

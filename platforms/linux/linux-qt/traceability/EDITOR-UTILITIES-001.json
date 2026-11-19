@@ -6,48 +6,52 @@
   "edition": "linux-qt",
   "status": "partial",
   "implementation": [
-    "platforms/linux/linux-qt/app/features/ToolsFeature.h",
-    "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-    "platforms/linux/linux-qt/app/ColorPickerDialog.h",
+    "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
+    "platforms/linux/linux-qt/app/BackgroundRemoverDialog.h",
     "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-    "platforms/linux/linux-qt/app/PortalColorPicker.h",
-    "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
-    "platforms/linux/linux-qt/src/tools/ColorFormats.h",
-    "platforms/linux/linux-qt/src/tools/ColorFormats.cpp",
-    "platforms/linux/linux-qt/src/tools/QrEncoder.h",
-    "platforms/linux/linux-qt/src/tools/QrEncoder.cpp",
-    "platforms/linux/linux-qt/app/QrRender.h",
-    "platforms/linux/linux-qt/app/QrRender.cpp",
-    "platforms/linux/linux-qt/app/QrCodeDialog.h",
-    "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
-    "platforms/linux/linux-qt/src/tools/FileHash.h",
-    "platforms/linux/linux-qt/src/tools/FileHash.cpp",
-    "platforms/linux/linux-qt/app/HashCheckerDialog.h",
-    "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
-    "platforms/linux/linux-qt/app/IconWriter.h",
-    "platforms/linux/linux-qt/app/IconWriter.cpp",
-    "platforms/linux/linux-qt/app/IconConverterDialog.h",
-    "platforms/linux/linux-qt/app/IconConverterDialog.cpp",
-    "platforms/linux/linux-qt/src/image-editor/ImageComparison.h",
-    "platforms/linux/linux-qt/src/image-editor/ImageComparison.cpp",
-    "platforms/linux/linux-qt/app/ComparisonImages.h",
+    "platforms/linux/linux-qt/app/ColorPickerDialog.h",
     "platforms/linux/linux-qt/app/ComparisonImages.cpp",
-    "platforms/linux/linux-qt/app/ImageComparisonDialog.h",
-    "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
-    "platforms/linux/linux-qt/src/media/VideoConversion.h",
-    "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+    "platforms/linux/linux-qt/app/ComparisonImages.h",
     "platforms/linux/linux-qt/app/ConversionRunner.h",
-    "platforms/linux/linux-qt/app/VideoConverter.h",
-    "platforms/linux/linux-qt/app/VideoConverter.cpp",
-    "platforms/linux/linux-qt/app/VideoConverterDialog.h",
-    "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
+    "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
+    "platforms/linux/linux-qt/app/HashCheckerDialog.h",
+    "platforms/linux/linux-qt/app/IconConverterDialog.cpp",
+    "platforms/linux/linux-qt/app/IconConverterDialog.h",
+    "platforms/linux/linux-qt/app/IconWriter.cpp",
+    "platforms/linux/linux-qt/app/IconWriter.h",
+    "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
+    "platforms/linux/linux-qt/app/ImageComparisonDialog.h",
     "platforms/linux/linux-qt/app/ImageRecognition.h",
-    "platforms/linux/linux-qt/app/QrRecognition.cpp",
-    "platforms/linux/linux-qt/app/OcrRecognition.cpp",
     "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
     "platforms/linux/linux-qt/app/ImageRecognitionDialog.h",
+    "platforms/linux/linux-qt/app/NativeAccessibility.h",
+    "platforms/linux/linux-qt/app/OcrRecognition.cpp",
+    "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
+    "platforms/linux/linux-qt/app/PortalColorPicker.h",
+    "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
+    "platforms/linux/linux-qt/app/QrCodeDialog.h",
+    "platforms/linux/linux-qt/app/QrRecognition.cpp",
+    "platforms/linux/linux-qt/app/QrRender.cpp",
+    "platforms/linux/linux-qt/app/QrRender.h",
     "platforms/linux/linux-qt/app/ScreenColorSampler.cpp",
-    "platforms/linux/linux-qt/app/NativeAccessibility.h"
+    "platforms/linux/linux-qt/app/VideoConverter.cpp",
+    "platforms/linux/linux-qt/app/VideoConverter.h",
+    "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
+    "platforms/linux/linux-qt/app/VideoConverterDialog.h",
+    "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
+    "platforms/linux/linux-qt/app/features/ToolsFeature.h",
+    "platforms/linux/linux-qt/src/background/BackgroundModels.cpp",
+    "platforms/linux/linux-qt/src/background/BackgroundModels.h",
+    "platforms/linux/linux-qt/src/image-editor/ImageComparison.cpp",
+    "platforms/linux/linux-qt/src/image-editor/ImageComparison.h",
+    "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+    "platforms/linux/linux-qt/src/media/VideoConversion.h",
+    "platforms/linux/linux-qt/src/tools/ColorFormats.cpp",
+    "platforms/linux/linux-qt/src/tools/ColorFormats.h",
+    "platforms/linux/linux-qt/src/tools/FileHash.cpp",
+    "platforms/linux/linux-qt/src/tools/FileHash.h",
+    "platforms/linux/linux-qt/src/tools/QrEncoder.cpp",
+    "platforms/linux/linux-qt/src/tools/QrEncoder.h"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/ColorFormatsTest.cpp",
@@ -71,16 +75,17 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Most catalog utilities are command-reachable with missing-host failures; approved model-backed background removal/dispositions and complete catalog reachability remain absent.",
+      "note": "Every catalog utility is command-reachable, including the background remover whose native window now exists (EU-009/010 model supply, decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20); missing host services are explained rather than crashing startup - the video converter carries its GStreamer requirement and the background remover's status rows report the inference engine as not linked in this build. The konami shader disposition (EU-019) and the background remover's inference half (EU-011) remain open, so breadth stays partial.",
       "evidence": [
-        "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
+        "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
         "platforms/linux/linux-qt/app/EditorWindow.cpp",
         "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
-        "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp",
+        "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
-        "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
         "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp",
+        "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConversionTest.cpp"
       ],
       "audit": {
@@ -95,8 +100,24 @@
         ],
         "production_anchors": [
           {
+            "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
+            "sha256": "e1c345a6504a6bdadec58619bb0cf651f31f92216db111a8b45c0c56fa583679"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.h",
+            "sha256": "188cb2064ac1828591bb32e9af9e4f387ef590e15b4a8c7e762e5eb36220982f"
+          },
+          {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
             "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/background/BackgroundModels.cpp",
+            "sha256": "de224db5916186f2036116802fb0593855ed088d564755407c2a9b9b2b43a59d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/background/BackgroundModels.h",
+            "sha256": "008d0d4506c2eb49596d8b8d045a8015659e463608a59165939010ce3f7bbd2a"
           }
         ],
         "test_anchors": [
@@ -110,7 +131,7 @@
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "Seven of eight utility catalog entries are reachable; background removal remains missing. New Scan QR codes and Recognize text (OCR) commands use the shared native recognition dialog. QR scanning has Image File, Screen and Region inputs; OCR uses installed local English data. Missing recognition libraries/models are explained. This does not qualify the full utility catalog or supported-desktop matrix."
+      "previous_note": "Most catalog utilities are command-reachable with missing-host failures; approved model-backed background removal/dispositions and complete catalog reachability remain absent."
     },
     "EU-002": {
       "disposition": "Required",
@@ -465,99 +486,188 @@
     },
     "EU-009": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "No approved local model/provenance/tensor/device/setup policy authorizes background removal.",
+      "note": "The model half of background removal is decided and implemented (candidate): decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20 approves the u2netp model (U-2-Net, Apache-2.0) with a pinned artifact URL, byte size, SHA-256 and MD5 and a catalogue tensor contract (input input.1 float32 [1,3,320,320], first output 1959 float32 [1,1,320,320]). The Background Remover window lists the approved model for explicit selection, loads the contract catalogue strictly, parses a model file's ONNX header with a bounded reader (512 MiB ceiling, capped counts and lengths, malformed input refused), validates provenance (size, SHA-256, MD5) and the tensor contract before any adoption, and shows model/device/setup/inference status rows; a user-supplied local model is header-validated with its unverified provenance reported honestly. Not yet implemented: the Auto/CPU/GPU device policy and live inference - the approved onnxruntime (MIT) engine is not linked in this build and the rows say so.",
       "evidence": [
-        "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
+        "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
+        "platforms/linux/linux-qt/src/background/BackgroundModels.cpp",
+        "platforms/linux/linux-qt/tests/BackgroundModelsTest.cpp",
+        "platforms/linux/linux-qt/tests/BackgroundRemoverDialogTest.cpp",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp"
-      ],
-      "waiting_on": [
-        "Mike: approve local background-removal model, license/provenance and device policy."
+        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
+        "product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json",
+        "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
+        "product-contract/decisions/EU-009-010-011-background-model-supply.md"
       ],
       "audit": {
-        "classification": "blocked",
+        "classification": "partial",
         "spec_line": 35,
-        "blocker": "Approve the local background-removal model, provenance and device policy.",
-        "coverage": "No approved local model/provenance/tensor/device/setup policy authorizes background removal.",
+        "blocker": "Approved: decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20.",
+        "coverage": "Model selection, catalogue provenance validation, bounded ONNX header parsing with tensor-contract validation and the model/device/setup/inference status rows are implemented and tested offscreen. The Auto/CPU/GPU device policy and live inference wait for the approved onnxruntime build and stay partial.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
+            "path": "platforms/linux/linux-qt/src/background/BackgroundModels.h",
+            "sha256": "008d0d4506c2eb49596d8b8d045a8015659e463608a59165939010ce3f7bbd2a"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/background/BackgroundModels.cpp",
+            "sha256": "de224db5916186f2036116802fb0593855ed088d564755407c2a9b9b2b43a59d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.h",
+            "sha256": "188cb2064ac1828591bb32e9af9e4f387ef590e15b4a8c7e762e5eb36220982f"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
+            "sha256": "e1c345a6504a6bdadec58619bb0cf651f31f92216db111a8b45c0c56fa583679"
+          },
+          {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
+            "sha256": "270044da23c7aaef66e69d26fdb573605aaa829d3b16c14798d4c396314f7d97"
           }
         ],
-        "test_anchors": [],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/BackgroundModelsTest.cpp",
+            "sha256": "1155271196d142933f16690e60e87c5910c1f0a713a5b5e94e122de3839d568f"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/BackgroundRemoverDialogTest.cpp",
+            "sha256": "7e631f243528495d41cc99ab03393c784d78c52afce1889dee0ef7e95dfb42f0"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/OnnxFixture.h",
+            "sha256": "9bd8421e00bb1b37ba31718bb26a7494c510bfe71c33f2bbf3039010c28944ca"
+          }
+        ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "Background removal is not implemented. There is no native background-removal window, no local model selection, no Auto, CPU or GPU device policy, no model provenance or tensor-shape validation, and no model, device, setup or inference status. The utility-catalog entry is still inventoried, but no approved platform disposition or local model has been chosen, so the requirement awaits a product decision on an approved local model. Background removal remains Required.",
-      "blocked_reason": "No approved local model/provenance/tensor/device/setup policy authorizes background removal."
+      "previous_note": "No approved local model/provenance/tensor/device/setup policy authorizes background removal."
     },
     "EU-010": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "implemented",
       "vectors": [],
-      "note": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists.",
+      "note": "Model supply is decided and implemented (candidate): the Background Remover never downloads silently. The window discloses the upstream project, the licence with its URL, the byte size, the exact artifact URL and host (with the GitHub CDN redirect caveat), the pinned SHA-256 and MD5, the model store directory and that the one-time download is the only network activity (images are never uploaded); downloading starts only after an explicit confirmation. Bytes land in a temporary sibling file, are verified against the pinned size, SHA-256 and MD5 and their ONNX header against the catalogue tensor contract, and only then are renamed into the store. Any failure - tampered bytes, a lying size, an oversize server, a mid-download cancel or closing the busy window (EU-017) - discards the temporary file and keeps the previous state, with stable kebab-case ids (model-integrity-mismatch, model-size-mismatch, download-cancelled). The pinned checksums were verified against the fetched 4,574,861-byte artifact itself, and the flow is proven offscreen against a local file artifact and a loopback stall server; no test touches the network.",
       "evidence": [
-        "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
+        "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
+        "platforms/linux/linux-qt/src/background/BackgroundModels.cpp",
+        "platforms/linux/linux-qt/tests/BackgroundModelsTest.cpp",
+        "platforms/linux/linux-qt/tests/BackgroundRemoverDialogTest.cpp",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp"
-      ],
-      "waiting_on": [
-        "Mike: approve local background-removal model and any download/license policy."
+        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
+        "product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json",
+        "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
+        "product-contract/decisions/EU-009-010-011-background-model-supply.md"
       ],
       "audit": {
-        "classification": "blocked",
+        "classification": "implemented",
         "spec_line": 38,
-        "blocker": "Approve the model licence/integrity/download policy before setup is implemented.",
-        "coverage": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists.",
+        "blocker": "Approved: decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20.",
+        "coverage": "Explicit-disclosure opt-in download with pinned integrity and verify-then-adopt store behaviour is implemented and tested: confirm-refusal, verified adoption, tampered refusal, oversize refusal, mid-download cancel and close-during-download all proven offscreen with local fixtures.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
+            "path": "platforms/linux/linux-qt/src/background/BackgroundModels.h",
+            "sha256": "008d0d4506c2eb49596d8b8d045a8015659e463608a59165939010ce3f7bbd2a"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/background/BackgroundModels.cpp",
+            "sha256": "de224db5916186f2036116802fb0593855ed088d564755407c2a9b9b2b43a59d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.h",
+            "sha256": "188cb2064ac1828591bb32e9af9e4f387ef590e15b4a8c7e762e5eb36220982f"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
+            "sha256": "e1c345a6504a6bdadec58619bb0cf651f31f92216db111a8b45c0c56fa583679"
+          },
+          {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
+            "sha256": "270044da23c7aaef66e69d26fdb573605aaa829d3b16c14798d4c396314f7d97"
           }
         ],
-        "test_anchors": [],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/BackgroundModelsTest.cpp",
+            "sha256": "1155271196d142933f16690e60e87c5910c1f0a713a5b5e94e122de3839d568f"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/BackgroundRemoverDialogTest.cpp",
+            "sha256": "7e631f243528495d41cc99ab03393c784d78c52afce1889dee0ef7e95dfb42f0"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/OnnxFixture.h",
+            "sha256": "9bd8421e00bb1b37ba31718bb26a7494c510bfe71c33f2bbf3039010c28944ca"
+          }
+        ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "Background removal is not implemented, so there is no model directory access, optional download, license, integrity, size or network behaviour to disclose, and no silent download or execution of a model from an untrusted location occurs because no model is loaded at all. The disclosure and trust requirement remains Required.",
-      "blocked_reason": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists."
+      "previous_note": "Model directory/download/licence/integrity/size/network behavior requires explicit approval; no authorized model supply exists."
     },
     "EU-011": {
       "disposition": "Required",
       "status": "not-started",
       "vectors": [],
-      "note": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract.",
+      "note": "Preview, save and inference are not started; the recorded blocker (no approved model/licence) is resolved by decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20, which approved the u2netp model supply and the onnxruntime (MIT) runtime and implemented the model half. The remaining work is the inference slice: load the verified model through the approved runtime (optional at build time, like libgcrypt), CPU device policy first with Auto and GPU reported honestly from the linked runtime, preview and save preserving source dimensions and colour with the catalogue's defined alpha (first-output min-max mask), cancellation, and the model/device/memory/inference/output failure split. Until then the utility's inference row states the engine is not linked in this build.",
       "evidence": [
-        "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp"
-      ],
-      "waiting_on": [
-        "Mike: approve local background-removal model before implementing preview/output."
+        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
+        "product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json",
+        "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
+        "product-contract/decisions/EU-009-010-011-background-model-supply.md"
       ],
       "audit": {
-        "classification": "blocked",
+        "classification": "not-started",
         "spec_line": 41,
-        "blocker": "Approve the local background-removal model before inference/output work.",
-        "coverage": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract.",
+        "blocker": "Resolved: decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20.",
+        "coverage": "No preview, save, inference or output code exists yet; the blocker is resolved by the approved model supply and runtime, so this row is open work rather than a waiting decision.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
+            "path": "platforms/linux/linux-qt/src/background/BackgroundModels.h",
+            "sha256": "008d0d4506c2eb49596d8b8d045a8015659e463608a59165939010ce3f7bbd2a"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/background/BackgroundModels.cpp",
+            "sha256": "de224db5916186f2036116802fb0593855ed088d564755407c2a9b9b2b43a59d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.h",
+            "sha256": "188cb2064ac1828591bb32e9af9e4f387ef590e15b4a8c7e762e5eb36220982f"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
+            "sha256": "e1c345a6504a6bdadec58619bb0cf651f31f92216db111a8b45c0c56fa583679"
+          },
+          {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
+            "sha256": "270044da23c7aaef66e69d26fdb573605aaa829d3b16c14798d4c396314f7d97"
           }
         ],
-        "test_anchors": [],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/BackgroundModelsTest.cpp",
+            "sha256": "1155271196d142933f16690e60e87c5910c1f0a713a5b5e94e122de3839d568f"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/BackgroundRemoverDialogTest.cpp",
+            "sha256": "7e631f243528495d41cc99ab03393c784d78c52afce1889dee0ef7e95dfb42f0"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/OnnxFixture.h",
+            "sha256": "9bd8421e00bb1b37ba31718bb26a7494c510bfe71c33f2bbf3039010c28944ca"
+          }
+        ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "Background removal is not implemented, so there is no background-removal preview or save, no source-dimension or colour preservation to verify, no defined alpha output, no cancellation, and no distinction between model, device, memory, inference and output failures. Background removal remains Required.",
-      "blocked_reason": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract."
+      "previous_note": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract."
     },
     "EU-012": {
       "disposition": "Required",
@@ -968,7 +1078,7 @@
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
+            "sha256": "270044da23c7aaef66e69d26fdb573605aaa829d3b16c14798d4c396314f7d97"
           }
         ],
         "test_anchors": [],
