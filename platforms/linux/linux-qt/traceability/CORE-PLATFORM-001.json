@@ -873,13 +873,16 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Full-screen/monitor/active-window entry points and errors are tested, but screenshot cursor/delay and authoritative mixed-scale physical mapping remain incomplete.",
+      "note": "Full-screen/monitor/active-window entry points and errors are tested, and RC-TOPOLOGY-AUTHORITY-2026-11-20 settles the mapping authority this row was waiting on: QScreen logical space (zxdg_output-derived) identifies the requested target, per-display physical bounds are each display's own-scale extents (mode-verified), and the packed arrangement is endorsed only for proven grid tilings - a named output is captured by its own compositor identity inside such a layout, and anything unprovable fails closed with compositor-layout-unproven. Remaining: the cross-monitor composite from per-output frames on proven grids, screenshot cursor/delay polish, and live desktop qualification.",
       "evidence": [
         "platforms/linux/linux-qt/app/CaptureController.cpp",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+        "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
         "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "product-contract/decisions/RC-topology-authority.md"
       ],
       "audit": {
         "classification": "partial",
@@ -888,70 +891,28 @@
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/main.cpp",
-            "sha256": "41d563d194defe50aa5331ef2a5e0a99f119eb633fdbd259f635f2e48a96fe6d"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-            "sha256": "3d9de1b25fa32bc8b1bd639071edcbd8143550e78f5bbdbb56379c90896a456c"
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.h",
+            "sha256": "8a7f7fe6e52d6ebf586bd4cec51ed6bee1d4bf1fef77227631e2b74247bb1131"
           },
           {
             "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
-            "sha256": "760ddb6e1512732504a7b3a187bac2a840d7398c7cf00a46d5c7b55585f1e771"
+            "sha256": "f9ddf44e96ea77e05c78b2b7cb9d7683d98e65f0812275b0a4635c487f6ca827"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
+            "sha256": "ffee50c3bea3e5535679a8dca063913d7d31dfa82bd10f56ad85309c94f47e82"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-            "sha256": "8b77530a5a9d55700407b5ed0354e02c5522e716cc9ab950339026643fd219dc",
-            "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
-            "line": 82
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
-            "method": "defaultProfileOmitsTheCursorAndUsesTheScreenshotFactory",
-            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
-            "line": 156
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
-            "method": "optInUsesTheWorkerBeforeTheOverlayAndSavesTheStampOnce",
-            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
-            "line": 183
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
-            "method": "frozenProfileSettingsSurviveChangesUntilTheNextCapture",
-            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
-            "line": 281
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
-            "method": "unsupportedAndMismatchedSourcesRefuseWithoutPortalOrFiles",
-            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
-            "line": 233
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
-            "method": "cancelAndStaleCompletionCannotPublishIntoANewerCapture",
-            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
-            "line": 335
-          },
-          {
-            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
-            "method": "ownerLossCannotPublishIntoANewerCapture",
-            "sha256": "13a2796b1f4f20fde23f1e1024c99ec116ae2c050eb370816105d1d17277c2e1",
-            "line": 379
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+            "sha256": "1263b566b0e514f95a0f3141b6a5ee63cb554710e8b164f3adad04abf12b054b"
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "Region/full-screen/monitor/active-window commands now use shared capture admission and frozen output. Window discovery and portal/controller tests exist. Native per-monitor mixed-scale/HDR/cursor target qualification remains. Audit 2026-11-04: Shared screenshot paths now freeze the approved Qt topology before acquisition and reject bitmap dimension mismatch with capture-topology-mismatch. RegionCaptureNativeTest proves fake mixed-scale region and validated last-region capture through native production workers/outputs; full-screen/monitor/active-window retain their existing ports. CORE-014 stays partial for its remaining complete source/platform scope. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome."
+      "previous_note": "Full-screen/monitor/active-window entry points and errors are tested, but screenshot cursor/delay and authoritative mixed-scale physical mapping remain incomplete."
     },
     "CORE-015": {
       "status": "implemented",

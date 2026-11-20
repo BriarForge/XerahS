@@ -18,7 +18,8 @@ add_library(xerahs_compositor_capture STATIC
   app/capture/CompositorErrors.cpp app/capture/CompositorErrors.h
   app/capture/protocol/ext-image-capture-source-v1-protocol.c
   app/capture/protocol/ext-image-copy-capture-v1-protocol.c
-  app/capture/protocol/wlr-screencopy-unstable-v1-protocol.c)
+  app/capture/protocol/wlr-screencopy-unstable-v1-protocol.c
+  app/capture/protocol/xdg-output-unstable-v1-protocol.c)
 target_include_directories(xerahs_compositor_capture PUBLIC app PRIVATE app/capture/protocol)
 target_link_libraries(xerahs_compositor_capture PUBLIC Qt6::Core Qt6::Gui PRIVATE PkgConfig::WAYLAND_CAPTURE)
 target_compile_options(xerahs_compositor_capture PRIVATE -Wall -Wextra -Wpedantic)

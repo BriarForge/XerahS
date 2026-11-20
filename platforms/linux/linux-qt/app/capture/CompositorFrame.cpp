@@ -3,18 +3,22 @@
 #include "ext-image-capture-source-v1-client-protocol.h"
 #include "ext-image-copy-capture-v1-client-protocol.h"
 #include "wlr-screencopy-unstable-v1-client-protocol.h"
+#include "xdg-output-unstable-v1-client-protocol.h"
 
 #include <wayland-client.h>
 
+#include <QSet>
 #include <QVector>
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <deque>
 #include <errno.h>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <poll.h>
 #include <sys/mman.h>
@@ -183,8 +187,10 @@ QImage imageFromShm(const uint8_t *bytes, int width, int height, int stride, uin
 struct OutputRecord {
   CompositorOutputFacts facts;
   wl_output *proxy = nullptr;
+  zxdg_output_v1 *xdgOutput = nullptr;
   bool removed = false;
   ~OutputRecord() {
+    if (xdgOutput) zxdg_output_v1_destroy(xdgOutput);
     if (proxy) wl_output_destroy(proxy);
   }
 };
@@ -194,6 +200,7 @@ struct Client {
   ext_output_image_capture_source_manager_v1 *sources = nullptr;
   ext_image_copy_capture_manager_v1 *extCopy = nullptr;
   zwlr_screencopy_manager_v1 *wlrCopy = nullptr;
+  zxdg_output_manager_v1 *xdgManager = nullptr;
   uint32_t wlrVersion = 0;
   std::deque<std::unique_ptr<OutputRecord>> outputs;
   bool syncDone = false;
@@ -231,6 +238,7 @@ struct Client {
     if (wlrCopy) zwlr_screencopy_manager_v1_destroy(wlrCopy);
     if (extCopy) ext_image_copy_capture_manager_v1_destroy(extCopy);
     if (sources) ext_output_image_capture_source_manager_v1_destroy(sources);
+    if (xdgManager) zxdg_output_manager_v1_destroy(xdgManager);
     if (shm) wl_shm_destroy(shm);
   }
 };
@@ -272,6 +280,38 @@ void outputDescription(void *, wl_output *, const char *) {}
 
 const wl_output_listener kOutputListener{outputGeometry, outputMode, outputDone, outputScale, outputName, outputDescription};
 
+// RC-TOPOLOGY-AUTHORITY-2026-11-20: zxdg_output_v1 carries the compositor's
+// authoritative logical arrangement. The events only fill facts; placement
+// is never invented here.
+void xdgLogicalPosition(void *data, zxdg_output_v1 *, int32_t x, int32_t y) {
+  auto *output = static_cast<OutputRecord *>(data);
+  output->facts.logicalX = x;
+  output->facts.logicalY = y;
+  output->facts.sawLogicalPosition = true;
+}
+
+void xdgLogicalSize(void *data, zxdg_output_v1 *, int32_t width, int32_t height) {
+  auto *output = static_cast<OutputRecord *>(data);
+  output->facts.logicalWidth = width;
+  output->facts.logicalHeight = height;
+  output->facts.sawLogicalSize = true;
+}
+
+void xdgDone(void *, zxdg_output_v1 *) {}
+void xdgName(void *, zxdg_output_v1 *, const char *) {}
+void xdgDescription(void *, zxdg_output_v1 *, const char *) {}
+
+const zxdg_output_v1_listener kXdgOutputListener{xdgLogicalPosition, xdgLogicalSize, xdgDone, xdgName, xdgDescription};
+
+// Binds the output's xdg_output once a manager exists. Safe to call again
+// after the manager arrives late in the registry burst.
+void attachXdgOutput(Client &client, OutputRecord &record) {
+  if (!client.xdgManager || !record.proxy || record.xdgOutput) return;
+  record.xdgOutput = zxdg_output_manager_v1_get_xdg_output(client.xdgManager, record.proxy);
+  if (!record.xdgOutput) return;
+  zxdg_output_v1_add_listener(record.xdgOutput, &kXdgOutputListener, &record);
+}
+
 void registryGlobal(void *data, wl_registry *registry, uint32_t name, const char *interface, uint32_t version) {
   auto *client = static_cast<Client *>(data);
   if (std::strcmp(interface, wl_shm_interface.name) == 0) {
@@ -281,7 +321,15 @@ void registryGlobal(void *data, wl_registry *registry, uint32_t name, const char
     auto record = std::make_unique<OutputRecord>();
     record->proxy = static_cast<wl_output *>(wl_registry_bind(registry, name, &wl_output_interface, bound));
     wl_output_add_listener(record->proxy, &kOutputListener, record.get());
+    OutputRecord *raw = record.get();
     client->outputs.push_back(std::move(record));
+    attachXdgOutput(*client, *raw);
+  } else if (std::strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
+    const uint32_t bound = std::min(version, 2u);
+    client->xdgManager = static_cast<zxdg_output_manager_v1 *>(
+        wl_registry_bind(registry, name, &zxdg_output_manager_v1_interface, bound));
+    // Outputs bound before the manager appeared get their xdg_output now.
+    for (auto &output : client->outputs) attachXdgOutput(*client, *output);
   } else if (std::strcmp(interface, ext_output_image_capture_source_manager_v1_interface.name) == 0) {
     client->sources = static_cast<ext_output_image_capture_source_manager_v1 *>(
         wl_registry_bind(registry, name, &ext_output_image_capture_source_manager_v1_interface, 1));
@@ -419,6 +467,7 @@ CompositorFrame finishImage(const CompositorFrameRequest &request, const Protoco
   frame.cursorPaintRequested = request.includeCursor;
   frame.cursorPaintedIntoFrame = request.includeCursor;
   frame.singleOutputBufferOriginProven = true;
+  frame.gridTilingProven = layout.gridTilingProven;
   stampPresentation(frame, client);
   return frame;
 }
@@ -515,11 +564,22 @@ CompositorFrame captureDisplay(wl_display *display, const CompositorFrameRequest
   for (const auto &output : client.outputs) {
     if (output->removed) continue;
     facts.push_back(output->facts);
-    chosen = output.get();
   }
-  const LayoutDecision layout = proveSingleOutputLayout(facts);
-  if (layout.kind != LayoutDecisionKind::Proven || !chosen || !chosen->proxy) {
-    return refused(CompositorFrame::Status::LayoutUnproven, kCompositorLayoutUnproven);
+  const LayoutDecision layout = proveOutputLayout(facts, request.outputName);
+  if (layout.kind != LayoutDecisionKind::Proven) {
+    const CompositorFrame::Status status =
+        layout.diagnostic == kCompositorSourceMismatch ? CompositorFrame::Status::SourceMismatch
+                                                        : CompositorFrame::Status::LayoutUnproven;
+    return refused(status, layout.diagnostic);
+  }
+  if (!request.outputName.isEmpty()) {
+    for (const auto &output : client.outputs)
+      if (!output->removed && output->facts.name == request.outputName) chosen = output.get();
+  } else if (facts.size() == 1) {
+    chosen = client.outputs.empty() ? nullptr : client.outputs.front().get();
+  }
+  if (!chosen || !chosen->proxy) {
+    return refused(CompositorFrame::Status::SourceMismatch, kCompositorSourceMismatch);
   }
   const bool extAvailable = client.extCopy && client.sources;
   const ProtocolChoice choice = chooseCaptureProtocol(request.includeCursor, extAvailable, client.wlrCopy != nullptr);
@@ -532,25 +592,104 @@ CompositorFrame captureDisplay(wl_display *display, const CompositorFrameRequest
 
 }  // namespace
 
-LayoutDecision proveSingleOutputLayout(const QVector<CompositorOutputFacts> &outputs) {
+namespace {
+
+bool factsComplete(const CompositorOutputFacts &output) {
+  return output.sawGeometry && output.sawCurrentMode && output.sawScale && output.sawDone && output.sawName &&
+         !output.conflictingMode && !output.name.isEmpty() && output.transform == 0 && output.scale >= 1 &&
+         output.modeWidth > 0 && output.modeHeight > 0 &&
+         bufferExtentAllowed(uint32_t(output.modeWidth), uint32_t(output.modeHeight));
+}
+
+// The compositor's own logical size, scaled by its own scale, must be the
+// mode's pixel size (the mode-verified physical bounds of the decision).
+bool logicalSizeMatchesMode(const CompositorOutputFacts &output) {
+  if (!output.sawLogicalPosition || !output.sawLogicalSize) return false;
+  if (output.logicalWidth <= 0 || output.logicalHeight <= 0) return false;
+  const double width = double(output.logicalWidth) * double(output.scale);
+  const double height = double(output.logicalHeight) * double(output.scale);
+  if (!std::isfinite(width) || !std::isfinite(height)) return false;
+  return qint64(std::floor(width + 0.000001)) == output.modeWidth &&
+         qint64(std::floor(height + 0.000001)) == output.modeHeight;
+}
+
+}  // namespace
+
+LayoutDecision proveOutputLayout(const QVector<CompositorOutputFacts> &outputs, const QString &requestedOutputName) {
   LayoutDecision rejected;
   rejected.diagnostic = kCompositorLayoutUnproven;
-  if (outputs.size() != 1) return rejected;
-  const CompositorOutputFacts &output = outputs.front();
-  if (!output.sawGeometry || !output.sawCurrentMode || !output.sawScale || !output.sawDone || !output.sawName) return rejected;
-  if (output.conflictingMode || output.name.isEmpty() || output.transform != 0 || output.scale < 1) return rejected;
-  if (output.modeWidth <= 0 || output.modeHeight <= 0) return rejected;
-  if (!bufferExtentAllowed(uint32_t(output.modeWidth), uint32_t(output.modeHeight))) return rejected;
+  if (outputs.isEmpty()) return rejected;
+  for (const CompositorOutputFacts &output : outputs) {
+    if (!factsComplete(output)) return rejected;
+  }
+  // Duplicate names are ambiguous identity: a name is never resolved by list
+  // position.
+  QSet<QString> names;
+  for (const CompositorOutputFacts &output : outputs) {
+    if (names.contains(output.name)) return rejected;
+    names.insert(output.name);
+  }
+  const CompositorOutputFacts *chosen = nullptr;
+  if (!requestedOutputName.isEmpty()) {
+    for (const CompositorOutputFacts &output : outputs)
+      if (output.name == requestedOutputName) chosen = &output;
+    if (!chosen) {
+      rejected.diagnostic = kCompositorSourceMismatch;
+      return rejected;
+    }
+  } else {
+    if (outputs.size() != 1) return rejected;
+    chosen = &outputs.front();
+  }
+  if (outputs.size() > 1) {
+    // RC-TOPOLOGY-AUTHORITY-2026-11-20: the packed degraded arrangement is
+    // endorsed only when the compositor's own xdg logical rectangles tile
+    // the plane. A strict tiling has no pairwise interior overlap and no
+    // interior gap, which for integer rectangles is exactly: no overlaps,
+    // and the per-output areas sum to the bounding box's area.
+    for (const CompositorOutputFacts &output : outputs) {
+      if (!logicalSizeMatchesMode(output)) return rejected;
+    }
+    qint64 left = std::numeric_limits<qint64>::max(), top = std::numeric_limits<qint64>::max();
+    qint64 right = std::numeric_limits<qint64>::min(), bottom = std::numeric_limits<qint64>::min();
+    qint64 area = 0;
+    for (const CompositorOutputFacts &output : outputs) {
+      const qint64 x1 = output.logicalX, y1 = output.logicalY;
+      const qint64 x2 = x1 + output.logicalWidth, y2 = y1 + output.logicalHeight;
+      left = std::min(left, x1);
+      top = std::min(top, y1);
+      right = std::max(right, x2);
+      bottom = std::max(bottom, y2);
+      area += output.logicalWidth * qint64(output.logicalHeight);
+      if (area > kMaximumPixels) return rejected;
+    }
+    if (area != (right - left) * (bottom - top)) return rejected;
+    for (int a = 0; a < outputs.size(); ++a) {
+      for (int b = a + 1; b < outputs.size(); ++b) {
+        const CompositorOutputFacts &first = outputs.at(a), &second = outputs.at(b);
+        const bool overlaps = first.logicalX < second.logicalX + second.logicalWidth &&
+                              second.logicalX < first.logicalX + first.logicalWidth &&
+                              first.logicalY < second.logicalY + second.logicalHeight &&
+                              second.logicalY < first.logicalY + first.logicalHeight;
+        if (overlaps) return rejected;
+      }
+    }
+  }
   LayoutDecision proven;
   proven.kind = LayoutDecisionKind::Proven;
-  proven.outputName = output.name;
-  proven.logicalX = output.logicalX;
-  proven.logicalY = output.logicalY;
-  proven.bufferWidth = output.modeWidth;
-  proven.bufferHeight = output.modeHeight;
-  proven.scale = output.scale;
-  proven.transform = output.transform;
+  proven.outputName = chosen->name;
+  proven.logicalX = chosen->logicalX;
+  proven.logicalY = chosen->logicalY;
+  proven.bufferWidth = chosen->modeWidth;
+  proven.bufferHeight = chosen->modeHeight;
+  proven.scale = chosen->scale;
+  proven.transform = chosen->transform;
+  proven.gridTilingProven = true;
   return proven;
+}
+
+LayoutDecision proveSingleOutputLayout(const QVector<CompositorOutputFacts> &outputs) {
+  return proveOutputLayout(outputs);
 }
 
 ProtocolChoice chooseCaptureProtocol(bool includeCursor, bool extImageCopyAvailable, bool wlrScreencopyAvailable) {

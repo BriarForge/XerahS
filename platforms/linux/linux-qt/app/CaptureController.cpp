@@ -228,8 +228,9 @@ void CaptureController::beginCompositorCapture() {
   emit busyChanged(true);
   if (!guard || !m_busy || !m_compositorPending || m_generation != generation) return;
   m_compositorWork = OwnedWork::run<CompositorFrame>(this,
-      [capture = std::move(capture)](const OwnedWork::Context &context) {
+      [capture = std::move(capture), outputName = display.outputName](const OwnedWork::Context &context) {
         CompositorFrameRequest request; request.includeCursor = true;
+        request.outputName = outputName;   // RC-TOPOLOGY-AUTHORITY-2026-11-20: capture the frozen display by name.
         request.cancelled = [context] { return context.cancelled(); };
         try { return capture(request); }
         catch (...) { CompositorFrame failed; failed.diagnostic = kCompositorCaptureFailed; return failed; }

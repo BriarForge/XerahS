@@ -3,6 +3,7 @@
 #include "ext-image-capture-source-v1-server-protocol.h"
 #include "ext-image-copy-capture-v1-server-protocol.h"
 #include "wlr-screencopy-unstable-v1-server-protocol.h"
+#include "xdg-output-unstable-v1-server-protocol.h"
 
 #include <QTest>
 #include <QElapsedTimer>
@@ -25,6 +26,7 @@ using xerahs::app::CompositorOutputFacts;
 using xerahs::app::LayoutDecisionKind;
 using xerahs::app::ProtocolChoice;
 using xerahs::app::chooseCaptureProtocol;
+using xerahs::app::proveOutputLayout;
 using xerahs::app::kCompositorCaptureFailed;
 using xerahs::app::kCompositorCaptureTimedOut;
 using xerahs::app::kCompositorCaptureUnsupported;
@@ -63,6 +65,15 @@ struct Scene {
   int bufferH = 4;
   bool advertiseExt = true;
   bool advertiseWlr = false;
+  bool advertiseXdg = true;     // RC-TOPOLOGY-AUTHORITY: zxdg_output_v1 logical arrangement.
+  bool sendXdgLogical = true;   // the logical position/size events themselves
+  bool gapOutputs = false;      // a gapped (non-tiling) multi-output arrangement
+  bool overlapOutputs = false;  // overlapping logical rectangles
+  bool staggerOutputs = false; // a vertical offset that breaks the tiling
+  int xdgLogicalX = -40;
+  int xdgLogicalY = 12;
+  int xdgLogicalW = 3;          // mode 6x4 at scale 2 is logical 3x2.
+  int xdgLogicalH = 2;
   bool xrgb = false;
   bool yBands = false;
   bool failFrame = false;
@@ -85,6 +96,7 @@ struct Scene {
   int wlrDamageCopies = 0;
   int lastOverlay = -1;
   int boundOutputs = 0;
+  std::vector<wl_resource *> outputResources;   // wl_output resources, bound order
 };
 
 void storePixel(uint8_t *pixel, uint32_t word) {
@@ -162,6 +174,7 @@ void bindOutput(wl_client *client, void *data, uint32_t version, uint32_t id) {
   wl_resource *resource = wl_resource_create(client, &wl_output_interface, int(version), id);
   static const struct wl_output_interface implementation{[](wl_client *, wl_resource *) {}};
   wl_resource_set_implementation(resource, &implementation, scene, nullptr);
+  scene->outputResources.push_back(resource);
   if (scene->sendGeometry) {
     wl_output_send_geometry(resource, scene->logicalX + index * 100, scene->logicalY, 300, 200, WL_OUTPUT_SUBPIXEL_UNKNOWN, "Mock", "Output", scene->transform);
   }
@@ -174,6 +187,41 @@ void bindOutput(wl_client *client, void *data, uint32_t version, uint32_t id) {
     wl_output_send_description(resource, "mock output");
   }
   if (version >= 2 && scene->sendDone) wl_output_send_done(resource);
+}
+
+// RC-TOPOLOGY-AUTHORITY-2026-11-20: the server side of zxdg_output_v1. The
+// logical position and size events are the compositor's own arrangement, and
+// the tests choose whether they tile, gap, overlap or never arrive.
+void xdgOutputCreated(wl_client *client, wl_resource *manager, uint32_t id, wl_resource *output) {
+  auto *scene = static_cast<Scene *>(wl_resource_get_user_data(manager));
+  int index = -1;
+  for (size_t i = 0; i < scene->outputResources.size(); ++i)
+    if (scene->outputResources[i] == output) index = int(i);
+  if (index < 0) return;
+  wl_resource *created = wl_resource_create(client, &zxdg_output_v1_interface, wl_resource_get_version(manager), id);
+  static const struct zxdg_output_v1_interface implementation{[](wl_client *, wl_resource *object) { wl_resource_destroy(object); }};
+  wl_resource_set_implementation(created, &implementation, scene, nullptr);
+  if (!scene->sendXdgLogical) return;
+  int x = scene->xdgLogicalX;
+  if (index > 0) {
+    const int width = scene->overlapOutputs ? 0 : scene->xdgLogicalW;
+    const int gap = scene->gapOutputs ? 17 : 0;
+    x += (width + gap) * index;
+  }
+  const int y = scene->xdgLogicalY + (index > 0 && scene->staggerOutputs ? 5 : 0);
+  zxdg_output_v1_send_logical_position(created, x, y);
+  zxdg_output_v1_send_logical_size(created, scene->xdgLogicalW, scene->xdgLogicalH);
+  zxdg_output_v1_send_name(created, "mock");
+  zxdg_output_v1_send_done(created);
+}
+
+void bindXdgManager(wl_client *client, void *data, uint32_t version, uint32_t id) {
+  const uint32_t bound = version > 2u ? 2u : version;
+  wl_resource *resource = wl_resource_create(client, &zxdg_output_manager_v1_interface, int(bound), id);
+  static const struct zxdg_output_manager_v1_interface implementation{
+      [](wl_client *, wl_resource *object) { wl_resource_destroy(object); },
+      xdgOutputCreated};
+  wl_resource_set_implementation(resource, &implementation, data, nullptr);
 }
 
 void sourceDestroy(wl_client *, wl_resource *resource) { wl_resource_destroy(resource); }
@@ -338,6 +386,7 @@ struct RunningServer {
     }
     wl_global_create(display, &wl_shm_interface, 1, &scene, bindShm);
     for (int output = 0; output < scene.outputs; ++output) wl_global_create(display, &wl_output_interface, 4, &scene, bindOutput);
+    if (scene.advertiseXdg) wl_global_create(display, &zxdg_output_manager_v1_interface, 2, &scene, bindXdgManager);
     if (scene.advertiseExt) {
       wl_global_create(display, &ext_output_image_capture_source_manager_v1_interface, 1, &scene, bindSources);
       wl_global_create(display, &ext_image_copy_capture_manager_v1_interface, 1, &scene, bindExt);
@@ -383,12 +432,32 @@ quint32 pixelAt(const QImage &image, int x, int y) {
 CompositorOutputFacts provenOutput() {
   CompositorOutputFacts output;
   output.sawGeometry = output.sawCurrentMode = output.sawScale = output.sawDone = output.sawName = true;
+  output.sawLogicalPosition = output.sawLogicalSize = true;
   output.name = QStringLiteral("OUT-A");
   output.logicalX = -40;
   output.logicalY = 12;
+  output.logicalWidth = 3;
+  output.logicalHeight = 2;
   output.modeWidth = 6;
   output.modeHeight = 4;
   output.scale = 2;
+  output.transform = 0;
+  return output;
+}
+
+// A second tiling output with a different scale, to the right of OUT-A.
+CompositorOutputFacts tilingSecondOutput() {
+  CompositorOutputFacts output;
+  output.sawGeometry = output.sawCurrentMode = output.sawScale = output.sawDone = output.sawName = true;
+  output.sawLogicalPosition = output.sawLogicalSize = true;
+  output.name = QStringLiteral("OUT-B");
+  output.logicalX = -37;   // directly beside OUT-A's logical 3x2
+  output.logicalY = 12;
+  output.logicalWidth = 4;
+  output.logicalHeight = 2;
+  output.modeWidth = 4;
+  output.modeHeight = 2;
+  output.scale = 1;        // logical 4x2 at scale 1 is mode 4x2.
   output.transform = 0;
   return output;
 }
@@ -410,6 +479,11 @@ private slots:
   void extRejectsANonNormalOrMissingFrameTransform();
   void extFailurePublishesNoPixels();
   void twoOutputsNeverOpenASession();
+  void gridTilingRulesDecideTheDecidedAuthority();
+  void singleOutputStillCapturesWithoutXdgOutput();
+  void provenGridTilingEndorsesNamedOutputCapture();
+  void namedOutputRefusalIsASourceMismatch();
+  void gappedOverlapStaggeredAndSilentXdgLayoutsRefuse();
   void wlrPaintsAndFlipsOnlyProvenFlags();
   void wlrAcceptsAdvertisedPaddedRows();
   void extWinsWhenBothProtocolsAreAdvertised();
@@ -594,6 +668,123 @@ void CompositorFrameTest::twoOutputsNeverOpenASession() {
   QCOMPARE(observed.sourceCreates, 0);
   QCOMPARE(observed.extSessions, 0);
   QCOMPARE(observed.wlrCaptures, 0);
+}
+
+void CompositorFrameTest::gridTilingRulesDecideTheDecidedAuthority() {
+  // RC-TOPOLOGY-AUTHORITY-2026-11-20: a strict grid tiling is proven; every
+  // other arrangement is refused rather than guessed. All from first
+  // principles, on hand-built facts.
+  const auto grid = proveOutputLayout({provenOutput(), tilingSecondOutput()}, QStringLiteral("OUT-B"));
+  QCOMPARE(grid.kind, LayoutDecisionKind::Proven);
+  QVERIFY(grid.gridTilingProven);
+  QCOMPARE(grid.outputName, QStringLiteral("OUT-B"));
+  QCOMPARE(grid.logicalX, -37);
+  QCOMPARE(grid.bufferWidth, 4);
+  QCOMPARE(grid.bufferHeight, 2);
+  QCOMPARE(grid.scale, 1);
+
+  // Mixed-scale tiling without a target also proves the whole layout.
+  const auto whole = proveOutputLayout({provenOutput(), tilingSecondOutput()});
+  QVERIFY(whole.kind == LayoutDecisionKind::Unproven);   // no target chosen: refused, not guessed
+
+  // A gap in the middle of the arrangement is unproven.
+  auto gapped = tilingSecondOutput();
+  gapped.logicalX = -30;
+  QCOMPARE(proveOutputLayout({provenOutput(), gapped}, QStringLiteral("OUT-A")).kind,
+           LayoutDecisionKind::Unproven);
+
+  // Overlapping logical rectangles are unproven.
+  auto overlapped = tilingSecondOutput();
+  overlapped.logicalX = -39;
+  QCOMPARE(proveOutputLayout({provenOutput(), overlapped}, QStringLiteral("OUT-A")).kind,
+           LayoutDecisionKind::Unproven);
+
+  // A vertical stagger that leaves an interior gap is unproven.
+  auto staggered = tilingSecondOutput();
+  staggered.logicalY = 17;
+  QCOMPARE(proveOutputLayout({provenOutput(), staggered}, QStringLiteral("OUT-A")).kind,
+           LayoutDecisionKind::Unproven);
+
+  // A logical size that disagrees with the mode at its own scale is unproven
+  // (the mode-verified physical bounds rule).
+  auto inconsistent = tilingSecondOutput();
+  inconsistent.logicalHeight = 5;
+  QCOMPARE(proveOutputLayout({provenOutput(), inconsistent}, QStringLiteral("OUT-A")).kind,
+           LayoutDecisionKind::Unproven);
+
+  // Missing xdg logical facts in a multi-output layout is unproven.
+  auto silent = tilingSecondOutput();
+  silent.sawLogicalPosition = silent.sawLogicalSize = false;
+  QCOMPARE(proveOutputLayout({provenOutput(), silent}, QStringLiteral("OUT-A")).kind,
+           LayoutDecisionKind::Unproven);
+
+  // Rotated or duplicate-identity outputs are unproven.
+  auto rotated = tilingSecondOutput();
+  rotated.transform = 1;
+  QCOMPARE(proveOutputLayout({provenOutput(), rotated}, QStringLiteral("OUT-A")).kind,
+           LayoutDecisionKind::Unproven);
+  auto duplicate = tilingSecondOutput();
+  duplicate.name = QStringLiteral("OUT-A");
+  QCOMPARE(proveOutputLayout({provenOutput(), duplicate}, QStringLiteral("OUT-A")).kind,
+           LayoutDecisionKind::Unproven);
+}
+
+void CompositorFrameTest::singleOutputStillCapturesWithoutXdgOutput() {
+  Scene scene;
+  scene.advertiseXdg = false;
+  CompositorFrameRequest request;
+  request.includeCursor = true;
+  const CompositorFrame frame = captureScene(scene, request);
+  QCOMPARE(frame.status, CompositorFrame::Status::Captured);
+  QCOMPARE(frame.outputName, QStringLiteral("OUT-A"));
+  QVERIFY(frame.gridTilingProven);   // a single output is the trivial tiling
+}
+
+void CompositorFrameTest::provenGridTilingEndorsesNamedOutputCapture() {
+  Scene scene;
+  scene.outputs = 2;
+  CompositorFrameRequest request;
+  request.includeCursor = true;
+  request.outputName = QStringLiteral("OUT-B");
+  const CompositorFrame frame = captureScene(scene, request);
+  QCOMPARE(frame.status, CompositorFrame::Status::Captured);
+  QCOMPARE(frame.outputName, QStringLiteral("OUT-B"));
+  QCOMPARE(frame.logicalX, -37);
+  QCOMPARE(frame.logicalY, 12);
+  QCOMPARE(frame.bufferWidth, 6);
+  QCOMPARE(frame.bufferHeight, 4);
+  QCOMPARE(frame.scale, 2);
+  QVERIFY(frame.gridTilingProven);
+  QCOMPARE(frame.protocol, QStringLiteral("ext-image-copy-capture-v1"));
+  QVERIFY(!frame.image.isNull());
+}
+
+void CompositorFrameTest::namedOutputRefusalIsASourceMismatch() {
+  Scene scene;
+  scene.outputs = 2;
+  CompositorFrameRequest request;
+  request.outputName = QStringLiteral("OUT-Z");
+  const CompositorFrame frame = captureScene(scene, request);
+  QCOMPARE(frame.status, CompositorFrame::Status::SourceMismatch);
+  QCOMPARE(frame.diagnostic, kCompositorSourceMismatch);
+  QVERIFY(frame.image.isNull());
+}
+
+void CompositorFrameTest::gappedOverlapStaggeredAndSilentXdgLayoutsRefuse() {
+  for (int mode = 0; mode < 4; ++mode) {
+    Scene scene;
+    scene.outputs = 2;
+    if (mode == 0) scene.gapOutputs = true;
+    if (mode == 1) scene.overlapOutputs = true;
+    if (mode == 2) scene.staggerOutputs = true;
+    if (mode == 3) scene.sendXdgLogical = false;
+    CompositorFrameRequest request;
+    request.outputName = QStringLiteral("OUT-A");
+    const CompositorFrame frame = captureScene(scene, request);
+    QCOMPARE(frame.status, CompositorFrame::Status::LayoutUnproven);
+    QCOMPARE(frame.diagnostic, kCompositorLayoutUnproven);
+    QVERIFY(frame.image.isNull());
+  }
 }
 
 void CompositorFrameTest::wlrPaintsAndFlipsOnlyProvenFlags() {

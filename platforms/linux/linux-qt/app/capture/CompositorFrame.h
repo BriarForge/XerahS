@@ -20,19 +20,26 @@ inline const QString kCompositorSourceMismatch = QStringLiteral("compositor-sour
 inline const QString kCompositorCaptureTimedOut = QStringLiteral("compositor-capture-timed-out");
 inline const QString kCompositorCaptureFailed = QStringLiteral("capture-source-failed");
 
-// Facts learned from one wl_output. Pixel size is the current mode, not the
-// logical position. logicalX/logicalY are compositor global coordinates and
-// are not a desktop physical origin.
+// Facts learned from one wl_output plus its zxdg_output, when the compositor
+// provides one. Pixel size is the current mode. logicalX/logicalY/logicalWidth/
+// logicalHeight are the compositor's authoritative logical arrangement from
+// zxdg_output_v1 (wl_output geometry x/y alone is not a global logical
+// position); RC-TOPOLOGY-AUTHORITY-2026-11-20 makes that arrangement the
+// verification authority for the packed degraded desktop layout.
 struct CompositorOutputFacts {
   bool sawGeometry = false;
   bool sawCurrentMode = false;
   bool sawScale = false;
   bool sawDone = false;
   bool sawName = false;
+  bool sawLogicalPosition = false;
+  bool sawLogicalSize = false;
   bool conflictingMode = false;
   QString name;
   qint32 logicalX = 0;
   qint32 logicalY = 0;
+  qint32 logicalWidth = 0;
+  qint32 logicalHeight = 0;
   qint32 modeWidth = 0;
   qint32 modeHeight = 0;
   qint32 scale = 0;
@@ -51,12 +58,23 @@ struct LayoutDecision {
   qint32 bufferHeight = 0;
   qint32 scale = 0;
   qint32 transform = 0;
+  // True when the whole current layout is verified: complete facts on every
+  // output, and the xdg logical rectangles tile the plane with no gaps or
+  // overlaps - the only arrangement for which the packed degraded desktop
+  // provably equals the compositor's own logical arrangement.
+  bool gridTilingProven = false;
 };
 
 // One named, done, unrotated output with a positive integer scale and a
-// positive current mode. Zero outputs, extra outputs, rotation, a missing
-// identity, or an incomplete burst are unproven. This does not place that
-// output inside a multi-monitor desktop.
+// positive current mode, or - with a requested output name - one chosen
+// output inside a whole layout whose every output is complete and whose xdg
+// logical rectangles form a strict grid tiling. Zero outputs, a missing
+// name, rotation, a flipped/overlapping/gapped arrangement, or an incomplete
+// burst is unproven or a source mismatch. This endorses the packed degraded
+// arrangement only for provable tilings; it never invents placement.
+LayoutDecision proveOutputLayout(const QVector<CompositorOutputFacts> &outputs,
+                                 const QString &requestedOutputName = QString());
+// The historical single-output subset: exactly one complete output.
 LayoutDecision proveSingleOutputLayout(const QVector<CompositorOutputFacts> &outputs);
 
 struct ProtocolChoice {
@@ -80,6 +98,9 @@ struct CompositorFrameRequest {
   // Region capture's cursor inclusion default. Off until a caller opts in.
   bool includeCursor = false;
   int timeoutMs = 4000;
+  // RC-TOPOLOGY-AUTHORITY-2026-11-20: a named output is captured by its own
+  // compositor identity inside a proven layout. Empty: the only output.
+  QString outputName;
   std::function<bool()> cancelled;
 };
 
@@ -115,6 +136,8 @@ struct CompositorFrame {
   bool separateCursorMetadata = false;
   // Image (0,0) is this output's buffer origin. It is not a virtual-desktop origin.
   bool singleOutputBufferOriginProven = false;
+  // The whole live layout is a proven tiling (see LayoutDecision).
+  bool gridTilingProven = false;
   quint64 presentationSec = 0;
   quint32 presentationNsec = 0;
 };

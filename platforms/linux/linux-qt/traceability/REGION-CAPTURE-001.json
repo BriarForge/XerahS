@@ -142,7 +142,7 @@
       "vectors": [
         "topology-change-cancels"
       ],
-      "note": "Session freezes IDs, per-screen DPR/rotation and topology changes, but native color primaries/transfer/HDR are explicitly unavailable and packed Qt positions are not an authoritative physical desktop topology.",
+      "note": "Session freezes IDs, per-screen DPR/rotation and topology changes, and RC-TOPOLOGY-AUTHORITY-2026-11-20 settles the pre-acquisition authority: QScreen logical geometry (itself zxdg_output-derived on Wayland) is the selection space, per-display physical bounds are each display's own logical extent times its own scale (mode-verified against live wl_output facts), and the packed desktop arrangement is a documented degraded disposition endorsed only when the compositor's own zxdg_output logical rectangles prove a strict grid tiling (complete facts, unrotated/unflipped, mode-consistent, no gaps/overlaps); anything else fails closed with compositor-layout-unproven. Native colour primaries/transfer/HDR remain explicitly unavailable, and live desktop qualification on real mixed-scale/rotated hardware is the remaining physical gate.",
       "disposition": "Required",
       "audit": {
         "classification": "partial",
@@ -154,57 +154,50 @@
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
-            "sha256": "0681833deed0dd03c52f2efc096a355673c52d12d7ae12676c2b076f95cbee6e"
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.h",
+            "sha256": "8a7f7fe6e52d6ebf586bd4cec51ed6bee1d4bf1fef77227631e2b74247bb1131"
           },
           {
-            "path": "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
-            "sha256": "9c14d6b9240a08649f5e92ef9359f27b16517815655b3f7e8ce0d2cff57239ef"
-          },
-          {
-            "path": "platforms/linux/linux-qt/src/capture/ScreenTopology.cpp",
-            "sha256": "e6dd482ed273a320e949490321dd1aa4413f99a367952a63820ba55e173f3420"
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+            "sha256": "f9ddf44e96ea77e05c78b2b7cb9d7683d98e65f0812275b0a4635c487f6ca827"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
-            "sha256": "fa5f318d2ad67bc6cf9423512d81cc4d2b5659acd95ba38a097a15f3625db022"
+            "sha256": "ffee50c3bea3e5535679a8dca063913d7d31dfa82bd10f56ad85309c94f47e82"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "e66126e6d807b5bbc4c4c87bc3593cbc49fa88b3726217129ba019485440c1a6",
-            "method": "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
-            "line": 430
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+            "sha256": "1263b566b0e514f95a0f3141b6a5ee63cb554710e8b164f3adad04abf12b054b"
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "evidence": [
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
+        "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+        "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
-        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "product-contract/decisions/RC-topology-authority.md"
       ],
-      "previous_note": "Audit 2026-11-04: RegionCaptureTest::toolkitTopologyPacksEachDisplayAtItsOwnScaleAndSurvivesReordering and toolkitTopologyRejectsInvalidScaleExtentsAndDuplicateIdentity prove pre-acquisition mapping/stable identity. RegionCaptureNativeTest::qtSnapshotUsesStableIdentityAndPerScreenMetadata and topologyChangeCancelsWithoutPublishing (add/remove/geometry/scale/rotation/identity) prove native metadata and cancellation. Native signals plus a Qt 6.4-compatible DPR poll and delivery/confirmation/publication checks prevent stale topology use. Screen depth and explicitly unavailable primaries/transfer/HDR are recorded; full per-monitor color characteristics remain unresolved, so this row stays partial. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome."
+      "previous_note": "Session freezes IDs, per-screen DPR/rotation and topology changes, but native color primaries/transfer/HDR are explicitly unavailable and packed Qt positions are not an authoritative physical desktop topology."
     },
     "RC-004": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "negative-origin-monitor",
         "mixed-scale-cross-monitor",
         "fractional-scale-floors",
         "negative-origin-scaled"
       ],
-      "note": "Core per-monitor mapping/vector arithmetic exists, but ScreenTopology packs rows/columns by logical origins; no accepted authority proves that packed physical arrangement equals compositor screenshot layout.",
+      "note": "The per-monitor logical-to-physical mapping is decided and implemented (candidate) per RC-TOPOLOGY-AUTHORITY-2026-11-20: QScreen logical space (zxdg_output-derived) is the selection authority, each display's physical bounds are its own logical extent scaled by its own scale, and the packed global arrangement is a documented degraded disposition endorsed only when the compositor's own facts prove a strict grid tiling - complete wl_output facts plus zxdg_output logical positions/sizes, unrotated, mode-consistent, with the exact integer tiling check (no pairwise overlap, areas sum to the bounding box). Gapped, overlapping, staggered, rotated, flipped or silent-xdg arrangements fail closed with compositor-layout-unproven instead of being mapped. Core mapping/vector arithmetic and the new proveOutputLayout rules are tested (the tiling and mode-consistency rules each proven red by disabling them); live compositor qualification remains separate.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 40,
         "published_vectors": [
           "negative-origin-monitor",
@@ -216,44 +209,37 @@
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
-            "sha256": "0681833deed0dd03c52f2efc096a355673c52d12d7ae12676c2b076f95cbee6e"
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.h",
+            "sha256": "8a7f7fe6e52d6ebf586bd4cec51ed6bee1d4bf1fef77227631e2b74247bb1131"
           },
           {
-            "path": "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
-            "sha256": "9c14d6b9240a08649f5e92ef9359f27b16517815655b3f7e8ce0d2cff57239ef"
-          },
-          {
-            "path": "platforms/linux/linux-qt/src/capture/ScreenTopology.cpp",
-            "sha256": "e6dd482ed273a320e949490321dd1aa4413f99a367952a63820ba55e173f3420"
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+            "sha256": "f9ddf44e96ea77e05c78b2b7cb9d7683d98e65f0812275b0a4635c487f6ca827"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
-            "sha256": "fa5f318d2ad67bc6cf9423512d81cc4d2b5659acd95ba38a097a15f3625db022"
+            "sha256": "ffee50c3bea3e5535679a8dca063913d7d31dfa82bd10f56ad85309c94f47e82"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "e66126e6d807b5bbc4c4c87bc3593cbc49fa88b3726217129ba019485440c1a6",
-            "method": "successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage",
-            "line": 1394
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+            "sha256": "1263b566b0e514f95a0f3141b6a5ee63cb554710e8b164f3adad04abf12b054b"
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "evidence": [
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
+        "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+        "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
-        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "product-contract/decisions/RC-topology-authority.md"
       ],
-      "previous_note": "Audit 2026-11-04: all published mapping vectors pass shared conformance. RegionCaptureTest::toolkitTopologyPacksEachDisplayAtItsOwnScaleAndSurvivesReordering proves per-display extents, normalized negative logical origins, fractional floors and order-independent identities. RegionCaptureNativeTest::mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel sends native pointer press/release through distinct fake 1x/2x reporting-display overlays and checks the physical rectangle and every saved output pixel; no bitmap-derived global scale remains. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome."
+      "previous_note": "Core per-monitor mapping/vector arithmetic exists, but ScreenTopology packs rows/columns by logical origins; no accepted authority proves that packed physical arrangement equals compositor screenshot layout."
     },
     "RC-005": {
       "status": "implemented",
@@ -656,7 +642,7 @@
         "mixed-scale-cross-monitor",
         "uncovered-area-is-transparent"
       ],
-      "note": "Confirmed output dimensions and Core composite order are tested, but native packed-topology mapping is not proven for arbitrary staggered/mixed-scale compositor layouts.",
+      "note": "Confirmed output dimensions and Core composite order are tested, and RC-TOPOLOGY-AUTHORITY-2026-11-20 now endorses the packed arrangement for proven grid tilings (the named per-output compositor frame is captured by compositor identity inside such layouts, with mode-verified bounds). Remaining for this row: the cross-monitor composite from per-output frames on proven grids - the controller still requires one display for the compositor-native path, so arbitrary staggered layouts stay refused with compositor-layout-unproven rather than composited, and live desktop qualification is the physical gate.",
       "disposition": "Required",
       "audit": {
         "classification": "partial",
@@ -669,44 +655,37 @@
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
-            "sha256": "0681833deed0dd03c52f2efc096a355673c52d12d7ae12676c2b076f95cbee6e"
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.h",
+            "sha256": "8a7f7fe6e52d6ebf586bd4cec51ed6bee1d4bf1fef77227631e2b74247bb1131"
           },
           {
-            "path": "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
-            "sha256": "9c14d6b9240a08649f5e92ef9359f27b16517815655b3f7e8ce0d2cff57239ef"
-          },
-          {
-            "path": "platforms/linux/linux-qt/src/capture/ScreenTopology.cpp",
-            "sha256": "e6dd482ed273a320e949490321dd1aa4413f99a367952a63820ba55e173f3420"
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+            "sha256": "f9ddf44e96ea77e05c78b2b7cb9d7683d98e65f0812275b0a4635c487f6ca827"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
-            "sha256": "fa5f318d2ad67bc6cf9423512d81cc4d2b5659acd95ba38a097a15f3625db022"
+            "sha256": "ffee50c3bea3e5535679a8dca063913d7d31dfa82bd10f56ad85309c94f47e82"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "e66126e6d807b5bbc4c4c87bc3593cbc49fa88b3726217129ba019485440c1a6",
-            "method": "successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage",
-            "line": 1394
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+            "sha256": "1263b566b0e514f95a0f3141b6a5ee63cb554710e8b164f3adad04abf12b054b"
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "evidence": [
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
+        "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+        "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
-        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "product-contract/decisions/RC-topology-authority.md"
       ],
-      "previous_note": "Audit 2026-11-04: RegionCaptureNativeTest::mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel drives production topology builder, per-display pointer mapping, controller, worker compositor and actual PNG save for 1920x1080@1 beside 2560x1440@2. Its 520x900 rectangle is compared pixel-for-pixel with independently labelled source pixels across the boundary. SnapshotCompositionTest::nativePixelsPreservePlacementGapsColourMetadataAndOwnership and negativeDesktopOriginUsesNormalizedBitmapOffsetsWithoutResampling prove exact source placement, transparent gaps, ownership and negative source offsets. All shared composition/mapping vectors pass. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome."
+      "previous_note": "Confirmed output dimensions and Core composite order are tested, but native packed-topology mapping is not proven for arbitrary staggered/mixed-scale compositor layouts."
     },
     "RC-013": {
       "status": "partial",
@@ -1224,7 +1203,7 @@
       ]
     },
     "RC-022": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "reverse-drag",
         "negative-origin-monitor",
@@ -1233,10 +1212,10 @@
         "fractional-logical-edge-reaches-physical-edge",
         "negative-origin-scaled"
       ],
-      "note": "Core IEEE754 floor-epsilon mapping is tested, but production QScreen-derived physical origins are packed rather than obtained from approved compositor physical bounds.",
+      "note": "The IEEE 754 double mapping is decided and implemented (candidate): D.physical.left + (x - D.logical.left) * D.scale with each display's own bounds - QScreen logical geometry (zxdg_output-derived) as the selection space and per-display physical bounds mode-verified against live wl_output facts. RC-TOPOLOGY-AUTHORITY-2026-11-20 endorses the packed physical origins only for proven grid tilings (exact integer tiling check on the compositor's own logical rectangles); any other arrangement fails closed with compositor-layout-unproven. Core floor-epsilon mapping is vector-tested and the new layout rules are tested against a fake libwayland server; live compositor qualification remains separate.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 96,
         "published_vectors": [
           "reverse-drag",
@@ -1250,44 +1229,37 @@
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
-            "sha256": "0681833deed0dd03c52f2efc096a355673c52d12d7ae12676c2b076f95cbee6e"
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.h",
+            "sha256": "8a7f7fe6e52d6ebf586bd4cec51ed6bee1d4bf1fef77227631e2b74247bb1131"
           },
           {
-            "path": "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
-            "sha256": "9c14d6b9240a08649f5e92ef9359f27b16517815655b3f7e8ce0d2cff57239ef"
-          },
-          {
-            "path": "platforms/linux/linux-qt/src/capture/ScreenTopology.cpp",
-            "sha256": "e6dd482ed273a320e949490321dd1aa4413f99a367952a63820ba55e173f3420"
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+            "sha256": "f9ddf44e96ea77e05c78b2b7cb9d7683d98e65f0812275b0a4635c487f6ca827"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
-            "sha256": "fa5f318d2ad67bc6cf9423512d81cc4d2b5659acd95ba38a097a15f3625db022"
+            "sha256": "ffee50c3bea3e5535679a8dca063913d7d31dfa82bd10f56ad85309c94f47e82"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "e66126e6d807b5bbc4c4c87bc3593cbc49fa88b3726217129ba019485440c1a6",
-            "method": "successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage",
-            "line": 1394
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+            "sha256": "1263b566b0e514f95a0f3141b6a5ee63cb554710e8b164f3adad04abf12b054b"
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "evidence": [
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
+        "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+        "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
-        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "product-contract/decisions/RC-topology-authority.md"
       ],
-      "previous_note": "Audit 2026-11-04: all six published binary64/floor mapping vectors pass conformance. RegionCaptureTest::toolkitTopologyPacksEachDisplayAtItsOwnScaleAndSurvivesReordering independently checks per-monitor DPR and fractional floor results. RegionCaptureNativeTest::mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel dispatches pointer input to the two native reporting-display overlays, verifies exclusive normalized endpoints and checks every saved source pixel. nativeHandlesClampAtEveryCornerWithEachDisplaysScale covers actual overlay mapping at both DPRs. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome."
+      "previous_note": "Core IEEE754 floor-epsilon mapping is tested, but production QScreen-derived physical origins are packed rather than obtained from approved compositor physical bounds."
     },
     "RC-023": {
       "status": "implemented",
@@ -1537,9 +1509,9 @@
         "last-region-invalid-after-topology-change"
       ],
       "disposition": "Required",
-      "note": "Product decision required: approve authoritative pre-acquisition physical topology source. Native code now validates against packed QScreen bounds, but that does not settle the recorded mapping-authority question.",
+      "note": "The recorded mapping-authority question is resolved by RC-TOPOLOGY-AUTHORITY-2026-11-20: the persisted last region records format version 1, the normalized physical rectangle, and the stable ID and physical bounds of every intersected display, where those bounds are the decided per-display own-scale extents and the packed arrangement they live in is the documented degraded disposition endorsed only for proven grid tilings. Native validation against the frozen bounds exists (last-region-invalid on a missing or changed display), and the same layout standard now governs recapture: a last region on an unproven multi-output arrangement fails closed with compositor-layout-unproven rather than recapturing misaligned pixels. Remaining: live desktop qualification on real mixed-scale/rotated hardware.",
       "audit": {
-        "classification": "blocked",
+        "classification": "partial",
         "spec_line": 126,
         "published_vectors": [
           "last-region-invalid-after-topology-change"
@@ -1548,47 +1520,39 @@
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
-            "sha256": "0681833deed0dd03c52f2efc096a355673c52d12d7ae12676c2b076f95cbee6e"
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.h",
+            "sha256": "8a7f7fe6e52d6ebf586bd4cec51ed6bee1d4bf1fef77227631e2b74247bb1131"
           },
           {
-            "path": "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
-            "sha256": "9c14d6b9240a08649f5e92ef9359f27b16517815655b3f7e8ce0d2cff57239ef"
-          },
-          {
-            "path": "platforms/linux/linux-qt/src/capture/ScreenTopology.cpp",
-            "sha256": "e6dd482ed273a320e949490321dd1aa4413f99a367952a63820ba55e173f3420"
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+            "sha256": "f9ddf44e96ea77e05c78b2b7cb9d7683d98e65f0812275b0a4635c487f6ca827"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "b10b2a583e3ee30fcf9e521e158807ec6813e33406c4834ae1465c5b0ce050c3"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
-            "sha256": "fa5f318d2ad67bc6cf9423512d81cc4d2b5659acd95ba38a097a15f3625db022"
+            "sha256": "ffee50c3bea3e5535679a8dca063913d7d31dfa82bd10f56ad85309c94f47e82"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-            "sha256": "e66126e6d807b5bbc4c4c87bc3593cbc49fa88b3726217129ba019485440c1a6",
-            "method": "lastRegionWriterRunsOnlyAfterSuccessfulPixelsAndBeforeActions",
-            "line": 316
+            "path": "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+            "sha256": "1263b566b0e514f95a0f3141b6a5ee63cb554710e8b164f3adad04abf12b054b"
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "evidence": [
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
+        "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
+        "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
         "platforms/linux/linux-qt/tests/LastRegionStoreTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
-        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "product-contract/decisions/RC-topology-authority.md"
       ],
-      "previous_note": "Audit 2026-11-04: RegionCaptureNativeTest::lastRegionValidatesBeforeAcquisitionAndUsesTheStoredRectangle persists/reloads a real version-1 two-display record, rejects missing display/changed physical bounds/no record with last-region-invalid and zero screenshot-factory calls, and proves valid recapture saves the exact stored rectangle without overlays. topologyFailuresRemainStableInDurableWorkflowResults proves the actual admitted last-region workflow preserves that stable failure code. The shared last-region-invalid-after-topology-change vector and LastRegionStoreTest verify representation/validation; Capture last region is available in the native shell and saved workflow source choices. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome. ShellCommandsTest::lastRegionCommandIsSharedAndRefusesStaleGeometryBeforeAcquisition proves the actual shared window/tray command, modal/busy guards and stale refusal through durable admission.",
-      "blocked_reason": "Product decision required: approve authoritative pre-acquisition physical topology source. Native code now validates against packed QScreen bounds, but that does not settle the recorded mapping-authority question."
+      "previous_note": "Product decision required: approve authoritative pre-acquisition physical topology source. Native code now validates against packed QScreen bounds, but that does not settle the recorded mapping-authority question."
     }
   },
   "evidence": [

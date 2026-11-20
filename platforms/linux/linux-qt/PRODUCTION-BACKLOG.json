@@ -15,11 +15,11 @@
   "capability_count": 16,
   "desktop_capability_count": 15,
   "counts": {
-    "blocked": 23,
-    "implemented": 186,
+    "blocked": 22,
+    "implemented": 188,
     "not-applicable": 1,
     "not-started": 5,
-    "partial": 110
+    "partial": 109
   },
   "capabilities": [
     {
@@ -42,10 +42,10 @@
       "capability": "REGION-CAPTURE-001",
       "requirements": 27,
       "counts": {
-        "blocked": 1,
-        "implemented": 19,
+        "blocked": 0,
+        "implemented": 21,
         "not-started": 1,
-        "partial": 6
+        "partial": 5
       },
       "trace": "traceability/REGION-CAPTURE-001.json"
     },
@@ -380,6 +380,24 @@
       "from": "not-started",
       "to": "implemented",
       "reason": "Inference, preview and save are built on the approved optional runtime, off the GUI thread through OwnedWork. The composed output preserves source dimensions and colour exactly (only the alpha byte changes, asserted per pixel) with defined alpha everywhere (min-max with floor scaling, a defined constant-mask case, non-finite refused), cancellation is cooperative (GUI cancel terminates the live Run; closing the busy window cancels per EU-017), and the model/device/memory/inference/output failures are typed and surfaced (model-engine-open-failed - the runtime refuses bytes the header parser accepted, model-device-unavailable, model-memory, model-inference-failed, model-output-invalid, plus model-contract-mismatch/model-missing/image-unusable). Save is atomic (QSaveFile) and the source file is retained byte-identical through every path. The real 4.6 MB artifact ran once out-of-band through the production engine; automated tests use hand-encoded executable fixtures, so no network and no committed model. Implemented candidate; live desktop qualification and visual quality acceptance are separate physical/human gates."
+    },
+    {
+      "requirement": "RC-004",
+      "from": "partial",
+      "to": "implemented",
+      "reason": "Decided 2026-11-20 (RC-TOPOLOGY-AUTHORITY-2026-11-20, resolved by the build loop under the maintainer's delegated owner-block authority; no contract text changed): the per-monitor logical-to-physical mapping is implemented with a decided authority - QScreen logical geometry (zxdg_output-derived on Wayland) is the selection space, each display's physical bounds are its own logical extent times its own scale (mode-verified against live wl_output facts), and the packed global arrangement is a documented degraded disposition endorsed only when the compositor's own zxdg_output logical rectangles prove a strict grid tiling (complete facts, unrotated/unflipped, mode-consistent, exact integer tiling check). Gapped, overlapping, staggered, rotated, flipped or silent-xdg arrangements fail closed with compositor-layout-unproven. Sources: grim's logical-space composition and its documented grid-assumption caveat, and KDE Spectacle's compositor-composite crop design. The tiling and mode-consistency rules were each proven red by disabling them; live compositor qualification remains separate."
+    },
+    {
+      "requirement": "RC-022",
+      "from": "partial",
+      "to": "implemented",
+      "reason": "The RC-022 mapping is decided with the same authority: D.physical.left + (x - D.logical.left) * D.scale in IEEE 754 double, with each display's own mode-verified bounds and the packed origins endorsed only for proven grid tilings (RC-TOPOLOGY-AUTHORITY-2026-11-20). Core floor-epsilon mapping is vector-tested and the new layout rules are tested end-to-end against a fake libwayland server driving the real client binding; unprovable arrangements fail closed. Live compositor qualification remains separate."
+    },
+    {
+      "requirement": "RC-027",
+      "from": "blocked",
+      "to": "partial",
+      "reason": "The recorded mapping-authority blocker is resolved by RC-TOPOLOGY-AUTHORITY-2026-11-20: the persisted last region's display bounds are the decided per-display own-scale extents, the packed arrangement they live in is endorsed only for proven grid tilings, and recapture on an unproven arrangement fails closed with compositor-layout-unproven rather than capturing misaligned pixels. Native validation (last-region-invalid on missing/changed displays) exists and is decided rather than candidate; live desktop qualification on real mixed-scale/rotated hardware is the remaining physical gate."
     }
   ],
   "review_limitations": [
@@ -1147,6 +1165,17 @@
         "EU-011"
       ],
       "outcome": "Built 2026-11-20 (the inference half of backlog item 2 on decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20): the approved onnxruntime-cpu 1.29.0 (MIT, optional at build time exactly like libgcrypt, pkg-config libonnxruntime) is linked and the Background Remover now removes backgrounds. The engine opens the model (cache per path+device), cross-checks the session's tensor contract against the catalogue at open (the runtime is the second gate after the bounded header parse), runs the input through the live session with a registered RunOptions so a GUI cancel terminates mid-flight, and validates the output's type and shape before composing. The core pipeline encodes the decided preprocessing (RGB, smooth 320x320, x/255 then ImageNet mean/std - the original U-2-Net domain, not rembg's per-image /max) and composes the decided alpha (min-max, floor, smooth resize to source dimensions, only the alpha byte changes; a constant mask is defined, non-finite refused). The window offers Auto/CPU/GPU from the linked runtime's providers (CPU-only builds answer an explicit GPU request with model-device-unavailable), revalidates the store model's pinned integrity before every run, shows a live preview, saves atomically with the source retained byte-identical, and reports every failure with its stable kebab-case id. Tests: onnx-mask-engine 8/8 against real CPU inference (hand-encoded executable ReduceMean fixture; the nodeless header fixture is refused by the runtime), background-models 15/15, background-remover-dialog 19/19, full suite 186/186; the alpha policy, the session contract gate and the per-run provenance revalidation were each proven red by disabling the rule and watching the matching tests fail; one real memory-safety bug (an out-of-bounds scanline read in the tensor encoder) was caught by exactly the real-runtime engine test before it could land. The real 4.6 MB u2netp artifact ran once out-of-band through the production engine (CPU provider, source dimensions preserved, alpha defined everywhere). Remaining: live desktop qualification with the real artifact on real photos and visual quality acceptance."
+    },
+    {
+      "requirements": [
+        "RC-003",
+        "RC-004",
+        "RC-012",
+        "RC-022",
+        "RC-027",
+        "CORE-014"
+      ],
+      "outcome": "Decided and built 2026-11-20 (decision RC-TOPOLOGY-AUTHORITY-2026-11-20, the recorded topology-authority owner block): QScreen logical geometry (itself zxdg_output-derived on Wayland) is the selection space - there is no separate portal logical authority to choose; per-display physical bounds are each display's own logical extent times its own scale, mode-verified against live wl_output facts; no Wayland protocol exposes a compositor's global physical pixel arrangement (grim composes per-output buffers in logical space, Spectacle crops the compositor's own composite), so the packed desktop arrangement is a documented degraded disposition endorsed only when the compositor's own facts prove a strict grid tiling - complete facts, unrotated/unflipped, logical size x own scale == mode, and the exact integer tiling check (no pairwise interior overlap, areas sum to the bounding box). Anything else (gapped, overlapping, staggered, rotated, flipped, silent-xdg) fails closed with the existing compositor-layout-unproven; a requested output that vanished by name is compositor-source-mismatch. Built: CompositorFrame binds zxdg_output_v1 (vendored protocol XML through wayland-scanner like the existing vendored protocols) to collect the authoritative logical position/size per output; proveOutputLayout(outputs, requestedName) implements the decided rules; CompositorFrameRequest.outputName captures a named output inside a proven grid (mixed scales included); the controller's cursor path requests the frozen display by compositor name. Tests 26/26 driving the real client binding against a fake libwayland server, including an end-to-end two-output named capture, an xdg-less single-output back-compat capture, a named-output source mismatch, and the four refused arrangements; the tiling check and the mode-consistency check were each proven red by disabling them and watching the tests fail. Remaining for the item: RC-012's cross-monitor composite from per-output frames on proven grids (the controller still requires one display for the compositor-native path), RC-003's colour/HDR characteristics (explicitly unavailable), CORE-014 cursor/delay polish, and live desktop qualification on real Sway/mixed-scale/rotated hardware."
     }
   ],
   "audit_method": "All 16 capabilities /345 IDs revalidated against current source and tests; unchanged bodies compared to the previous complete review, changed paths and approved contracts inspected. Existing suite passes but direct current-production HTTP probe exposes the P1 2xx/truncated-body accounting gap. No release or security acceptance inferred.",
@@ -3927,10 +3956,10 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 188,
+    "implemented": 190,
     "not-applicable": 1,
     "not-started": 15,
-    "partial": 120
+    "partial": 118
   },
   "full_audit_counts": {
     "blocked": 32,
