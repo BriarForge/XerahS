@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 22,
-    "implemented": 188,
+    "implemented": 189,
     "not-applicable": 1,
     "not-started": 5,
-    "partial": 109
+    "partial": 108
   },
   "capabilities": [
     {
@@ -43,9 +43,9 @@
       "requirements": 27,
       "counts": {
         "blocked": 0,
-        "implemented": 21,
+        "implemented": 22,
         "not-started": 1,
-        "partial": 5
+        "partial": 4
       },
       "trace": "traceability/REGION-CAPTURE-001.json"
     },
@@ -398,6 +398,12 @@
       "from": "blocked",
       "to": "partial",
       "reason": "The recorded mapping-authority blocker is resolved by RC-TOPOLOGY-AUTHORITY-2026-11-20: the persisted last region's display bounds are the decided per-display own-scale extents, the packed arrangement they live in is endorsed only for proven grid tilings, and recapture on an unproven arrangement fails closed with compositor-layout-unproven rather than capturing misaligned pixels. Native validation (last-region-invalid on missing/changed displays) exists and is decided rather than candidate; live desktop qualification on real mixed-scale/rotated hardware is the remaining physical gate."
+    },
+    {
+      "requirement": "RC-012",
+      "from": "partial",
+      "to": "implemented",
+      "reason": "The remaining build half of RC-TOPOLOGY-AUTHORITY-2026-11-20 is landed: the compositor-native cursor path composes one desktop from per-output frames on proven grids. Every display is captured by its frozen compositor name (each connection re-proves the whole live layout, so an unprovable grid fails closed inside the capture itself), the compose seam (composeCapturedFrames) cross-checks every frame against the frozen session - compositor name, logical position, scale, mode-verified buffer bounds, provenance - before placing it at the packed origin, and any disagreement refuses whole with compositor-source-mismatch. A cross-monitor confirmed rectangle crops both displays' pixels at the exact packed boundary, proven by the integration test; an unnamed display refuses a priori. The placement and the frame cross-check were each proven red by disabling them. Live desktop qualification on real Sway/mixed-scale/rotated hardware remains the physical gate."
     }
   ],
   "review_limitations": [
@@ -1176,6 +1182,13 @@
         "CORE-014"
       ],
       "outcome": "Decided and built 2026-11-20 (decision RC-TOPOLOGY-AUTHORITY-2026-11-20, the recorded topology-authority owner block): QScreen logical geometry (itself zxdg_output-derived on Wayland) is the selection space - there is no separate portal logical authority to choose; per-display physical bounds are each display's own logical extent times its own scale, mode-verified against live wl_output facts; no Wayland protocol exposes a compositor's global physical pixel arrangement (grim composes per-output buffers in logical space, Spectacle crops the compositor's own composite), so the packed desktop arrangement is a documented degraded disposition endorsed only when the compositor's own facts prove a strict grid tiling - complete facts, unrotated/unflipped, logical size x own scale == mode, and the exact integer tiling check (no pairwise interior overlap, areas sum to the bounding box). Anything else (gapped, overlapping, staggered, rotated, flipped, silent-xdg) fails closed with the existing compositor-layout-unproven; a requested output that vanished by name is compositor-source-mismatch. Built: CompositorFrame binds zxdg_output_v1 (vendored protocol XML through wayland-scanner like the existing vendored protocols) to collect the authoritative logical position/size per output; proveOutputLayout(outputs, requestedName) implements the decided rules; CompositorFrameRequest.outputName captures a named output inside a proven grid (mixed scales included); the controller's cursor path requests the frozen display by compositor name. Tests 26/26 driving the real client binding against a fake libwayland server, including an end-to-end two-output named capture, an xdg-less single-output back-compat capture, a named-output source mismatch, and the four refused arrangements; the tiling check and the mode-consistency check were each proven red by disabling them and watching the tests fail. Remaining for the item: RC-012's cross-monitor composite from per-output frames on proven grids (the controller still requires one display for the compositor-native path), RC-003's colour/HDR characteristics (explicitly unavailable), CORE-014 cursor/delay polish, and live desktop qualification on real Sway/mixed-scale/rotated hardware."
+    },
+    {
+      "requirements": [
+        "RC-012",
+        "CORE-014"
+      ],
+      "outcome": "Built 2026-11-20 (the composite half of the topology item on decision RC-TOPOLOGY-AUTHORITY-2026-11-20): multi-display compositor captures now compose one desktop. The controller's cursor path requests every frozen display by its compositor name on its own connection (each capture re-proves the whole live layout, keeping unprovable grids refused), and composeCapturedFrames in app/ScreenTopology cross-checks every frame against the frozen session display it names - compositor name, logical position, own scale, mode-verified buffer bounds and provenance - before painting it at the session's packed origin, sized to the bounding box, refusing whole with compositor-source-mismatch on any disagreement or a missing/extra/duplicate/unnamed frame. The session's topology check now requires exactly the frozen compositor names for the compositor path (any size), preserving the single-display chain unchanged. Tests: the compose rules pinned purely (placement at the packed origins, boundary at composite x=100, and eight refusal modes), the controller journey composing a mixed-scale grid with a cross-monitor drag whose crop carries OUT-1's pixels left of the exact boundary and OUT-2's right of it, one overlay per display per RC-005, the requested names asserted in order, and a frame-scale mismatch refusing the whole capture with no files or overlays. The placement and the frame cross-check were each proven red by disabling them and watching the matching tests fail. Full suite 186/186. Remaining of the item: CORE-014 cursor/delay polish on the monitor/window flows, and live desktop qualification on real Sway/mixed-scale/rotated hardware (a physical gate)."
     }
   ],
   "audit_method": "All 16 capabilities /345 IDs revalidated against current source and tests; unchanged bodies compared to the previous complete review, changed paths and approved contracts inspected. Existing suite passes but direct current-production HTTP probe exposes the P1 2xx/truncated-body accounting gap. No release or security acceptance inferred.",
@@ -3956,10 +3969,10 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 190,
+    "implemented": 191,
     "not-applicable": 1,
     "not-started": 15,
-    "partial": 118
+    "partial": 117
   },
   "full_audit_counts": {
     "blocked": 32,

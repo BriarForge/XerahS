@@ -1,5 +1,6 @@
 #include "CaptureController.h"
 #include "OwnedWork.h"
+#include "ScreenTopology.h"
 #include "capture/CompositorErrors.h"
 
 #include "CaptureActions.h"
@@ -216,42 +217,139 @@ void CaptureController::beginCapture(QStringList selected) {
 }
 
 void CaptureController::beginCompositorCapture() {
-  if (m_displays.size() != 1 || m_displays.front().outputName.isEmpty()) {
+  if (m_displays.empty()) {
     onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, compositorCaptureFailureMessage(kCompositorLayoutUnproven)); return;
   }
-  const auto display = m_displays.front();
+  if (m_displays.size() == 1 && m_displays.front().outputName.isEmpty()) {
+    onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, compositorCaptureFailureMessage(kCompositorLayoutUnproven)); return;
+  }
   const auto generation = m_generation;
   auto capture = m_compositorCapture;
   if (!capture) capture = &CompositorFrameCapture::capture;
   m_compositorPending = true;
   const QPointer<CaptureController> guard(this);
   emit busyChanged(true);
+  // Availability listeners may synchronously cancel before acquisition starts.
   if (!guard || !m_busy || !m_compositorPending || m_generation != generation) return;
-  m_compositorWork = OwnedWork::run<CompositorFrame>(this,
-      [capture = std::move(capture), outputName = display.outputName](const OwnedWork::Context &context) {
-        CompositorFrameRequest request; request.includeCursor = true;
-        request.outputName = outputName;   // RC-TOPOLOGY-AUTHORITY-2026-11-20: capture the frozen display by name.
-        request.cancelled = [context] { return context.cancelled(); };
-        try { return capture(request); }
-        catch (...) { CompositorFrame failed; failed.diagnostic = kCompositorCaptureFailed; return failed; }
-      }, [this, generation, display](CompositorFrame frame) {
+  if (m_displays.size() == 1) {
+    const auto display = m_displays.front();
+    m_compositorWork = OwnedWork::run<CompositorFrame>(this,
+        [capture = std::move(capture), outputName = display.outputName](const OwnedWork::Context &context) {
+          CompositorFrameRequest request; request.includeCursor = true;
+          request.outputName = outputName;   // RC-TOPOLOGY-AUTHORITY-2026-11-20: capture the frozen display by name.
+          request.cancelled = [context] { return context.cancelled(); };
+          try { return capture(request); }
+          catch (...) { CompositorFrame failed; failed.diagnostic = kCompositorCaptureFailed; return failed; }
+        }, [this, generation, display](CompositorFrame frame) {
+          if (!m_busy || !m_compositorPending || m_generation != generation) return;
+          m_compositorPending = false; m_compositorWork.reset();
+          if (frame.status == CompositorFrame::Status::Cancelled) {
+            onSnapshot(int(PortalScreenshot::Outcome::Cancelled), {}, {}); return;
+          }
+          if (frame.status != CompositorFrame::Status::Captured) {
+            onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, compositorCaptureFailureMessage(frame.diagnostic)); return;
+          }
+          const auto &mapping = display.mapping;
+          if (!frame.singleOutputBufferOriginProven || !frame.cursorPaintRequested || !frame.cursorPaintedIntoFrame ||
+              frame.outputName != display.outputName || frame.transform != 0 ||
+              frame.scale != mapping.scale || frame.logicalX != mapping.logical.left || frame.logicalY != mapping.logical.top ||
+              frame.bufferWidth != mapping.physical.width() || frame.bufferHeight != mapping.physical.height() ||
+              frame.image.width() != mapping.physical.width() || frame.image.height() != mapping.physical.height()) {
+            failCapture(diagnostic::captureTopologyMismatch, compositorCaptureFailureMessage(kCompositorSourceMismatch)); return;
+          }
+          onSnapshot(int(PortalScreenshot::Outcome::Captured), frame.image, {});
+        });
+    return;
+  }
+  // RC-TOPOLOGY-AUTHORITY-2026-11-20: multi-display compositor captures
+  // compose one desktop from per-output frames. Every display is captured by
+  // its own compositor name (each connection re-proves the whole live
+  // layout, so an unprovable grid fails closed inside the capture), and the
+  // compose seam cross-checks each frame against the frozen session before
+  // placing it at the packed origin.
+  CaptureDisplays displays = m_displays;
+  for (const auto &display : m_displays) {
+    if (display.outputName.isEmpty()) {
+      onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, compositorCaptureFailureMessage(kCompositorLayoutUnproven));
+      return;
+    }
+  }
+  m_compositorWork = OwnedWork::run<ComposedSnapshot>(this,
+      [capture = std::move(capture), displays](const OwnedWork::Context &context) {
+        std::vector<CapturedDisplayFrame> frames;
+        frames.reserve(displays.size());
+        for (const CaptureDisplay &display : displays) {
+          if (context.cancelled()) {
+            ComposedSnapshot cancelled;
+            cancelled.cancelled = true;
+            return cancelled;
+          }
+          CompositorFrameRequest request;
+          request.includeCursor = true;
+          request.outputName = display.outputName;
+          request.cancelled = [context] { return context.cancelled(); };
+          CompositorFrame frame;
+          try { frame = capture(request); }
+          catch (...) {
+            ComposedSnapshot failed;
+            failed.diagnostic = kCompositorCaptureFailed;
+            return failed;
+          }
+          if (frame.status == CompositorFrame::Status::Cancelled) {
+            ComposedSnapshot cancelled;
+            cancelled.cancelled = true;
+            return cancelled;
+          }
+          if (frame.status != CompositorFrame::Status::Captured) {
+            ComposedSnapshot failed;
+            failed.diagnostic = frame.diagnostic;
+            return failed;
+          }
+          CapturedDisplayFrame captured;
+          captured.outputName = frame.outputName;
+          captured.image = frame.image;
+          captured.logicalX = frame.logicalX;
+          captured.logicalY = frame.logicalY;
+          captured.bufferWidth = frame.bufferWidth;
+          captured.bufferHeight = frame.bufferHeight;
+          captured.scale = frame.scale;
+          captured.transform = frame.transform;
+          captured.cursorPaintRequested = frame.cursorPaintRequested;
+          captured.cursorPaintedIntoFrame = frame.cursorPaintedIntoFrame;
+          captured.singleOutputBufferOriginProven = frame.singleOutputBufferOriginProven;
+          frames.push_back(std::move(captured));
+        }
+        // The cursor-inclusion path requires the compositor to paint the
+        // cursor into every frame, exactly as the single-display chain does.
+        for (const CapturedDisplayFrame &frame : frames)
+          if (!frame.cursorPaintRequested || !frame.cursorPaintedIntoFrame) {
+            ComposedSnapshot failed;
+            failed.diagnostic = kCompositorSourceMismatch;
+            return failed;
+          }
+        const ComposedDesktop composed = composeCapturedFrames(displays, frames);
+        ComposedSnapshot result;
+        if (!composed.ok) {
+          result.diagnostic = composed.diagnostic;
+          return result;
+        }
+        result.image = composed.image;
+        return result;
+      },
+      [this, generation](ComposedSnapshot composed) {
         if (!m_busy || !m_compositorPending || m_generation != generation) return;
         m_compositorPending = false; m_compositorWork.reset();
-        if (frame.status == CompositorFrame::Status::Cancelled) {
+        if (composed.cancelled) {
           onSnapshot(int(PortalScreenshot::Outcome::Cancelled), {}, {}); return;
         }
-        if (frame.status != CompositorFrame::Status::Captured) {
-          onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, compositorCaptureFailureMessage(frame.diagnostic)); return;
+        if (composed.image.isNull()) {
+          const QString detail = composed.diagnostic.isEmpty() ? kCompositorCaptureFailed : composed.diagnostic;
+          if (detail == kCompositorSourceMismatch || detail == kCompositorLayoutUnproven) {
+            failCapture(diagnostic::captureTopologyMismatch, compositorCaptureFailureMessage(detail)); return;
+          }
+          onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, compositorCaptureFailureMessage(detail)); return;
         }
-        const auto &mapping = display.mapping;
-        if (!frame.singleOutputBufferOriginProven || !frame.cursorPaintRequested || !frame.cursorPaintedIntoFrame ||
-            frame.outputName != display.outputName || frame.transform != 0 ||
-            frame.scale != mapping.scale || frame.logicalX != mapping.logical.left || frame.logicalY != mapping.logical.top ||
-            frame.bufferWidth != mapping.physical.width() || frame.bufferHeight != mapping.physical.height() ||
-            frame.image.width() != mapping.physical.width() || frame.image.height() != mapping.physical.height()) {
-          failCapture(diagnostic::captureTopologyMismatch, compositorCaptureFailureMessage(kCompositorSourceMismatch)); return;
-        }
-        onSnapshot(int(PortalScreenshot::Outcome::Captured), frame.image, {});
+        onSnapshot(int(PortalScreenshot::Outcome::Captured), composed.image, {});
       });
 }
 
@@ -337,8 +435,14 @@ void CaptureController::failCapture(const QString &code, const QString &message)
 
 bool CaptureController::topologyMatches() const {
   const auto displays = m_topologyReader ? m_topologyReader() : screenTopology();
-  if (m_regionSettings.includeCursor && (displays.size() != 1 || m_displays.size() != 1 ||
-      displays.front().outputName != m_displays.front().outputName)) return false;
+  // RC-TOPOLOGY-AUTHORITY-2026-11-20: the compositor path captures each
+  // display by its frozen compositor name, so a session of any size must
+  // still present exactly those names in that order.
+  if (m_regionSettings.includeCursor) {
+    if (displays.size() != m_displays.size()) return false;
+    for (size_t index = 0; index < m_displays.size(); ++index)
+      if (displays[index].outputName != m_displays[index].outputName) return false;
+  }
   const auto current = displayMappings(displays);
   if (current.size() != m_topology.size()) return false;
   for (const auto &display : m_topology) {

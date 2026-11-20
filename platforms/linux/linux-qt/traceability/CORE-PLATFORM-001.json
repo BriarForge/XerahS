@@ -873,7 +873,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Full-screen/monitor/active-window entry points and errors are tested, and RC-TOPOLOGY-AUTHORITY-2026-11-20 settles the mapping authority this row was waiting on: QScreen logical space (zxdg_output-derived) identifies the requested target, per-display physical bounds are each display's own-scale extents (mode-verified), and the packed arrangement is endorsed only for proven grid tilings - a named output is captured by its own compositor identity inside such a layout, and anything unprovable fails closed with compositor-layout-unproven. Remaining: the cross-monitor composite from per-output frames on proven grids, screenshot cursor/delay polish, and live desktop qualification.",
+      "note": "Full-screen/monitor/active-window entry points and errors are tested; RC-TOPOLOGY-AUTHORITY-2026-11-20's mapping authority is decided and both build halves are landed: named per-output compositor captures on proven grids, and the multi-display compose seam (composeCapturedFrames) that cross-checks every captured frame against the frozen session before placing it at the packed origin - a full-desktop or cross-monitor cursor-inclusive capture now composes one desktop from per-output frames, refused whole on any mismatch, with the session's topology check requiring exactly the frozen compositor names. Remaining: screenshot cursor/delay polish on the monitor/window flows, and live desktop qualification on real mixed-scale/rotated hardware.",
       "evidence": [
         "platforms/linux/linux-qt/app/CaptureController.cpp",
         "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
@@ -891,28 +891,24 @@
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.h",
-            "sha256": "8a7f7fe6e52d6ebf586bd4cec51ed6bee1d4bf1fef77227631e2b74247bb1131"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
-            "sha256": "f9ddf44e96ea77e05c78b2b7cb9d7683d98e65f0812275b0a4635c487f6ca827"
+            "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
+            "sha256": "82abbb797b34b3f5b14f050427a3d65e8f0e86dd4a2bbb8dba3e6bbab9e996f5"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "ffee50c3bea3e5535679a8dca063913d7d31dfa82bd10f56ad85309c94f47e82"
+            "sha256": "409978c57ca359387ea05e0557941dc0ab4d3b7604b2b8d2c507826da1dd6c5a"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
-            "sha256": "1263b566b0e514f95a0f3141b6a5ee63cb554710e8b164f3adad04abf12b054b"
+            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
+            "sha256": "47fc1c27510701304706bcc6a8c66105fc0f5f99a4c7fdbfb6ac431a167e073d"
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "Full-screen/monitor/active-window entry points and errors are tested, but screenshot cursor/delay and authoritative mixed-scale physical mapping remain incomplete."
+      "previous_note": "Full-screen/monitor/active-window entry points and errors are tested, and RC-TOPOLOGY-AUTHORITY-2026-11-20 settles the mapping authority this row was waiting on: QScreen logical space (zxdg_output-derived) identifies the requested target, per-display physical bounds are each display's own-scale extents (mode-verified), and the packed arrangement is endorsed only for proven grid tilings - a named output is captured by its own compositor identity inside such a layout, and anything unprovable fails closed with compositor-layout-unproven. Remaining: the cross-monitor composite from per-output frames on proven grids, screenshot cursor/delay polish, and live desktop qualification."
     },
     "CORE-015": {
       "status": "implemented",

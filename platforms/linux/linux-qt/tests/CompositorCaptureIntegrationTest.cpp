@@ -62,6 +62,36 @@ CaptureDisplays oneOutput(const LogicalRect &logical, double scale, const QStrin
   displays[0].outputName = outputName;
   return displays;
 }
+// A mixed-scale grid the packed topology arranges side by side: OUT-1 is
+// logical 100x80 at scale 1 (physical 100x80 at the packed origin), OUT-2 is
+// logical 150x80 at scale 2 (physical 300x160 beside it).
+CaptureDisplays twoOutputs() {
+  const auto mapped = snapshotScreenTopology({
+      {QStringLiteral("Panel"), QStringLiteral("Maker"), QStringLiteral("Model"), QStringLiteral("1"), {0, 0, 100, 80}, 1, 0, {}, true},
+      {QStringLiteral("Panel"), QStringLiteral("Maker"), QStringLiteral("Model"), QStringLiteral("2"), {100, 0, 250, 80}, 2, 0, {}, true}});
+  if (mapped.size() != 2) return {};
+  CaptureDisplays displays(2);
+  displays[0].mapping = mapped[0];
+  displays[0].outputName = QStringLiteral("OUT-1");
+  displays[1].mapping = mapped[1];
+  displays[1].outputName = QStringLiteral("OUT-2");
+  return displays;
+}
+CapturedDisplayFrame acceptedFrame(const CaptureDisplay &display, const QImage &image) {
+  CapturedDisplayFrame frame;
+  frame.outputName = display.outputName;
+  frame.image = image;
+  frame.logicalX = qint32(display.mapping.logical.left);
+  frame.logicalY = qint32(display.mapping.logical.top);
+  frame.bufferWidth = qint32(display.mapping.physical.width());
+  frame.bufferHeight = qint32(display.mapping.physical.height());
+  frame.scale = qint32(display.mapping.scale);
+  frame.transform = 0;
+  frame.cursorPaintRequested = true;
+  frame.cursorPaintedIntoFrame = true;
+  frame.singleOutputBufferOriginProven = true;
+  return frame;
+}
 CompositorFrame accepted(const CaptureDisplay &display, const QImage &image) {
   CompositorFrame frame;
   frame.status = CompositorFrame::Status::Captured;
@@ -89,6 +119,7 @@ struct FrameReader {
   CompositorFrame first, second;
   std::atomic<int> calls{0}, releaseThrough{1000000}, finished{0};
   std::atomic<bool> includeCursor{false}, hasCancelled{false}, cancelledAtEntry{false}, sawCancel{false};
+  QStringList requestedNames;   // guarded by the mutex
   void setFirst(CompositorFrame frame) { std::lock_guard lock(mutex); first = std::move(frame); }
   void setSecond(CompositorFrame frame) { std::lock_guard lock(mutex); second = std::move(frame); }
   CompositorFrame operator()(const CompositorFrameRequest &request) {
@@ -96,6 +127,7 @@ struct FrameReader {
     includeCursor.store(request.includeCursor);
     hasCancelled.store(static_cast<bool>(request.cancelled));
     if (id == 1) cancelledAtEntry.store(request.cancelled && request.cancelled());
+    { std::lock_guard lock(mutex); requestedNames.append(request.outputName); }
     while (releaseThrough.load() < id) {
       if (request.cancelled && request.cancelled()) sawCancel.store(true);
       QThread::msleep(2);
@@ -239,7 +271,10 @@ private slots:
           {QStringLiteral("Panel"), QStringLiteral("Maker"), QStringLiteral("Model"), QStringLiteral("1"), {0, 0, 100, 80}, 1, 0, {}, true},
           {QStringLiteral("Panel"), QStringLiteral("Maker"), QStringLiteral("Model"), QStringLiteral("2"), {100, 0, 200, 80}, 1, 0, {}, true}});
       QCOMPARE(mapped.size(), size_t(2));
-      screens = {{nullptr, mapped[0], QStringLiteral("OUT-1")}, {nullptr, mapped[1], QStringLiteral("OUT-2")}};
+      // RC-TOPOLOGY-AUTHORITY-2026-11-20: a multi-display session only
+      // refuses a priori when a display has no compositor name to capture
+      // by; named grids attempt the per-output captures.
+      screens = {{nullptr, mapped[0], QStringLiteral("OUT-1")}, {nullptr, mapped[1], QString()}};
     } else {
       screens = oneOutput(kLogical, kScale, kind == QLatin1String("nameless-output") ? QString() : QStringLiteral("Hypr-Synthetic-1"));
     }
@@ -409,6 +444,133 @@ private slots:
     QCOMPARE(QImage(receipt->file->path), newer.portalImage.copy(8, 8, 132, 92));
     QCOMPARE(stampCount(QImage(receipt->file->path)), 0);
     older.reset();
+  }
+
+  // RC-012/CORE-014 on RC-TOPOLOGY-AUTHORITY-2026-11-20: the compose seam
+  // places captured frames at the session's packed origins after
+  // cross-checking every frame against its frozen display, and refuses any
+  // disagreement whole.
+  void composeCapturedFramesPlacesPackedOriginsAndRefusesMismatches() {
+    const CaptureDisplays displays = twoOutputs();
+    QVERIFY(displays.size() == 2);
+    QCOMPARE(displays[0].mapping.physical.left, qint64(0));
+    QCOMPARE(displays[0].mapping.physical.width(), qint64(100));
+    QCOMPARE(displays[1].mapping.physical.left, qint64(100));
+    QCOMPARE(displays[1].mapping.physical.width(), qint64(300));
+    QCOMPARE(displays[1].mapping.physical.height(), qint64(160));
+    QCOMPARE(displays[1].mapping.scale, 2.0);
+
+    QImage left(100, 80, QImage::Format_ARGB32);
+    left.fill(qRgb(201, 10, 11));
+    QImage right(300, 160, QImage::Format_ARGB32);
+    right.fill(qRgb(12, 202, 13));
+    const auto composed = composeCapturedFrames(
+        displays, {acceptedFrame(displays[0], left), acceptedFrame(displays[1], right)});
+    QVERIFY2(composed.ok, qPrintable(composed.diagnostic));
+    QCOMPARE(composed.image.width(), 400);
+    QCOMPARE(composed.image.height(), 160);
+    QCOMPARE(composed.image.pixel(50, 40), qRgb(201, 10, 11));
+    QCOMPARE(composed.image.pixel(150, 80), qRgb(12, 202, 13));
+    QCOMPARE(composed.image.pixel(399, 159), qRgb(12, 202, 13));
+
+    // Every disagreement refuses whole, never a misaligned composite.
+    auto scaleOff = acceptedFrame(displays[1], right);
+    scaleOff.scale = 1;
+    QVERIFY(!composeCapturedFrames(displays, {acceptedFrame(displays[0], left), scaleOff}).ok);
+    auto logicalOff = acceptedFrame(displays[1], right);
+    logicalOff.logicalX += 40;
+    QVERIFY(!composeCapturedFrames(displays, {acceptedFrame(displays[0], left), logicalOff}).ok);
+    auto boundsOff = acceptedFrame(displays[1], right);
+    boundsOff.bufferWidth += 1;
+    QVERIFY(!composeCapturedFrames(displays, {acceptedFrame(displays[0], left), boundsOff}).ok);
+    auto rotated = acceptedFrame(displays[1], right);
+    rotated.transform = 1;
+    QVERIFY(!composeCapturedFrames(displays, {acceptedFrame(displays[0], left), rotated}).ok);
+    auto unproven = acceptedFrame(displays[1], right);
+    unproven.singleOutputBufferOriginProven = false;
+    QVERIFY(!composeCapturedFrames(displays, {acceptedFrame(displays[0], left), unproven}).ok);
+    QVERIFY(!composeCapturedFrames(displays, {acceptedFrame(displays[0], left)}).ok);   // missing display
+    QVERIFY(!composeCapturedFrames(displays, {acceptedFrame(displays[0], left), acceptedFrame(displays[0], left)}).ok);   // duplicate
+    QVERIFY(!composeCapturedFrames(displays, {acceptedFrame(displays[0], left), acceptedFrame(displays[1], right),
+                                             acceptedFrame(displays[1], right)})
+                 .ok);   // extra frame
+    auto foreign = acceptedFrame(displays[1], right);
+    foreign.outputName = QStringLiteral("OUT-Z");
+    QVERIFY(!composeCapturedFrames(displays, {acceptedFrame(displays[0], left), foreign}).ok);
+    auto unnamed = displays;
+    unnamed[1].outputName.clear();
+    QVERIFY(!composeCapturedFrames(unnamed, {acceptedFrame(displays[0], left), acceptedFrame(displays[1], right)}).ok);
+  }
+
+  void twoOutputsComposeOneDesktopOnAProvenGrid() {
+    Harness harness(twoOutputs());
+    QVERIFY(harness.screens.size() == 2);
+    auto values = harness.store.current().values;
+    values.insert(QStringLiteral("regionCapture.includeCursor"), true);
+    QVERIFY(harness.save(values));
+
+    QImage left = scene({100, 80}, false);
+    left.fill(qRgb(201, 10, 11));
+    QImage right = scene({300, 160}, false);
+    right.fill(qRgb(12, 202, 13));
+    harness.reader.setFirst(accepted(harness.screens[0], left));
+    harness.reader.setSecond(accepted(harness.screens[1], right));
+    harness.deliverPortal = true;
+    harness.controller->captureRegion();
+    QTRY_COMPARE(harness.reader.calls.load(), 2);
+    QCOMPARE(harness.portalCalls, 0);
+    {
+      std::lock_guard<std::mutex> lock(harness.reader.mutex);
+      const QStringList expected{QStringLiteral("OUT-1"), QStringLiteral("OUT-2")};
+      QCOMPARE(harness.reader.requestedNames, expected);
+    }
+    // RC-005: the frozen frame covers every capturable display, so the
+    // session shows one overlay per display.
+    QTRY_COMPARE(overlays().size(), 2);
+    // A cross-monitor drag: the confirmed rectangle spans both displays, so
+    // the crop mixes both frames' pixels at the packed boundary (x=100).
+    harness.drag(240, 60);
+    QTRY_VERIFY(!harness.controller->busy());
+    const auto receipt = harness.controller->lastPipelineResult();
+    QVERIFY(receipt && receipt->file);
+    const QImage saved(receipt->file->path);
+    QCOMPARE(saved.size(), QSize(232, 52));
+    QCOMPARE(saved.pixel(50, 20), qRgb(201, 10, 11));
+    // The packed boundary is at composite x=100, so saved x=92: the left of
+    // the boundary carries OUT-1's pixels and the right carries OUT-2's.
+    QCOMPARE(saved.pixel(91, 20), qRgb(201, 10, 11));
+    QCOMPARE(saved.pixel(92, 20), qRgb(12, 202, 13));
+    QCOMPARE(saved.pixel(200, 40), qRgb(12, 202, 13));
+    QCOMPARE(harness.reader.calls.load(), 2);
+    QCOMPARE(harness.portalCalls, 0);
+  }
+
+  void composedMismatchRefusesTheWholeCapture() {
+    Harness harness(twoOutputs());
+    QVERIFY(harness.screens.size() == 2);
+    auto values = harness.store.current().values;
+    values.insert(QStringLiteral("regionCapture.includeCursor"), true);
+    QVERIFY(harness.save(values));
+    QImage left = scene({100, 80}, false);
+    QImage right = scene({300, 160}, false);
+    // OUT-2's frame carries the wrong scale: the compose seam must refuse
+    // the whole desktop rather than composite misaligned pixels.
+    auto wrong = accepted(harness.screens[1], right);
+    wrong.scale = 1;
+    harness.reader.setFirst(accepted(harness.screens[0], left));
+    harness.reader.setSecond(wrong);
+    harness.deliverPortal = true;
+    QSignalSpy notices(harness.controller.get(), &CaptureController::notify);
+    harness.controller->captureRegion();
+    QTRY_VERIFY(!harness.controller->busy());
+    QCOMPARE(harness.reader.calls.load(), 2);
+    QCOMPARE(harness.portalCalls, 0);
+    QCOMPARE(overlays().size(), 0);
+    QVERIFY(!harness.controller->lastPipelineResult());
+    QCOMPARE(QDir(harness.outputs).entryList(QDir::Files).size(), 0);
+    QCOMPARE(notices.size(), 1);
+    QCOMPARE(notices[0][1].toString(),
+             compositorCaptureFailureMessage(QStringLiteral("compositor-source-mismatch")));
   }
 };
 

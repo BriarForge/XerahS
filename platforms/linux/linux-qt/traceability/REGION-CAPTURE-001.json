@@ -637,15 +637,15 @@
       "previous_note": "Native Capture settings exposes snapping with the normative enabled default; disabled sessions skip discovery and refuse zero-area clicks. Private-bus tests prove options are frozen before acquisition and later enabled clicks use visible snap preview bounds. Existing native discovery filters and Core drag override remain tested. Compositor discovery breadth and physical qualification remain Required. Audit 2026-11-03 (Aoife, at ef77af6): Snapping uses native window discovery; exact target bounds are previewed before confirmation; free dragging overrides a snap preview and snapping can be disabled, with options frozen before acquisition. Remaining items above are qualification, not implementation status."
     },
     "RC-012": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "mixed-scale-cross-monitor",
         "uncovered-area-is-transparent"
       ],
-      "note": "Confirmed output dimensions and Core composite order are tested, and RC-TOPOLOGY-AUTHORITY-2026-11-20 now endorses the packed arrangement for proven grid tilings (the named per-output compositor frame is captured by compositor identity inside such layouts, with mode-verified bounds). Remaining for this row: the cross-monitor composite from per-output frames on proven grids - the controller still requires one display for the compositor-native path, so arbitrary staggered layouts stay refused with compositor-layout-unproven rather than composited, and live desktop qualification is the physical gate.",
+      "note": "Confirmed output dimensions equal the confirmed rectangle's physical dimensions on every native path, and RC-TOPOLOGY-AUTHORITY-2026-11-20's remaining composite half is now built: the compositor-native cursor path composes one desktop from per-output frames on proven grids - each display is captured by its frozen compositor name (every connection re-proves the whole live layout, so an unprovable grid fails closed inside the capture), and the compose seam cross-checks every frame against the frozen session (name, logical position, scale, mode-verified buffer bounds, provenance) before placing it at the packed origin, refusing whole with compositor-source-mismatch on any disagreement. A cross-monitor confirmed rectangle crops both displays' pixels at the exact packed boundary (tested), and an unnamed display or an unprovable layout fails closed. The portal composite path is unchanged. Live desktop qualification on real Sway/mixed-scale/rotated hardware remains the physical gate.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 64,
         "published_vectors": [
           "mixed-scale-cross-monitor",
@@ -655,37 +655,40 @@
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.h",
-            "sha256": "8a7f7fe6e52d6ebf586bd4cec51ed6bee1d4bf1fef77227631e2b74247bb1131"
+            "path": "platforms/linux/linux-qt/app/ScreenTopology.h",
+            "sha256": "8a0e4b265ed97bfb77cff14a6497c443d03f3a323c858476404e87e6c9fa9445"
           },
           {
-            "path": "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
-            "sha256": "f9ddf44e96ea77e05c78b2b7cb9d7683d98e65f0812275b0a4635c487f6ca827"
+            "path": "platforms/linux-qt/app/ScreenTopology.cpp",
+            "sha256": "82abbb797b34b3f5b14f050427a3d65e8f0e86dd4a2bbb8dba3e6bbab9e996f5"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "ffee50c3bea3e5535679a8dca063913d7d31dfa82bd10f56ad85309c94f47e82"
+            "sha256": "409978c57ca359387ea05e0557941dc0ab4d3b7604b2b8d2c507826da1dd6c5a"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
-            "sha256": "1263b566b0e514f95a0f3141b6a5ee63cb554710e8b164f3adad04abf12b054b"
+            "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
+            "sha256": "47fc1c27510701304706bcc6a8c66105fc0f5f99a4c7fdbfb6ac431a167e073d"
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "evidence": [
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
         "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
+        "platforms/linux/linux-qt/app/ScreenTopology.cpp",
         "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
         "platforms/linux/linux-qt/app/capture/CompositorFrameTest.cpp",
+        "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
         "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
         "product-contract/decisions/RC-topology-authority.md"
       ],
-      "previous_note": "Confirmed output dimensions and Core composite order are tested, but native packed-topology mapping is not proven for arbitrary staggered/mixed-scale compositor layouts."
+      "previous_note": "Confirmed output dimensions and Core composite order are tested, and RC-TOPOLOGY-AUTHORITY-2026-11-20 now endorses the packed arrangement for proven grid tilings (the named per-output compositor frame is captured by compositor identity inside such layouts, with mode-verified bounds). Remaining for this row: the cross-monitor composite from per-output frames on proven grids - the controller still requires one display for the compositor-native path, so arbitrary staggered layouts stay refused with compositor-layout-unproven rather than composited, and live desktop qualification is the physical gate."
     },
     "RC-013": {
       "status": "partial",
