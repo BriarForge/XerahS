@@ -75,7 +75,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Every catalog utility is command-reachable, including the background remover whose native window now exists (EU-009/010 model supply, decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20); missing host services are explained rather than crashing startup - the video converter carries its GStreamer requirement and the background remover's status rows report the inference engine as not linked in this build. The konami shader disposition (EU-019) and the background remover's inference half (EU-011) remain open, so breadth stays partial.",
+      "note": "Every catalog utility is command-reachable, including the background remover whose native window runs the approved u2netp model end to end (model supply decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20; inference built on the approved optional onnxruntime). Missing host services are explained rather than crashing startup - the video converter carries its GStreamer requirement and a build without onnxruntime reports the inference engine as not linked while model setup still works. The konami shader disposition (EU-019) remains open, so breadth stays partial.",
       "evidence": [
         "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
         "platforms/linux/linux-qt/app/EditorWindow.cpp",
@@ -131,7 +131,7 @@
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "Most catalog utilities are command-reachable with missing-host failures; approved model-backed background removal/dispositions and complete catalog reachability remain absent."
+      "previous_note": "Every catalog utility is command-reachable, including the background remover whose native window now exists (EU-009/010 model supply, decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20); missing host services are explained rather than crashing startup - the video converter carries its GStreamer requirement and the background remover's status rows report the inference engine as not linked in this build. The konami shader disposition (EU-019) and the background remover's inference half (EU-011) remain open, so breadth stays partial."
     },
     "EU-002": {
       "disposition": "Required",
@@ -486,42 +486,52 @@
     },
     "EU-009": {
       "disposition": "Required",
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "The model half of background removal is decided and implemented (candidate): decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20 approves the u2netp model (U-2-Net, Apache-2.0) with a pinned artifact URL, byte size, SHA-256 and MD5 and a catalogue tensor contract (input input.1 float32 [1,3,320,320], first output 1959 float32 [1,1,320,320]). The Background Remover window lists the approved model for explicit selection, loads the contract catalogue strictly, parses a model file's ONNX header with a bounded reader (512 MiB ceiling, capped counts and lengths, malformed input refused), validates provenance (size, SHA-256, MD5) and the tensor contract before any adoption, and shows model/device/setup/inference status rows; a user-supplied local model is header-validated with its unverified provenance reported honestly. Not yet implemented: the Auto/CPU/GPU device policy and live inference - the approved onnxruntime (MIT) engine is not linked in this build and the rows say so.",
+      "note": "Implemented (candidate) end to end on the decided supply: the Background Remover uses the explicitly selected local model (the approved u2netp from the store, or a user-supplied .onnx selected in the window), an Auto/CPU/GPU device policy whose chooser is built from the linked runtime's execution providers (a CPU-only build offers Auto and CPU and refuses an explicit GPU request with the typed model-device-unavailable failure), provenance validated before every run (the store model is re-verified against the pinned size, SHA-256 and MD5 each compute; a local model is honestly reported as checksum-unverified), and tensor shapes validated twice - the bounded ONNX header parse at selection plus the onnxruntime session contract cross-check at open (model-contract-mismatch on any disagreement). The model/device/setup/inference status rows are live, and failures retain the source untouched. Remaining: live desktop qualification with the real artifact and visual quality acceptance are separate physical/human gates.",
       "evidence": [
         "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
+        "platforms/linux/linux-qt/app/OnnxMaskEngine.cpp",
         "platforms/linux/linux-qt/src/background/BackgroundModels.cpp",
         "platforms/linux/linux-qt/tests/BackgroundModelsTest.cpp",
         "platforms/linux/linux-qt/tests/BackgroundRemoverDialogTest.cpp",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/OnnxMaskEngineTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
         "product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json",
         "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
         "product-contract/decisions/EU-009-010-011-background-model-supply.md"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 35,
         "blocker": "Approved: decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20.",
-        "coverage": "Model selection, catalogue provenance validation, bounded ONNX header parsing with tensor-contract validation and the model/device/setup/inference status rows are implemented and tested offscreen. The Auto/CPU/GPU device policy and live inference wait for the approved onnxruntime build and stay partial.",
+        "coverage": "Model selection, device policy from the linked runtime, per-run provenance revalidation, double tensor-shape validation (header parser plus session cross-check) and the live status rows are implemented and tested: engine 8/8 against real onnxruntime CPU inference, dialog 19/19 with a scripted engine, core 15/15.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/background/BackgroundModels.h",
-            "sha256": "008d0d4506c2eb49596d8b8d045a8015659e463608a59165939010ce3f7bbd2a"
+            "sha256": "48a88c893d95b70357559ea42735b89bd74d7e380419685a0130c4de6a40f66f"
           },
           {
             "path": "platforms/linux/linux-qt/src/background/BackgroundModels.cpp",
-            "sha256": "de224db5916186f2036116802fb0593855ed088d564755407c2a9b9b2b43a59d"
+            "sha256": "3381150a824087d96a9574b385102449f6e1d37288502ac7544146e75745d869"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/OnnxMaskEngine.h",
+            "sha256": "1258b2e0dc1a6e5f6af10e4774249ba2e964188ebe0f5b70841a538e64135d90"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/OnnxMaskEngine.cpp",
+            "sha256": "96a343a6a3b20f76882e6f5929e628e793d531c1caba71b049bd581e1c5dfee8"
           },
           {
             "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.h",
-            "sha256": "188cb2064ac1828591bb32e9af9e4f387ef590e15b4a8c7e762e5eb36220982f"
+            "sha256": "25e7e7d5db850d57b00f79d34481f0e63cdb12ff84c6f30d7d1eb8fdf0a3ea5a"
           },
           {
             "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
-            "sha256": "e1c345a6504a6bdadec58619bb0cf651f31f92216db111a8b45c0c56fa583679"
+            "sha256": "5e41eb93938188b064bdcba45fffd2e5e28d2c2ddf54ee105257c55cf6b1a5bf"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
@@ -531,21 +541,25 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/BackgroundModelsTest.cpp",
-            "sha256": "1155271196d142933f16690e60e87c5910c1f0a713a5b5e94e122de3839d568f"
+            "sha256": "44457190bc5afe39e0ffbd4b72881157200b7706079005a9509882402950f920"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/OnnxMaskEngineTest.cpp",
+            "sha256": "0b44b1068f323850affad702d22e56a0317563364f15c63af0a0b0e4ca9f1370"
           },
           {
             "path": "platforms/linux/linux-qt/tests/BackgroundRemoverDialogTest.cpp",
-            "sha256": "7e631f243528495d41cc99ab03393c784d78c52afce1889dee0ef7e95dfb42f0"
+            "sha256": "e303659951b36f2ccb6b5034262a5cd0d2101e9892ca96bc7c5473adebac7bb5"
           },
           {
             "path": "platforms/linux/linux-qt/tests/OnnxFixture.h",
-            "sha256": "9bd8421e00bb1b37ba31718bb26a7494c510bfe71c33f2bbf3039010c28944ca"
+            "sha256": "417f18a343b7cc4cc7a80bae3df006b923820af0e8dc1d40511302fa09acc8d7"
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "No approved local model/provenance/tensor/device/setup policy authorizes background removal."
+      "previous_note": "The model half of background removal is decided and implemented (candidate): decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20 approves the u2netp model (U-2-Net, Apache-2.0) with a pinned artifact URL, byte size, SHA-256 and MD5 and a catalogue tensor contract (input input.1 float32 [1,3,320,320], first output 1959 float32 [1,1,320,320]). The Background Remover window lists the approved model for explicit selection, loads the contract catalogue strictly, parses a model file's ONNX header with a bounded reader (512 MiB ceiling, capped counts and lengths, malformed input refused), validates provenance (size, SHA-256, MD5) and the tensor contract before any adoption, and shows model/device/setup/inference status rows; a user-supplied local model is header-validated with its unverified provenance reported honestly. Not yet implemented: the Auto/CPU/GPU device policy and live inference - the approved onnxruntime (MIT) engine is not linked in this build and the rows say so."
     },
     "EU-010": {
       "disposition": "Required",
@@ -612,38 +626,51 @@
     },
     "EU-011": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "implemented",
       "vectors": [],
-      "note": "Preview, save and inference are not started; the recorded blocker (no approved model/licence) is resolved by decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20, which approved the u2netp model supply and the onnxruntime (MIT) runtime and implemented the model half. The remaining work is the inference slice: load the verified model through the approved runtime (optional at build time, like libgcrypt), CPU device policy first with Auto and GPU reported honestly from the linked runtime, preview and save preserving source dimensions and colour with the catalogue's defined alpha (first-output min-max mask), cancellation, and the model/device/memory/inference/output failure split. Until then the utility's inference row states the engine is not linked in this build.",
+      "note": "Implemented (candidate): inference, preview and save run the approved optional onnxruntime engine off the GUI thread through OwnedWork. The composed output preserves the source dimensions and colour exactly (only the alpha byte changes, verified per pixel) and produces defined alpha everywhere: the first output is min-max normalized with floor scaling, a constant mask is defined (fully foreground when positive, else background) and non-finite mask values are refused whole (model-output-invalid). Cancellation is cooperative at both ends - the GUI cancel terminates the live onnxruntime Run and the close path cancels rather than continuing (EU-017) - with inference-cancelled reported. The failure split is typed and surfaced: model-engine-open-failed (the runtime refuses bytes the header parser accepted), model-device-unavailable, model-memory, model-inference-failed, model-output-invalid, plus model-contract-mismatch, model-missing and image-unusable. Save is atomic (QSaveFile: a failure never truncates an existing file) and the source file is retained byte-identical through every path. The real 4.6 MB artifact was run once out-of-band through the production engine (CPU provider, source dimensions preserved, alpha defined everywhere); tests run real CPU inference on hand-encoded executable fixtures only. Remaining: live desktop qualification and visual quality acceptance remain separate physical/human gates.",
       "evidence": [
+        "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
+        "platforms/linux/linux-qt/app/OnnxMaskEngine.cpp",
+        "platforms/linux/linux-qt/src/background/BackgroundModels.cpp",
+        "platforms/linux/linux-qt/tests/BackgroundRemoverDialogTest.cpp",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/OnnxMaskEngineTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
         "product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json",
         "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json",
         "product-contract/decisions/EU-009-010-011-background-model-supply.md"
       ],
       "audit": {
-        "classification": "not-started",
+        "classification": "implemented",
         "spec_line": 41,
         "blocker": "Resolved: decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20.",
-        "coverage": "No preview, save, inference or output code exists yet; the blocker is resolved by the approved model supply and runtime, so this row is open work rather than a waiting decision.",
+        "coverage": "Preview/save with preserved dimensions and colour, defined alpha, cooperative cancellation and the model/device/memory/inference/output failure split are implemented and tested: real-runtime engine tests (8/8), pipeline tests (15/15 core) and dialog journey tests (19/19, scripted engine) with red proofs for the alpha policy, the session contract gate and the per-run provenance revalidation.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/background/BackgroundModels.h",
-            "sha256": "008d0d4506c2eb49596d8b8d045a8015659e463608a59165939010ce3f7bbd2a"
+            "sha256": "48a88c893d95b70357559ea42735b89bd74d7e380419685a0130c4de6a40f66f"
           },
           {
             "path": "platforms/linux/linux-qt/src/background/BackgroundModels.cpp",
-            "sha256": "de224db5916186f2036116802fb0593855ed088d564755407c2a9b9b2b43a59d"
+            "sha256": "3381150a824087d96a9574b385102449f6e1d37288502ac7544146e75745d869"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/OnnxMaskEngine.h",
+            "sha256": "1258b2e0dc1a6e5f6af10e4774249ba2e964188ebe0f5b70841a538e64135d90"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/OnnxMaskEngine.cpp",
+            "sha256": "96a343a6a3b20f76882e6f5929e628e793d531c1caba71b049bd581e1c5dfee8"
           },
           {
             "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.h",
-            "sha256": "188cb2064ac1828591bb32e9af9e4f387ef590e15b4a8c7e762e5eb36220982f"
+            "sha256": "25e7e7d5db850d57b00f79d34481f0e63cdb12ff84c6f30d7d1eb8fdf0a3ea5a"
           },
           {
             "path": "platforms/linux/linux-qt/app/BackgroundRemoverDialog.cpp",
-            "sha256": "e1c345a6504a6bdadec58619bb0cf651f31f92216db111a8b45c0c56fa583679"
+            "sha256": "5e41eb93938188b064bdcba45fffd2e5e28d2c2ddf54ee105257c55cf6b1a5bf"
           },
           {
             "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
@@ -653,21 +680,25 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/BackgroundModelsTest.cpp",
-            "sha256": "1155271196d142933f16690e60e87c5910c1f0a713a5b5e94e122de3839d568f"
+            "sha256": "44457190bc5afe39e0ffbd4b72881157200b7706079005a9509882402950f920"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/OnnxMaskEngineTest.cpp",
+            "sha256": "0b44b1068f323850affad702d22e56a0317563364f15c63af0a0b0e4ca9f1370"
           },
           {
             "path": "platforms/linux/linux-qt/tests/BackgroundRemoverDialogTest.cpp",
-            "sha256": "7e631f243528495d41cc99ab03393c784d78c52afce1889dee0ef7e95dfb42f0"
+            "sha256": "e303659951b36f2ccb6b5034262a5cd0d2101e9892ca96bc7c5473adebac7bb5"
           },
           {
             "path": "platforms/linux/linux-qt/tests/OnnxFixture.h",
-            "sha256": "9bd8421e00bb1b37ba31718bb26a7494c510bfe71c33f2bbf3039010c28944ca"
+            "sha256": "417f18a343b7cc4cc7a80bae3df006b923820af0e8dc1d40511302fa09acc8d7"
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "Defined alpha/cancellation/device/memory/inference outcomes require the blocked approved model/device contract."
+      "previous_note": "Preview, save and inference are not started; the recorded blocker (no approved model/licence) is resolved by decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20, which approved the u2netp model supply and the onnxruntime (MIT) runtime and implemented the model half. The remaining work is the inference slice: load the verified model through the approved runtime (optional at build time, like libgcrypt), CPU device policy first with Auto and GPU reported honestly from the linked runtime, preview and save preserving source dimensions and colour with the catalogue's defined alpha (first-output min-max mask), cancellation, and the model/device/memory/inference/output failure split. Until then the utility's inference row states the engine is not linked in this build."
     },
     "EU-012": {
       "disposition": "Required",

@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 23,
-    "implemented": 184,
+    "implemented": 186,
     "not-applicable": 1,
-    "not-started": 6,
-    "partial": 111
+    "not-started": 5,
+    "partial": 110
   },
   "capabilities": [
     {
@@ -113,9 +113,9 @@
       "requirements": 19,
       "counts": {
         "blocked": 3,
-        "implemented": 8,
-        "not-started": 1,
-        "partial": 8
+        "implemented": 10,
+        "not-started": 0,
+        "partial": 7
       },
       "trace": "traceability/EDITOR-UTILITIES-001.json"
     },
@@ -368,6 +368,18 @@
       "from": "blocked",
       "to": "not-started",
       "reason": "The recorded blocker (no approved model/licence) is resolved by decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20 (approved u2netp supply plus the onnxruntime MIT runtime for the next build), but no preview, save or inference code exists yet, so the row is open work rather than a waiting decision. The utility's inference row honestly reports that no engine is linked in this build."
+    },
+    {
+      "requirement": "EU-009",
+      "from": "partial",
+      "to": "implemented",
+      "reason": "The remaining halves landed 2026-11-20 on the decided supply (EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20): the approved optional onnxruntime (MIT, discovered via pkg-config like libgcrypt) is linked and tested, the Auto/CPU/GPU device chooser is built from the linked runtime's execution providers (a CPU-only build offers Auto and CPU and answers an explicit GPU request with the typed model-device-unavailable failure), provenance is revalidated before every compute (pinned size, SHA-256, MD5), and tensor shapes are validated twice - the bounded ONNX header parse plus the onnxruntime session contract cross-check at open. The model/device/setup/inference rows are live and failures retain the source. Engine 8/8 against real CPU inference, core 15/15, dialog 19/19; the alpha policy, the session contract gate and the per-run revalidation were each proven red by disabling the rule. Implemented candidate; live desktop qualification and visual acceptance are separate gates."
+    },
+    {
+      "requirement": "EU-011",
+      "from": "not-started",
+      "to": "implemented",
+      "reason": "Inference, preview and save are built on the approved optional runtime, off the GUI thread through OwnedWork. The composed output preserves source dimensions and colour exactly (only the alpha byte changes, asserted per pixel) with defined alpha everywhere (min-max with floor scaling, a defined constant-mask case, non-finite refused), cancellation is cooperative (GUI cancel terminates the live Run; closing the busy window cancels per EU-017), and the model/device/memory/inference/output failures are typed and surfaced (model-engine-open-failed - the runtime refuses bytes the header parser accepted, model-device-unavailable, model-memory, model-inference-failed, model-output-invalid, plus model-contract-mismatch/model-missing/image-unusable). Save is atomic (QSaveFile) and the source file is retained byte-identical through every path. The real 4.6 MB artifact ran once out-of-band through the production engine; automated tests use hand-encoded executable fixtures, so no network and no committed model. Implemented candidate; live desktop qualification and visual quality acceptance are separate physical/human gates."
     }
   ],
   "review_limitations": [
@@ -1127,6 +1139,14 @@
         "EU-011"
       ],
       "outcome": "Decided and landed 2026-11-20 (decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20, contract 0.4.5, EDITOR-UTILITIES-001 0.1.1, carry-forward approval APPROVAL-2026-11-20-EU-009-010-011-BACKGROUND-MODEL-SUPPLY): the background-removal model supply is approved and built. The approved model is u2netp (U-2-Net, Apache-2.0), pinned by URL, byte size 4574861, SHA-256 309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8 and the upstream MD5 8e83ca70e441ab06c318d82300c84806, with the tensor contract read from the artifact's own header (input input.1 float32 [1,3,320,320], first output 1959 float32 [1,1,320,320]). RMBG was rejected as non-commercial; onnxruntime (MIT, Arch extra) is the approved optional-build runtime for the inference slice. Native surface: the Background Remover window is command-reachable (EU-001), lists the approved model with every EU-010 disclosure on screen, downloads only after an explicit confirmation, verifies size+SHA-256+MD5+ONNX-header+tensor-contract before the atomic store rename, discards tampered/oversize/cancelled bytes with stable kebab-case ids, validates user-supplied local models with honest unverified-provenance reporting, and shows model/device/setup/inference rows that state the inference engine is not linked in this build (CPU policy first; Auto/GPU arrive with the runtime). Tests: background-models 10/10 and background-remover-dialog 12/12, full suite 185/185; integrity, opt-in and tensor-contract rules each proven red by disabling the check and watching the matching tests fail; no test touches the network. Remaining: EU-011 inference/preview/save and EU-009's device policy (approved runtime not yet linked), plus live desktop qualification with the real artifact."
+    },
+    {
+      "requirements": [
+        "EU-001",
+        "EU-009",
+        "EU-011"
+      ],
+      "outcome": "Built 2026-11-20 (the inference half of backlog item 2 on decision EU-009-010-011-BACKGROUND-MODEL-SUPPLY-2026-11-20): the approved onnxruntime-cpu 1.29.0 (MIT, optional at build time exactly like libgcrypt, pkg-config libonnxruntime) is linked and the Background Remover now removes backgrounds. The engine opens the model (cache per path+device), cross-checks the session's tensor contract against the catalogue at open (the runtime is the second gate after the bounded header parse), runs the input through the live session with a registered RunOptions so a GUI cancel terminates mid-flight, and validates the output's type and shape before composing. The core pipeline encodes the decided preprocessing (RGB, smooth 320x320, x/255 then ImageNet mean/std - the original U-2-Net domain, not rembg's per-image /max) and composes the decided alpha (min-max, floor, smooth resize to source dimensions, only the alpha byte changes; a constant mask is defined, non-finite refused). The window offers Auto/CPU/GPU from the linked runtime's providers (CPU-only builds answer an explicit GPU request with model-device-unavailable), revalidates the store model's pinned integrity before every run, shows a live preview, saves atomically with the source retained byte-identical, and reports every failure with its stable kebab-case id. Tests: onnx-mask-engine 8/8 against real CPU inference (hand-encoded executable ReduceMean fixture; the nodeless header fixture is refused by the runtime), background-models 15/15, background-remover-dialog 19/19, full suite 186/186; the alpha policy, the session contract gate and the per-run provenance revalidation were each proven red by disabling the rule and watching the matching tests fail; one real memory-safety bug (an out-of-bounds scanline read in the tensor encoder) was caught by exactly the real-runtime engine test before it could land. The real 4.6 MB u2netp artifact ran once out-of-band through the production engine (CPU provider, source dimensions preserved, alpha defined everywhere). Remaining: live desktop qualification with the real artifact on real photos and visual quality acceptance."
     }
   ],
   "audit_method": "All 16 capabilities /345 IDs revalidated against current source and tests; unchanged bodies compared to the previous complete review, changed paths and approved contracts inspected. Existing suite passes but direct current-production HTTP probe exposes the P1 2xx/truncated-body accounting gap. No release or security acceptance inferred.",
@@ -3907,10 +3927,10 @@
     }
   ],
   "raw_trace_counts": {
-    "implemented": 186,
+    "implemented": 188,
     "not-applicable": 1,
-    "not-started": 17,
-    "partial": 121
+    "not-started": 15,
+    "partial": 120
   },
   "full_audit_counts": {
     "blocked": 32,

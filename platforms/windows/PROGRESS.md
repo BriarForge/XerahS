@@ -7,9 +7,9 @@ Product Contract **0.4.5**. Percentages are **recorded implementation coverage**
 | Platform | Implementation coverage | Implemented / desktop requirements |
 |---|---:|---:|
 | [macOS](../macos/PROGRESS.md) | **0.0%** | 0 / 324 |
-| [Linux](../linux/PROGRESS.md) | **57.4%** | 186 / 324 |
+| [Linux](../linux/PROGRESS.md) | **58.0%** | 188 / 324 |
 | [Windows](PROGRESS.md) | **0.0%** | 0 / 324 |
-| **Overall desktop** | **19.1%** | **186 / 972 platform-requirement pairs** |
+| **Overall desktop** | **19.3%** | **188 / 972 platform-requirement pairs** |
 
 Only requirements explicitly marked `implemented` in a platform traceability map receive credit. Partial, not-started and missing/unassessed rows receive no credit. Overall sums the three platforms' implemented rows and divides by their combined desktop requirement count.
 

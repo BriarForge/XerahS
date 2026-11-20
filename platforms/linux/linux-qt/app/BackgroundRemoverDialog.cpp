@@ -1,6 +1,7 @@
 #include "BackgroundRemoverDialog.h"
 
 #include "NativeAccessibility.h"
+#include "OnnxMaskEngine.h"
 
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -15,8 +16,10 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QPixmap>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QSaveFile>
 #include <QStandardPaths>
 #include <QVBoxLayout>
 
@@ -36,6 +39,7 @@ QString humanSize(qint64 bytes) {
 
 BackgroundRemoverDialog::BackgroundRemoverDialog(QWidget *parent) : QDialog(parent) {
   buildUi();
+  setMaskEngine(std::shared_ptr<bg::MaskEngine>(makeOnnxMaskEngine().release()));
   const bg::CatalogueResult catalogue =
       bg::loadCatalogueFromFile(QStringLiteral(XERAHS_BACKGROUND_CATALOGUE));
   if (catalogue.ok) setCatalogue(catalogue.entries);
@@ -137,6 +141,41 @@ void BackgroundRemoverDialog::buildUi() {
   statusForm->addRow(tr("Inference:"), m_inferenceStatus);
   root->addWidget(statusGroup);
 
+  // EU-011: the image journey - choose a source, run the engine, keep the
+  // preview, save the result. The engine work itself runs through OwnedWork.
+  auto *imageGroup = new QGroupBox(tr("Image"), this);
+  auto *imageLayout = new QVBoxLayout(imageGroup);
+  auto *imageActions = new QHBoxLayout;
+  m_chooseImage = new QPushButton(tr("Choose image…"), imageGroup);
+  m_chooseImage->setObjectName(QStringLiteral("chooseImage"));
+  m_deviceCombo = new QComboBox(imageGroup);
+  m_deviceCombo->setObjectName(QStringLiteral("deviceCombo"));
+  m_remove = new QPushButton(tr("Remove background"), imageGroup);
+  m_remove->setObjectName(QStringLiteral("removeBackground"));
+  m_cancelInference = new QPushButton(tr("Cancel"), imageGroup);
+  m_cancelInference->setObjectName(QStringLiteral("cancelInference"));
+  m_cancelInference->hide();
+  m_save = new QPushButton(tr("Save as…"), imageGroup);
+  m_save->setObjectName(QStringLiteral("saveResult"));
+  imageActions->addWidget(m_chooseImage);
+  imageActions->addWidget(new QLabel(tr("Device:"), imageGroup));
+  imageActions->addWidget(m_deviceCombo);
+  imageActions->addWidget(m_remove);
+  imageActions->addWidget(m_cancelInference);
+  imageActions->addStretch(1);
+  imageActions->addWidget(m_save);
+  m_sourcePathLabel = new QLabel(imageGroup);
+  m_sourcePathLabel->setObjectName(QStringLiteral("sourcePath"));
+  m_sourcePathLabel->setWordWrap(true);
+  m_resultPreview = new QLabel(imageGroup);
+  m_resultPreview->setObjectName(QStringLiteral("resultPreview"));
+  m_resultPreview->setAlignment(Qt::AlignCenter);
+  m_resultPreview->setMinimumSize(240, 160);
+  imageLayout->addLayout(imageActions);
+  imageLayout->addWidget(m_sourcePathLabel);
+  imageLayout->addWidget(m_resultPreview);
+  root->addWidget(imageGroup);
+
   m_error = new QLabel(this);
   m_error->setObjectName(QStringLiteral("errorLabel"));
   m_error->setWordWrap(true);
@@ -146,18 +185,17 @@ void BackgroundRemoverDialog::buildUi() {
   connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
   root->addWidget(buttons);
 
-  m_deviceStatus->setText(tr("CPU. Auto and GPU selection need the inference engine, which is not "
-                             "linked in this build."));
-  m_inferenceStatus->setText(tr("Not available in this build: the approved inference engine "
-                                "(onnxruntime, MIT) is not linked. Model download and validation "
-                                "still work."));
-
+  refreshEngineStatus();
   connect(m_modelCombo, &QComboBox::currentIndexChanged, this, [this] { refreshStoreValidation(); });
   connect(m_download, &QPushButton::clicked, this, &BackgroundRemoverDialog::downloadModel);
   connect(m_cancelDownload, &QPushButton::clicked, this, &BackgroundRemoverDialog::cancelDownload);
   connect(m_chooseLocal, &QPushButton::clicked, this, &BackgroundRemoverDialog::chooseLocalModel);
+  connect(m_chooseImage, &QPushButton::clicked, this, &BackgroundRemoverDialog::chooseImage);
+  connect(m_remove, &QPushButton::clicked, this, &BackgroundRemoverDialog::removeBackground);
+  connect(m_cancelInference, &QPushButton::clicked, this, &BackgroundRemoverDialog::cancelInference);
+  connect(m_save, &QPushButton::clicked, this, &BackgroundRemoverDialog::saveResult);
 
-  new NativeAccessibility(*this, tr("Background remover model setup window"));
+  new NativeAccessibility(*this, tr("Background remover window"));
 }
 
 void BackgroundRemoverDialog::setCatalogue(const QList<bg::CatalogueEntry> &entries) {
@@ -198,6 +236,8 @@ QString BackgroundRemoverDialog::inferenceStatus() const { return m_inferenceSta
 QString BackgroundRemoverDialog::errorText() const { return m_error->text(); }
 
 void BackgroundRemoverDialog::setSetupStatus(const QString &text) { m_setupStatus->setText(text); }
+
+void BackgroundRemoverDialog::setInferenceStatus(const QString &text) { m_inferenceStatus->setText(text); }
 
 void BackgroundRemoverDialog::showError(const QString &message) { m_error->setText(message); }
 void BackgroundRemoverDialog::clearError() { m_error->setText(QString()); }
@@ -422,9 +462,182 @@ void BackgroundRemoverDialog::chooseLocalModel() {
   setSetupStatus(tr("Local model selected. Inference is not available in this build."));
 }
 
+void BackgroundRemoverDialog::setMaskEngine(std::shared_ptr<bg::MaskEngine> engine) {
+  m_engine = std::move(engine);
+  if (m_engine) m_engine->resetCancel();
+  // Device availability follows the engine, so the policy chooser is built
+  // here and never reset behind the user's back.
+  m_deviceCombo->clear();
+  if (m_engine) {
+    const bg::EngineInfo info = m_engine->info();
+    m_deviceCombo->addItem(bg::devicePolicyLabel(bg::DevicePolicy::Auto));
+    m_deviceCombo->addItem(bg::devicePolicyLabel(bg::DevicePolicy::Cpu));
+    if (info.gpu) m_deviceCombo->addItem(bg::devicePolicyLabel(bg::DevicePolicy::Gpu));
+  }
+  refreshEngineStatus();
+}
+
+void BackgroundRemoverDialog::setSaveFilePicker(SaveFilePicker picker) { m_savePicker = std::move(picker); }
+
+void BackgroundRemoverDialog::refreshEngineStatus() {
+  // EU-009: the device and inference rows state exactly what this build has.
+  if (!m_engine) {
+    m_deviceStatus->setText(tr("No device policy: no inference engine is linked in this build."));
+    m_inferenceStatus->setText(tr("Not available in this build: the approved inference engine "
+                                  "(onnxruntime, MIT) is not linked. Model download and validation "
+                                  "still work."));
+    m_remove->setEnabled(false);
+    m_save->setEnabled(false);
+    return;
+  }
+  const bg::EngineInfo info = m_engine->info();
+  m_deviceStatus->setText(info.gpu
+                              ? tr("Engine: %1. CPU and GPU (%2) are available.")
+                                    .arg(info.name, info.detail)
+                              : tr("Engine: %1. CPU is available. GPU: no hardware execution "
+                                   "provider is shipped with the linked runtime in this build.")
+                                    .arg(info.name));
+  m_inferenceStatus->setText(m_result.isNull() ? tr("Ready. Choose an image and select Remove background.")
+                                               : tr("Preview ready. Save it or run again."));
+  m_remove->setEnabled(!m_source.isNull());
+}
+
+void BackgroundRemoverDialog::chooseImage() {
+  ModelFilePicker picker = m_picker;
+  if (!picker) {
+    picker = [this] {
+      return QFileDialog::getOpenFileName(this, tr("Choose an image"), QString(),
+                                           tr("Images (*.png *.jpg *.jpeg *.bmp *.webp)"));
+    };
+  }
+  const QString path = picker();
+  if (path.isEmpty()) return;
+  clearError();
+  QImage image(path);
+  if (image.isNull()) {
+    showError(tr("“%1” could not be read as an image.").arg(QFileInfo(path).fileName()));
+    return;
+  }
+  m_source = image;
+  m_sourcePath = path;
+  m_sourcePathLabel->setText(tr("Source: %1 (%2 x %3)")
+                                 .arg(QFileInfo(path).fileName())
+                                 .arg(image.width())
+                                 .arg(image.height()));
+  refreshEngineStatus();
+}
+
+void BackgroundRemoverDialog::removeBackground() {
+  const bg::CatalogueEntry *entry = currentEntry();
+  if (!entry || !m_engine || m_source.isNull() || downloading() || inferring()) return;
+  clearError();
+  m_result = {};
+  m_resultPreview->clear();
+  m_save->setEnabled(false);
+
+  const CatalogueEntry model = *entry;
+  const bool localModel = !m_localModelPath.isEmpty();
+  const QString modelPath = localModel ? m_localModelPath
+                                       : bg::storeModelPath(defaultStoreDirectory(), model.id);
+  const QImage source = m_source.copy();   // detached: the worker owns its copy
+  const auto engine = m_engine;
+  const int deviceIndex = m_deviceCombo->currentIndex();
+  const bg::DevicePolicy device = deviceIndex == 1 ? bg::DevicePolicy::Cpu
+                                    : deviceIndex == 2 ? bg::DevicePolicy::Gpu
+                                                       : bg::DevicePolicy::Auto;
+  engine->resetCancel();
+
+  m_remove->setEnabled(false);
+  m_cancelInference->show();
+  setInferenceStatus(tr("Running…"));
+
+  m_inferenceWork = OwnedWork::run<bg::EngineResult>(
+      this,
+      [source, model, modelPath, localModel, engine, device](const OwnedWork::Context &context) {
+        bg::EngineResult result;
+        if (context.cancelled()) {
+          result.cancelled = true;
+          result.errorId = QStringLiteral("inference-cancelled");
+          return result;
+        }
+        // A store model is revalidated before every run: the adoption check
+        // pins the bytes once, and this catches any later tampering.
+        if (!localModel) {
+          const bg::ValidationResult validation = bg::validateModelFile(modelPath, model);
+          if (validation.status != bg::ValidationStatus::Ok) {
+            result.errorId = validation.errorId();
+            result.message = validation.message();
+            return result;
+          }
+        }
+        if (context.cancelled()) {
+          result.cancelled = true;
+          result.errorId = QStringLiteral("inference-cancelled");
+          return result;
+        }
+        return engine->compute(source, modelPath, model, device);
+      },
+      [this](bg::EngineResult result) {
+        m_cancelInference->hide();
+        m_remove->setEnabled(true);
+        if (result.cancelled) {
+          setInferenceStatus(tr("Cancelled. Nothing was changed."));
+          return;
+        }
+        if (!result.ok) {
+          showError(tr("Background removal failed (%1). %2").arg(result.errorId, result.message));
+          setInferenceStatus(tr("Failed: %1.").arg(result.errorId));
+          return;
+        }
+        m_result = result.image;
+        m_resultPreview->setPixmap(
+            QPixmap::fromImage(m_result).scaled(m_resultPreview->size(), Qt::KeepAspectRatio,
+                                                Qt::SmoothTransformation));
+        m_save->setEnabled(true);
+        setInferenceStatus(tr("Done. Preview ready: %1 x %2, defined alpha.")
+                               .arg(m_result.width())
+                               .arg(m_result.height()));
+      });
+}
+
+void BackgroundRemoverDialog::cancelInference() {
+  if (!inferring()) return;
+  if (m_engine) m_engine->cancel();
+  m_inferenceWork.cancel();
+}
+
+void BackgroundRemoverDialog::saveResult() {
+  if (m_result.isNull()) return;
+  clearError();
+  SaveFilePicker picker = m_savePicker;
+  if (!picker) {
+    picker = [this](const QString &suggested) {
+      return QFileDialog::getSaveFileName(this, tr("Save the cutout"), suggested,
+                                          tr("PNG images (*.png)"));
+    };
+  }
+  const QString suggested =
+      m_sourcePath.isEmpty() ? QStringLiteral("cutout.png")
+                             : QFileInfo(m_sourcePath).absolutePath() + QLatin1Char('/') +
+                                   QFileInfo(m_sourcePath).completeBaseName() + QStringLiteral("-cutout.png");
+  const QString path = picker(suggested);
+  if (path.isEmpty()) return;
+
+  // Atomic write: a failure never truncates an existing file, and the source
+  // is never touched (EU-009: retain the source on failure).
+  QSaveFile file(path);
+  if (!file.open(QIODevice::WriteOnly) || !m_result.save(&file, "PNG") || !file.commit()) {
+    file.cancelWriting();
+    showError(tr("The cutout could not be written (output-write-failed)."));
+    setInferenceStatus(tr("Failed: output-write-failed. The preview and source are unchanged."));
+    return;
+  }
+  setInferenceStatus(tr("Saved: %1.").arg(path));
+}
+
 void BackgroundRemoverDialog::reject() {
-  // EU-017: closing a busy window cancels its download rather than leaving
-  // background work behind.
+  // EU-017: closing a busy window cancels its work rather than leaving
+  // background work behind - the download and the inference alike.
   if (m_reply) {
     disconnect(m_reply, &QNetworkReply::finished, this, nullptr);
     m_reply->abort();
@@ -438,6 +651,12 @@ void BackgroundRemoverDialog::reject() {
     m_progress->hide();
     m_download->setEnabled(true);
     setSetupStatus(tr("Download cancelled on close. Nothing was saved."));
+  }
+  if (inferring()) {
+    if (m_engine) m_engine->cancel();
+    m_inferenceWork.cancel();
+    m_cancelInference->hide();
+    m_remove->setEnabled(true);
   }
   QDialog::reject();
 }

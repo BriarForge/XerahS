@@ -8,6 +8,7 @@
 #include "OnnxFixture.h"
 
 #include <QCryptographicHash>
+#include <QComboBox>
 #include <QDialogButtonBox>
 #include <QElapsedTimer>
 #include <QFile>
@@ -111,6 +112,55 @@ private:
   QTcpServer m_server;
 };
 
+// A scripted mask engine: the dialog tests decide what one compute() returns.
+// The stall mode blocks the worker until cancel() arrives, bounded so a
+// broken test still finishes.
+class FakeEngine final : public xerahs::bg::MaskEngine {
+public:
+  xerahs::bg::EngineInfo info() const override {
+    xerahs::bg::EngineInfo result;
+    result.linked = true;
+    result.name = QStringLiteral("fake-engine 1.0");
+    result.cpu = true;
+    result.detail = QStringLiteral("CPUExecutionProvider");
+    return result;
+  }
+  xerahs::bg::EngineResult compute(const QImage &, const QString &modelPath, const xerahs::bg::CatalogueEntry &,
+                                    xerahs::bg::DevicePolicy device) override {
+    ++calls;
+    lastModelPath = modelPath;
+    lastDevice = device;
+    if (stall) {
+      int waited = 0;
+      while (!m_cancelled.load() && waited < 5000) {
+        QThread::msleep(2);
+        waited += 2;
+      }
+      if (m_cancelled.load()) {
+        xerahs::bg::EngineResult cancelled;
+        cancelled.cancelled = true;
+        cancelled.errorId = QStringLiteral("inference-cancelled");
+        return cancelled;
+      }
+    }
+    xerahs::bg::EngineResult result = scripted;
+    result.image = scripted.image.copy();
+    return result;
+  }
+  void cancel() override { m_cancelled.store(true); }
+  void resetCancel() override { m_cancelled.store(false); }
+  void close() override {}
+
+  int calls = 0;
+  QString lastModelPath;
+  xerahs::bg::DevicePolicy lastDevice = xerahs::bg::DevicePolicy::Auto;
+  bool stall = false;
+  xerahs::bg::EngineResult scripted;   // ok=false unless the test says otherwise
+
+private:
+  std::atomic_bool m_cancelled{false};
+};
+
 }  // namespace
 
 class BackgroundRemoverDialogTest final : public QObject {
@@ -126,17 +176,36 @@ private slots:
   void localModelValidatesAndReportsUnverifiedProvenance();
   void localGarbageModelIsRefused();
   void honestStatusRows();
+  void engineAbsentIsExplained();
+  void removeBackgroundProducesPreviewAndSavesPng();
+  void missingStoreModelRefusesInference();
+  void deviceSelectionReachesTheEngine();
+  void cancelInferenceReportsCancelled();
+  void engineFailureIsShownWithItsId();
+  void closeDuringInferenceCancels();
   void closeDuringDownloadCancels();
 
 private:
   bool pumpUntilDownloadingEnds(BackgroundRemoverDialog &dialog, int timeoutMs = 5000);
   void pump(int cycles = 50);
+  bool pumpUntil(const std::function<bool()> &condition, int timeoutMs = 5000);
 };
 
 bool BackgroundRemoverDialogTest::pumpUntilDownloadingEnds(BackgroundRemoverDialog &dialog, int timeoutMs) {
   QElapsedTimer timer;
   timer.start();
   while (dialog.downloading()) {
+    QCoreApplication::processEvents(QEventLoop::AllEvents);
+    if (timer.elapsed() > timeoutMs) return false;
+    QTest::qSleep(1);
+  }
+  return true;
+}
+
+bool BackgroundRemoverDialogTest::pumpUntil(const std::function<bool()> &condition, int timeoutMs) {
+  QElapsedTimer timer;
+  timer.start();
+  while (!condition()) {
     QCoreApplication::processEvents(QEventLoop::AllEvents);
     if (timer.elapsed() > timeoutMs) return false;
     QTest::qSleep(1);
@@ -316,13 +385,27 @@ void BackgroundRemoverDialogTest::honestStatusRows() {
                                      QUrl(QStringLiteral("https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx")))});
   dialog.show();
 
-  // EU-009: the device and inference rows say exactly what this build has.
+  // EU-009: the device row states the CPU policy; a CPU-only build says so.
   QVERIFY(dialog.deviceStatus().contains("CPU"));
-  QVERIFY(dialog.inferenceStatus().contains("Not available in this build"));
-  QVERIFY(dialog.inferenceStatus().contains("onnxruntime"));
   // The un-downloaded model is reported missing, not silently fetched.
   QVERIFY(dialog.modelStatus().contains("not in your model store"));
   QVERIFY(dialog.setupStatus().contains("without your confirmation", Qt::CaseInsensitive));
+}
+
+void BackgroundRemoverDialogTest::engineAbsentIsExplained() {
+  QTemporaryDir storeDir;
+  BackgroundRemoverDialog dialog;
+  dialog.setStoreDirectory(storeDir.path());
+  dialog.setCatalogue({fixtureEntry(fixture::u2netpLikeModel(),
+                                     QUrl(QStringLiteral("https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx")))});
+  dialog.setMaskEngine(nullptr);   // a build without the optional runtime
+  dialog.show();
+
+  // EU-001: the missing host service is explained, and it is not a waiver.
+  QVERIFY(dialog.inferenceStatus().contains("Not available in this build"));
+  QVERIFY(dialog.inferenceStatus().contains("onnxruntime"));
+  QVERIFY(dialog.deviceStatus().contains("no inference engine is linked"));
+  QVERIFY(!button(dialog, "removeBackground")->isEnabled());
 }
 
 void BackgroundRemoverDialogTest::closeDuringDownloadCancels() {
@@ -347,6 +430,234 @@ void BackgroundRemoverDialogTest::closeDuringDownloadCancels() {
   QVERIFY(!dialog.isVisible());
   QVERIFY(!QFile::exists(storeDir.filePath("u2netp.onnx.download")));
   QVERIFY(dialog.setupStatus().contains("cancelled on close", Qt::CaseInsensitive));
+}
+
+void BackgroundRemoverDialogTest::removeBackgroundProducesPreviewAndSavesPng() {
+  QTemporaryDir storeDir, serveDir;
+  const QByteArray bytes = fixture::u2netpLikeModel();
+  QFile storeModel(storeDir.filePath(QStringLiteral("u2netp.onnx")));
+  QVERIFY(storeModel.open(QIODevice::WriteOnly | QIODevice::Truncate));
+  storeModel.write(bytes);
+  storeModel.close();
+
+  QImage source(9, 6, QImage::Format_RGB32);
+  source.fill(qRgb(120, 130, 140));
+  const QString sourcePath = serveDir.filePath(QStringLiteral("source.png"));
+  QVERIFY(source.save(sourcePath, "PNG"));
+  QFile sourceFile(sourcePath);
+  QVERIFY(sourceFile.open(QIODevice::ReadOnly));
+  const QByteArray sourceBytes = sourceFile.readAll();
+  sourceFile.close();
+
+  auto engine = std::make_shared<FakeEngine>();
+  engine->scripted.ok = true;
+  engine->scripted.image = QImage(9, 6, QImage::Format_ARGB32);
+  engine->scripted.image.fill(qRgba(17, 34, 51, 128));
+
+  BackgroundRemoverDialog dialog;
+  dialog.setStoreDirectory(storeDir.path());
+  dialog.setCatalogue({fixtureEntry(bytes, QUrl::fromLocalFile(serveDir.filePath(QStringLiteral("m.onnx"))))});
+  dialog.setMaskEngine(engine);
+  dialog.setModelFilePicker([sourcePath] { return sourcePath; });
+  const QString savedPath = serveDir.filePath(QStringLiteral("cutout.png"));
+  dialog.setSaveFilePicker([savedPath](const QString &) { return savedPath; });
+  dialog.show();
+
+  dialog.chooseImage();
+  QVERIFY2(dialog.errorText().isEmpty(), qPrintable(dialog.errorText()));
+  dialog.removeBackground();
+  QVERIFY(pumpUntil([&] { return dialog.inferring(); }));
+QVERIFY(pumpUntil([&] { return !dialog.inferring(); }));
+  // EU-011: dimensions, colour and defined alpha arrive in the preview.
+  const QImage result = dialog.resultImage();
+  QVERIFY(!result.isNull());
+  QCOMPARE(result.width(), 9);
+  QCOMPARE(result.height(), 6);
+  QCOMPARE(qAlpha(result.pixel(4, 3)), 128);
+  QCOMPARE(engine->calls, 1);
+  QVERIFY(dialog.inferenceStatus().contains("Preview ready"));
+
+  dialog.saveResult();
+  QVERIFY2(dialog.errorText().isEmpty(), qPrintable(dialog.errorText()));
+  const QImage reloaded(savedPath);
+  QVERIFY(!reloaded.isNull());
+  QCOMPARE(reloaded.width(), 9);
+  QCOMPARE(reloaded.height(), 6);
+  QCOMPARE(qAlpha(reloaded.pixel(4, 3)), 128);
+  QCOMPARE(qRed(reloaded.pixel(4, 3)), 17);
+  QCOMPARE(qGreen(reloaded.pixel(4, 3)), 34);
+  QCOMPARE(qBlue(reloaded.pixel(4, 3)), 51);
+  QVERIFY(dialog.inferenceStatus().contains("Saved"));
+
+  // EU-009: the source file is retained unchanged through save failures and
+  // successes alike.
+  QFile after(sourcePath);
+  QVERIFY(after.open(QIODevice::ReadOnly));
+  QCOMPARE(after.readAll(), sourceBytes);
+}
+
+void BackgroundRemoverDialogTest::missingStoreModelRefusesInference() {
+  QTemporaryDir storeDir, serveDir;
+  const QByteArray bytes = fixture::u2netpLikeModel();
+  QImage source(4, 4, QImage::Format_RGB32);
+  source.fill(qRgb(10, 20, 30));
+  const QString sourcePath = serveDir.filePath(QStringLiteral("source.png"));
+  QVERIFY(source.save(sourcePath, "PNG"));
+
+  auto engine = std::make_shared<FakeEngine>();
+  BackgroundRemoverDialog dialog;
+  dialog.setStoreDirectory(storeDir.path());   // no model placed in the store
+  dialog.setCatalogue({fixtureEntry(bytes, QUrl::fromLocalFile(serveDir.filePath(QStringLiteral("m.onnx"))))});
+  dialog.setMaskEngine(engine);
+  dialog.setModelFilePicker([sourcePath] { return sourcePath; });
+  dialog.show();
+
+  dialog.chooseImage();
+  dialog.removeBackground();
+QVERIFY(pumpUntil([&] { return !dialog.inferring(); }));
+  // The typed store failure surfaces and the engine is never invoked.
+  QCOMPARE(engine->calls, 0);
+  QVERIFY(dialog.inferenceStatus().contains("model-missing"));
+  QVERIFY(dialog.errorText().contains("model-missing") || dialog.errorText().isEmpty());
+  QVERIFY(dialog.resultImage().isNull());
+}
+
+void BackgroundRemoverDialogTest::deviceSelectionReachesTheEngine() {
+  QTemporaryDir storeDir, serveDir;
+  const QByteArray bytes = fixture::u2netpLikeModel();
+  QFile storeModel(storeDir.filePath(QStringLiteral("u2netp.onnx")));
+  QVERIFY(storeModel.open(QIODevice::WriteOnly | QIODevice::Truncate));
+  storeModel.write(bytes);
+  storeModel.close();
+  QImage source(4, 4, QImage::Format_RGB32);
+  source.fill(qRgb(10, 20, 30));
+  const QString sourcePath = serveDir.filePath(QStringLiteral("source.png"));
+  QVERIFY(source.save(sourcePath, "PNG"));
+
+  auto engine = std::make_shared<FakeEngine>();
+  engine->scripted.ok = true;
+  engine->scripted.image = QImage(4, 4, QImage::Format_ARGB32);
+  engine->scripted.image.fill(qRgba(1, 2, 3, 200));
+
+  BackgroundRemoverDialog dialog;
+  dialog.setStoreDirectory(storeDir.path());
+  dialog.setCatalogue({fixtureEntry(bytes, QUrl::fromLocalFile(serveDir.filePath(QStringLiteral("m.onnx"))))});
+  dialog.setMaskEngine(engine);
+  dialog.setModelFilePicker([sourcePath] { return sourcePath; });
+  dialog.show();
+
+  // EU-009 device policy: a CPU-only engine offers Auto and CPU only, and
+  // the selection is what the engine receives.
+  auto *combo = dialog.findChild<QComboBox *>(QStringLiteral("deviceCombo"));
+  QVERIFY(combo);
+  QCOMPARE(combo->count(), 2);
+  combo->setCurrentIndex(1);   // CPU
+
+  dialog.chooseImage();
+  dialog.removeBackground();
+QVERIFY(pumpUntil([&] { return !dialog.inferring(); }));
+  QCOMPARE(engine->calls, 1);
+  QCOMPARE(engine->lastDevice, xerahs::bg::DevicePolicy::Cpu);
+  QCOMPARE(engine->lastModelPath, storeDir.filePath(QStringLiteral("u2netp.onnx")));
+}
+
+void BackgroundRemoverDialogTest::cancelInferenceReportsCancelled() {
+  QTemporaryDir storeDir, serveDir;
+  const QByteArray bytes = fixture::u2netpLikeModel();
+  QFile storeModel(storeDir.filePath(QStringLiteral("u2netp.onnx")));
+  QVERIFY(storeModel.open(QIODevice::WriteOnly | QIODevice::Truncate));
+  storeModel.write(bytes);
+  storeModel.close();
+  QImage source(4, 4, QImage::Format_RGB32);
+  source.fill(qRgb(10, 20, 30));
+  const QString sourcePath = serveDir.filePath(QStringLiteral("source.png"));
+  QVERIFY(source.save(sourcePath, "PNG"));
+
+  auto engine = std::make_shared<FakeEngine>();
+  engine->stall = true;
+  BackgroundRemoverDialog dialog;
+  dialog.setStoreDirectory(storeDir.path());
+  dialog.setCatalogue({fixtureEntry(bytes, QUrl::fromLocalFile(serveDir.filePath(QStringLiteral("m.onnx"))))});
+  dialog.setMaskEngine(engine);
+  dialog.setModelFilePicker([sourcePath] { return sourcePath; });
+  dialog.show();
+
+  dialog.chooseImage();
+  dialog.removeBackground();
+  QVERIFY(pumpUntil([&] { return engine->calls == 1; }));
+  dialog.cancelInference();
+QVERIFY(pumpUntil([&] { return !dialog.inferring(); }));
+  QVERIFY(dialog.inferenceStatus().contains("Cancelled"));
+  QVERIFY(dialog.resultImage().isNull());
+}
+
+void BackgroundRemoverDialogTest::engineFailureIsShownWithItsId() {
+  QTemporaryDir storeDir, serveDir;
+  const QByteArray bytes = fixture::u2netpLikeModel();
+  QFile storeModel(storeDir.filePath(QStringLiteral("u2netp.onnx")));
+  QVERIFY(storeModel.open(QIODevice::WriteOnly | QIODevice::Truncate));
+  storeModel.write(bytes);
+  storeModel.close();
+  QImage source(4, 4, QImage::Format_RGB32);
+  source.fill(qRgb(10, 20, 30));
+  const QString sourcePath = serveDir.filePath(QStringLiteral("source.png"));
+  QVERIFY(source.save(sourcePath, "PNG"));
+
+  auto engine = std::make_shared<FakeEngine>();
+  engine->scripted.ok = false;
+  engine->scripted.errorId = QStringLiteral("model-memory");
+  engine->scripted.message = QStringLiteral("The engine ran out of memory.");
+
+  BackgroundRemoverDialog dialog;
+  dialog.setStoreDirectory(storeDir.path());
+  dialog.setCatalogue({fixtureEntry(bytes, QUrl::fromLocalFile(serveDir.filePath(QStringLiteral("m.onnx"))))});
+  dialog.setMaskEngine(engine);
+  dialog.setModelFilePicker([sourcePath] { return sourcePath; });
+  dialog.show();
+
+  dialog.chooseImage();
+  dialog.removeBackground();
+QVERIFY(pumpUntil([&] { return !dialog.inferring(); }));
+  // EU-011: the failure split reaches the user with its stable id, and no
+  // stale preview is kept.
+  QVERIFY(dialog.inferenceStatus().contains("model-memory"));
+  QVERIFY(dialog.errorText().contains("model-memory"));
+  QVERIFY(dialog.resultImage().isNull());
+  QVERIFY(!button(dialog, "saveResult")->isEnabled());
+}
+
+void BackgroundRemoverDialogTest::closeDuringInferenceCancels() {
+  QTemporaryDir storeDir, serveDir;
+  const QByteArray bytes = fixture::u2netpLikeModel();
+  QFile storeModel(storeDir.filePath(QStringLiteral("u2netp.onnx")));
+  QVERIFY(storeModel.open(QIODevice::WriteOnly | QIODevice::Truncate));
+  storeModel.write(bytes);
+  storeModel.close();
+  QImage source(4, 4, QImage::Format_RGB32);
+  source.fill(qRgb(10, 20, 30));
+  const QString sourcePath = serveDir.filePath(QStringLiteral("source.png"));
+  QVERIFY(source.save(sourcePath, "PNG"));
+
+  auto engine = std::make_shared<FakeEngine>();
+  engine->stall = true;
+  BackgroundRemoverDialog dialog;
+  dialog.setStoreDirectory(storeDir.path());
+  dialog.setCatalogue({fixtureEntry(bytes, QUrl::fromLocalFile(serveDir.filePath(QStringLiteral("m.onnx"))))});
+  dialog.setMaskEngine(engine);
+  dialog.setModelFilePicker([sourcePath] { return sourcePath; });
+  dialog.show();
+
+  dialog.chooseImage();
+  dialog.removeBackground();
+  QVERIFY(pumpUntil([&] { return engine->calls == 1; }));
+  // The real close path: the Close button rejects the dialog and cancels
+  // the inference rather than leaving work behind (EU-017).
+  auto *box = dialog.findChild<QDialogButtonBox *>();
+  auto *close = box->button(QDialogButtonBox::Close);
+  QVERIFY(close);
+  close->click();
+  QVERIFY(!dialog.isVisible());
+  pump(20);
 }
 
 QTEST_MAIN(BackgroundRemoverDialogTest)
