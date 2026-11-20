@@ -32,9 +32,17 @@ packaged in Arch extra as `onnxruntime-cpu 1.29.0`, already used by packaged
 desktop apps such as calibre and darktable); it stays optional at build
 time exactly like libgcrypt — without it the Background Remover explains
 that its inference engine is not linked while model setup still works, and a
-build without it is not a platform waiver. CPU is the device policy for the
-first inference build; Auto and GPU report honestly from the linked
-runtime's execution providers. No library or model is downloaded at build
+build without it is not a platform waiver. The engine is implemented and
+tested on this host against the real 1.29.0 runtime: the optional CMake
+dependency is discovered with pkg-config (libonnxruntime), the session
+cross-checks the catalogue tensor contract at open, CPU is the device
+policy, and an explicit GPU request on a CPU-only build is the typed
+`model-device-unavailable` failure. Tests run real CPU inference against
+hand-encoded executable ONNX fixtures, so no model file is downloaded or
+committed; the real 4.6 MB artifact was additionally run once out-of-band
+through the production engine. CPU is the device policy for the first
+inference build; Auto and GPU report honestly from the linked runtime's
+execution providers. No library or model is downloaded at build
 time, and the model download itself never happens in tests (local files and
 loopback sockets only).
 

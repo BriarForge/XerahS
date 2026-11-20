@@ -1266,7 +1266,7 @@ add_test(NAME file-hash COMMAND file-hash-test)
 # approved contract catalogue and validates model bytes without the network.
 add_executable(background-models-test tests/BackgroundModelsTest.cpp)
 set_target_properties(background-models-test PROPERTIES AUTOMOC ON)
-target_link_libraries(background-models-test PRIVATE xerahs_core Qt6::Test)
+target_link_libraries(background-models-test PRIVATE xerahs_core Qt6::Gui Qt6::Test)
 target_compile_definitions(background-models-test PRIVATE
   XERAHS_BACKGROUND_CATALOGUE="${XERAHS_REPO_ROOT}/product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json")
 add_test(NAME background-models COMMAND background-models-test)
@@ -1274,15 +1274,27 @@ set_tests_properties(background-models PROPERTIES TIMEOUT 30)
 
 # EDITOR-UTILITIES-001 / EU-009, EU-010: the Background Remover window. The
 # approved contract catalogue is a compile-time path; tests inject their own
-# catalogue, store directory and file/confirm seams.
+# catalogue, store directory and file/confirm seams. The approved inference
+# runtime is optional at build time exactly like libgcrypt: without it the
+# factory returns nullptr and the window reports the engine as not linked.
+pkg_check_modules(XERAHS_ONNXRUNTIME QUIET IMPORTED_TARGET libonnxruntime)
 add_library(xerahs_background_remover STATIC
   app/BackgroundRemoverDialog.cpp
-  app/BackgroundRemoverDialog.h)
+  app/BackgroundRemoverDialog.h
+  app/OnnxMaskEngine.cpp
+  app/OnnxMaskEngine.h)
 set_target_properties(xerahs_background_remover PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_background_remover PUBLIC app)
 target_link_libraries(xerahs_background_remover PUBLIC xerahs_core Qt6::Widgets PRIVATE Qt6::Network)
 target_compile_definitions(xerahs_background_remover PRIVATE
   XERAHS_BACKGROUND_CATALOGUE="${XERAHS_REPO_ROOT}/product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json")
+if(TARGET PkgConfig::XERAHS_ONNXRUNTIME)
+  target_compile_definitions(xerahs_background_remover PRIVATE XERAHS_ONNXRUNTIME=1)
+  target_link_libraries(xerahs_background_remover PRIVATE PkgConfig::XERAHS_ONNXRUNTIME)
+  message(STATUS "Background remover: onnxruntime ${XERAHS_ONNXRUNTIME_VERSION} linked (CPU inference enabled)")
+else()
+  message(STATUS "Background remover: optional onnxruntime is not installed; the engine is reported as not linked")
+endif()
 target_compile_options(xerahs_background_remover PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(xerahs_app PUBLIC xerahs_background_remover)
 
@@ -1293,6 +1305,20 @@ target_compile_definitions(background-remover-dialog-test PRIVATE
   XERAHS_BACKGROUND_CATALOGUE="${XERAHS_REPO_ROOT}/product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json")
 add_test(NAME background-remover-dialog COMMAND background-remover-dialog-test)
 set_tests_properties(background-remover-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 60)
+
+# EU-011: the real inference engine, tested only when the approved optional
+# runtime is actually linked; the fixtures are hand-encoded executable models
+# (tests/OnnxFixture.h), so no network and no real model file is needed.
+if(TARGET PkgConfig::XERAHS_ONNXRUNTIME)
+  add_executable(onnx-mask-engine-test tests/OnnxMaskEngineTest.cpp)
+  set_target_properties(onnx-mask-engine-test PROPERTIES AUTOMOC ON)
+  target_include_directories(onnx-mask-engine-test PRIVATE app tests)
+  target_link_libraries(onnx-mask-engine-test PRIVATE xerahs_background_remover Qt6::Test)
+  target_compile_definitions(onnx-mask-engine-test PRIVATE
+    XERAHS_BACKGROUND_CATALOGUE="${XERAHS_REPO_ROOT}/product-contract/capabilities/EDITOR-UTILITIES-001/background-model-catalogue.json")
+  add_test(NAME onnx-mask-engine COMMAND onnx-mask-engine-test)
+  set_tests_properties(onnx-mask-engine PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 90)
+endif()
 
 add_executable(hash-checker-dialog-test tests/HashCheckerDialogTest.cpp)
 set_target_properties(hash-checker-dialog-test PROPERTIES AUTOMOC ON)

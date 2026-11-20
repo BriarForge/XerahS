@@ -6,9 +6,12 @@
 // (EU-010: nothing is executed or kept from an unverified artifact).
 #pragma once
 
+#include <QImage>
 #include <QList>
 #include <QString>
 #include <QVector>
+
+#include <memory>
 
 namespace xerahs::bg {
 
@@ -138,5 +141,83 @@ enum class AdoptStatus { Ok, NotVerified, MoveFailed };
 // validation error id when the adoption is refused.
 AdoptStatus adoptModel(const QString &tempPath, const QString &storeDir, const CatalogueEntry &entry,
                        QString *detail = nullptr);
+
+// --- EU-011: the inference pipeline (Qt Core; QtGui supplies QImage only) ---
+
+// Encodes the source image as the catalogue model's float32 input tensor:
+// RGB, smooth-resized to the contract size, each channel scaled to the
+// 0..1 domain the recorded mean/std are defined against (the original
+// U-2-Net preprocessing; rembg divides by each image's own maximum instead,
+// which the decision record does not adopt), then (x - mean) / std, packed
+// CHW little-endian. The size always equals the entry's pinned input dims.
+enum class PipelineStatus { Ok, ImageUnusable, ContractUnsupported, MaskInvalid, MemoryFailed };
+struct PipelineInput {
+  PipelineStatus status = PipelineStatus::Ok;
+  QByteArray tensor;
+  QString errorId() const;      // "" or "image-unusable" / "model-contract-mismatch" / "model-memory"
+  QString message() const;
+};
+PipelineInput encodeInputTensor(const QImage &source, const CatalogueEntry &entry);
+
+// Composes the alpha output from the raw first-output mask per the decided
+// policy: min-max normalize (a constant mask is defined, not NaN: alpha 255
+// when the constant is positive, else 0), floor to 0..255, smooth-resize to
+// the source dimensions, and the source colour preserved with only the alpha
+// byte replaced. Non-finite mask values are refused whole.
+struct PipelineOutput {
+  PipelineStatus status = PipelineStatus::Ok;
+  QImage image;                 // ARGB32, source dimensions, defined alpha
+  QString errorId() const;      // "" or "model-output-invalid" / "model-memory"
+  QString message() const;
+};
+PipelineOutput composeMaskedImage(const QImage &source, const QVector<float> &rawMask,
+                                  const CatalogueEntry &entry);
+
+// --- EU-009/EU-011: the mask engine port ---
+// The production implementation links the approved onnxruntime (MIT),
+// optional at build time exactly like libgcrypt: without it the factory
+// returns nullptr and the window reports the engine as not linked. Tests
+// implement their own engine.
+
+struct EngineInfo {
+  bool linked = false;
+  QString name;                 // e.g. "onnxruntime 1.29.0"
+  bool cpu = false;
+  bool gpu = false;             // a hardware execution provider is available
+  QString detail;               // provider detail for the device row
+};
+
+enum class DevicePolicy { Auto, Cpu, Gpu };
+QString devicePolicyId(DevicePolicy policy);       // "auto" / "cpu" / "gpu"
+QString devicePolicyLabel(DevicePolicy policy);    // "Auto" / "CPU" / "GPU"
+
+struct EngineResult {
+  bool ok = false;
+  bool cancelled = false;
+  QImage image;                  // the composed preview/output on success
+  // One of the EU-011 failure ids: "model-engine-open-failed" (model),
+  // "model-device-unavailable" (device), "model-memory" (memory),
+  // "model-inference-failed" (inference), "model-output-invalid" (output),
+  // "model-contract-mismatch" (the session's contract disagrees with the
+  // catalogue), "model-input-invalid" (the caller's tensor), or
+  // "image-unusable"; "inference-cancelled" with cancelled=true.
+  QString errorId, message;
+};
+
+class MaskEngine {
+public:
+  virtual ~MaskEngine();
+  virtual EngineInfo info() const = 0;
+  // The whole pipeline for one image: open the model (cached per path),
+  // preprocess, run, compose. Runs off the GUI thread; callers pass a
+  // detached copy of the source. The source is never modified.
+  virtual EngineResult compute(const QImage &source, const QString &modelPath, const CatalogueEntry &entry,
+                               DevicePolicy device) = 0;
+  // Cooperative and cross-thread: a cancelled compute returns
+  // cancelled=true without touching anything.
+  virtual void cancel() = 0;
+  virtual void resetCancel() = 0;
+  virtual void close() = 0;
+};
 
 }  // namespace xerahs::bg

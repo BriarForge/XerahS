@@ -12,6 +12,9 @@
 #include <QTemporaryDir>
 #include <QTest>
 
+#include <cmath>
+#include <limits>
+
 using namespace xerahs::bg;
 namespace fixture = OnnxFixture;
 
@@ -87,6 +90,11 @@ private slots:
   void tensorContractMatchingIsStrict();
   void validateModelFileVerifiesPinnedIntegrity();
   void adoptModelKeepsTheStoreSafe();
+  void encodeInputTensorMatchesTheDecidedPolicy();
+  void encodeInputTensorRefusesUnusableInputs();
+  void composeMaskedImageProducesTheDecidedAlpha();
+  void composeMaskedImageDegenerateConstantIsDefined();
+  void composeMaskedImageRefusesInvalidMasks();
 
 private:
   QString catalogueJson() const;
@@ -324,6 +332,153 @@ void BackgroundModelsTest::adoptModelKeepsTheStoreSafe() {
   QCOMPARE(adoptModel(writeTemp(dir, "good2.download", good), blocker + QStringLiteral("/sub"), entry, &detail),
            AdoptStatus::MoveFailed);
   QCOMPARE(detail, QStringLiteral("store-dir-failed"));
+}
+
+// --- EU-011: the inference pipeline ---
+
+namespace {
+
+// A 320x320 source with a hard colour edge. Same-size smooth scaling is
+// pixel-exact, so every expected tensor value below is computed from first
+// principles, not from the implementation.
+QImage hardEdgeImage() {
+  QImage image(320, 320, QImage::Format_RGB888);
+  for (int y = 0; y < 320; ++y)
+    for (int x = 0; x < 320; ++x)
+      image.setPixel(x, y, x < 160 ? qRgb(255, 0, 0) : qRgb(0, 0, 255));
+  return image;
+}
+
+float normalizedChannel(int value, int channel, const CatalogueEntry &entry) {
+  return float((value / 255.0 - entry.preprocess.mean[channel]) / entry.preprocess.std[channel]);
+}
+
+// A synthetic entry whose output contract matches a small source image, so
+// the mask resize is the pixel-exact same-size identity.
+CatalogueEntry composeEntry(int width, int height) {
+  CatalogueEntry entry = fixtureEntry(fixture::u2netpLikeModel());
+  TensorDim rows, columns;
+  rows.value = height;
+  columns.value = width;
+  entry.firstOutput.dims = {TensorDim{1, {}}, TensorDim{1, {}}, rows, columns};
+  return entry;
+}
+
+}  // namespace
+
+void BackgroundModelsTest::encodeInputTensorMatchesTheDecidedPolicy() {
+  const CatalogueEntry entry = fixtureEntry(fixture::u2netpLikeModel());
+  const QImage source = hardEdgeImage();
+  const PipelineInput input = encodeInputTensor(source, entry);
+  QCOMPARE(input.status, PipelineStatus::Ok);
+  QCOMPARE(input.tensor.size(), qsizetype(1 * 3 * 320 * 320 * int(sizeof(float))));
+
+  const auto *values = reinterpret_cast<const float *>(input.tensor.constData());
+  const auto at = [values](int channel, int y, int x) {
+    return values[(qsizetype(channel) * 320 + y) * qsizetype(320) + x];
+  };
+  // Left half pure red, right half pure blue: CHW layout, decided mean/std.
+  for (const QPoint point : {QPoint(40, 160), QPoint(150, 20), QPoint(0, 0), QPoint(159, 319)}) {
+    QCOMPARE(at(0, point.y(), point.x()), normalizedChannel(255, 0, entry));
+    QCOMPARE(at(1, point.y(), point.x()), normalizedChannel(0, 1, entry));
+    QCOMPARE(at(2, point.y(), point.x()), normalizedChannel(0, 2, entry));
+  }
+  for (const QPoint point : {QPoint(200, 160), QPoint(319, 0), QPoint(250, 300)}) {
+    QCOMPARE(at(0, point.y(), point.x()), normalizedChannel(0, 0, entry));
+    QCOMPARE(at(1, point.y(), point.x()), normalizedChannel(0, 1, entry));
+    QCOMPARE(at(2, point.y(), point.x()), normalizedChannel(255, 2, entry));
+  }
+}
+
+void BackgroundModelsTest::encodeInputTensorRefusesUnusableInputs() {
+  const CatalogueEntry entry = fixtureEntry(fixture::u2netpLikeModel());
+  const PipelineInput nullImage = encodeInputTensor(QImage(), entry);
+  QCOMPARE(nullImage.status, PipelineStatus::ImageUnusable);
+  QCOMPARE(nullImage.errorId(), QStringLiteral("image-unusable"));
+
+  CatalogueEntry channels = entry;
+  TensorDim one;
+  one.value = 1;
+  channels.input.dims[1] = one;   // a contract the pipeline cannot encode
+  const PipelineInput wrongContract = encodeInputTensor(hardEdgeImage(), channels);
+  QCOMPARE(wrongContract.status, PipelineStatus::ContractUnsupported);
+  QCOMPARE(wrongContract.errorId(), QStringLiteral("model-contract-mismatch"));
+}
+
+void BackgroundModelsTest::composeMaskedImageProducesTheDecidedAlpha() {
+  const int width = 13, height = 21;
+  const CatalogueEntry entry = composeEntry(width, height);
+  QImage source(width, height, QImage::Format_RGB32);
+  for (int y = 0; y < height; ++y)
+    for (int x = 0; x < width; ++x)
+      source.setPixel(x, y, qRgb(30 + x, 60 + y, 90));
+  source.setPixel(5, 7, qRgb(200, 100, 50));
+
+  // A mask ramp along x: min-max normalization is the identity here, so the
+  // decided alpha is floor(mask * 255) with the source colour untouched.
+  QVector<float> mask;
+  mask.reserve(width * height);
+  for (int y = 0; y < height; ++y)
+    for (int x = 0; x < width; ++x)
+      mask.append(float(x) / float(width - 1));
+
+  const PipelineOutput output = composeMaskedImage(source, mask, entry);
+  QCOMPARE(output.status, PipelineStatus::Ok);
+  QCOMPARE(output.image.width(), width);
+  QCOMPARE(output.image.height(), height);
+  QCOMPARE(output.image.format(), QImage::Format_ARGB32);
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      if (x == 5 && y == 7) continue;   // the deliberately marked pixel, checked below
+      const QRgb pixel = output.image.pixel(x, y);
+      QCOMPARE(qAlpha(pixel), int(std::floor(float(x) / float(width - 1) * 255.0f)));
+      QCOMPARE(qRed(pixel), 30 + x);
+      QCOMPARE(qGreen(pixel), 60 + y);
+      QCOMPARE(qBlue(pixel), 90);
+    }
+  }
+  const QRgb marked = output.image.pixel(5, 7);
+  QCOMPARE(qRed(marked), 200);
+  QCOMPARE(qGreen(marked), 100);
+  QCOMPARE(qBlue(marked), 50);
+}
+
+void BackgroundModelsTest::composeMaskedImageDegenerateConstantIsDefined() {
+  const int width = 5, height = 4;
+  const CatalogueEntry entry = composeEntry(width, height);
+  QImage source(width, height, QImage::Format_RGB32);
+  source.fill(qRgb(10, 20, 30));
+
+  QVector<float> positive(width * height, 0.3f);
+  const PipelineOutput foreground = composeMaskedImage(source, positive, entry);
+  QCOMPARE(foreground.status, PipelineStatus::Ok);
+  QCOMPARE(qAlpha(foreground.image.pixel(2, 2)), 255);
+
+  QVector<float> negative(width * height, -0.3f);
+  const PipelineOutput background = composeMaskedImage(source, negative, entry);
+  QCOMPARE(background.status, PipelineStatus::Ok);
+  QCOMPARE(qAlpha(background.image.pixel(2, 2)), 0);
+}
+
+void BackgroundModelsTest::composeMaskedImageRefusesInvalidMasks() {
+  const int width = 5, height = 4;
+  const CatalogueEntry entry = composeEntry(width, height);
+  QImage source(width, height, QImage::Format_RGB32);
+  source.fill(qRgb(10, 20, 30));
+
+  QVector<float> wrongCount(width * height + 1, 0.5f);
+  const PipelineOutput wrong = composeMaskedImage(source, wrongCount, entry);
+  QCOMPARE(wrong.status, PipelineStatus::MaskInvalid);
+  QCOMPARE(wrong.errorId(), QStringLiteral("model-output-invalid"));
+
+  QVector<float> withNaN(width * height, 0.5f);
+  withNaN[2] = std::numeric_limits<float>::quiet_NaN();
+  const PipelineOutput broken = composeMaskedImage(source, withNaN, entry);
+  QCOMPARE(broken.status, PipelineStatus::MaskInvalid);
+  QCOMPARE(broken.errorId(), QStringLiteral("model-output-invalid"));
+
+  const PipelineOutput nullImage = composeMaskedImage(QImage(), QVector<float>(width * height, 0.5f), entry);
+  QCOMPARE(nullImage.status, PipelineStatus::ImageUnusable);
 }
 
 QTEST_MAIN(BackgroundModelsTest)

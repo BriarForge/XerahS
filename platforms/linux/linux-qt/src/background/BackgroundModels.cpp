@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QImage>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -12,6 +13,7 @@
 #include <QRegularExpression>
 #include <QUrl>
 
+#include <algorithm>
 #include <cmath>
 
 namespace xerahs::bg {
@@ -696,6 +698,219 @@ AdoptStatus adoptModel(const QString &tempPath, const QString &storeDir, const C
     return AdoptStatus::MoveFailed;
   }
   return AdoptStatus::Ok;
+}
+
+// --- EU-011: the inference pipeline ---
+
+namespace {
+
+// The product of a pinned input/output contract, or -1 when a dim is symbolic
+// (catalogue contracts are concrete, so callers can rely on a positive count).
+qint64 contractElementCount(const TensorContract &contract) {
+  qint64 count = 1;
+  for (const TensorDim &dim : contract.dims) {
+    if (!dim.known()) return -1;
+    count *= dim.value;
+  }
+  return count;
+}
+
+}  // namespace
+
+QString PipelineInput::errorId() const {
+  switch (status) {
+  case PipelineStatus::Ok: return {};
+  case PipelineStatus::ImageUnusable: return QStringLiteral("image-unusable");
+  case PipelineStatus::ContractUnsupported: return QStringLiteral("model-contract-mismatch");
+  case PipelineStatus::MaskInvalid: return QStringLiteral("model-output-invalid");
+  case PipelineStatus::MemoryFailed: return QStringLiteral("model-memory");
+  }
+  return {};
+}
+
+QString PipelineInput::message() const {
+  switch (status) {
+  case PipelineStatus::Ok: return {};
+  case PipelineStatus::ImageUnusable:
+    return QStringLiteral("The image could not be read for background removal.");
+  case PipelineStatus::ContractUnsupported:
+    return QStringLiteral("The model's input contract is not one the pipeline can encode.");
+  case PipelineStatus::MaskInvalid:
+    return QStringLiteral("The model produced an unusable mask.");
+  case PipelineStatus::MemoryFailed:
+    return QStringLiteral("Not enough memory to prepare the model input.");
+  }
+  return {};
+}
+
+PipelineInput encodeInputTensor(const QImage &source, const CatalogueEntry &entry) {
+  PipelineInput result;
+  if (source.isNull()) {
+    result.status = PipelineStatus::ImageUnusable;
+    return result;
+  }
+  // The pipeline encodes one RGB image batch: rank 4, batch 1, three channels.
+  if (entry.input.dims.size() != 4 || !entry.input.dims.at(0).known() ||
+      entry.input.dims.at(0).value != 1 || !entry.input.dims.at(1).known() ||
+      entry.input.dims.at(1).value != 3 || !entry.input.dims.at(2).known() ||
+      !entry.input.dims.at(3).known()) {
+    result.status = PipelineStatus::ContractUnsupported;
+    return result;
+  }
+  const qint64 height = entry.input.dims.at(2).value;
+  const qint64 width = entry.input.dims.at(3).value;
+  const qsizetype count = qsizetype(height * width * 3);
+  try {
+    // Smooth resize matches the recorded "resize" step (the reference uses a
+    // Lanczos-class filter); RGB is the recorded colour order.
+    const QImage scaled = source.convertToFormat(QImage::Format_RGB888)
+                              .scaled(int(width), int(height), Qt::IgnoreAspectRatio,
+                                      Qt::SmoothTransformation);
+    QByteArray tensor;
+    tensor.resize(count * int(sizeof(float)));
+    auto *values = reinterpret_cast<float *>(tensor.data());
+    for (int y = 0; y < scaled.height(); ++y) {
+      const uchar *line = scaled.constScanLine(y);
+      for (int x = 0; x < scaled.width(); ++x) {
+        const int offset = x * 3;
+        for (int channel = 0; channel < 3; ++channel) {
+          const double raw = double(line[offset + channel]) / 255.0;
+          const double normalized = (raw - entry.preprocess.mean[channel]) / entry.preprocess.std[channel];
+          values[(qsizetype(channel) * scaled.height() + y) * scaled.width() + x] =
+              static_cast<float>(normalized);
+        }
+      }
+    }
+    result.tensor = tensor;
+    result.status = PipelineStatus::Ok;
+    return result;
+  } catch (const std::bad_alloc &) {
+    result.status = PipelineStatus::MemoryFailed;
+    return result;
+  }
+}
+
+QString PipelineOutput::errorId() const {
+  switch (status) {
+  case PipelineStatus::Ok: return {};
+  case PipelineStatus::ImageUnusable: return QStringLiteral("image-unusable");
+  case PipelineStatus::ContractUnsupported: return QStringLiteral("model-contract-mismatch");
+  case PipelineStatus::MaskInvalid: return QStringLiteral("model-output-invalid");
+  case PipelineStatus::MemoryFailed: return QStringLiteral("model-memory");
+  }
+  return {};
+}
+
+QString PipelineOutput::message() const {
+  switch (status) {
+  case PipelineStatus::Ok: return {};
+  case PipelineStatus::ImageUnusable:
+    return QStringLiteral("The image could not be read for background removal.");
+  case PipelineStatus::ContractUnsupported:
+    return QStringLiteral("The model's output contract is not one the pipeline can compose.");
+  case PipelineStatus::MaskInvalid:
+    return QStringLiteral("The model produced an unusable mask.");
+  case PipelineStatus::MemoryFailed:
+    return QStringLiteral("Not enough memory to compose the output image.");
+  }
+  return {};
+}
+
+PipelineOutput composeMaskedImage(const QImage &source, const QVector<float> &rawMask,
+                                  const CatalogueEntry &entry) {
+  PipelineOutput result;
+  if (source.isNull()) {
+    result.status = PipelineStatus::ImageUnusable;
+    return result;
+  }
+  const qint64 expected = contractElementCount(entry.firstOutput);
+  if (expected <= 0 || qsizetype(expected) != rawMask.size()) {
+    result.status = PipelineStatus::MaskInvalid;
+    return result;
+  }
+  if (!entry.firstOutput.dims.at(2).known() || !entry.firstOutput.dims.at(3).known()) {
+    result.status = PipelineStatus::ContractUnsupported;
+    return result;
+  }
+  try {
+    float highest = rawMask.first(), lowest = rawMask.first();
+    bool finite = true;
+    for (const float value : rawMask) {
+      if (!std::isfinite(value)) {
+        finite = false;
+        break;
+      }
+      highest = std::max(highest, value);
+      lowest = std::min(lowest, value);
+    }
+    if (!finite) {
+      result.status = PipelineStatus::MaskInvalid;
+      return result;
+    }
+    // The decided min-max policy with a defined degenerate case: a constant
+    // mask carries no contrast, so it is fully foreground when positive and
+    // fully background otherwise - never a NaN.
+    const bool constant = highest == lowest;
+    const float range = highest - lowest;
+    const int maskHeight = int(entry.firstOutput.dims.at(2).value);
+    const int maskWidth = int(entry.firstOutput.dims.at(3).value);
+    QImage gray(maskWidth, maskHeight, QImage::Format_Grayscale8);
+    for (int y = 0; y < maskHeight; ++y) {
+      auto *line = gray.scanLine(y);
+      for (int x = 0; x < maskWidth; ++x) {
+        const float value = rawMask.at(qsizetype(y) * maskWidth + x);
+        float alpha = 0.0f;
+        if (constant) {
+          alpha = lowest > 0.0f ? 255.0f : 0.0f;
+        } else {
+          alpha = (value - lowest) / range * 255.0f;   // floor, like the reference
+          alpha = std::min(std::max(alpha, 0.0f), 255.0f);
+        }
+        line[x] = uchar(alpha);
+      }
+    }
+    // Smooth resize to the source dimensions, then only the alpha byte
+    // changes: the source colour is preserved exactly.
+    const QImage scaled = gray.scaled(source.width(), source.height(), Qt::IgnoreAspectRatio,
+                                     Qt::SmoothTransformation);
+    QImage output = source.convertToFormat(QImage::Format_ARGB32);
+    for (int y = 0; y < output.height(); ++y) {
+      auto *line = reinterpret_cast<QRgb *>(output.scanLine(y));
+      const uchar *maskLine = scaled.constScanLine(y);
+      for (int x = 0; x < output.width(); ++x) {
+        const quint8 alpha = maskLine[x];
+        line[x] = qRgba(qRed(line[x]), qGreen(line[x]), qBlue(line[x]), alpha);
+      }
+    }
+    result.image = output;
+    result.status = PipelineStatus::Ok;
+    return result;
+  } catch (const std::bad_alloc &) {
+    result.status = PipelineStatus::MemoryFailed;
+    return result;
+  }
+}
+
+// --- EU-009/EU-011: the mask engine port ---
+
+MaskEngine::~MaskEngine() = default;
+
+QString devicePolicyId(DevicePolicy policy) {
+  switch (policy) {
+  case DevicePolicy::Auto: return QStringLiteral("auto");
+  case DevicePolicy::Cpu: return QStringLiteral("cpu");
+  case DevicePolicy::Gpu: return QStringLiteral("gpu");
+  }
+  return QStringLiteral("auto");
+}
+
+QString devicePolicyLabel(DevicePolicy policy) {
+  switch (policy) {
+  case DevicePolicy::Auto: return QStringLiteral("Auto");
+  case DevicePolicy::Cpu: return QStringLiteral("CPU");
+  case DevicePolicy::Gpu: return QStringLiteral("GPU");
+  }
+  return QStringLiteral("Auto");
 }
 
 }  // namespace xerahs::bg
