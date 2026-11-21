@@ -195,6 +195,12 @@ QFrame#navigationPane {
   background-color: %2;
   border-right: 1px solid %7;
 }
+QSplitter#mainShellSplitter::handle {
+  background-color: transparent;
+}
+QSplitter#mainShellSplitter::handle:hover {
+  background-color: %12;
+}
 QLineEdit#navigationSearch, QLineEdit {
   background-color: %5;
   color: %9;

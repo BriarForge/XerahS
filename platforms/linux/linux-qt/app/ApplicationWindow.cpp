@@ -20,14 +20,22 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMimeData>
+#include <QPainter>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QSplitter>
 #include <QStackedWidget>
 #include <QStyle>
+#include <QStyleOptionButton>
+#include <QStyleOptionFocusRect>
+#include <QStyleOptionToolButton>
+#include <QStylePainter>
 #include <QToolButton>
 #include <QUrl>
 #include <QVBoxLayout>
+
+#include <algorithm>
 
 namespace xerahs::app {
 namespace {
@@ -123,6 +131,237 @@ AppIcon iconForCommand(const QString &id) {
   return AppIcon::Combine;
 }
 
+QString stripMnemonic(const QString &raw) {
+  QString out;
+  out.reserve(raw.size());
+  for (int i = 0; i < raw.size(); ++i) {
+    if (raw[i] == QLatin1Char('&')) {
+      if (i + 1 < raw.size() && raw[i + 1] == QLatin1Char('&')) {
+        out.append(QLatin1Char('&'));
+        ++i;
+      }
+      continue;
+    }
+    out.append(raw[i]);
+  }
+  return out;
+}
+
+class NavItemButton final : public QPushButton {
+public:
+  NavItemButton(const QString &label, bool isGroup, bool isChild, QWidget *parent)
+      : QPushButton(label, parent), m_isGroup(isGroup), m_isChild(isChild) {
+    QSizePolicy sp(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    sp.setHeightForWidth(true);
+    setSizePolicy(sp);
+  }
+
+  bool hasHeightForWidth() const override { return true; }
+
+  int heightForWidth(int w) const override {
+    const int leftPad = m_isChild ? 26 : 10;
+    const int rightPad = m_isGroup ? 28 : 10;
+    constexpr int vPad = 7;
+    const int iconW = icon().isNull() ? 0 : (iconSize().width() + 8);
+    const int availW = std::max(60, w - leftPad - iconW - rightPad);
+    const QRect br = fontMetrics().boundingRect(
+        QRect(0, 0, availW, 10000),
+        Qt::AlignLeft | Qt::AlignVCenter | Qt::TextWordWrap,
+        stripMnemonic(text()));
+    const int contentH = std::max(icon().isNull() ? 0 : iconSize().height(), br.height());
+    return std::max(34, contentH + vPad * 2);
+  }
+
+  QSize minimumSizeHint() const override { return QSize(80, 34); }
+
+  QSize sizeHint() const override {
+    const int refW = width() > 60 ? width() : 260;
+    return QSize(refW, heightForWidth(refW));
+  }
+
+protected:
+  void resizeEvent(QResizeEvent *event) override {
+    QPushButton::resizeEvent(event);
+    if (width() != m_lastWidth) {
+      m_lastWidth = width();
+      updateGeometry();
+    }
+  }
+
+  void changeEvent(QEvent *event) override {
+    QPushButton::changeEvent(event);
+    if (event && (event->type() == QEvent::FontChange || event->type() == QEvent::StyleChange)) {
+      updateGeometry();
+    }
+  }
+
+  void paintEvent(QPaintEvent *) override {
+    QStylePainter p(this);
+    QStyleOptionButton opt;
+    initStyleOption(&opt);
+    const QString label = stripMnemonic(text());
+    const QIcon ico = icon();
+    const QSize icoSz = iconSize();
+    opt.text.clear();
+    opt.icon = QIcon();
+    opt.iconSize = QSize();
+    p.drawControl(QStyle::CE_PushButtonBevel, opt);
+
+    const int leftPad = m_isChild ? 26 : 10;
+    const int rightPad = m_isGroup ? 28 : 10;
+    constexpr int vPad = 7;
+    int textLeft = leftPad;
+    if (!ico.isNull()) {
+      const QIcon::Mode mode = !isEnabled()
+          ? QIcon::Disabled
+          : (opt.state & QStyle::State_MouseOver) ? QIcon::Active : QIcon::Normal;
+      const int lineH = std::max(icoSz.height(), fontMetrics().height());
+      const int iconY = vPad + std::max(0, (lineH - icoSz.height()) / 2);
+      ico.paint(&p, QRect(leftPad, iconY, icoSz.width(), icoSz.height()), Qt::AlignCenter, mode);
+      textLeft += icoSz.width() + 8;
+    }
+
+    const QRect textRect(
+        textLeft,
+        vPad,
+        std::max(10, width() - textLeft - rightPad),
+        std::max(10, height() - vPad * 2));
+    const QPalette::ColorGroup cg = isEnabled() ? QPalette::Active : QPalette::Disabled;
+    p.setPen(opt.palette.color(cg, QPalette::ButtonText));
+    p.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter | Qt::TextWordWrap, label);
+
+    if (m_isGroup) {
+      const bool expanded = property("navExpanded").toBool();
+      p.save();
+      p.setRenderHint(QPainter::Antialiasing, true);
+      p.setPen(QPen(opt.palette.color(cg, QPalette::ButtonText), 1.6, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+      const qreal cx = width() - 15.0;
+      const qreal cy = height() / 2.0;
+      if (expanded) {
+        p.drawLine(QPointF(cx - 4.0, cy - 2.0), QPointF(cx, cy + 2.0));
+        p.drawLine(QPointF(cx, cy + 2.0), QPointF(cx + 4.0, cy - 2.0));
+      } else {
+        p.drawLine(QPointF(cx - 2.0, cy - 4.0), QPointF(cx + 2.0, cy));
+        p.drawLine(QPointF(cx + 2.0, cy), QPointF(cx - 2.0, cy + 4.0));
+      }
+      p.restore();
+    }
+
+    if (hasFocus()) {
+      QStyleOptionFocusRect focusOpt;
+      focusOpt.initFrom(this);
+      focusOpt.rect = rect().adjusted(2, 2, -2, -2);
+      p.drawPrimitive(QStyle::PE_FrameFocusRect, focusOpt);
+    }
+  }
+
+private:
+  bool m_isGroup = false;
+  bool m_isChild = false;
+  int m_lastWidth = -1;
+};
+
+class NavActionButton final : public QToolButton {
+public:
+  explicit NavActionButton(QWidget *parent) : QToolButton(parent) {
+    QSizePolicy sp(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    sp.setHeightForWidth(true);
+    setSizePolicy(sp);
+  }
+
+  bool hasHeightForWidth() const override { return true; }
+
+  int heightForWidth(int w) const override {
+    constexpr int kLeftPad = 24;
+    constexpr int kRightPad = 10;
+    constexpr int kVPad = 6;
+    const int iconW = icon().isNull() ? 0 : (iconSize().width() + 8);
+    const int availW = std::max(60, w - kLeftPad - iconW - kRightPad);
+    const QRect br = fontMetrics().boundingRect(
+        QRect(0, 0, availW, 10000),
+        Qt::AlignLeft | Qt::AlignVCenter | Qt::TextWordWrap,
+        stripMnemonic(text()));
+    const int contentH = std::max(icon().isNull() ? 0 : iconSize().height(), br.height());
+    return std::max(30, contentH + kVPad * 2);
+  }
+
+  QSize minimumSizeHint() const override { return QSize(80, 30); }
+
+  QSize sizeHint() const override {
+    const int refW = width() > 60 ? width() : 260;
+    return QSize(refW, heightForWidth(refW));
+  }
+
+protected:
+  void resizeEvent(QResizeEvent *event) override {
+    QToolButton::resizeEvent(event);
+    if (width() != m_lastWidth) {
+      m_lastWidth = width();
+      updateGeometry();
+    }
+  }
+
+  void actionEvent(QActionEvent *event) override {
+    QToolButton::actionEvent(event);
+    updateGeometry();
+  }
+
+  void changeEvent(QEvent *event) override {
+    QToolButton::changeEvent(event);
+    if (event && (event->type() == QEvent::FontChange || event->type() == QEvent::StyleChange)) {
+      updateGeometry();
+    }
+  }
+
+  void paintEvent(QPaintEvent *) override {
+    QStylePainter p(this);
+    QStyleOptionToolButton opt;
+    initStyleOption(&opt);
+    const QString label = stripMnemonic(text());
+    const QIcon ico = icon();
+    const QSize icoSz = iconSize();
+    opt.text.clear();
+    opt.icon = QIcon();
+    opt.iconSize = QSize();
+    opt.features = QStyleOptionToolButton::None;
+    p.drawComplexControl(QStyle::CC_ToolButton, opt);
+
+    constexpr int kLeftPad = 24;
+    constexpr int kRightPad = 10;
+    constexpr int kVPad = 6;
+    int textLeft = kLeftPad;
+    if (!ico.isNull()) {
+      const QIcon::Mode mode = !isEnabled()
+          ? QIcon::Disabled
+          : (opt.state & QStyle::State_MouseOver) ? QIcon::Active : QIcon::Normal;
+      const int lineH = std::max(icoSz.height(), fontMetrics().height());
+      const int iconY = kVPad + std::max(0, (lineH - icoSz.height()) / 2);
+      ico.paint(&p, QRect(kLeftPad, iconY, icoSz.width(), icoSz.height()), Qt::AlignCenter, mode);
+      textLeft += icoSz.width() + 8;
+    }
+
+    const QRect textRect(
+        textLeft,
+        kVPad,
+        std::max(10, width() - textLeft - kRightPad),
+        std::max(10, height() - kVPad * 2));
+    const QPalette::ColorGroup cg = isEnabled() ? QPalette::Active : QPalette::Disabled;
+    const bool hovered = isEnabled() && (opt.state & QStyle::State_MouseOver);
+    p.setPen(opt.palette.color(cg, hovered ? QPalette::WindowText : QPalette::ButtonText));
+    p.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter | Qt::TextWordWrap, label);
+
+    if (hasFocus()) {
+      QStyleOptionFocusRect focusOpt;
+      focusOpt.initFrom(this);
+      focusOpt.rect = rect().adjusted(2, 2, -2, -2);
+      p.drawPrimitive(QStyle::PE_FrameFocusRect, focusOpt);
+    }
+  }
+
+private:
+  int m_lastWidth = -1;
+};
+
 QWidget *makeFallbackPage(const QString &title, const QString &subtitle, QWidget *parent) {
   auto *page = new QWidget(parent);
   auto *layout = new QVBoxLayout(page);
@@ -169,12 +408,19 @@ void ApplicationWindow::build(CommandRegistry &commands) {
   rootLayout->setContentsMargins(0, 0, 0, 0);
   rootLayout->setSpacing(0);
 
-  // Column 0: Left Navigation Pane (mirrors MainWindow.axaml sidebar).
-  auto *navPane = new QFrame(central);
+  // Main 2-pane split (mirrors MainWindow.axaml ColumnDefinitions="300,*", user-resizable).
+  auto *splitter = new QSplitter(Qt::Horizontal, central);
+  splitter->setObjectName(QStringLiteral("mainShellSplitter"));
+  splitter->setChildrenCollapsible(false);
+  splitter->setHandleWidth(4);
+
+  // Column 0: Left Navigation Pane.
+  auto *navPane = new QFrame(splitter);
   navPane->setObjectName(QStringLiteral("navigationPane"));
-  navPane->setFixedWidth(236);
+  navPane->setMinimumWidth(220);
+  navPane->setMaximumWidth(420);
   auto *navOuter = new QVBoxLayout(navPane);
-  navOuter->setContentsMargins(10, 10, 10, 10);
+  navOuter->setContentsMargins(10, 10, 6, 10);
   navOuter->setSpacing(8);
 
   m_navSearch = new QLineEdit(navPane);
@@ -191,23 +437,24 @@ void ApplicationWindow::build(CommandRegistry &commands) {
   navScroll->setWidgetResizable(true);
   navScroll->setFrameShape(QFrame::NoFrame);
   navScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  navScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
   navScroll->viewport()->setAutoFillBackground(false);
 
   auto *navTreeHost = new QWidget(navScroll);
   navTreeHost->setObjectName(QStringLiteral("navigationTree"));
   navTreeHost->setAutoFillBackground(false);
   auto *navLayout = new QVBoxLayout(navTreeHost);
-  navLayout->setContentsMargins(0, 2, 2, 2);
+  navLayout->setContentsMargins(0, 2, 8, 2);
   navLayout->setSpacing(2);
   buildNavigationPane(commands, navLayout);
   navLayout->addStretch();
   navScroll->setWidget(navTreeHost);
   navOuter->addWidget(navScroll, 1);
 
-  rootLayout->addWidget(navPane);
+  splitter->addWidget(navPane);
 
   // Column 1: Right Content Area + Retained Capture Banner + Status Strip.
-  auto *contentHost = new QWidget(central);
+  auto *contentHost = new QWidget(splitter);
   contentHost->setObjectName(QStringLiteral("contentFrameHost"));
   auto *contentLayout = new QVBoxLayout(contentHost);
   contentLayout->setContentsMargins(0, 0, 0, 0);
@@ -244,7 +491,12 @@ void ApplicationWindow::build(CommandRegistry &commands) {
   statusLayout->addWidget(m_progress);
   contentLayout->addWidget(statusStrip);
 
-  rootLayout->addWidget(contentHost, 1);
+  splitter->addWidget(contentHost);
+  splitter->setStretchFactor(0, 0);
+  splitter->setStretchFactor(1, 1);
+  splitter->setSizes({300, 800});
+  if (auto *handle = splitter->handle(1)) handle->setFocusPolicy(Qt::NoFocus);
+  rootLayout->addWidget(splitter, 1);
   setCentralWidget(central);
 
   buildDefaultPages(commands);
@@ -266,7 +518,7 @@ void ApplicationWindow::build(CommandRegistry &commands) {
 
   applyCurrentTheme();
   navigateTo(QStringLiteral("Editor"));
-  resize(980, 620);
+  resize(1100, 650);
   setAcceptDrops(true);
   adoptDropTargets();
 }
@@ -345,10 +597,11 @@ void ApplicationWindow::buildNavigationPane(CommandRegistry &commands, QVBoxLayo
   auto *host = navLayout->parentWidget();
 
   auto makeGroup = [&](const QString &id, const QString &label, const QString &keywords, bool expandedByDefault) -> NavGroupEntry & {
-    auto *header = new QPushButton(label, host);
+    auto *header = new NavItemButton(label, true, false, host);
     header->setObjectName(QStringLiteral("navGroup_") + id);
     header->setAccessibleName(label);
     header->setProperty("navRole", QStringLiteral("group"));
+    header->setProperty("navExpanded", expandedByDefault);
     header->setCursor(Qt::PointingHandCursor);
     header->setFlat(true);
     header->setIconSize(QSize(18, 18));
@@ -369,17 +622,24 @@ void ApplicationWindow::buildNavigationPane(CommandRegistry &commands, QVBoxLayo
     entry.expanded = expandedByDefault;
     m_navGroups.append(entry);
     const int idx = m_navGroups.size() - 1;
-    connect(header, &QPushButton::clicked, this, [this, idx] {
+    connect(header, &QPushButton::clicked, this, [this, idx, host] {
       auto &g = m_navGroups[idx];
       g.expanded = !g.expanded;
+      g.header->setProperty("navExpanded", g.expanded);
+      g.header->update();
       g.container->setVisible(g.expanded);
+      g.container->updateGeometry();
+      if (host) {
+        host->updateGeometry();
+        if (auto *lay = host->layout()) lay->activate();
+      }
     });
     return m_navGroups[idx];
   };
 
   auto addPageButton = [&](const QString &pageId, const QString &label, const QString &keywords,
                            QWidget *parentWidget, QVBoxLayout *targetLayout, const QString &groupId = {}) -> QPushButton * {
-    auto *btn = new QPushButton(label, parentWidget);
+    auto *btn = new NavItemButton(label, false, !groupId.isEmpty(), parentWidget);
     btn->setObjectName(QStringLiteral("navPage_") + pageId);
     btn->setAccessibleName(label);
     btn->setProperty("navRole", QStringLiteral("page"));
@@ -395,7 +655,7 @@ void ApplicationWindow::buildNavigationPane(CommandRegistry &commands, QVBoxLayo
 
   auto addActionButton = [&](const QString &id, QAction *action, NavGroupEntry &group) {
     if (!action || m_commandButtons.contains(id)) return;
-    auto *btn = new QToolButton(group.container);
+    auto *btn = new NavActionButton(group.container);
     btn->setObjectName(id);
     btn->setDefaultAction(action);
     btn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
@@ -404,7 +664,6 @@ void ApplicationWindow::buildNavigationPane(CommandRegistry &commands, QVBoxLayo
     btn->setCursor(Qt::PointingHandCursor);
     btn->setAutoRaise(true);
     btn->setIconSize(QSize(15, 15));
-    btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     qobject_cast<QVBoxLayout *>(group.container->layout())->addWidget(btn);
     group.items.append(btn);
     m_commandButtons.insert(id, btn);
@@ -555,7 +814,10 @@ void ApplicationWindow::navigateTo(const QString &pageId) {
       for (auto &group : m_navGroups) {
         if (group.id == it->groupId && !group.expanded) {
           group.expanded = true;
+          group.header->setProperty("navExpanded", true);
+          group.header->update();
           group.container->setVisible(true);
+          group.container->updateGeometry();
         }
       }
     }
@@ -617,8 +879,12 @@ void ApplicationWindow::applyNavigationFilter(const QString &query) {
       if (childVisible) ++visibleChildren;
     }
     const bool groupVisible = !filtering || headerMatches || visibleChildren > 0;
+    const bool showChildren = groupVisible && (filtering ? visibleChildren > 0 : group.expanded);
     group.header->setVisible(groupVisible);
-    group.container->setVisible(groupVisible && (filtering ? visibleChildren > 0 : group.expanded));
+    group.header->setProperty("navExpanded", showChildren);
+    group.header->update();
+    group.container->setVisible(showChildren);
+    group.container->updateGeometry();
   }
 }
 
