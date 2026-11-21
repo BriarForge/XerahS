@@ -1,3 +1,4 @@
+#include "capture/ScreenTopology.h"
 #include "capture/WindowSnapTargets.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -107,6 +108,20 @@ private slots:
     QVERIFY(drag.snapPreviewAt({150, 150})); drag.pointerDown({150, 150}); drag.pointerMove({160, 160});
     QVERIFY(!drag.snapPreviewAt({160, 160})); drag.pointerUp({160, 160});
     QCOMPARE(drag.selection(), std::optional<PhysicalRect>(PhysicalRect{150, 150, 160, 160}));
+  }
+  void matchesHashedDisplayIdentityByOutputName() {
+    const auto realTopo = snapshotScreenTopology({{"eDP-1", "Apple", "iMac", "S1", {0, 0, 3072, 1728}, 1.25}});
+    QCOMPARE(realTopo.size(), std::size_t(1));
+    QVERIFY(realTopo[0].id != QStringLiteral("eDP-1"));
+    QCOMPARE(realTopo[0].outputName, QStringLiteral("eDP-1"));
+    const QByteArray edpMonitors = R"([{"id":0,"name":"eDP-1","activeWorkspace":{"id":3},"specialWorkspace":{"id":0}}])";
+    QJsonObject win{
+        {"mapped", true}, {"hidden", false}, {"pid", 123}, {"monitor", 0},
+        {"workspace", QJsonObject{{"id", 3}}}, {"at", QJsonArray{100, 200}},
+        {"size", QJsonArray{800, 600}}, {"floating", true}, {"fullscreen", 0}, {"focusHistoryID", 0}};
+    const auto targets = hyprlandSnapTargets(QJsonDocument(QJsonArray{win}).toJson(), edpMonitors, realTopo, 999);
+    QCOMPARE(targets.size(), std::size_t(1));
+    QCOMPARE(targets[0].physical, (PhysicalRect{125, 250, 1125, 1000}));
   }
 };
 QTEST_GUILESS_MAIN(WindowSnapTargetsTest)

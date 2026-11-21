@@ -4,6 +4,7 @@
 #include "PortalScreenshot.h"
 #include "RegionOverlay.h"
 #include "NativeWorkflowExecutions.h"
+#include "capture/CompositorFrame.h"
 #include "capture/LastRegionStore.h"
 #include "capture/ScreenTopology.h"
 #include <QApplication>
@@ -302,6 +303,54 @@ private slots:
     // "Display refresh rate": the pointer feedback also fits a 60 Hz frame at the 95th percentile.
     QVERIFY2(bestP95 <= 1000.0 / 60.0, qPrintable(QString("selection feedback p95 %1 ms exceeds one 60 Hz frame").arg(bestP95)));
     QVERIFY2(bestConfirm <= confirmBudgetMs, qPrintable(QString("confirmation to pixels %1 ms exceeds 250 ms").arg(bestConfirm)));
+  }
+
+  void effectiveWaylandScaleHandlesFractionalIntegerRotatedAndInvalidFacts() {
+    auto makeFacts = [](int modeW, int modeH, int transform = 0, bool done = true) {
+      CompositorOutputFacts facts;
+      facts.sawGeometry = true;
+      facts.sawCurrentMode = true;
+      facts.sawScale = true;
+      facts.sawDone = done;
+      facts.sawName = true;
+      facts.name = QStringLiteral("eDP-1");
+      facts.modeWidth = modeW;
+      facts.modeHeight = modeH;
+      facts.transform = transform;
+      facts.scale = 2;
+      return facts;
+    };
+
+    // 3840x2160 @ 1.25 (3072x1728 logical, Qt reports integer DPR 2.0)
+    const double s125 = effectiveWaylandScale(2.0, 3072, 1728, makeFacts(3840, 2160));
+    QVERIFY(std::abs(s125 - 1.25) < 1e-6);
+    const auto topo125 = snapshotScreenTopology({{"eDP-1", "Apple", "iMac", "S1", {0, 0, 3072, 1728}, s125}});
+    QCOMPARE(topo125.size(), size_t(1));
+    QCOMPARE(topo125[0].physical, (PhysicalRect{0, 0, 3840, 2160}));
+
+    // 3840x2160 @ 1.5 (2560x1440 logical, Qt reports integer DPR 2.0)
+    const double s150 = effectiveWaylandScale(2.0, 2560, 1440, makeFacts(3840, 2160));
+    QVERIFY(std::abs(s150 - 1.5) < 1e-6);
+    const auto topo150 = snapshotScreenTopology({{"eDP-1", "Apple", "iMac", "S1", {0, 0, 2560, 1440}, s150}});
+    QCOMPARE(topo150.size(), size_t(1));
+    QCOMPARE(topo150[0].physical, (PhysicalRect{0, 0, 3840, 2160}));
+
+    // 3840x2160 @ 1.75 (2194x1234 rounded logical size)
+    const double s175 = effectiveWaylandScale(2.0, 2194, 1234, makeFacts(3840, 2160));
+    const auto topo175 = snapshotScreenTopology({{"eDP-1", "Apple", "iMac", "S1", {0, 0, 2194, 1234}, s175}});
+    QCOMPARE(topo175.size(), size_t(1));
+    QCOMPARE(topo175[0].physical, (PhysicalRect{0, 0, 3840, 2160}));
+
+    // 3840x2160 @ 2.0 (integer 1920x1080 logical)
+    QCOMPARE(effectiveWaylandScale(2.0, 1920, 1080, makeFacts(3840, 2160)), 2.0);
+
+    // Rotated 90 deg (transform = 1, mode 3840x2160, logical 1728x3072, Qt reports DPR 2.0)
+    const double rot125 = effectiveWaylandScale(2.0, 1728, 3072, makeFacts(3840, 2160, 1));
+    QVERIFY(std::abs(rot125 - 1.25) < 1e-6);
+
+    // Incomplete facts (sawDone = false) or non-uniform aspect (3000x1000 vs 3840x2160) -> fail closed to qtDpr
+    QCOMPARE(effectiveWaylandScale(2.0, 3072, 1728, makeFacts(3840, 2160, 0, false)), 2.0);
+    QCOMPARE(effectiveWaylandScale(2.0, 3000, 1000, makeFacts(3840, 2160)), 2.0);
   }
 };
 QTEST_MAIN(RegionCaptureNativeTest)

@@ -191,7 +191,7 @@ target_compile_options(xerahs-conformance-adapter PRIVATE -Wall -Wextra -Wpedant
 
 # Optional compositor transport stays outside the Qt Core production library.
 add_library(xerahs_window_discovery STATIC app/WindowDiscovery.cpp app/WindowDiscovery.h app/ScreenTopology.cpp app/ScreenTopology.h)
-target_link_libraries(xerahs_window_discovery PUBLIC xerahs_core Qt6::Network Qt6::Gui)
+target_link_libraries(xerahs_window_discovery PUBLIC xerahs_core Qt6::Network Qt6::Gui PRIVATE xerahs_compositor_capture)
 
 # CORE-013: desktop Secret Service transport for upload credentials.
 # libgcrypt is optional: without it the store negotiates only the plain

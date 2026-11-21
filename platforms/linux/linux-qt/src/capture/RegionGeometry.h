@@ -49,6 +49,7 @@ struct Display {
   int rotation = 0;
   QString colorDescription{}; // explicit unknown when Qt provides no colour profile
   bool captureAvailable = true;
+  QString outputName{};
 };
 
 using Topology = std::vector<Display>;

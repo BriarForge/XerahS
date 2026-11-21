@@ -44,8 +44,18 @@ std::vector<SnapTarget> hyprlandSnapTargets(const QByteArray &clientsJson, const
       const auto active = monitor.value("activeWorkspace").toObject().value("id");
       const auto special = monitor.value("specialWorkspace").toObject().value("id");
       if ((number(active) && workspace == active) ||
-          (number(special) && special.toInt() != 0 && workspace == special))
-        display = findDisplay(topology, monitor.value("name").toString());
+          (number(special) && special.toInt() != 0 && workspace == special)) {
+        const QString monitorName = monitor.value("name").toString();
+        display = findDisplay(topology, monitorName);
+        if (!display && !monitorName.isEmpty()) {
+          for (const Display &candidate : topology) {
+            if (!candidate.outputName.isEmpty() && candidate.outputName == monitorName) {
+              display = &candidate;
+              break;
+            }
+          }
+        }
+      }
       break;
     }
     if (!display) continue;

@@ -14,6 +14,7 @@
 #include <QStringList>
 #include <vector>
 namespace xerahs::app {
+struct CompositorOutputFacts;
 struct CaptureDisplay {
   QPointer<QScreen> screen;
   xerahs::capture::Display mapping;
@@ -21,6 +22,7 @@ struct CaptureDisplay {
 };
 using CaptureDisplays = std::vector<CaptureDisplay>;
 QString screenIdentity(const QString &name, const QString &manufacturer, const QString &model, const QString &serial);
+double effectiveWaylandScale(double qtDpr, int logicalWidth, int logicalHeight, const CompositorOutputFacts &facts);
 CaptureDisplays screenTopology();
 xerahs::capture::Topology displayMappings(const CaptureDisplays &screens);
 

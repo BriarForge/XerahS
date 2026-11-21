@@ -252,7 +252,7 @@ void CaptureController::beginCompositorCapture() {
           const auto &mapping = display.mapping;
           if (!frame.singleOutputBufferOriginProven || !frame.cursorPaintRequested || !frame.cursorPaintedIntoFrame ||
               frame.outputName != display.outputName || frame.transform != 0 ||
-              frame.scale != mapping.scale || frame.logicalX != mapping.logical.left || frame.logicalY != mapping.logical.top ||
+              frame.scale != qint32(std::ceil(mapping.scale - 0.000001)) || frame.logicalX != mapping.logical.left || frame.logicalY != mapping.logical.top ||
               frame.bufferWidth != mapping.physical.width() || frame.bufferHeight != mapping.physical.height() ||
               frame.image.width() != mapping.physical.width() || frame.image.height() != mapping.physical.height()) {
             failCapture(diagnostic::captureTopologyMismatch, compositorCaptureFailureMessage(kCompositorSourceMismatch)); return;

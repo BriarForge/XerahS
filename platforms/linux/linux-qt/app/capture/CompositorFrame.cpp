@@ -7,7 +7,11 @@
 
 #include <wayland-client.h>
 
+#include <QCoreApplication>
+#include <QGuiApplication>
+#include <QPointer>
 #include <QSet>
+#include <QSocketNotifier>
 #include <QVector>
 
 #include <algorithm>
@@ -717,6 +721,225 @@ CompositorFrame CompositorFrameCapture::captureOnFd(int fd, const CompositorFram
   const int owned = dup(fd);
   if (owned < 0) return refused(CompositorFrame::Status::Failed, kCompositorCaptureFailed);
   return captureDisplay(wl_display_connect_to_fd(owned), request);
+}
+
+namespace {
+
+struct MonitorOutputRecord {
+  uint32_t globalName = 0;
+  CompositorOutputFacts facts;
+  wl_output *proxy = nullptr;
+  zxdg_output_v1 *xdgOutput = nullptr;
+  ~MonitorOutputRecord() {
+    if (xdgOutput) zxdg_output_v1_destroy(xdgOutput);
+    if (proxy) wl_output_destroy(proxy);
+  }
+};
+
+class WaylandOutputMonitor final : public QObject {
+public:
+  explicit WaylandOutputMonitor(QObject *parent) : QObject(parent) {
+    m_display = wl_display_connect(nullptr);
+    if (!m_display) return;
+    m_registry = wl_display_get_registry(m_display);
+    if (!m_registry) {
+      teardown();
+      return;
+    }
+    wl_registry_add_listener(m_registry, &kMonitorRegistryListener, this);
+    if (wl_display_roundtrip(m_display) < 0 || wl_display_roundtrip(m_display) < 0) {
+      teardown();
+      return;
+    }
+    const int fd = wl_display_get_fd(m_display);
+    if (fd >= 0) {
+      m_notifier = new QSocketNotifier(fd, QSocketNotifier::Read, this);
+      connect(m_notifier, &QSocketNotifier::activated, this, [this] { drainEvents(); });
+    }
+  }
+
+  ~WaylandOutputMonitor() override { teardown(); }
+
+  void drainEvents() {
+    if (!m_display) return;
+    if (wl_display_dispatch_pending(m_display) < 0) {
+      teardown();
+      return;
+    }
+    const int flushed = wl_display_flush(m_display);
+    if (flushed < 0 && errno != EAGAIN) {
+      teardown();
+      return;
+    }
+    while (wl_display_prepare_read(m_display) != 0) {
+      if (wl_display_dispatch_pending(m_display) < 0) {
+        teardown();
+        return;
+      }
+    }
+    pollfd pfd{wl_display_get_fd(m_display), POLLIN, 0};
+    const int ready = poll(&pfd, 1, 0);
+    if (ready > 0 && (pfd.revents & POLLIN)) {
+      if (wl_display_read_events(m_display) < 0 || wl_display_dispatch_pending(m_display) < 0) {
+        teardown();
+        return;
+      }
+    } else {
+      wl_display_cancel_read(m_display);
+      if ((ready < 0 && errno != EINTR) || (pfd.revents & (POLLERR | POLLHUP))) {
+        teardown();
+        return;
+      }
+    }
+  }
+
+  QVector<CompositorOutputFacts> outputs() const {
+    QVector<CompositorOutputFacts> result;
+    result.reserve(int(m_outputs.size()));
+    for (const auto &entry : m_outputs) result.push_back(entry->facts);
+    return result;
+  }
+
+private:
+  void teardown() {
+    if (m_notifier) {
+      m_notifier->setEnabled(false);
+      delete m_notifier;
+      m_notifier = nullptr;
+    }
+    m_outputs.clear();
+    if (m_xdgManager) {
+      zxdg_output_manager_v1_destroy(m_xdgManager);
+      m_xdgManager = nullptr;
+    }
+    if (m_registry) {
+      wl_registry_destroy(m_registry);
+      m_registry = nullptr;
+    }
+    if (m_display) {
+      wl_display_disconnect(m_display);
+      m_display = nullptr;
+    }
+  }
+
+  void attachXdg(MonitorOutputRecord &record) {
+    if (!m_xdgManager || !record.proxy || record.xdgOutput) return;
+    record.xdgOutput = zxdg_output_manager_v1_get_xdg_output(m_xdgManager, record.proxy);
+    if (!record.xdgOutput) return;
+    zxdg_output_v1_add_listener(record.xdgOutput, &kMonitorXdgListener, &record);
+  }
+
+  static void onGeometry(void *data, wl_output *, int32_t x, int32_t y, int32_t, int32_t, int32_t, const char *, const char *, int32_t transform) {
+    auto *out = static_cast<MonitorOutputRecord *>(data);
+    out->facts.sawGeometry = true;
+    out->facts.logicalX = x;
+    out->facts.logicalY = y;
+    out->facts.transform = transform;
+  }
+
+  static void onMode(void *data, wl_output *, uint32_t flags, int32_t width, int32_t height, int32_t) {
+    if ((flags & WL_OUTPUT_MODE_CURRENT) == 0) return;
+    auto *out = static_cast<MonitorOutputRecord *>(data);
+    out->facts.sawCurrentMode = true;
+    out->facts.conflictingMode = false;
+    out->facts.modeWidth = width;
+    out->facts.modeHeight = height;
+  }
+
+  static void onDone(void *data, wl_output *) { static_cast<MonitorOutputRecord *>(data)->facts.sawDone = true; }
+
+  static void onScale(void *data, wl_output *, int32_t factor) {
+    auto *out = static_cast<MonitorOutputRecord *>(data);
+    out->facts.sawScale = true;
+    out->facts.scale = factor;
+  }
+
+  static void onName(void *data, wl_output *, const char *name) {
+    auto *out = static_cast<MonitorOutputRecord *>(data);
+    out->facts.sawName = true;
+    out->facts.name = QString::fromUtf8(name ? name : "");
+  }
+
+  static void onDescription(void *, wl_output *, const char *) {}
+
+  static void onXdgLogicalPos(void *data, zxdg_output_v1 *, int32_t x, int32_t y) {
+    auto *out = static_cast<MonitorOutputRecord *>(data);
+    out->facts.logicalX = x;
+    out->facts.logicalY = y;
+    out->facts.sawLogicalPosition = true;
+  }
+
+  static void onXdgLogicalSize(void *data, zxdg_output_v1 *, int32_t width, int32_t height) {
+    auto *out = static_cast<MonitorOutputRecord *>(data);
+    out->facts.logicalWidth = width;
+    out->facts.logicalHeight = height;
+    out->facts.sawLogicalSize = true;
+  }
+
+  static void onXdgDone(void *, zxdg_output_v1 *) {}
+
+  static void onXdgName(void *data, zxdg_output_v1 *, const char *name) {
+    auto *out = static_cast<MonitorOutputRecord *>(data);
+    if (out->facts.name.isEmpty() && name && *name) {
+      out->facts.sawName = true;
+      out->facts.name = QString::fromUtf8(name);
+    }
+  }
+
+  static void onXdgDescription(void *, zxdg_output_v1 *, const char *) {}
+
+  static void onGlobal(void *data, wl_registry *registry, uint32_t name, const char *interface, uint32_t version) {
+    auto *self = static_cast<WaylandOutputMonitor *>(data);
+    if (std::strcmp(interface, wl_output_interface.name) == 0) {
+      const uint32_t bound = std::min(version, 4u);
+      auto record = std::make_unique<MonitorOutputRecord>();
+      record->globalName = name;
+      record->proxy = static_cast<wl_output *>(wl_registry_bind(registry, name, &wl_output_interface, bound));
+      if (!record->proxy) return;
+      wl_output_add_listener(record->proxy, &kMonitorOutputListener, record.get());
+      MonitorOutputRecord *raw = record.get();
+      self->m_outputs.push_back(std::move(record));
+      self->attachXdg(*raw);
+    } else if (std::strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
+      const uint32_t bound = std::min(version, 2u);
+      self->m_xdgManager = static_cast<zxdg_output_manager_v1 *>(
+          wl_registry_bind(registry, name, &zxdg_output_manager_v1_interface, bound));
+      for (auto &output : self->m_outputs) self->attachXdg(*output);
+    }
+  }
+
+  static void onGlobalRemove(void *data, wl_registry *, uint32_t name) {
+    auto *self = static_cast<WaylandOutputMonitor *>(data);
+    for (auto it = self->m_outputs.begin(); it != self->m_outputs.end(); ++it) {
+      if ((*it)->globalName == name) {
+        self->m_outputs.erase(it);
+        break;
+      }
+    }
+  }
+
+  static inline const wl_output_listener kMonitorOutputListener{
+      onGeometry, onMode, onDone, onScale, onName, onDescription};
+  static inline const zxdg_output_v1_listener kMonitorXdgListener{
+      onXdgLogicalPos, onXdgLogicalSize, onXdgDone, onXdgName, onXdgDescription};
+  static inline const wl_registry_listener kMonitorRegistryListener{onGlobal, onGlobalRemove};
+
+  wl_display *m_display = nullptr;
+  wl_registry *m_registry = nullptr;
+  zxdg_output_manager_v1 *m_xdgManager = nullptr;
+  QSocketNotifier *m_notifier = nullptr;
+  std::deque<std::unique_ptr<MonitorOutputRecord>> m_outputs;
+};
+
+}  // namespace
+
+QVector<CompositorOutputFacts> cachedWaylandOutputs() {
+  auto *guiApp = qobject_cast<QGuiApplication *>(QCoreApplication::instance());
+  if (!guiApp || !QGuiApplication::platformName().startsWith(QLatin1String("wayland"))) return {};
+  static QPointer<WaylandOutputMonitor> monitor;
+  if (!monitor) monitor = new WaylandOutputMonitor(guiApp);
+  monitor->drainEvents();
+  return monitor->outputs();
 }
 
 }  // namespace xerahs::app

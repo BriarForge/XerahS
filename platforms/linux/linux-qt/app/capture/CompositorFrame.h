@@ -150,4 +150,6 @@ public:
   static CompositorFrame captureOnFd(int fd, const CompositorFrameRequest &request = {});
 };
 
+QVector<CompositorOutputFacts> cachedWaylandOutputs();
+
 }  // namespace xerahs::app

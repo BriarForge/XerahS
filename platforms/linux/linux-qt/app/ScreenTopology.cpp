@@ -1,19 +1,59 @@
 #include "ScreenTopology.h"
+#include "capture/CompositorFrame.h"
 #include "capture/ScreenTopology.h"
 #include <QColorSpace>
 #include <QGuiApplication>
+#include <algorithm>
+#include <cmath>
 #include <cstring>
 namespace xerahs::app {
 QString screenIdentity(const QString &name, const QString &manufacturer, const QString &model, const QString &serial) {
   return xerahs::capture::stableDisplayIdentity(name, manufacturer, model, serial);
 }
+double effectiveWaylandScale(double qtDpr, int logicalWidth, int logicalHeight, const CompositorOutputFacts &facts) {
+  if (!facts.sawCurrentMode || !facts.sawGeometry || !facts.sawDone || facts.conflictingMode ||
+      facts.modeWidth <= 0 || facts.modeHeight <= 0 || logicalWidth <= 0 || logicalHeight <= 0) {
+    return qtDpr;
+  }
+  const bool swapped = (facts.transform == 1 || facts.transform == 3 || facts.transform == 5 || facts.transform == 7);
+  const qint64 physW = swapped ? facts.modeHeight : facts.modeWidth;
+  const qint64 physH = swapped ? facts.modeWidth : facts.modeHeight;
+  const auto matchesMode = [&](double scale) {
+    return std::isfinite(scale) && scale > 0 &&
+           qint64(std::floor(double(logicalWidth) * scale + 0.000001)) == physW &&
+           qint64(std::floor(double(logicalHeight) * scale + 0.000001)) == physH;
+  };
+  if (matchesMode(qtDpr)) return qtDpr;
+  const double sx = double(physW) / double(logicalWidth);
+  const double sy = double(physH) / double(logicalHeight);
+  if (std::isfinite(sx) && std::isfinite(sy) && sx > 0 && sy > 0 && std::abs(sx - sy) <= 0.01) {
+    const double candidate = std::max(sx, sy);
+    if (matchesMode(candidate)) return candidate;
+  }
+  return qtDpr;
+}
 CaptureDisplays screenTopology() {
   const auto screens = QGuiApplication::screens();
+  const auto waylandOutputs = cachedWaylandOutputs();
   std::vector<xerahs::capture::ScreenDescription> descriptions;
   for (auto *screen : screens) {
     const auto g = screen->geometry();
+    const CompositorOutputFacts *match = nullptr;
+    int matchCount = 0;
+    const QString screenName = screen->name();
+    if (!screenName.isEmpty()) {
+      for (const auto &facts : waylandOutputs) {
+        if (facts.name == screenName) {
+          match = &facts;
+          ++matchCount;
+        }
+      }
+    }
+    const double scale = (matchCount == 1 && match)
+        ? effectiveWaylandScale(screen->devicePixelRatio(), g.width(), g.height(), *match)
+        : screen->devicePixelRatio();
     descriptions.push_back({screen->name(), screen->manufacturer(), screen->model(), screen->serialNumber(),
-        {double(g.x()), double(g.y()), double(g.x() + g.width()), double(g.y() + g.height())}, screen->devicePixelRatio(),
+        {double(g.x()), double(g.y()), double(g.x() + g.width()), double(g.y() + g.height())}, scale,
         int(screen->orientation()), QStringLiteral("Qt screen depth %1; color primaries/transfer/HDR unavailable").arg(screen->depth()), true});
   }
   const auto topology = xerahs::capture::snapshotScreenTopology(descriptions);
@@ -73,7 +113,7 @@ ComposedDesktop composeCapturedFrames(const CaptureDisplays &displays, const std
     // The cross-check: the compositor's own facts must agree with the frozen
     // session display - unrotated, own scale, mode-verified bounds, and the
     // compositor logical position equals the session's logical origin.
-    if (frame->transform != 0 || qint32(display.mapping.scale) != frame->scale ||
+    if (frame->transform != 0 || qint32(std::ceil(display.mapping.scale - 0.000001)) != frame->scale ||
         frame->bufferWidth != qint32(display.mapping.physical.width()) ||
         frame->bufferHeight != qint32(display.mapping.physical.height()) ||
         frame->logicalX != qint32(display.mapping.logical.left) ||

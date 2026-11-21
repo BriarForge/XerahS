@@ -28,6 +28,7 @@ Topology snapshotScreenTopology(const std::vector<ScreenDescription> &screens) {
     Display display{id, {0, 0, width, height}, g, screen.scale};
     display.rotation = screen.rotation; display.colorDescription = screen.colorDescription;
     display.captureAvailable = screen.captureAvailable;
+    display.outputName = screen.name;
     result.push_back(std::move(display));
     columns[g.left] = std::max(columns[g.left], width); rows[g.top] = std::max(rows[g.top], height);
   }
