@@ -13,6 +13,7 @@
 #include <QApplication>
 #include <QDialog>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
 #include <QProgressBar>
@@ -154,10 +155,13 @@ private slots:
         CommandSurface::Tray | CommandSurface::CaptureMenu));
     commands.add(command("open-xerahs", "Open XerahS", CommandGroup::Capture, CommandSurface::Tray));
     ApplicationWindow window(commands);
-    auto *grid = qobject_cast<QGridLayout *>(window.centralWidget()->layout()->itemAt(1)->layout());
-    QVERIFY(grid);
     QStringList buttons;
-    for (int i = 0; i < grid->count(); ++i) buttons.append(qobject_cast<QToolButton *>(grid->itemAt(i)->widget())->objectName());
+    for (const auto &id : commands.ids(CommandSurface::Window)) {
+      auto *button = window.findChild<QToolButton *>(id);
+      QVERIFY2(button, qPrintable(id));
+      QCOMPARE(button->defaultAction(), commands.action(id));
+      buttons.append(button->objectName());
+    }
     QCOMPARE(buttons, commands.ids(CommandSurface::Window));
     QCOMPARE(buttons, QStringList({QStringLiteral("cancel-capture"), QStringLiteral("capture-region"),
         QStringLiteral("capture-workflows"), QStringLiteral("pick-colour"), QStringLiteral("hash-checker"),
@@ -173,9 +177,29 @@ private slots:
             QStringLiteral("capture-after-delay"), QStringLiteral("---"), QStringLiteral("capture-workflows")}));
     QCOMPARE(menuEntries(menuTitled(window.menuBar(), QStringLiteral("&Tools"))),
         QStringList({QStringLiteral("pick-colour"), QStringLiteral("hash-checker")}));
-    QCOMPARE(menuEntries(menuTitled(window.menuBar(), QStringLiteral("&Preferences"))),
-        QStringList({QStringLiteral("upload-destinations"), QStringLiteral("---"), QStringLiteral("editor-appearance"),
-            QStringLiteral("settings")}));
+    auto *settingsMenu = menuTitled(window.menuBar(), QStringLiteral("&Settings"));
+    QVERIFY(settingsMenu);
+    const auto settingsEntries = menuEntries(settingsMenu);
+    QVERIFY(settingsEntries.contains(QStringLiteral("upload-destinations")));
+    QVERIFY(settingsEntries.contains(QStringLiteral("editor-appearance")));
+    QVERIFY(settingsEntries.contains(QStringLiteral("settings")));
+    QVERIFY(menuTitled(window.menuBar(), QStringLiteral("&Edit")));
+    QVERIFY(menuTitled(window.menuBar(), QStringLiteral("&View")));
+    QVERIFY(menuTitled(window.menuBar(), QStringLiteral("&Workflows")));
+    QVERIFY(menuTitled(window.menuBar(), QStringLiteral("&Help")));
+    // Verify reference navigation shell pages and search filtering.
+    QCOMPARE(window.currentPageId(), QStringLiteral("Editor"));
+    window.navigateTo(QStringLiteral("History"));
+    QCOMPARE(window.currentPageId(), QStringLiteral("History"));
+    window.navigateTo(QStringLiteral("Settings_Dest"));
+    QCOMPARE(window.currentPageId(), QStringLiteral("Settings_Dest"));
+    auto *search = window.findChild<QLineEdit *>(QStringLiteral("navigationSearch"));
+    QVERIFY(search);
+    search->setText(QStringLiteral("hash"));
+    QVERIFY(window.findChild<QToolButton *>(QStringLiteral("hash-checker"))->isVisibleTo(&window));
+    QVERIFY(!window.findChild<QToolButton *>(QStringLiteral("capture-region"))->isVisibleTo(&window));
+    search->clear();
+    QVERIFY(window.findChild<QToolButton *>(QStringLiteral("capture-region"))->isVisibleTo(&window));
     QMenu tray;
     commands.populate(&tray, CommandSurface::Tray);
     QCOMPARE(menuEntries(&tray), QStringList({

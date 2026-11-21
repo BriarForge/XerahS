@@ -287,6 +287,15 @@ target_compile_options(xerahs_workflow_shortcuts PRIVATE -Wall -Wextra -Wpedanti
 # The XerahS application (D-LIN-001: Qt Widgets). Product logic stays in
 # xerahs_core; app/ only wires it to Qt and the desktop.
 # The application's shell wiring lives in an object library so tests can build the real command registry.
+add_library(xerahs_ui_theme STATIC
+  app/AppIcons.cpp
+  app/AppIcons.h
+  app/AppTheme.cpp
+  app/AppTheme.h)
+target_include_directories(xerahs_ui_theme PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app)
+target_link_libraries(xerahs_ui_theme PUBLIC Qt6::Gui Qt6::Widgets)
+target_compile_options(xerahs_ui_theme PRIVATE -Wall -Wextra -Wpedantic)
+
 add_library(xerahs_app OBJECT
   app/ApplicationIcon.cpp app/ApplicationIcon.h
   app/CommandPalette.cpp app/CommandPalette.h
@@ -402,7 +411,7 @@ add_library(xerahs_app OBJECT
 )
 set_target_properties(xerahs_app PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_app PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app)
-target_link_libraries(xerahs_app PUBLIC xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_legacy_history_source xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus xerahs_compositor_capture)
+target_link_libraries(xerahs_app PUBLIC xerahs_ui_theme xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_legacy_history_source xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus xerahs_compositor_capture)
 target_compile_options(xerahs_app PRIVATE -Wall -Wextra -Wpedantic)
 add_executable(xerahs app/main.cpp)
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
@@ -568,7 +577,7 @@ add_executable(application-window-test tests/ApplicationWindowTest.cpp app/Appli
   app/CommandRegistry.cpp app/CommandRegistry.h app/features/ToolsFeature.cpp app/features/ToolsFeature.h)
 set_target_properties(application-window-test PROPERTIES AUTOMOC ON)
 target_include_directories(application-window-test PRIVATE app)
-target_link_libraries(application-window-test PRIVATE xerahs_core Qt6::Widgets Qt6::Test)
+target_link_libraries(application-window-test PRIVATE xerahs_ui_theme xerahs_core Qt6::Widgets Qt6::Test)
 target_link_libraries(application-window-test PRIVATE xerahs_background_remover)
 add_test(NAME application-window COMMAND application-window-test)
 set_tests_properties(application-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
@@ -650,7 +659,7 @@ add_executable(portal-screenshot-test tests/PortalScreenshotTest.cpp app/PortalS
                app/SnapshotComposition.cpp app/SnapshotComposition.h
                app/RegionOverlay.cpp app/RegionOverlay.h)
 set_target_properties(portal-screenshot-test PROPERTIES AUTOMOC ON)
-target_link_libraries(portal-screenshot-test PRIVATE xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test xerahs_compositor_capture)
+target_link_libraries(portal-screenshot-test PRIVATE xerahs_ui_theme xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test xerahs_compositor_capture)
 target_include_directories(portal-screenshot-test PRIVATE app)
 add_dependencies(portal-screenshot-test xerahs)
 add_test(NAME portal-screenshot COMMAND "${XERAHS_DBUS_RUN_SESSION}"
@@ -971,7 +980,7 @@ add_executable(workflow-shortcuts-test tests/WorkflowShortcutsTest.cpp
   app/RegionOverlay.cpp app/RegionOverlay.h app/ApplicationWindow.cpp app/ApplicationWindow.h
   app/CommandRegistry.cpp app/CommandRegistry.h)
 set_target_properties(workflow-shortcuts-test PROPERTIES AUTOMOC ON)
-target_link_libraries(workflow-shortcuts-test PRIVATE xerahs_window_discovery xerahs_workflow_shortcuts xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test xerahs_compositor_capture)
+target_link_libraries(workflow-shortcuts-test PRIVATE xerahs_ui_theme xerahs_window_discovery xerahs_workflow_shortcuts xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test xerahs_compositor_capture)
 add_test(NAME workflow-shortcuts COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:workflow-shortcuts-test>)
 set_tests_properties(workflow-shortcuts PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
@@ -1244,7 +1253,7 @@ target_link_libraries(xerahs_app PUBLIC xerahs_file_upload)
 add_executable(file-upload-test tests/FileUploadTest.cpp app/ApplicationWindow.cpp app/ApplicationWindow.h
   app/CommandRegistry.cpp app/CommandRegistry.h)
 set_target_properties(file-upload-test PROPERTIES AUTOMOC ON)
-target_link_libraries(file-upload-test PRIVATE xerahs_file_upload Qt6::Test)
+target_link_libraries(file-upload-test PRIVATE xerahs_ui_theme xerahs_file_upload Qt6::Test)
 add_test(NAME file-upload COMMAND file-upload-test)
 set_tests_properties(file-upload PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
