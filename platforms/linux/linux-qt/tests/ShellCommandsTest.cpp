@@ -234,6 +234,38 @@ private slots:
     QVERIFY(dialogs >= 4); QVERIFY(buttons >= 8);
     for (auto *widget : QApplication::topLevelWidgets()) if (qobject_cast<QDialog *>(widget)) widget->close();
   }
+  void referenceShellPagesNavigateAndRenderWithoutInertState() {
+    Shell shell(root.path()); shell.attach();
+    shell.window().show();
+    const QStringList pages = {
+      QStringLiteral("Editor"), QStringLiteral("Recording"), QStringLiteral("History"),
+      QStringLiteral("Statistics"), QStringLiteral("Workflows"), QStringLiteral("Tools"),
+      QStringLiteral("Settings_App"), QStringLiteral("Settings_Dest"),
+      QStringLiteral("Debug"), QStringLiteral("About")
+    };
+    const QString qaDir = qEnvironmentVariable("XERAHS_SHELL_QA_DIR");
+    if (!qaDir.isEmpty()) {
+      QDir().mkpath(qaDir);
+      shell.window().setThemeMode(ShellThemeMode::Dark);
+      shell.window().resize(1100, 680);
+    }
+    for (const auto &pageId : pages) {
+      shell.window().navigateTo(pageId);
+      QCOMPARE(shell.window().currentPageId(), pageId);
+      auto *page = shell.window().pageWidget(pageId);
+      QVERIFY2(page, qPrintable(pageId));
+      QVERIFY2(page->isVisibleTo(&shell.window()), qPrintable(pageId));
+      if (!qaDir.isEmpty()) {
+        QCoreApplication::processEvents();
+        QVERIFY(shell.window().grab().save(QDir(qaDir).filePath(pageId + QStringLiteral(".png"))));
+      }
+    }
+    shell.window().setThemeMode(ShellThemeMode::Dark);
+    QVERIFY(shell.window().isDarkTheme());
+    shell.window().setThemeMode(ShellThemeMode::Light);
+    QVERIFY(!shell.window().isDarkTheme());
+    shell.window().setThemeMode(ShellThemeMode::System);
+  }
 };
 
 int main(int argc, char **argv) {

@@ -1,4 +1,5 @@
 #include "EditorCanvas.h"
+#include "AppTheme.h"
 #include "TextContentDialog.h"
 #include "image-editor/ShapePainter.h"
 #include "RectanglePropertiesDialog.h"
@@ -6,6 +7,7 @@
 #include "AnnotationColorDialog.h"
 #include "ImageInsertDialog.h"
 
+#include <QApplication>
 #include <QColorSpace>
 #include <QBuffer>
 #include <QBoxLayout>
@@ -472,15 +474,34 @@ void EditorCanvas::scrollContentsBy(int, int) {
 void EditorCanvas::paintEvent(QPaintEvent *) {
   const bool moving = movePreviewCurrent();
   QPainter p(viewport());
-  p.fillRect(viewport()->rect(), palette().dark());
+  const bool highContrast = isHighContrastSystemPalette(palette()) || isHighContrastSystemPalette(QApplication::palette());
+  const QVariant darkProp = property("darkTheme");
+  const bool dark = darkProp.isValid()
+      ? darkProp.toBool()
+      : (palette().color(QPalette::Window).lightness() < palette().color(QPalette::WindowText).lightness());
+  const auto tokens = appThemePalette(dark);
+  p.fillRect(viewport()->rect(), highContrast ? palette().dark() : QBrush(tokens.editorMain));
   p.translate(m_view.offset());
   p.scale(m_view.zoom(), m_view.zoom());
-  // Checkerboard exposes source alpha without changing source pixels.
-  QPixmap tile(16, 16);
-  tile.fill(Qt::white);
-  { QPainter checker(&tile); checker.fillRect(0, 0, 8, 8, Qt::lightGray); checker.fillRect(8, 8, 8, 8, Qt::lightGray); }
-  p.fillRect(QRectF(QPointF(0, 0), m_image.size()), QBrush(tile));
+  // ShareX.ImageEditor 15px checkerboard exposes source alpha without changing source pixels.
+  QPixmap tile(30, 30);
+  tile.fill(highContrast ? Qt::white : tokens.editorCheckerA);
+  {
+    QPainter checker(&tile);
+    const QColor alt = highContrast ? Qt::lightGray : tokens.editorCheckerB;
+    checker.fillRect(0, 0, 15, 15, alt);
+    checker.fillRect(15, 15, 15, 15, alt);
+  }
+  const QRectF imageRect(QPointF(0, 0), m_image.size());
+  p.fillRect(imageRect, QBrush(tile));
   p.drawImage(0, 0, m_displaySource);
+  if (!highContrast) {
+    QPen framePen(tokens.editorBorder, 1.0);
+    framePen.setCosmetic(true);
+    p.setPen(framePen);
+    p.setBrush(Qt::NoBrush);
+    p.drawRect(imageRect);
+  }
   p.setRenderHint(QPainter::Antialiasing);
   for (const Annotation &annotation : m_session->document().annotations) {
     const auto *r = std::get_if<RectangleAnnotation>(&annotation);

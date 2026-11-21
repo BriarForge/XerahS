@@ -133,6 +133,29 @@ QMainWindow#applicationWindow {
   background-color: %1;
   color: %9;
 }
+QWidget#mainShellCentral, QWidget#contentFrameHost, QStackedWidget#contentFrame,
+QWidget#navigationTree, QScrollArea, QScrollArea > QWidget, QScrollArea > QWidget > QWidget {
+  background-color: transparent;
+  color: %9;
+}
+QWidget#contentFrameHost {
+  background-color: %2;
+}
+QLabel, QCheckBox, QRadioButton {
+  color: %9;
+  background-color: transparent;
+}
+QCheckBox::indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid %8;
+  background-color: %5;
+}
+QCheckBox::indicator:checked {
+  background-color: %12;
+  border-color: %12;
+}
 QMenuBar {
   background-color: %1;
   color: %9;
@@ -195,12 +218,12 @@ QPushButton[navRole="page"], QPushButton[navRole="group"], QToolButton[navRole="
   font-weight: 500;
 }
 QToolButton[navRole="action"] {
-  padding: 6px 10px 6px 28px;
+  padding: 5px 8px 5px 24px;
   font-weight: 400;
   color: %10;
 }
 QPushButton[navRole="page"][navChild="true"] {
-  padding: 6px 10px 6px 28px;
+  padding: 6px 10px 6px 26px;
   font-weight: 400;
 }
 QPushButton[navRole="page"]:hover, QPushButton[navRole="group"]:hover, QToolButton[navRole="action"]:hover {
@@ -217,9 +240,6 @@ QPushButton[navRole="page"]:disabled, QToolButton[navRole="action"]:disabled {
   color: %11;
 }
 
-QWidget#contentFrameHost {
-  background-color: %2;
-}
 QFrame[card="true"] {
   background-color: %3;
   border: 1px solid %7;
@@ -268,7 +288,13 @@ QPushButton {
   color: %9;
   border: 1px solid %16;
   border-radius: 6px;
-  padding: 6px 14px;
+  padding: 6px 12px;
+}
+QPushButton[iconOnly="true"] {
+  padding: 0px;
+}
+QPushButton[compact="true"] {
+  padding: 3px 8px;
 }
 QPushButton:hover {
   background-color: %15;
@@ -306,23 +332,12 @@ QComboBox, QSpinBox {
   border-radius: 6px;
   padding: 5px 10px;
 }
-QTabWidget::pane {
-  border: none;
-  background-color: %2;
-}
-QTabBar::tab {
-  background-color: transparent;
-  color: %10;
-  padding: 8px 16px;
-  border-bottom: 2px solid transparent;
-}
-QTabBar::tab:selected {
+QComboBox QAbstractItemView {
+  background-color: %3;
   color: %9;
-  border-bottom: 2px solid %12;
-  font-weight: 600;
-}
-QTabBar::tab:hover {
-  color: %9;
+  border: 1px solid %7;
+  selection-background-color: %12;
+  selection-color: %13;
 }
 QListWidget, QPlainTextEdit {
   background-color: %3;
@@ -330,14 +345,43 @@ QListWidget, QPlainTextEdit {
   border: 1px solid %7;
   border-radius: 6px;
 }
+QListWidget::item {
+  padding: 6px 8px;
+  border-radius: 4px;
+}
 QListWidget::item:selected {
   background-color: %14;
   color: %9;
+}
+QScrollBar:vertical {
+  background: transparent;
+  width: 8px;
+  margin: 2px 1px;
+}
+QScrollBar::handle:vertical {
+  background: %8;
+  min-height: 24px;
   border-radius: 4px;
 }
-QScrollArea {
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
   background: transparent;
-  border: none;
+  height: 0px;
+}
+QScrollBar:horizontal {
+  background: transparent;
+  height: 8px;
+  margin: 1px 2px;
+}
+QScrollBar::handle:horizontal {
+  background: %8;
+  min-width: 24px;
+  border-radius: 4px;
+}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal,
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+  background: transparent;
+  width: 0px;
 }
 QProgressBar {
   background-color: %4;
@@ -360,51 +404,68 @@ QProgressBar::chunk {
 
 QString editorThemeStyleSheet(const AppThemePalette &t) {
   return QStringLiteral(R"(
-QWidget#editorSurfaceHost, QMainWindow#editorWindow {
+QWidget#editorSurfaceHost {
   background-color: %1;
-  color: %8;
+  color: %7;
 }
-QToolBar#editorToolbar, QFrame#editorTopToolbar, QFrame#editorOptionsBar, QFrame#editorBottomBar {
-  background-color: %3;
-  border: 1px solid %4;
+QWidget#editorSurfaceHost QScrollArea, QWidget#editorSurfaceHost QScrollArea > QWidget, QWidget#editorSurfaceHost QScrollArea > QWidget > QWidget {
+  background-color: transparent;
+}
+QToolBar#editorToolbar, QToolBar#editorBottomActionBar, QFrame#editorTopToolbar, QFrame#editorOptionsBar, QFrame#editorBottomBar {
+  background-color: %2;
+  border: 1px solid %3;
   border-radius: 6px;
   spacing: 3px;
   padding: 3px;
 }
-QToolBar#editorToolbar::separator {
-  background-color: %5;
+QToolBar#editorToolbar::separator, QToolBar#editorBottomActionBar::separator {
+  background-color: %4;
   width: 1px;
   margin: 4px 4px;
 }
-QToolBar#editorToolbar QToolButton, QFrame#editorTopToolbar QToolButton, QFrame#editorOptionsBar QToolButton,
+QToolBar#editorToolbar QToolButton, QToolBar#editorBottomActionBar QToolButton,
+QFrame#editorTopToolbar QToolButton, QFrame#editorTopToolbar QPushButton,
+QFrame#editorOptionsBar QToolButton, QFrame#editorOptionsBar QPushButton,
 QFrame#editorBottomBar QToolButton, QFrame#editorBottomBar QPushButton {
-  background-color: %6;
-  color: %8;
-  border: 1px solid %4;
+  background-color: %5;
+  color: %7;
+  border: 1px solid %3;
   border-radius: 4px;
-  padding: 5px 7px;
-  min-width: 26px;
-  min-height: 26px;
+  padding: 3px 7px;
+  min-width: 24px;
+  min-height: 24px;
 }
-QToolBar#editorToolbar QToolButton:hover, QFrame#editorTopToolbar QToolButton:hover,
-QFrame#editorOptionsBar QToolButton:hover, QFrame#editorBottomBar QToolButton:hover,
-QFrame#editorBottomBar QPushButton:hover {
-  background-color: %7;
+QFrame#editorTopToolbar QPushButton[iconOnly="true"],
+QFrame#editorOptionsBar QPushButton[iconOnly="true"],
+QFrame#editorBottomBar QPushButton[iconOnly="true"] {
+  padding: 0px;
 }
-QToolBar#editorToolbar QToolButton:checked, QFrame#editorTopToolbar QToolButton:checked,
-QFrame#editorOptionsBar QToolButton:checked {
-  background-color: %9;
-  color: %10;
-  border-color: %9;
+QFrame#editorOptionsBar QPushButton[accent="true"] {
+  background-color: %8;
+  color: %9;
+  border-color: %8;
 }
-QToolBar#editorToolbar QToolButton:disabled, QFrame#editorBottomBar QToolButton:disabled {
+QToolBar#editorToolbar QToolButton:hover, QToolBar#editorBottomActionBar QToolButton:hover,
+QFrame#editorTopToolbar QToolButton:hover, QFrame#editorTopToolbar QPushButton:hover,
+QFrame#editorOptionsBar QToolButton:hover, QFrame#editorOptionsBar QPushButton:hover,
+QFrame#editorBottomBar QToolButton:hover, QFrame#editorBottomBar QPushButton:hover {
+  background-color: %6;
+}
+QToolBar#editorToolbar QToolButton:checked, QToolBar#editorBottomActionBar QToolButton:checked,
+QFrame#editorTopToolbar QToolButton:checked, QFrame#editorTopToolbar QPushButton:checked,
+QFrame#editorOptionsBar QToolButton:checked, QFrame#editorOptionsBar QPushButton:checked {
+  background-color: %8;
+  color: %9;
+  border-color: %8;
+}
+QToolBar#editorToolbar QToolButton:disabled, QToolBar#editorBottomActionBar QToolButton:disabled,
+QFrame#editorTopToolbar QPushButton:disabled, QFrame#editorBottomBar QPushButton:disabled {
   color: #7A7A7A;
 }
 )")
-      .arg(t.editorMain.name(), t.editorPanel.name(), t.editorToolbar.name(), t.editorBorder.name(),
-           t.editorSeparator.name(), t.editorControlBg.name(), t.editorControlHover.name(), t.editorText.name(),
-           t.accent.name())
-      .arg(t.accentForeground.name());
+      .arg(t.editorMain.name(), t.editorToolbar.name(), t.editorBorder.name(), t.editorSeparator.name(),
+           t.editorControlBg.name(), t.editorControlHover.name(), t.editorText.name(), t.accent.name(),
+           t.accentForeground.name());
 }
 
 bool applyShellTheme(QWidget &window, ShellThemeMode mode) {
@@ -428,6 +489,10 @@ bool applyEditorTheme(QWidget &window, ShellThemeMode mode) {
   }
   const bool dark = resolveDarkTheme(mode, sys);
   const auto tokens = appThemePalette(dark);
+  QPalette edPal = buildThemeQPalette(tokens);
+  edPal.setColor(QPalette::Window, tokens.editorMain);
+  edPal.setColor(QPalette::WindowText, tokens.editorText);
+  window.setPalette(edPal);
   window.setStyleSheet(editorThemeStyleSheet(tokens));
   return dark;
 }

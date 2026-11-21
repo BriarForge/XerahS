@@ -5,6 +5,7 @@
 #include "ApplicationWindow.h"
 #include "CaptureController.h"
 #include "ScheduledCapture.h"
+#include "ShellPages.h"
 #include "features/CaptureFeature.h"
 #include "features/FilesFeature.h"
 #include "features/UploadFeature.h"
@@ -12,6 +13,7 @@
 namespace xerahs::app {
 
 void attachCommandWindow(AppContext &ctx, ApplicationWindow &window, QMenu &tray) {
+  installShellPages(ctx, window);
   if (ctx.schedule) ctx.schedule->setDialogParent(&window);
   ctx.capture.setActionSelectionParent(&window);
   attachUploadWindow(ctx, window);

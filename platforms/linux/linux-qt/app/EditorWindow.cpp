@@ -1,4 +1,6 @@
 #include "NativeAccessibility.h"
+#include "AppIcons.h"
+#include "AppTheme.h"
 #include "EditorWindow.h"
 #include "EditorRecoveryQueue.h"
 #include "image-editor/ShapePainter.h"
@@ -55,7 +57,10 @@
 #include <QPointer>
 #include <QSpinBox>
 #include <QStatusBar>
+#include <QFrame>
+#include <QHBoxLayout>
 #include <QToolBar>
+#include <QToolButton>
 #include <QTimer>
 #include <QCoreApplication>
 #include <QSet>
@@ -198,6 +203,7 @@ EditorWindow *EditorWindow::fromCapturedDocument(const AnnotationDocument &docum
 EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument document,
                            EditorSession::InitialPersistence persistence, QImage displaySource)
     : m_path(path), m_image(std::move(image)), m_session(std::make_unique<EditorSession>(std::move(document), persistence)) {
+  setObjectName(QStringLiteral("editorWindow"));
   new NativeAccessibility(*this, EditorWindow::tr("Edit the image using menus, tools and the canvas. Save is explicit. Close offers recovery for unsaved changes."), false);
   guardEditorShutdown(*this);
   m_recoveryTimer = new QTimer(this); m_recoveryTimer->setSingleShot(true);
@@ -558,12 +564,105 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_toolbarActions.insert("create-rectangle", m_createRectangle);
   m_toolbarActions.insert("focus-annotations", objects);
   for (auto *action : m_toolbarActions) { action->setParent(this); addAction(action); }
+  // Attach Lucide-matched vector icons to every editor toolbar & output action.
+  const auto applyEditorActionIcons = [this](const QColor &color) {
+    const struct IconBinding { const char *id; AppIcon icon; } bindings[] = {
+      {"save", AppIcon::Save}, {"save-as", AppIcon::SaveAll}, {"undo", AppIcon::Undo2}, {"redo", AppIcon::Redo2},
+      {"delete-selection", AppIcon::Trash2}, {"rotate-selection", AppIcon::RotateCw},
+      {"zoom-in", AppIcon::ZoomIn}, {"zoom-out", AppIcon::ZoomOut}, {"reset-zoom", AppIcon::Search}, {"fit-image", AppIcon::Maximize},
+      {"new-image", AppIcon::FilePlus}, {"open-image", AppIcon::FolderOpen}, {"crop-image", AppIcon::Crop}, {"crop-tool", AppIcon::Crop},
+      {"effects", AppIcon::Sparkles}, {"flatten-image", AppIcon::Layers2}, {"clear-annotations", AppIcon::BrushCleaning},
+      {"copy-rendered-image", AppIcon::Clipboard}, {"print", AppIcon::Printer}, {"close-editor", AppIcon::LogOut},
+      {"select-tool", AppIcon::MousePointer2}, {"rectangle-tool", AppIcon::Square}, {"ellipse-tool", AppIcon::Circle},
+      {"line-tool", AppIcon::Minus}, {"arrow-tool", AppIcon::ArrowRight}, {"freehand-tool", AppIcon::Pencil},
+      {"text-tool", AppIcon::Type}, {"step-tool", AppIcon::Hash}, {"highlight-tool", AppIcon::Highlighter},
+      {"blur-tool", AppIcon::Droplet}, {"pixelate-tool", AppIcon::Grid2x2}, {"speechballoon-tool", AppIcon::MessageSquare},
+      {"magnify-tool", AppIcon::Search}, {"spotlight-tool", AppIcon::Lightbulb}, {"smarteraser-tool", AppIcon::Eraser},
+      {"image-tool", AppIcon::ImageIcon}, {"emoji-tool", AppIcon::Smile}, {"cursor-tool", AppIcon::MousePointer},
+      {"cutout-tool", AppIcon::Scissors},
+    };
+    for (const auto &b : bindings) {
+      if (auto *act = m_toolbarActions.value(QString::fromLatin1(b.id))) act->setIcon(appIcon(b.icon, color, 18));
+    }
+    if (m_pinAction) m_pinAction->setIcon(appIcon(AppIcon::Pin, color, 18));
+    if (m_uploadAction) m_uploadAction->setIcon(appIcon(AppIcon::CloudUpload, color, 18));
+    if (m_wallpaperAction) m_wallpaperAction->setIcon(appIcon(AppIcon::Wallpaper, color, 18));
+  };
+  bar->setIconSize(QSize(18, 18));
   m_toolbarController = new NativeEditorToolbar(*this, *bar, m_toolbarActions, [this] {
     return m_canvas && !m_canvasOperationPending && !m_closePending && !m_outputPending && !m_canvas->interactionActive();
   });
 
+  // ShareX.ImageEditor floating bottom zoom & quick output overlay anchored to
+  // the bottom-center of the canvas (matches EditorBuiltInToolbars.axaml) without
+  // inflating minimum window height on constrained displays.
+  auto *bottomBar = new QFrame(m_canvas->viewport());
+  bottomBar->setObjectName(QStringLiteral("editorBottomBar"));
+  auto *bottomLayout = new QHBoxLayout(bottomBar);
+  bottomLayout->setContentsMargins(4, 3, 4, 3);
+  bottomLayout->setSpacing(3);
+  const auto addFloatingAction = [&](QAction *act) {
+    if (!act) return;
+    auto *btn = new QToolButton(bottomBar);
+    btn->setDefaultAction(act);
+    btn->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    btn->setIconSize(QSize(18, 18));
+    btn->setAutoRaise(true);
+    btn->setFocusPolicy(Qt::NoFocus);
+    bottomLayout->addWidget(btn);
+  };
+  addFloatingAction(zoomOut);
+  addFloatingAction(resetZoom);
+  addFloatingAction(zoomIn);
+  addFloatingAction(fit);
+  auto *bSep = new QFrame(bottomBar);
+  bSep->setFrameShape(QFrame::VLine);
+  bSep->setFixedHeight(20);
+  bottomLayout->addWidget(bSep);
+  addFloatingAction(m_copyAction);
+  addFloatingAction(saveAction);
+  addFloatingAction(saveAs);
+  addFloatingAction(m_pinAction);
+  addFloatingAction(m_printAction);
+  addFloatingAction(m_uploadAction);
+  addFloatingAction(m_wallpaperAction);
+  bottomBar->adjustSize();
+  struct BottomOverlayAnchor final : QObject {
+    QPointer<QFrame> bar;
+    QPointer<QWidget> host;
+    BottomOverlayAnchor(QFrame *b, QWidget *h) : QObject(b), bar(b), host(h) {
+      if (host) host->installEventFilter(this);
+      reposition();
+    }
+    void reposition() {
+      if (!bar || !host) return;
+      const QSize sz = bar->sizeHint();
+      const bool fits = host->width() >= sz.width() + 16 && host->height() >= sz.height() + 90;
+      bar->setVisible(fits);
+      if (fits) {
+        bar->resize(sz);
+        bar->move((host->width() - sz.width()) / 2, host->height() - sz.height() - 6);
+        bar->raise();
+      }
+    }
+    bool eventFilter(QObject *, QEvent *ev) override {
+      if (ev->type() == QEvent::Resize || ev->type() == QEvent::Show) reposition();
+      return false;
+    }
+  };
+  new BottomOverlayAnchor(bottomBar, m_canvas->viewport());
+
   m_windowState = new NativeEditorWindowState(*this, {std::min(m_image.width() + 40, 1400), std::min(m_image.height() + 120, 900)});
   new NativeEditorAppearance(*this);
+  const bool darkEditor = palette().color(QPalette::Window).lightness() < palette().color(QPalette::WindowText).lightness();
+  const auto editorTokens = appThemePalette(darkEditor);
+  const QColor iconTint = isHighContrastSystemPalette(palette()) ? palette().color(QPalette::WindowText) : editorTokens.editorText;
+  applyEditorActionIcons(iconTint);
+  if (!isHighContrastSystemPalette(palette())) {
+    const QString barStyle = editorThemeStyleSheet(editorTokens);
+    bar->setStyleSheet(barStyle);
+    bottomBar->setStyleSheet(barStyle);
+  }
   refresh();
   m_canvas->setFocus();
 }

@@ -83,6 +83,7 @@ private:
     m_scroll->setFrameShape(QFrame::NoFrame); m_scroll->setWidgetResizable(true); m_scroll->setWidget(content);
     if (main) main->setCentralWidget(m_scroll);
     else { auto *outer = new QVBoxLayout(&m_window); outer->setContentsMargins(0,0,0,0); outer->addWidget(m_scroll); }
+    if (m_window.isVisible()) { content->show(); m_scroll->show(); }
     m_window.setMinimumSize(0,0);
     if (m_window.layout()) m_window.layout()->activate();
   }

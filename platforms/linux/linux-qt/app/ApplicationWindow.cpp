@@ -169,12 +169,12 @@ void ApplicationWindow::build(CommandRegistry &commands) {
   rootLayout->setContentsMargins(0, 0, 0, 0);
   rootLayout->setSpacing(0);
 
-  // Column 0: Left Navigation Pane (mirrors MainWindow.axaml 300px sidebar).
+  // Column 0: Left Navigation Pane (mirrors MainWindow.axaml sidebar).
   auto *navPane = new QFrame(central);
   navPane->setObjectName(QStringLiteral("navigationPane"));
-  navPane->setFixedWidth(258);
+  navPane->setFixedWidth(236);
   auto *navOuter = new QVBoxLayout(navPane);
-  navOuter->setContentsMargins(12, 12, 12, 12);
+  navOuter->setContentsMargins(10, 10, 10, 10);
   navOuter->setSpacing(8);
 
   m_navSearch = new QLineEdit(navPane);
@@ -191,9 +191,11 @@ void ApplicationWindow::build(CommandRegistry &commands) {
   navScroll->setWidgetResizable(true);
   navScroll->setFrameShape(QFrame::NoFrame);
   navScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  navScroll->viewport()->setAutoFillBackground(false);
 
   auto *navTreeHost = new QWidget(navScroll);
   navTreeHost->setObjectName(QStringLiteral("navigationTree"));
+  navTreeHost->setAutoFillBackground(false);
   auto *navLayout = new QVBoxLayout(navTreeHost);
   navLayout->setContentsMargins(0, 2, 2, 2);
   navLayout->setSpacing(2);
@@ -706,8 +708,10 @@ void ApplicationWindow::addCaptureRecoveryActions(QAction *edit, QAction *discar
     layout->setContentsMargins(14, 6, 14, 6);
     layout->setSpacing(8);
   }
+  QList<QAction *> recoveryActions;
   for (auto *action : {edit, review, retry, discard}) {
     if (!action) continue;
+    recoveryActions.append(action);
     auto *button = new QToolButton(m_recoveryStrip);
     button->setDefaultAction(action);
     button->setToolButtonStyle(Qt::ToolButtonTextOnly);
@@ -718,13 +722,20 @@ void ApplicationWindow::addCaptureRecoveryActions(QAction *edit, QAction *discar
     layout->addWidget(button);
   }
   layout->addStretch();
-  m_recoveryStrip->show();
-
   auto *menu = menuBar()->addMenu(tr("&Retained Capture"));
   if (edit) menu->addAction(edit);
   if (review) menu->addAction(review);
   if (retry) menu->addAction(retry);
   if (discard) menu->addAction(discard);
+
+  const auto syncRecoveryStrip = [this, recoveryActions, menu] {
+    bool anyEnabled = false;
+    for (auto *a : recoveryActions) anyEnabled |= (a && a->isEnabled());
+    m_recoveryStrip->setVisible(anyEnabled);
+    menu->menuAction()->setVisible(anyEnabled);
+  };
+  for (auto *action : recoveryActions) connect(action, &QAction::changed, m_recoveryStrip, syncRecoveryStrip);
+  syncRecoveryStrip();
   adoptDropTargets();
 }
 

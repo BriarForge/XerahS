@@ -262,7 +262,7 @@ add_library(xerahs_editor_canvas STATIC app/EditorCanvas.cpp app/EditorCanvas.h
   app/CanvasCropDialog.cpp app/CanvasCropDialog.h)
 set_target_properties(xerahs_editor_canvas PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_editor_canvas PUBLIC app)
-target_link_libraries(xerahs_editor_canvas PUBLIC xerahs_core xerahs_editor_codecs Qt6::Widgets)
+target_link_libraries(xerahs_editor_canvas PUBLIC xerahs_ui_theme xerahs_core xerahs_editor_codecs Qt6::Widgets)
 target_compile_options(xerahs_editor_canvas PRIVATE -Wall -Wextra -Wpedantic)
 
 add_library(xerahs_action_selection STATIC app/ActionSelectionDialog.cpp app/ActionSelectionDialog.h
@@ -305,6 +305,8 @@ add_library(xerahs_app OBJECT
   app/CaptureWorkflows.h
   app/ApplicationWindow.cpp
   app/ApplicationWindow.h
+  app/ShellPages.cpp
+  app/ShellPages.h
   app/CommandRegistry.cpp
   app/CommandRegistry.h
   app/AppContext.h
