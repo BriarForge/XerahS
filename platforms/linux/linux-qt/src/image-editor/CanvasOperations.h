@@ -20,7 +20,7 @@ struct CanvasTransform {
 
 enum class CanvasAction { Crop, ResizeCanvas, ResizeImage, RotateClockwise, RotateCounterClockwise, Rotate180,
                           FlipHorizontal, FlipVertical, AutoCrop, RotateCustom, Flatten, ClearAnnotations, ClearImageAndAnnotations,
-                          CutOut };
+                          CutOut, Background };
 enum class CanvasAnchor { TopLeft, Top, TopRight, Left, Center, Right, BottomLeft, Bottom, BottomRight };
 enum class Interpolation { Nearest, Bilinear };
 enum class CropBorder { Transparent, TopLeftColor, Color };
@@ -33,6 +33,22 @@ struct AutoCropPolicy {
   bool includeAnnotations = true;
 };
 
+// EC-013 on decision EC-013-BACKGROUND-COMPOSITION-2026-11-23: one
+// committed, fully undoable background composition. Geometry inner to outer:
+// (optionally smart-clipped) content, padding band in the source's top-left
+// pixel colour, rounded card, gaussian shadow, square margin band in the
+// chosen kind. Defaults are the reference's own.
+struct BackgroundPolicy {
+  enum class Kind { Transparent, Solid, Gradient };
+  Kind kind = Kind::Transparent;
+  Argb solid = 0xFF222222;                                   // reference default
+  Argb gradientFrom = 0xFFDD2476, gradientTo = 0xFFFF512F;   // reference default, vertical top to bottom
+  double margin = 80, padding = 40;                          // reference defaults
+  double cornerRadius = 20;                                  // reference default
+  bool smartPadding = true;                                  // reference default
+  double shadowRadius = 30;                                  // reference default; 0 means no shadow
+};
+
 struct CanvasOperation {
   CanvasAction action = CanvasAction::RotateClockwise;
   qint64 width = 0, height = 0;
@@ -42,6 +58,7 @@ struct CanvasOperation {
   Interpolation interpolation = Interpolation::Nearest;
   bool lockAspect = true;
   AutoCropPolicy autoCrop;
+  BackgroundPolicy background;
   double rotationDegrees = 0;  // positive is clockwise, about canvas centre
   bool expandCanvas = true;
   // CutOut (EA-013): remove columns start.x..end.x when true, otherwise rows

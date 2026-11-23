@@ -1,6 +1,7 @@
 #include "image-editor/CanvasOperations.h"
 #include "image-editor/AnnotationTransform.h"
 #include "image-editor/CropRegion.h"
+#include "image-editor/effects/EffectSupport.h"
 
 #include <algorithm>
 #include <array>
@@ -87,6 +88,180 @@ Argb bilinear(const ArgbImage &source, double x, double y, bool useBorder = fals
   if (alpha == 0) return 0;
   const auto byte = [](double value) { return quint32(std::clamp(std::floor(value + .5), 0.0, 255.0)); };
   return (byte(alpha * 255) << 24) | (byte(red / alpha) << 16) | (byte(green / alpha) << 8) | byte(blue / alpha);
+}
+
+// EC-013 on decision EC-013-BACKGROUND-COMPOSITION-2026-11-23.
+struct BackgroundGeometry {
+  qint64 insetLeft = 0, insetTop = 0, insetRight = 0, insetBottom = 0;
+  qint64 marginPx = 0, paddingPx = 0, radiusPx = 0;
+  qint64 width = 0, height = 0;
+  // Nothing is composed (no clip, no bands, no shadow, transparent kind).
+  bool noOp = true;
+};
+
+// The reference's smart-padding rule (MainViewModel.CanvasState.cs): target =
+// the source's top-left pixel; a pixel is background when every RGBA channel
+// differs by at most tolerance 30 (inclusive); insets are the per-edge
+// uniform border. Annotations are not part of detection.
+std::optional<BackgroundGeometry> backgroundGeometry(const ArgbImage &source, const BackgroundPolicy &policy,
+                                                     const CanvasControl &control) {
+  BackgroundGeometry g;
+  g.marginPx = qint64(std::floor(policy.margin + 0.5));
+  g.paddingPx = qint64(std::floor(policy.padding + 0.5));
+  g.radiusPx = qint64(std::floor(policy.cornerRadius + 0.5));
+  if (policy.smartPadding) {
+    const Argb target = source.at(0, 0);
+    const auto isBackground = [&](Argb pixel) {
+      for (int shift : {0, 8, 16, 24})
+        if (std::abs(int((pixel >> shift) & 255) - int((target >> shift) & 255)) > 30) return false;
+      return true;
+    };
+    qint64 left = source.width, top = source.height, right = -1, bottom = -1;
+    for (qint64 y = 0; y < source.height; ++y) {
+      if (cancelled(control)) return std::nullopt;
+      for (qint64 x = 0; x < source.width; ++x)
+        if (!isBackground(source.at(x, y))) {
+          left = std::min(left, x); top = std::min(top, y);
+          right = std::max(right, x); bottom = std::max(bottom, y);
+        }
+    }
+    if (right >= left) {   // a uniform border exists on at least one edge
+      g.insetLeft = left; g.insetTop = top;
+      g.insetRight = source.width - 1 - right; g.insetBottom = source.height - 1 - bottom;
+    }
+  }
+  g.width = source.width - g.insetLeft - g.insetRight + 2 * (g.marginPx + g.paddingPx);
+  g.height = source.height - g.insetTop - g.insetBottom + 2 * (g.marginPx + g.paddingPx);
+  g.noOp = g.insetLeft == 0 && g.insetTop == 0 && g.insetRight == 0 && g.insetBottom == 0 && g.marginPx == 0 && g.paddingPx == 0 &&
+           policy.kind == BackgroundPolicy::Kind::Transparent && !(policy.shadowRadius > 0);
+  return g;
+}
+
+// Non-premultiplied source-over of two Argb pixels.
+Argb over(Argb dst, Argb src) {
+  const double sa = (src >> 24) / 255.0;
+  if (sa <= 0) return dst;
+  if (sa >= 1) return src;
+  const double da = (dst >> 24) / 255.0;
+  const double outA = sa + da * (1 - sa);
+  if (outA <= 0) return 0;
+  const auto mix = [&](int shift) {
+    const double s = ((src >> shift) & 255) / 255.0, d = ((dst >> shift) & 255) / 255.0;
+    return quint32(std::floor((s * sa + d * da * (1 - sa)) / outA * 255.0 + 0.5));
+  };
+  return (quint32(std::floor(outA * 255.0 + 0.5)) << 24) | (mix(16) << 16) | (mix(8) << 8) | mix(0);
+}
+
+Argb scaleAlpha(Argb color, double coverage) {
+  const quint32 alpha = quint32(std::floor(((color >> 24) & 255) * coverage + 0.5));
+  return (color & 0x00FFFFFF) | (alpha << 24);
+}
+
+// Deterministic rounded-rectangle coverage: 16 equally spaced point samples
+// per pixel (4x4, no randomness), exact membership via the clamped-spine
+// distance test. The renderer's exact analytic box coverage does not extend
+// to arcs; this convention is pinned by the decided record.
+double roundedCoverage(qint64 x, qint64 y, double left, double top, double right, double bottom, double radius) {
+  radius = std::min({radius, (right - left) / 2.0, (bottom - top) / 2.0});
+  int inside = 0;
+  for (int sy = 0; sy < 4; ++sy)
+    for (int sx = 0; sx < 4; ++sx) {
+      const double px = x + (sx + 0.5) / 4, py = y + (sy + 0.5) / 4;
+      const double cx = std::clamp(px, left + radius, right - radius);
+      const double cy = std::clamp(py, top + radius, bottom - radius);
+      if ((px - cx) * (px - cx) + (py - cy) * (py - cy) <= radius * radius) ++inside;
+    }
+  return inside / 16.0;
+}
+
+// The composed canvas, inner to outer: (optionally smart-clipped) content,
+// padding band in the source's top-left colour, rounded card, gaussian
+// shadow, square margin band in the chosen kind.
+std::optional<ArgbImage> composeBackgroundImage(const ArgbImage &source, const BackgroundPolicy &policy,
+                                                 const BackgroundGeometry &g, const CanvasControl &control) {
+  ArgbImage image = solidImage(g.width, g.height, 0);
+  const double cardLeft = double(g.marginPx), cardTop = double(g.marginPx);
+  const double cardRight = double(g.width - g.marginPx), cardBottom = double(g.height - g.marginPx);
+  const double radius = double(g.radiusPx);
+  const auto cardCoverage = [&](qint64 x, qint64 y) {
+    return roundedCoverage(x, y, cardLeft, cardTop, cardRight, cardBottom, radius);
+  };
+
+  // 1. Margin band in the chosen kind. Solid fills the whole canvas; the
+  // gradient runs top to bottom over the full height, exactly one row each.
+  if (policy.kind == BackgroundPolicy::Kind::Solid) {
+    std::fill(image.pixels.begin(), image.pixels.end(), policy.solid);
+  } else if (policy.kind == BackgroundPolicy::Kind::Gradient) {
+    const auto channel = [&](quint32 from, quint32 to, double t) {
+      return quint32(std::floor(from + (double(to) - double(from)) * t + 0.5));
+    };
+    for (qint64 y = 0; y < g.height; ++y) {
+      const double t = g.height == 1 ? 0.0 : double(y) / double(g.height - 1);
+      const Argb row = (channel((policy.gradientFrom >> 24) & 255, (policy.gradientTo >> 24) & 255, t) << 24) |
+                       (channel((policy.gradientFrom >> 16) & 255, (policy.gradientTo >> 16) & 255, t) << 16) |
+                       (channel((policy.gradientFrom >> 8) & 255, (policy.gradientTo >> 8) & 255, t) << 8) |
+                       channel(policy.gradientFrom & 255, policy.gradientTo & 255, t);
+      const auto begin = image.pixels.begin() + std::ptrdiff_t(y * g.width);
+      std::fill(begin, begin + std::ptrdiff_t(g.width), row);
+    }
+  }
+  progress(control, 25);
+
+  // 2. Shadow: the reference's CreateCanvasShadow facts - blur from
+  // shadowRadius, offset (0, +10), black at alpha 80/255 - composed over the
+  // margin band and bounded by the canvas. The silhouette reuses the house
+  // gaussian (sigma = radius / 3, the blurredClamp convention), unclamped so
+  // a shadow reaching the canvas edge fades instead of smearing.
+  if (policy.shadowRadius > 0) {
+    xerahs::effects::support::FloatImage silhouette;
+    silhouette.w = int(g.width); silhouette.h = int(g.height);
+    silhouette.d.assign(std::size_t(g.width) * std::size_t(g.height) * 4, 0.f);
+    for (qint64 y = 0; y < g.height; ++y) {
+      if (cancelled(control)) return std::nullopt;
+      for (qint64 x = 0; x < g.width; ++x) {
+        const double c = cardCoverage(x, y - 10);
+        if (c > 0) silhouette.d[std::size_t((y * g.width + x) * 4 + 3)] = float(c * 255.0);
+      }
+    }
+    xerahs::effects::EffectContext context;
+    if (control.cancelled) context.cancelled = control.cancelled;
+    if (!xerahs::effects::support::gaussianBlur255(silhouette, std::max(0.001f, float(policy.shadowRadius) / 3.f), false, context))
+      return std::nullopt;
+    for (qint64 i = 0; i < g.width * g.height; ++i) {
+      const double mask = silhouette.d[std::size_t(i * 4 + 3)] / 255.0;
+      if (mask <= 0) continue;
+      const quint32 alpha = quint32(std::floor(mask * 80.0 + 0.5));
+      image.pixels[std::size_t(i)] = over(image.pixels[std::size_t(i)], alpha << 24);
+    }
+  }
+  progress(control, 50);
+
+  // 3. Card: the padding band in the source's exact top-left colour, over
+  // the margin band, clipped by the rounded card.
+  const Argb band = source.at(0, 0);
+  for (qint64 y = g.marginPx; y < g.height - g.marginPx; ++y) {
+    if (cancelled(control)) return std::nullopt;
+    for (qint64 x = g.marginPx; x < g.width - g.marginPx; ++x) {
+      const double c = cardCoverage(x, y);
+      if (c <= 0) continue;
+      image.pixels[std::size_t(y * g.width + x)] = over(image.pixels[std::size_t(y * g.width + x)], c >= 1 ? band : scaleAlpha(band, c));
+    }
+  }
+  progress(control, 75);
+
+  // 4. Content: the source with its detected uniform border clipped, on the
+  // card, composed over the band so a transparent band stays see-through.
+  const qint64 contentWidth = source.width - g.insetLeft - g.insetRight;
+  const qint64 contentHeight = source.height - g.insetTop - g.insetBottom;
+  const qint64 dx = g.marginPx + g.paddingPx, dy = g.marginPx + g.paddingPx;
+  for (qint64 cy = 0; cy < contentHeight; ++cy) {
+    if (cancelled(control)) return std::nullopt;
+    for (qint64 cx = 0; cx < contentWidth; ++cx)
+      image.pixels[std::size_t((dy + cy) * g.width + (dx + cx))] =
+          over(image.pixels[std::size_t((dy + cy) * g.width + (dx + cx))], source.at(g.insetLeft + cx, g.insetTop + cy));
+  }
+  progress(control, 100);
+  return image;
 }
 
 CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
@@ -272,6 +447,7 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
   qint64 width = source.width, height = source.height;
   CanvasTransform transform;
   bool resample = false, clipAnnotations = false;
+  std::optional<BackgroundGeometry> background;
   switch (op.action) {
     case CanvasAction::Crop: {
       const auto region = normalizedCropRegion(width, height, op.start, op.end);
@@ -339,11 +515,27 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
       clipAnnotations = !op.expandCanvas;
       break;
     }
+    case CanvasAction::Background: {
+      const BackgroundPolicy &policy = op.background;
+      if (!std::isfinite(policy.margin) || policy.margin < 0 || !std::isfinite(policy.padding) || policy.padding < 0 ||
+          !std::isfinite(policy.cornerRadius) || policy.cornerRadius < 0 || policy.cornerRadius > 255 ||
+          !std::isfinite(policy.shadowRadius) || policy.shadowRadius < 0 || policy.shadowRadius > 100)
+        return failure(diagnostic::documentInvalid);
+      background = backgroundGeometry(source, policy, control);
+      if (!background) return failure(QStringLiteral("canvas-cancelled"));
+      if (background->width < 1 || background->height < 1) return failure(diagnostic::documentInvalid);
+      width = background->width; height = background->height;
+      transform.dx = double(background->marginPx + background->paddingPx - background->insetLeft);
+      transform.dy = double(background->marginPx + background->paddingPx - background->insetTop);
+      clipAnnotations = true;
+      break;
+    }
     default: return failure(diagnostic::documentInvalid);
   }
   if (!validSize(width, height)) return failure(width < 1 || height < 1 ? diagnostic::documentInvalid : diagnostic::documentTooLarge);
   const bool identity = width == source.width && height == source.height && transform.xx == 1 && transform.yy == 1 &&
-                        transform.xy == 0 && transform.yx == 0 && transform.dx == 0 && transform.dy == 0;
+                        transform.xy == 0 && transform.yx == 0 && transform.dx == 0 && transform.dy == 0 &&
+                        (!background || background->noOp);
   CanvasResult result;
   result.transform = transform;
   if (identity) {
@@ -385,7 +577,14 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
     png = std::move(*mirrored);
   }
   progress(control, 0);
-  ArgbImage image = solidImage(width, height, op.fill);
+  ArgbImage image;
+  if (background) {
+    auto composed = composeBackgroundImage(source, op.background, *background, control);
+    if (!composed) return failure(QStringLiteral("canvas-cancelled"));
+    image = std::move(*composed);
+  } else {
+    image = solidImage(width, height, op.fill);
+  }
   if (resample) {
     const bool rotating = op.action == CanvasAction::RotateCustom;
     for (qint64 y = 0; y < height; ++y) {
@@ -403,7 +602,7 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
       }
       progress(control, int((y + 1) * 100 / height));
     }
-  } else {
+  } else if (!background) {
     for (qint64 y = 0; y < source.height; ++y) {
       if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
       for (qint64 x = 0; x < source.width; ++x) {

@@ -7,6 +7,7 @@
 #include <QTest>
 
 #include <cmath>
+#include <functional>
 #include <limits>
 
 using namespace xerahs::editor;
@@ -118,8 +119,7 @@ private slots:
     QVERIFY(!result.pixelsResampled);
   }
 
-  void allNineAnchorsHaveDeterministicOffsets() {
-    const ArgbImage source = solidImage(3, 2, 0xFF112233);
+  void allNineAnchorsHaveDeterministicOffsets() {    const ArgbImage source = solidImage(3, 2, 0xFF112233);
     for (int anchor = 0; anchor < 9; ++anchor) {
       CanvasOperation op; op.action = CanvasAction::ResizeCanvas; op.anchor = CanvasAnchor(anchor); op.width = 6; op.height = 5;
       const auto result = applyCanvasOperation(document(3, 2), source, op); QVERIFY(result.image);
@@ -249,6 +249,182 @@ private slots:
       QCOMPARE(result.error, std::optional<QString>(QStringLiteral("canvas-cancelled")));
       QVERIFY(!result.document && !result.image);
     }
+  }
+
+  // EC-013 on decision EC-013-BACKGROUND-COMPOSITION-2026-11-23: the composed
+  // geometry, kinds, smart padding, shadow and annotation translation, each
+  // pinned at the decided facts (reference defaults; top-left target,
+  // tolerance 30; gaussian sigma = radius / 3, offset +10, alpha 80).
+  ArgbImage backgroundSource() {
+    // A white 12x8 with one red 3x3 mark at (3,2)..(5,4): the uniform border
+    // is left 3, top 2, right 6, bottom 3 around the 3x3 content.
+    ArgbImage image = solidImage(12, 8, 0xFFFFFFFF);
+    for (qint64 y = 2; y <= 4; ++y)
+      for (qint64 x = 3; x <= 5; ++x) image.pixels[std::size_t(y * image.width + x)] = 0xFF112233;
+    return image;
+  }
+
+  void backgroundComposesTheDecidedGeometry() {
+    const ArgbImage source = backgroundSource();
+    CanvasOperation op; op.action = CanvasAction::Background;
+    op.background.kind = BackgroundPolicy::Kind::Solid;
+    op.background.solid = 0xFF202020;
+    op.background.margin = 2; op.background.padding = 1;
+    op.background.cornerRadius = 0; op.background.shadowRadius = 0;
+    const auto result = applyCanvasOperation(document(12, 8), source, op);
+    QVERIFY(!result.error);
+    QVERIFY(result.changed && result.image);
+    QCOMPARE(result.image->width, qint64(9)); QCOMPARE(result.image->height, qint64(9));
+    QCOMPARE(result.image->at(0, 0), Argb(0xFF202020));    // square margin band, outer corner
+    QCOMPARE(result.image->at(8, 8), Argb(0xFF202020));
+    QCOMPARE(result.image->at(2, 2), Argb(0xFFFFFFFF));    // padding band: the source's top-left colour
+    QCOMPARE(result.image->at(6, 6), Argb(0xFFFFFFFF));
+    QCOMPARE(result.image->at(3, 3), Argb(0xFF112233));    // the clipped content on the card
+    QCOMPARE(result.image->at(5, 5), Argb(0xFF112233));
+    QCOMPARE(result.image->at(3, 2), Argb(0xFFFFFFFF));   // above the content: band, not content
+    QCOMPARE(result.transform.dx, 0.0); QCOMPARE(result.transform.dy, 1.0);
+  }
+
+  void backgroundSmartPaddingClipsTheUniformBorder() {
+    const ArgbImage source = backgroundSource();
+    CanvasOperation op; op.action = CanvasAction::Background;
+    op.background.kind = BackgroundPolicy::Kind::Transparent;
+    op.background.margin = 0; op.background.padding = 0; op.background.cornerRadius = 0; op.background.shadowRadius = 0;
+    // Smart padding on: the compose is exactly the clipped content.
+    op.background.smartPadding = true;
+    const auto clipped = applyCanvasOperation(document(12, 8), source, op);
+    QVERIFY(!clipped.error);
+    QVERIFY(clipped.changed && clipped.image);
+    QCOMPARE(clipped.image->width, qint64(3)); QCOMPARE(clipped.image->height, qint64(3));
+    for (qint64 y = 0; y < 3; ++y)
+      for (qint64 x = 0; x < 3; ++x) QCOMPARE(clipped.image->at(x, y), source.at(3 + x, 2 + y));
+    // Smart padding off with nothing else composed: an honest no-op.
+    op.background.smartPadding = false;
+    const auto unchanged = applyCanvasOperation(document(12, 8), source, op);
+    QVERIFY(!unchanged.error && !unchanged.changed && !unchanged.image);
+  }
+
+  void backgroundShadowIsTheDecidedGaussian() {
+    // A uniform red 40x30: no border detected, no clip.
+    const ArgbImage source = solidImage(40, 30, 0xFFFF0000);
+    CanvasOperation op; op.action = CanvasAction::Background;
+    op.background.kind = BackgroundPolicy::Kind::Transparent;
+    op.background.margin = 30; op.background.padding = 0;
+    op.background.cornerRadius = 0; op.background.smartPadding = true;
+    op.background.shadowRadius = 12;
+    const auto result = applyCanvasOperation(document(40, 30), source, op);
+    QVERIFY(!result.error && result.changed && result.image);
+    QCOMPARE(result.image->width, qint64(100)); QCOMPARE(result.image->height, qint64(90));
+    // The card itself stays the band colour (the source's top-left red).
+    QCOMPARE(result.image->at(50, 35), Argb(0xFFFF0000));
+    // Hand-derived from the decided rule, not read off the implementation:
+    // sigma 4 (radius 12), the dropped silhouette covers rows 40..69, and
+    // the visible strip below the card (rows 61..69) never reaches full
+    // coverage because the 10 px drop is smaller than the kernel reach - the
+    // full-alpha mask exists only under the card. At (50,65) the taps
+    // k=-12..4 land inside, so mask = 8.7174/10.0088 = 0.871 and the alpha is
+    // round(0.871 * 80) = 70, black.
+    QCOMPARE(result.image->at(50, 65), Argb(0x46000000));
+    // Below the silhouette's bottom edge only taps k=-12..-6 land inside:
+    // mask = 0.8336/10.0088 = 0.083, alpha round(0.083 * 80) = 7.
+    QCOMPARE(result.image->at(50, 75), Argb(0x07000000));
+    // Above the card the shadow never rises: the kernel's reach (sigma 4 ->
+    // radius 12) cannot bridge the 10 px offset gap.
+    QCOMPARE(result.image->at(50, 20), Argb(0));
+    // The far canvas corner stays transparent: the gaussian tail is zero.
+    QCOMPARE(result.image->at(0, 0), Argb(0));
+    // The mask decays monotonically below the card: 70 > 7 > 0.
+    const auto alpha = [&](qint64 x, qint64 y) { return (result.image->at(x, y) >> 24) & 255; };
+    QVERIFY(alpha(50, 75) > 0);
+    QVERIFY(alpha(50, 75) < alpha(50, 65));
+    QVERIFY(alpha(50, 65) < 80);
+  }
+
+  void backgroundGradientRunsTopToBottom() {
+    const ArgbImage source = solidImage(1, 1, 0xFFFFFFFF);
+    CanvasOperation op; op.action = CanvasAction::Background;
+    op.background.kind = BackgroundPolicy::Kind::Gradient;
+    op.background.gradientFrom = 0xFF000000; op.background.gradientTo = 0xFFFFFFFF;
+    op.background.margin = 4; op.background.padding = 0;
+    op.background.cornerRadius = 0; op.background.shadowRadius = 0; op.background.smartPadding = false;
+    const auto result = applyCanvasOperation(document(1, 1), source, op);
+    QVERIFY(!result.error && result.changed && result.image);
+    QCOMPARE(result.image->width, qint64(9)); QCOMPARE(result.image->height, qint64(9));
+    QCOMPARE(result.image->at(0, 0), Argb(0xFF000000));    // row 0: the top colour
+    QCOMPARE(result.image->at(8, 0), Argb(0xFF000000));
+    QCOMPARE(result.image->at(0, 8), Argb(0xFFFFFFFF));    // the last row: the bottom colour
+    QCOMPARE(result.image->at(4, 4), Argb(0xFFFFFFFF));    // the content over its band on the card
+    QCOMPARE(result.image->at(0, 4), Argb(0xFF808080));    // the exact midpoint row
+    QCOMPARE(result.image->at(8, 4), Argb(0xFF808080));
+  }
+
+  void backgroundRoundsTheCardCorners() {
+    const ArgbImage source = solidImage(20, 14, 0xFF0000FF);  // blue content, blue band
+    CanvasOperation op; op.action = CanvasAction::Background;
+    op.background.kind = BackgroundPolicy::Kind::Solid;
+    op.background.solid = 0xFF00FF00;
+    op.background.margin = 2; op.background.padding = 2; op.background.cornerRadius = 6;
+    op.background.shadowRadius = 0; op.background.smartPadding = false;
+    const auto result = applyCanvasOperation(document(20, 14), source, op);
+    QVERIFY(!result.error && result.changed && result.image);
+    QCOMPARE(result.image->width, qint64(28)); QCOMPARE(result.image->height, qint64(22));
+    QCOMPARE(result.image->at(2, 2), Argb(0xFF00FF00));    // the card's cut corner shows the margin
+    QCOMPARE(result.image->at(2, 7), Argb(0xFF0000FF));    // below the arc, the band is whole
+    QCOMPARE(result.image->at(7, 7), Argb(0xFF0000FF));
+    QCOMPARE(result.image->at(25, 19), Argb(0xFF00FF00));  // the opposite cut corner
+    QCOMPARE(result.image->at(14, 11), Argb(0xFF0000FF));  // the card centre
+  }
+
+  void backgroundValidationAndCancellationReturnNoPartialResult() {
+    const ArgbImage source = backgroundSource();
+    CanvasOperation op; op.action = CanvasAction::Background;
+    op.background.kind = BackgroundPolicy::Kind::Solid;
+    op.background.margin = 2; op.background.padding = 2; op.background.cornerRadius = 2;
+    const std::vector<std::pair<const char *, std::function<void(BackgroundPolicy &)>>>
+        invalid{{"negative margin", [](BackgroundPolicy &p) { p.margin = -1; }},
+                {"negative padding", [](BackgroundPolicy &p) { p.padding = -1; }},
+                {"negative corner", [](BackgroundPolicy &p) { p.cornerRadius = -0.5; }},
+                {"corner above 255", [](BackgroundPolicy &p) { p.cornerRadius = 256; }},
+                {"negative shadow", [](BackgroundPolicy &p) { p.shadowRadius = -1; }},
+                {"shadow above 100", [](BackgroundPolicy &p) { p.shadowRadius = 101; }},
+                {"non-finite margin", [](BackgroundPolicy &p) { p.margin = std::numeric_limits<double>::quiet_NaN(); }},
+                {"non-finite shadow", [](BackgroundPolicy &p) { p.shadowRadius = std::numeric_limits<double>::infinity(); }}};
+    for (const auto &[name, spoil] : invalid) {
+      CanvasOperation probe = op;
+      spoil(probe.background);
+      const auto result = applyCanvasOperation(document(12, 8), source, probe);
+      QVERIFY2(result.error == std::optional<QString>(diagnostic::documentInvalid), name);
+      QVERIFY(!result.document && !result.image);
+    }
+    op.background.margin = 1e9;
+    const auto huge = applyCanvasOperation(document(12, 8), source, op);
+    QVERIFY(huge.error == std::optional<QString>(diagnostic::documentInvalid) || huge.error == std::optional<QString>(diagnostic::documentTooLarge));
+    op.background.margin = 2; op.background.shadowRadius = 30;
+    for (int cancelAt : {5, 50, 90}) {
+      int percent = 0;
+      const auto result = applyCanvasOperation(document(12, 8), source, op,
+          {[&] { return percent >= cancelAt; }, [&](int p) { percent = p; }});
+      QCOMPARE(result.error, std::optional<QString>(QStringLiteral("canvas-cancelled")));
+      QVERIFY(!result.document && !result.image);
+    }
+  }
+
+  void backgroundTranslatesAnnotationsWithTheComposedContent() {
+    auto d = document(12, 8);
+    auto onContent = rectangle({3, 2}, {5, 4});
+    auto farAway = rectangle({-30, -30}, {-20, -20});
+    d.annotations = {onContent, farAway};
+    const ArgbImage source = backgroundSource();
+    CanvasOperation op; op.action = CanvasAction::Background;
+    op.background.kind = BackgroundPolicy::Kind::Solid; op.background.solid = 0xFF202020;
+    op.background.margin = 2; op.background.padding = 1; op.background.cornerRadius = 0; op.background.shadowRadius = 0;
+    const auto result = applyCanvasOperation(d, source, op);
+    QVERIFY(!result.error && result.changed && result.document);
+    QCOMPARE(result.document->annotations.size(), size_t(1));   // the far-off object is clipped away
+    const auto &moved = std::get<RectangleAnnotation>(result.document->annotations.front());
+    QCOMPARE(moved.start.x, 3.0); QCOMPARE(moved.start.y, 3.0);
+    QCOMPARE(moved.end.x, 5.0); QCOMPARE(moved.end.y, 5.0);
+    QCOMPARE(result.document->canvasWidth, qint64(9)); QCOMPARE(result.document->canvasHeight, qint64(9));
   }
 
   void invalidAndCancelledEditsHaveNoPartialOutputs() {

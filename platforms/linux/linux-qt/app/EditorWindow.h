@@ -161,6 +161,7 @@ private:
   void cropImage(xerahs::editor::CropRegion region);
   void autoCropImage();
   void rotateImage();
+  void backgroundImage();
   void effectsImage();
   void clearImage();
   void compareImages();

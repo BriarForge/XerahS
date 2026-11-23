@@ -19,7 +19,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 
 ## Current position
 
-- **Linux:** 191 implemented, 117 partial, 16 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
+- **Linux:** 191 implemented, 118 partial, 15 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
 
 Linux figures cover the `linux-qt` reference edition. Candidate editions and supported desktop-environment qualification remain separate. Existing maps retain their recorded audit dates and versions; regenerating this report does not constitute a new implementation audit.
 
@@ -35,7 +35,7 @@ Next work follows the [implementation plan](linux-qt/IMPLEMENTATION.md) and [mea
 | [EDITOR-SESSION-001](../../product-contract/capabilities/EDITOR-SESSION-001/SPEC.md) | 86.7% | 26 | 4 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-SESSION-001.json) |
 | [EDITOR-ANNOTATIONS-001](../../product-contract/capabilities/EDITOR-ANNOTATIONS-001/SPEC.md) | 90.0% | 18 | 2 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-ANNOTATIONS-001.json) |
 | [EDITOR-EFFECTS-001](../../product-contract/capabilities/EDITOR-EFFECTS-001/SPEC.md) | 44.4% | 8 | 10 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-EFFECTS-001.json) |
-| [EDITOR-CANVAS-001](../../product-contract/capabilities/EDITOR-CANVAS-001/SPEC.md) | 82.4% | 14 | 2 | 1 | 0 | [Linux map](linux-qt/traceability/EDITOR-CANVAS-001.json) |
+| [EDITOR-CANVAS-001](../../product-contract/capabilities/EDITOR-CANVAS-001/SPEC.md) | 82.4% | 14 | 3 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-CANVAS-001.json) |
 | [EDITOR-OUTPUT-ACTIONS-001](../../product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md) | 68.8% | 11 | 5 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-OUTPUT-ACTIONS-001.json) |
 | [EDITOR-SETTINGS-001](../../product-contract/capabilities/EDITOR-SETTINGS-001/SPEC.md) | 50.0% | 8 | 8 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-SETTINGS-001.json) |
 | [EDITOR-UTILITIES-001](../../product-contract/capabilities/EDITOR-UTILITIES-001/SPEC.md) | 57.9% | 11 | 8 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-UTILITIES-001.json) |

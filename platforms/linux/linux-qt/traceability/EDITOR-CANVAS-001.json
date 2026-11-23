@@ -730,17 +730,17 @@
     },
     "EC-013": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
       "audit": {
-        "classification": "blocked",
+        "classification": "partial",
         "spec_line": 45,
-        "coverage": "No complete background composition surface/model exists; deterministic smart-padding/background and retention policy remain explicit unanswered product decisions.",
+        "coverage": "Decided and built 2026-11-23 (decision EC-013-BACKGROUND-COMPOSITION-2026-11-23, resolved by the build loop under delegated owner-block authority): background composition is one committed, fully undoable canvas operation (CanvasAction::Background in CanvasOperations) with the reference's own defaults - margin 80, padding 40, corner radius 20, shadow radius 30 (0 removes it), transparent default, solid #FF222222, gradient #FFDD2476 -> #FFFF512F top to bottom - and the reference's smart padding (top-left pixel target, tolerance 30 per RGBA channel inclusive, per-edge uniform-border insets, annotations excluded from detection, translated with the composed content). The composed geometry is inner-to-outer content, padding band in the source's top-left colour, rounded card, gaussian shadow (house kernel sigma = radius / 3, offset +10, black alpha 80) and square margin band in the chosen kind, bounded by the canvas. The editor's Image > Background dialog commits it through the shared canvas worker with one history entry, and the saved PNG carries the composed pixels. Named follow-ups: the image kind (a file-picker background asset behind the inserted-image safety rules), the reference's Wallpaper kind (not one of the SPEC's four), gradient presets, and EC-014's flatten background clause reconciliation (the committed model bakes the background into the source, so flatten's existing composite covers an applied background; the clause's dedicated evidence is the follow-up).",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "635e6ef5e8a799b28fe8ea718e5ac45fcc84c54a9dcea2ccd36dd5307fae959f"
+            "sha256": "e932d1021ebd0ddf9c9d602a2416264e4e4b596b524eb7fe772c60d660e632e4"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorCanvasOperations.cpp",
@@ -748,16 +748,25 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/CanvasOperations.cpp",
-            "sha256": "5878cb10ba584caf535ad911944c4dd58ddf73f6d1333976aad28d79241443ba"
+            "sha256": "9d5bf27390b1b125e1f6aa75e5150330727b8a3dc7f5defaeb98815a81fec5e5"
           }
         ],
-        "test_anchors": [],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp",
+            "sha256": "3ac20709b7c2f0a93e618fe47c2c05cdebaeafdfb371873095e4412fa50ce1ac"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+            "sha256": "ee2578420dbc9fb1426cb88e947a65d83de35aa2e317104f06c6aacb24d73dcd"
+          }
+        ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
       "previous_note": "",
-      "note": "No complete background composition surface/model exists; deterministic smart-padding/background and retention policy remain explicit unanswered product decisions.",
-      "blocked_reason": "No complete background composition surface/model exists; deterministic smart-padding/background and retention policy remain explicit unanswered product decisions."
+      "note": "Decided and built 2026-11-23 (decision EC-013-BACKGROUND-COMPOSITION-2026-11-23): background composition is one committed, fully undoable canvas operation with the reference's defaults and smart-padding rule (top-left pixel target, tolerance 30, per-edge uniform-border insets; annotations excluded from detection and translated with the content). Transparent, solid and gradient kinds, margin/padding/corner/shadow geometry, the smart clip and the editor Image > Background journey are landed with red-proven rules (the smart scan, the shadow's +10 drop and the corner rounding each fail their tests when disabled) and the saved PNG carries the composed pixels through one history entry. Remaining: the image kind behind the inserted-image safety rules, the Wallpaper kind (a reference extra outside the SPEC's four), gradient presets, and EC-014's flatten background clause reconciliation.",
+      "blocked_reason": ""
     },
     "EC-014": {
       "disposition": "Required",

@@ -20,6 +20,7 @@
 #include <QImageReader>
 #include <QMetaMethod>
 #include "EditorSource.h"
+#include "CanvasBackgroundDialog.h"
 #include "CanvasRotationDialog.h"
 #include "ImageComparisonDialog.h"
 #include "NewImageDialog.h"
@@ -2656,6 +2657,58 @@ private slots:
     trigger(*window, QStringLiteral("canvasAction%1").arg(int(CanvasAction::RotateClockwise)));
     QVERIFY(window->statusBar()->currentMessage().startsWith("20 × 40")); trigger(*window, QStringLiteral("undo"));
     QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+  }
+
+  // EC-013 on decision EC-013-BACKGROUND-COMPOSITION-2026-11-23: the Image >
+  // Background journey. Choosing a solid background composes the decided
+  // geometry through the committed canvas path - one undoable history entry,
+  // the saved PNG carries the composed pixels, and Undo restores the source.
+  void backgroundImageComposesOneUndoableEntryAndSavesTheComposedPixels() {
+    QTemporaryDir dir;
+    const auto path = dir.filePath("background.png");
+    QVERIFY(fixture().save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path));
+    QVERIFY(window);
+    window->show(); window->activateWindow(); QTRY_VERIFY(window->isActiveWindow());
+    auto *canvas = window->findChild<EditorCanvas *>();
+    const auto before = canvas->annotationDocument();
+    QCOMPARE(before.canvasWidth, 60.0); QCOMPARE(before.canvasHeight, 40.0);
+    // Solid kind, margin 6, padding 4, no shadow, no smart padding (the
+    // fixture has no uniform border), radius 0: a deterministic 80x60 result.
+    QTimer::singleShot(0, [&] {
+      auto *modal = qobject_cast<CanvasBackgroundDialog *>(QApplication::activeModalWidget());
+      QVERIFY2(modal, "background dialog did not open");
+      if (!modal) return;
+      modal->findChild<QComboBox *>("backgroundKind")->setCurrentIndex(1);
+      modal->findChild<QDoubleSpinBox *>("backgroundMargin")->setValue(6);
+      modal->findChild<QDoubleSpinBox *>("backgroundPadding")->setValue(4);
+      modal->findChild<QDoubleSpinBox *>("backgroundCorner")->setValue(0);
+      modal->findChild<QDoubleSpinBox *>("backgroundShadow")->setValue(0);
+      modal->findChild<QCheckBox *>("backgroundSmart")->setChecked(false);
+      modal->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Ok)->click();
+    });
+    trigger(*window, "backgroundImage");
+    QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 80.0);
+    QTRY_COMPARE(canvas->annotationDocument().canvasHeight, 60.0);
+    QVERIFY(window->windowTitle().contains(QStringLiteral(" •")));
+    // One committed history entry: Undo restores the exact prior document.
+    trigger(*window, "undo");
+    QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 60.0);
+    QTRY_COMPARE(canvas->annotationDocument().canvasHeight, 40.0);
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(before));
+    trigger(*window, "redo");
+    QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 80.0);
+    // The saved PNG carries the composed background: the margin is the chosen
+    // solid #FF222222, the band is the source's own top-left colour, and the
+    // content centre keeps its source pixel.
+    trigger(*window, "saveImage");
+    QVERIFY(!window->windowTitle().contains(QStringLiteral(" •")));
+    const QImage saved(path);
+    QCOMPARE(saved.size(), QSize(80, 60));
+    QCOMPARE(saved.pixel(3, 3), qRgb(34, 34, 34));          // the solid margin
+    QCOMPARE(saved.pixel(76, 56), qRgb(34, 34, 34));
+    QCOMPARE(saved.pixel(8, 45), qRgb(0, 0, 100));          // the band = the source's top-left
+    QCOMPARE(saved.pixel(45, 30), qRgb(105, 100, 100));     // the source (35,20) centre, unchanged
   }
 
   void cancellingAndClosingOpenRetireTheLiveWorker() {

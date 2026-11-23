@@ -9,6 +9,7 @@
 #include "AnnotationColorDialog.h"
 #include "AnnotationObjectNavigator.h"
 #include "ApplicationWindow.h"
+#include "CanvasBackgroundDialog.h"
 #include "CanvasRotationDialog.h"
 #include "CaptureAnnotationDialog.h"
 #include "CaptureController.h"
@@ -853,6 +854,19 @@ private slots:
       // The angle, the preview status and the chosen fill colour hold runtime values.
       const int checked = translatedTexts(dialog, {});
       QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void canvasBackgroundDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      CanvasBackgroundDialog dialog;
+      // The colour buttons hold runtime values; every label and kind expands.
+      const int checked = translatedTexts(dialog, {"backgroundSolid", "backgroundGradientFrom", "backgroundGradientTo"});
+      QVERIFY2(checked >= 8, qPrintable(QString::number(checked)));
       QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);

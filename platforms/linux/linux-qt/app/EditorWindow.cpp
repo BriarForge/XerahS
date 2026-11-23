@@ -12,6 +12,7 @@
 
 #include "EditorCanvas.h"
 #include "EditorCanvasOperations.h"
+#include "CanvasBackgroundDialog.h"
 #include "CanvasRotationDialog.h"
 #include "ImageComparisonDialog.h"
 #include "NewImageDialog.h"
@@ -335,6 +336,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   QAction *resizeCanvas = imageMenu->addAction(EditorWindow::tr("Resize Canvas…"));
   resizeCanvas->setObjectName(QStringLiteral("resizeCanvas"));
   connect(resizeCanvas, &QAction::triggered, this, [this] { resizeImage(true); });
+  QAction *background = imageMenu->addAction(EditorWindow::tr("Background…"));
+  background->setObjectName(QStringLiteral("backgroundImage"));
+  connect(background, &QAction::triggered, this, &EditorWindow::backgroundImage);
   imageMenu->addSeparator();
   QAction *customRotation = imageMenu->addAction(EditorWindow::tr("Rotate Image…"));
   customRotation->setObjectName(QStringLiteral("rotateImage"));
@@ -1283,6 +1287,16 @@ void EditorWindow::resizeImage(bool canvasOnly) {
   operation.anchor = CanvasAnchor(choice->currentIndex()); operation.fill = fill;
   operation.interpolation = Interpolation(choice->currentIndex()); operation.lockAspect = lock->isChecked();
   disposeCanvasDialog(dialog); return operation;
+  });
+}
+
+void EditorWindow::backgroundImage() {
+  // EC-013: the dialog only chooses the policy; the committed operation,
+  // its typed failures and the busy overlay run through the shared worker.
+  editCanvas([](const QImage &, QWidget *parent) {
+    CanvasBackgroundDialog dialog(parent);
+    if (dialog.exec() != QDialog::Accepted) return std::optional<xerahs::editor::CanvasOperation>{};
+    return std::optional<xerahs::editor::CanvasOperation>(dialog.operation());
   });
 }
 

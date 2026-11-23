@@ -397,6 +397,8 @@ add_library(xerahs_app OBJECT
   app/EditorWindow.h
   app/CanvasRotationDialog.cpp
   app/CanvasRotationDialog.h
+  app/CanvasBackgroundDialog.cpp
+  app/CanvasBackgroundDialog.h
   app/ImageComparisonDialog.cpp
   app/ImageComparisonDialog.h
   app/NewImageDialog.cpp
@@ -873,6 +875,7 @@ add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cp
                app/AppearanceDialog.cpp app/AppearanceDialog.h
                app/NativeEditorWindowState.cpp app/NativeEditorWindowState.h
                app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
+               app/CanvasBackgroundDialog.cpp app/CanvasBackgroundDialog.h
                app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h
                app/NewImageDialog.cpp app/NewImageDialog.h)
 set_target_properties(editor-window-test PROPERTIES AUTOMOC ON)
@@ -1557,6 +1560,9 @@ add_library(xerahs_effects STATIC
 target_include_directories(xerahs_effects PUBLIC src)
 target_link_libraries(xerahs_effects PUBLIC Qt6::Core Qt6::Gui)
 target_compile_options(xerahs_effects PRIVATE -Wall -Wextra -Wpedantic -ffp-contract=off)
+# EC-013 background composition (CanvasOperations) reuses the house gaussian
+# blur for its shadow instead of duplicating a second kernel.
+target_link_libraries(xerahs_core PRIVATE xerahs_effects)
 target_link_libraries(xerahs_app PUBLIC xerahs_effects)
 
 foreach(effect_test IN ITEMS EffectFramework CensusCatalog AdjustmentEffects AdjustmentEffects2 DrawingEffects FilterEffects1 ManipulationEffects ManipulationEffects2 FilterEffects3 FilterEffects2 FilterEffects4 FilterEffects5 FilterEffects6 FilterEffects7)
