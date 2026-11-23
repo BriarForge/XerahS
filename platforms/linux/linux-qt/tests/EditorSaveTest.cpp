@@ -79,6 +79,49 @@ private slots:
     QVERIFY(QFile::setPermissions(dir.path(), QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner | QFileDevice::ReadGroup));
     QVERIFY(!sweepEditorTemporaryFiles(dir.path(), now)); QVERIFY(QFile::exists(dir.filePath("xerahs-editor-expired")));
   }
+
+  // ES-020 on decision ES-020-RETENTION-2026-11-23: the configured bounds and
+  // the best-effort overwrite. The open-handle observation is the honest way
+  // to see the bytes: POSIX keeps an unlinked file readable through its open
+  // descriptor, so the sweep with secure delete must leave zeros behind.
+  void managedTemporaryRetentionFollowsTheConfiguredLimitsAndOverwrites() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    QVERIFY(QFile::setPermissions(dir.path(), QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+    const auto now = QDateTime::currentDateTimeUtc();
+    const auto make = [&](const QString &name, qint64 age) {
+      QFile file(dir.filePath(name));
+      if (!file.open(QIODevice::WriteOnly) || file.write("PRIVATE editor pixels") < 0 || !file.flush() ||
+          !file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner) ||
+          !file.setFileTime(now.addSecs(-age), QFileDevice::FileModificationTime)) qFatal("retention fixture failed");
+    };
+    make("xerahs-editor-old", 2 * 86400); make("xerahs-editor-fresh", 4 * 3600);
+    // days = 0 sweeps every startup: the fresh file is gone too.
+    QVERIFY(sweepEditorTemporaryFiles(dir.path(), now, 0, false));
+    QVERIFY(!QFile::exists(dir.filePath("xerahs-editor-old")));
+    QVERIFY(!QFile::exists(dir.filePath("xerahs-editor-fresh")));
+    // days = 3 keeps both; days = 1 removes only the older one.
+    make("xerahs-editor-old", 2 * 86400); make("xerahs-editor-fresh", 4 * 3600);
+    QVERIFY(sweepEditorTemporaryFiles(dir.path(), now, 3, false));
+    QVERIFY(QFile::exists(dir.filePath("xerahs-editor-old")));
+    QVERIFY(sweepEditorTemporaryFiles(dir.path(), now, 1, false));
+    QVERIFY(!QFile::exists(dir.filePath("xerahs-editor-old")));
+    QVERIFY(QFile::exists(dir.filePath("xerahs-editor-fresh")));
+    // Secure delete: the handle stays open through the sweep, and the bytes
+    // read back afterwards are all zero - the overwrite really happened.
+    QFile held(dir.filePath("xerahs-editor-fresh"));
+    QVERIFY(held.open(QIODevice::ReadWrite));
+    QVERIFY(held.seek(0));
+    QVERIFY(held.write("PRIVATE editor pixels") > 0);
+    QVERIFY(held.flush());
+    QVERIFY(held.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner));
+    QVERIFY(held.setFileTime(now.addSecs(-2 * 86400), QFileDevice::FileModificationTime));
+    QVERIFY(sweepEditorTemporaryFiles(dir.path(), now, 1, true));
+    QVERIFY(!QFile::exists(dir.filePath("xerahs-editor-fresh")));
+    QVERIFY(held.seek(0));
+    const QByteArray remaining = held.readAll();
+    QCOMPARE(remaining.size(), 21);
+    for (char byte : remaining) QCOMPARE(byte, '\0');
+  }
   void managedPreparationTemporaryIsPrivateAndRemovedAtTaskEnd() {
     QTemporaryDir cache; QVERIFY(cache.isValid());
     const auto previousCache = qgetenv("XDG_CACHE_HOME"); qputenv("XDG_CACHE_HOME", cache.path().toUtf8());

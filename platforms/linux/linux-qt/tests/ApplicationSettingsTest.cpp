@@ -294,6 +294,43 @@ private slots:
     }
   }
 
+  // ES-020 on decision ES-020-RETENTION-2026-11-23: the General-tab rows.
+  void retentionLimitsDialogAppliesAndCancels() {
+    QTemporaryDir dir; ApplicationSettingsStore store(dir.filePath("settings.json"), dir.path());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [] {});
+      auto *temporary = dialog.findChild<QSpinBox *>("retentionTemporaryDays");
+      auto *recovery = dialog.findChild<QSpinBox *>("retentionRecoveryDays");
+      auto *secure = dialog.findChild<QCheckBox *>("retentionSecureDelete");
+      QVERIFY(temporary && recovery && secure);
+      QCOMPARE(temporary->value(), 1); QCOMPARE(recovery->value(), 7); QVERIFY(!secure->isChecked());
+      // The shred-documented caveat is visible next to the checkbox.
+      bool caveat = false;
+      for (auto *label : dialog.findChildren<QLabel *>())
+        if (label->accessibleName() == "Private file retention limits and the secure-delete caveat" &&
+            label->text().contains("cannot guarantee erasure")) caveat = true;
+      QVERIFY(caveat);
+      temporary->setValue(0); recovery->setValue(90); secure->setChecked(true);
+      dialog.reject();
+      const auto limits = retentionLimits(store.current().values);
+      QCOMPARE(limits.temporaryDays, 1); QCOMPARE(limits.recoveryDays, 7); QVERIFY(!limits.secureDelete);
+    }
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [] {});
+      dialog.findChild<QSpinBox *>("retentionTemporaryDays")->setValue(2);
+      dialog.findChild<QSpinBox *>("retentionRecoveryDays")->setValue(14);
+      dialog.findChild<QCheckBox *>("retentionSecureDelete")->setChecked(true);
+      dialog.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->click();
+      const auto limits = retentionLimits(store.current().values);
+      QCOMPARE(limits.temporaryDays, 2); QCOMPARE(limits.recoveryDays, 14); QVERIFY(limits.secureDelete);
+    }
+    ApplicationSettingsStore reopened(dir.filePath("settings.json"), dir.path());
+    const auto persisted = retentionLimits(reopened.current().values);
+    QCOMPARE(persisted.temporaryDays, 2); QCOMPARE(persisted.recoveryDays, 14); QVERIFY(persisted.secureDelete);
+    QVERIFY(reopened.current().diagnostics.isEmpty());
+  }
+
   void oldMaximumHotkeysSurviveNewRecordingAction() {
     auto old = defaultSettings("/tmp"); auto bindings = old.value("hotkeys").toObject(); bindings.remove("start-region-recording");
     while (bindings.size() < maximumHotkeyBindings - 1) bindings.insert(QUuid::createUuid().toString(QUuid::WithoutBraces), "");
@@ -344,6 +381,46 @@ private slots:
     for (const auto &key : keys) QCOMPARE(reset.value(key), defaults.value(key));
     QCOMPARE(reset.value("saveFolder"), values.value("saveFolder"));
     QVERIFY(resetPreview(values, Section::Capture, dir.path()).join('\n').contains("autoCapture.count"));
+  }
+
+  // ES-020 on decision ES-020-RETENTION-2026-11-23: the configured limits.
+  void retentionLimitsDefaultsRoundTripAndRepair() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    const auto defaults = defaultSettings(dir.path());
+    QCOMPARE(defaults.value("editorRetention.temporaryDays").toInt(), 1);
+    QCOMPARE(defaults.value("editorRetention.recoveryDays").toInt(), 7);
+    QCOMPARE(defaults.value("editorRetention.secureDelete").toBool(), false);
+    const QStringList keys{"editorRetention.temporaryDays", "editorRetention.recoveryDays", "editorRetention.secureDelete"};
+    // Old files without the keys load with defaults and no diagnostics.
+    auto old = defaults; for (const auto &key : keys) old.remove(key);
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(QJsonDocument(QJsonObject{{"version", 1}, {"values", old}}).toJson()); file.close();
+    ApplicationSettingsStore store(path, dir.path()); QVERIFY(store.current().diagnostics.isEmpty());
+    for (const auto &key : keys) QCOMPARE(store.current().values.value(key), defaults.value(key));
+    // The decided bounds round-trip: 0 keeps today's behaviour for recovery
+    // (count-only) and the reference's startup-clean for temporary files.
+    auto values = store.current().values;
+    values.insert("editorRetention.temporaryDays", 0); values.insert("editorRetention.recoveryDays", 90); values.insert("editorRetention.secureDelete", true);
+    QVERIFY(store.save(values).isEmpty());
+    ApplicationSettingsStore reopened(path, dir.path()); QCOMPARE(reopened.current().values, values); QVERIFY(reopened.current().diagnostics.isEmpty());
+    const auto resolved = retentionLimits(values);
+    QCOMPARE(resolved.temporaryDays, 0); QCOMPARE(resolved.recoveryDays, 90); QVERIFY(resolved.secureDelete);
+    // Out-of-range or wrongly-typed values are repaired to the defaults.
+    const QVector<QPair<QString, QJsonValue>> invalid{{"editorRetention.temporaryDays", -1}, {"editorRetention.temporaryDays", 31},
+      {"editorRetention.temporaryDays", 1.5}, {"editorRetention.temporaryDays", "1"}, {"editorRetention.temporaryDays", true},
+      {"editorRetention.recoveryDays", -1}, {"editorRetention.recoveryDays", 91}, {"editorRetention.recoveryDays", 7.5},
+      {"editorRetention.secureDelete", 1}, {"editorRetention.secureDelete", "yes"}};
+    for (const auto &entry : invalid) {
+      auto bad = values; bad.insert(entry.first, entry.second);
+      const auto repaired = repairSettings(bad, dir.path());
+      QVERIFY2(repaired.diagnostics.join('\n').contains(entry.first), qPrintable(entry.first));
+      QCOMPARE(repaired.values.value(entry.first), defaults.value(entry.first));
+      QVERIFY(!store.save(bad).isEmpty());
+    }
+    // The resolver keeps the decided defaults for malformed values.
+    const auto fallback = retentionLimits(QJsonObject{});
+    QCOMPARE(fallback.temporaryDays, 1); QCOMPARE(fallback.recoveryDays, 7); QVERIFY(!fallback.secureDelete);
+    const auto malformed = retentionLimits(QJsonObject{{"editorRetention.temporaryDays", 2.5}, {"editorRetention.secureDelete", QJsonValue()}});
+    QCOMPARE(malformed.temporaryDays, 1); QCOMPARE(malformed.recoveryDays, 7); QVERIFY(!malformed.secureDelete);
   }
   void scrollingCaptureSettingsDefaultsRoundTripAndRepair() {
     QTemporaryDir dir; const auto path = dir.filePath("settings.json");
@@ -397,7 +474,10 @@ private slots:
     int applied = 0;
     {
       xerahs::app::SettingsDialog dialog(store, dir.path(), plan, shortcuts, [&] { ++applied; });
-      QStringList groups; for (auto *g : dialog.findChildren<QGroupBox *>()) groups << g->title();
+      // The capture tab's groups only; the General tab carries its own
+      // (for example the ES-020 retention box).
+      QStringList groups; auto *tabs = dialog.findChild<QTabWidget *>(); QVERIFY(tabs);
+      for (auto *g : tabs->widget(1)->findChildren<QGroupBox *>()) groups << g->title();
       QCOMPARE(groups, (QStringList{"Delayed capture", "Automatic capture", "Scrolling capture"}));
       QCOMPARE(spinNamed(dialog, "Delayed capture seconds")->value(), 12);
       QCOMPARE(comboNamed(dialog, "Delayed capture source")->currentData().toString(), QString("region"));
@@ -764,11 +844,12 @@ private slots:
     const QJsonValue longText(QString(4097, QChar('a'))), embeddedNul(QString("a") + QChar(0) + "b");
     const QVector<QJsonValue> wrongTypes{QJsonValue("true"), QJsonValue(0), QJsonValue(1), QJsonValue(QJsonValue::Null), QJsonValue(QJsonArray{}), QJsonValue(QJsonObject{}), QJsonValue(1.5)};
     QMap<QString, QPair<QVector<QJsonValue>, QVector<QJsonValue>>> matrix; // key -> good, bad
-    for (const char *key : {"startAtLogin", "showTrayIcon", "playCaptureSound", "showNotification", "privateNotifications", "regionCapture.quickConfirm", "regionCapture.snapping", "regionCapture.includeCursor", "scrollingCapture.positionPointer"})
+    for (const char *key : {"startAtLogin", "showTrayIcon", "playCaptureSound", "showNotification", "privateNotifications", "regionCapture.quickConfirm", "regionCapture.snapping", "regionCapture.includeCursor", "scrollingCapture.positionPointer", "editorRetention.secureDelete"})
       matrix[key] = {{true, false}, wrongTypes + QVector<QJsonValue>{"", nan, inf, "yes"}};
     const QMap<QString, QPair<int, int>> ranges{{"delayedCapture.seconds", {1, 60}}, {"autoCapture.intervalMs", {1000, 86400000}}, {"autoCapture.count", {1, 10000}},
       {"autoCapture.durationMinutes", {1, 1440}}, {"scrollingCapture.settleMs", {0, 5000}}, {"scrollingCapture.wheelSteps", {1, 50}}, {"scrollingCapture.headerBand", {0, 2000}},
-      {"scrollingCapture.footerBand", {0, 2000}}, {"scrollingCapture.maxHeight", {1000, 100000}}, {"scrollingCapture.maxFrames", {2, 500}}};
+      {"scrollingCapture.footerBand", {0, 2000}}, {"scrollingCapture.maxHeight", {1000, 100000}}, {"scrollingCapture.maxFrames", {2, 500}},
+      {"editorRetention.temporaryDays", {0, 30}}, {"editorRetention.recoveryDays", {0, 90}}};
     for (auto it = ranges.cbegin(); it != ranges.cend(); ++it) {
       const auto [low, high] = it.value();
       matrix[it.key()] = {{low, high, (low + high) / 2}, {low - 1, high + 1, low + 0.5, QString::number(low), true, QJsonValue(QJsonValue::Null), QJsonArray{}, QJsonObject{}, nan, inf, -std::numeric_limits<double>::infinity(), 1e300, -1e300, std::numeric_limits<int>::min()}};

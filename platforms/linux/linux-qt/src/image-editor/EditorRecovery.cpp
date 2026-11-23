@@ -153,6 +153,36 @@ QString EditorRecoveryStore::remove(const QString &id) {
   return {};
 }
 
+int EditorRecoveryStore::sweepExpired(const QString &directory, const QDateTime &now, int retentionDays, bool secureDelete) {
+  if (retentionDays <= 0 || !now.isValid()) return 0;
+  const auto bound = now.addSecs(-qint64(retentionDays) * 24 * 60 * 60);
+  const QDir dir(directory);
+  if (!dir.exists()) return 0;
+  int pruned = 0;
+  // Same safety pattern as the count prune: per-file lock, a read that must
+  // succeed, an exited owner, and a valid savedAt. Corrupt or unreadable
+  // records stay untouched here - the listing's set-aside path owns them.
+  for (const auto &info : dir.entryInfoList({QStringLiteral("*.json")}, QDir::Files | QDir::NoSymLinks, QDir::Time)) {
+    const auto id = info.completeBaseName();
+    if (!validId(id)) continue;
+    const auto path = info.absoluteFilePath();
+    const PrivateJsonFile file(path, options());
+    StoreLock lock;
+    if (file.lock(lock) != StoreStatus::Ok) continue;
+    const auto read = file.read();
+    if (read.status != StoreStatus::Ok) continue;
+    if (!exitedOwner(read.document)) continue;
+    const auto savedAt = QDateTime::fromString(read.document.value(QStringLiteral("savedAt")).toString(), Qt::ISODateWithMs);
+    if (!savedAt.isValid() || savedAt > bound) continue;
+    // ES-020: the best-effort zero-fill before unlink when configured;
+    // failures still unlink (retention, not erasure, is the guarantee).
+    if (secureDelete) xerahs::storage::overwriteForRemoval(path);
+    if (!QFile::remove(path)) continue;
+    ++pruned;
+  }
+  return pruned;
+}
+
 void EditorRecoveryStore::trimSetAside() {
   const QDir dir(m_directory);
   const auto aside = dir.entryInfoList({QStringLiteral("*.corrupt")}, QDir::Files | QDir::NoSymLinks, QDir::Time);

@@ -40,6 +40,15 @@ xerahs::workflows::CaptureWorkflow withApplicationDefaults(xerahs::workflows::Ca
 struct OutputPrecedence { QString directory, pattern; };
 OutputPrecedence describeOutputPrecedence(const xerahs::workflows::CaptureWorkflow &workflow, bool savedDefinition);
 xerahs::capture::SessionSettings regionSessionSettings(const QJsonObject &values);
+// ES-020 on decision ES-020-RETENTION-2026-11-23: the configured temp and
+// recovery retention limits plus the best-effort secure delete. Malformed
+// values keep the decided defaults.
+struct RetentionLimits {
+  int temporaryDays = 1;    // 0 = sweep every startup
+  int recoveryDays = 7;     // 0 = count-only
+  bool secureDelete = false;
+};
+RetentionLimits retentionLimits(const QJsonObject &values);
 HotkeyBindings hotkeys(const QJsonObject &values);
 QJsonObject resetSection(const QJsonObject &values, Section section, const QString &saveFolder);
 QStringList resetPreview(const QJsonObject &values, Section section, const QString &saveFolder);

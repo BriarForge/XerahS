@@ -1,17 +1,17 @@
 # Graph Report - product-contract  (2026-11-23)
 
 ## Corpus Check
-- 114 files · ~177,220 words
+- 115 files · ~177,754 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 16 file(s) not represented in the graph (top: .feature 16)
 
 ## Summary
-- 1436 nodes · 1711 edges · 77 communities (76 shown, 1 thin omitted)
+- 1442 nodes · 1716 edges · 71 communities (70 shown, 1 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a1bd592e`
+- Built from commit: `310703a3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -46,7 +46,7 @@
 - APPROVAL-2026-10-08-LINUX-HYPRLAND-TOOLKIT.json
 - APPROVAL-2026-11-12-FILENAME-WIDE-SAMPLING.json
 - Product Contract governance
-- FILENAME-GENERATION-001 Filename generation
+- Filename deterministic acceptance vectors
 - Product Contract manifest
 - APPROVAL-2026-11-14-ES-EMPTY-SAVE-BASELINE.json
 - Post-capture pipeline state machine
@@ -76,7 +76,7 @@
 - EDITOR-EFFECTS-001
 - Waivers
 - APPROVAL-2026-11-20-EA-009-STEP-STYLES.json
-- FN-026
+- ES-020 temp/recovery retention and secure delete (decided 2026-11-23)
 - EA-009: Step styles and reset semantics
 - APPROVAL-2026-11-20-EA-008-TEXT-BORDER.json
 - EA-008: regular Text border geometry
@@ -84,12 +84,6 @@
 - CORE-013: encrypted Secret Service session negotiation
 - EO-004: Save As format disposition and quality/matte defaults
 - EU-009/010/011: background-removal model supply
-- FN-023
-- Filename deterministic acceptance vectors
-- FN-021
-- FN-002
-- FN-022
-- FN-012
 - EC-013 background composition (decided 2026-11-23)
 - RC-003/004/012/022/027 and CORE-014: the physical topology authority
 
@@ -120,7 +114,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (77 total, 1 thin omitted)
+## Communities (71 total, 1 thin omitted)
 
 ### Community 0 - "REGION-CAPTURE-001 Interactive region capture"
 Cohesion: 0.05
@@ -242,9 +236,9 @@ Nodes (21): authority, identity, role, decision, decision_id, effects, activatio
 Cohesion: 0.10
 Nodes (16): Capability manifest, Contract backlog tracker, Contract-first change workflow, Contract linter, Graphify explain, Graph-first navigation, Graphify path, Graphify query (+8 more)
 
-### Community 30 - "FILENAME-GENERATION-001 Filename generation"
-Cohesion: 0.15
-Nodes (19): FILENAME-GENERATION-001, Deterministic non-committing preview, FILENAME-GENERATION-001 Filename generation, FN-001, FN-010, FN-015, FN-017, FN-018 (+11 more)
+### Community 30 - "Filename deterministic acceptance vectors"
+Cohesion: 0.05
+Nodes (95): FILENAME-GENERATION-001, Atomic name reservation counter, Cryptographic rejection sampling, Deterministic non-committing preview, FILENAME-GENERATION-001 Filename generation, FN-001, FN-002, FN-003 (+87 more)
 
 ### Community 31 - "Product Contract manifest"
 Cohesion: 0.11
@@ -362,9 +356,9 @@ Nodes (3): D-REL-001 release waiver policy, Time-bound platform waiver, Waivers
 Cohesion: 0.09
 Nodes (21): authority, identity, role, decision, decision_id, effects, activation_authorized, census_closed (+13 more)
 
-### Community 61 - "FN-026"
-Cohesion: 0.18
-Nodes (17): FN-009, FN-016, FN-019, FN-026, Random-file read permission, brace-after-plain-token-is-literal, invalid-repeat-does-not-consume-counter, non-numeric-repeat (+9 more)
+### Community 61 - "ES-020 temp/recovery retention and secure delete (decided 2026-11-23)"
+Cohesion: 0.33
+Nodes (5): Decision, ES-020 temp/recovery retention and secure delete (decided 2026-11-23), Question, Research, Sources
 
 ### Community 62 - "EA-009: Step styles and reset semantics"
 Cohesion: 0.40
@@ -394,30 +388,6 @@ Nodes (4): Choice, EO-004: Save As format disposition and quality/matte defaults
 Cohesion: 0.33
 Nodes (5): Choice, EU-009/010/011: background-removal model supply, Impact, Problem, Sources (read 2026-11-20)
 
-### Community 69 - "FN-023"
-Cohesion: 0.22
-Nodes (15): FN-011, FN-013, FN-014, FN-023, Portable filename finalization, blank-pattern-text-mode, extension-exceeds-max-length, extension-is-not-a-token (+7 more)
-
-### Community 70 - "Filename deterministic acceptance vectors"
-Cohesion: 0.26
-Nodes (13): Atomic name reservation counter, FN-004, FN-007, FN-025, blank-pattern-does-not-advance-counter, counter-base36, counter-hex-padding, counter-once (+5 more)
-
-### Community 71 - "FN-021"
-Cohesion: 0.36
-Nodes (10): Cryptographic rejection sampling, FN-008, FN-021, guid-lower-and-upper, random-alphanumeric-with-rejection, random-digits-with-rejection, random-emoji, random-hex-both-cases (+2 more)
-
-### Community 72 - "FN-002"
-Cohesion: 0.39
-Nodes (8): FN-002, FN-003, FN-020, calendar-names-and-week, twelve-hour, twelve-hour-midnight-and-milliseconds, twelve-hour-noon, unix-seconds
-
-### Community 73 - "FN-022"
-Cohesion: 0.38
-Nodes (7): FN-005, FN-006, FN-022, text-mode-environment-unchanged, url-mode-percent-encoding, window-metadata, window-title-trim-space-and-sanitize
-
-### Community 74 - "FN-012"
-Cohesion: 0.53
-Nodes (6): FN-012, FN-024, path-mode-components, path-mode-rejects-absolute, path-mode-rejects-drive, path-mode-rejects-traversal
-
 ### Community 75 - "EC-013 background composition (decided 2026-11-23)"
 Cohesion: 0.29
 Nodes (6): Decision, EC-013 background composition (decided 2026-11-23), Question, Research, Sources, The image kind (decided and built 2026-11-23, same slice continuation)
@@ -428,23 +398,23 @@ Nodes (5): Choice, Impact, Problem, RC-003/004/012/022/027 and CORE-014: the phy
 
 ## Knowledge Gaps
 - **282 isolated node(s):** `Capture result topology snapshot`, `Desktop physical coordinate space`, `DXGI WinRT Win32 capture`, `Half-open physical selection rectangle`, `IEEE754 floor epsilon mapping` (+277 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 932 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 937 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Product Contract` connect `INTERFACE-CATALOG-001 Native and agent interfaces` to `REGION-CAPTURE-001 Interactive region capture`, `POST-CAPTURE-ACTIONS-001 Post-capture actions`, `MOBILE-PLATFORM-001 Native mobile applications`, `SETTINGS-CATALOG-001 Application settings catalog`, `WORKFLOW-CATALOG-001 Workflow and action catalog`, `FILENAME-GENERATION-001 Filename generation`?**
-  _High betweenness centrality (0.062) - this node is a cross-community bridge._
+- **Why does `Product Contract` connect `INTERFACE-CATALOG-001 Native and agent interfaces` to `REGION-CAPTURE-001 Interactive region capture`, `POST-CAPTURE-ACTIONS-001 Post-capture actions`, `MOBILE-PLATFORM-001 Native mobile applications`, `SETTINGS-CATALOG-001 Application settings catalog`, `WORKFLOW-CATALOG-001 Workflow and action catalog`, `Filename deterministic acceptance vectors`?**
+  _High betweenness centrality (0.057) - this node is a cross-community bridge._
 - **What connects `Capture result topology snapshot`, `Desktop physical coordinate space`, `DXGI WinRT Win32 capture` to the rest of the system?**
   _282 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `REGION-CAPTURE-001 Interactive region capture` be split into smaller, more focused modules?**
   _Cohesion score 0.05129561078794289 - nodes in this community are weakly interconnected._
-- **Why does `FILENAME-GENERATION-001 Filename generation` connect `FILENAME-GENERATION-001 Filename generation` to `FN-023`, `Filename deterministic acceptance vectors`, `FN-021`, `FN-002`, `FN-022`, `FN-012`, `INTERFACE-CATALOG-001 Native and agent interfaces`, `Product Contract reviews`, `FN-026`, `Product Contract manifest`?**
+- **Why does `Product Contract` connect `Product Contract` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Contract approval review — 2026-08-31`, `Document`, `Conformance vector format`, `backlog.json`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract completion status`, `Native implementation readiness`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
   _High betweenness centrality (0.046) - this node is a cross-community bridge._
 - **Should `CORE-PLATFORM-001 Native platform capability foundation` be split into smaller, more focused modules?**
   _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._
-- **Why does `Product Contract` connect `Product Contract` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Contract approval review — 2026-08-31`, `Document`, `Conformance vector format`, `backlog.json`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract completion status`, `Native implementation readiness`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
-  _High betweenness centrality (0.044) - this node is a cross-community bridge._
+- **Why does `FILENAME-GENERATION-001 Filename generation` connect `Filename deterministic acceptance vectors` to `INTERFACE-CATALOG-001 Native and agent interfaces`, `Product Contract reviews`, `Product Contract manifest`?**
+  _High betweenness centrality (0.036) - this node is a cross-community bridge._
 - **Should `EDITOR-ANNOTATIONS-001 Annotation tools` be split into smaller, more focused modules?**
   _Cohesion score 0.046511627906976744 - nodes in this community are weakly interconnected._

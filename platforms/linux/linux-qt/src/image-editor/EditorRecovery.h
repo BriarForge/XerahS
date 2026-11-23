@@ -55,6 +55,13 @@ public:
   RecoveryListing list();
   // Retain only this listed record's optimistic-write snapshot for its editor.
   EditorRecoveryStore forRecord(const QString &id) const;
+  // ES-020 on decision ES-020-RETENTION-2026-11-23: the startup age sweep.
+  // Only supported records whose owner has exited and whose savedAt is older
+  // than the bound become candidates - a live editor's record is never pruned
+  // by age, exactly as the count prune refuses it. retentionDays <= 0 keeps
+  // count-only behaviour and prunes nothing. Returns the pruned count; files
+  // already removed stay removed (the sweep is best effort at startup).
+  static int sweepExpired(const QString &directory, const QDateTime &now, int retentionDays, bool secureDelete);
 
 private:
   QString pathFor(const QString &id) const;

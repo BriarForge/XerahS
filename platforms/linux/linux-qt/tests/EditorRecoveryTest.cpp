@@ -166,6 +166,50 @@ private slots:
     const auto left = QDir(store.directory()).entryList({"*.json"}, QDir::Files);
     QVERIFY(left.size() <= EditorRecoveryStore::kMaxRecords); QVERIFY(left.contains(ids.last() + ".json"));
   }
+
+  // ES-020 on decision ES-020-RETENTION-2026-11-23: the startup age sweep.
+  // Only supported records with exited owners older than the bound are
+  // pruned; a live owner is never an age candidate and a fresh record stays.
+  void sweepExpiredPrunesOnlyOldRecordsWithExitedOwners() {
+    QTemporaryDir dir;
+    const QDateTime now(QDate(2026, 11, 23), QTime(12, 0), Qt::UTC);
+    const auto directory = dir.filePath("r");
+    const auto dead = exitedOwner(); QVERIFY(dead > 0);
+    EditorRecoveryStore oldStore(directory, [&] { return now.addDays(-8); });
+    const auto deadId = EditorRecoveryStore::newId();
+    const auto liveId = EditorRecoveryStore::newId();
+    QCOMPARE(oldStore.write(deadId, {}, document(), dead), QString());
+    QCOMPARE(oldStore.write(liveId, {}, document(), QCoreApplication::applicationPid()), QString());
+    EditorRecoveryStore freshStore(directory, [&] { return now; });
+    const auto freshId = EditorRecoveryStore::newId();
+    QCOMPARE(freshStore.write(freshId, {}, document(), dead), QString());
+    // A corrupt record is never an age candidate: the listing's set-aside
+    // path owns it, and the sweep leaves it in place.
+    const auto corruptId = EditorRecoveryStore::newId();
+    {
+      QFile corrupt(directory + "/" + corruptId + ".json");
+      QVERIFY(corrupt.open(QIODevice::WriteOnly));
+      corrupt.write("not json");
+    }
+    // retention 0 is count-only: nothing is pruned by age.
+    QCOMPARE(EditorRecoveryStore::sweepExpired(directory, now, 0, false), 0);
+    QVERIFY(QFile::exists(directory + "/" + deadId + ".json"));
+    // The configured bound prunes exactly the old dead-owner record.
+    QCOMPARE(EditorRecoveryStore::sweepExpired(directory, now, 7, false), 1);
+    QVERIFY(!QFile::exists(directory + "/" + deadId + ".json"));
+    QVERIFY(QFile::exists(directory + "/" + liveId + ".json"));
+    QVERIFY(QFile::exists(directory + "/" + freshId + ".json"));
+    QVERIFY(QFile::exists(directory + "/" + corruptId + ".json"));
+    // Secure delete overwrites before unlink: the held handle reads zeros.
+    QFile held(directory + "/" + freshId + ".json");
+    QVERIFY(held.open(QIODevice::ReadOnly));
+    QCOMPARE(EditorRecoveryStore::sweepExpired(directory, now.addDays(8), 7, true), 1);
+    QVERIFY(!QFile::exists(directory + "/" + freshId + ".json"));
+    QVERIFY(held.seek(0));
+    for (char byte : held.readAll()) QCOMPARE(byte, '\0');
+    // The live-owner record is still there, age notwithstanding.
+    QVERIFY(QFile::exists(directory + "/" + liveId + ".json"));
+  }
   void countPruningPreservesProtectedRecords_data() {
     QTest::addColumn<QString>("kind");
     QTest::newRow("newer-version") << QString("newer");

@@ -140,4 +140,23 @@ QString storeStatusName(StoreStatus status) {
   return {};
 }
 
+bool overwriteForRemoval(const QString &path) {
+  const int fd = ::open(QFile::encodeName(path).constData(), O_WRONLY | O_CLOEXEC);
+  if (fd < 0) return false;
+  struct stat info{};
+  if (::fstat(fd, &info) != 0 || !S_ISREG(info.st_mode) || info.st_size < 0) { ::close(fd); return false; }
+  // The size is racy against concurrent writers by design: this is one
+  // best-effort pass, never a guarantee. Zero-fill what is there, sync.
+  bool ok = true;
+  char zeros[4096]{};
+  for (off_t written = 0; written < info.st_size; written += off_t(sizeof zeros)) {
+    const off_t remaining = info.st_size - written;
+    const ssize_t chunk = remaining > off_t(sizeof zeros) ? ssize_t(sizeof zeros) : ssize_t(remaining);
+    if (::write(fd, zeros, size_t(chunk)) != chunk) { ok = false; break; }
+  }
+  if (ok) ok = ::fdatasync(fd) == 0;
+  ::close(fd);
+  return ok;
+}
+
 }  // namespace xerahs::storage

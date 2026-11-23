@@ -80,4 +80,11 @@ private:
 
 QString storeStatusName(StoreStatus status);  // "ok", "missing", "unsafe", ...
 
+// ES-020 on decision ES-020-RETENTION-2026-11-23: one zero-fill pass then
+// fsync, best effort, before an unlink that removes private user data.
+// shred's own caveat applies - filesystems and devices that do not overwrite
+// in place (SSD wear levelling, COW, mirrors) make this a reduction, never a
+// promise of physical erasure.
+bool overwriteForRemoval(const QString &path);
+
 }  // namespace xerahs::storage

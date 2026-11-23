@@ -162,9 +162,6 @@ int main(int argc, char *argv[]) {
     return xerahs::shell::errorExitCode(started.kind == xerahs::app::InstanceStart::Kind::Busy ? QStringLiteral("activation-busy") : started.diagnostic);
   }
 
-  const auto temporaryDirectory = xerahs::app::editorTemporaryDirectory();
-  if (!temporaryDirectory.isEmpty()) xerahs::app::sweepEditorTemporaryFiles(temporaryDirectory);
-
   // IFCAT-008: SIGINT/SIGTERM cancel cleanly. The event loop quits (closing
   // windows and cancelling owned work through the normal teardown) and the
   // process exits 128+signal (130/143). A repeated signal during shutdown is
@@ -200,6 +197,16 @@ int main(int argc, char *argv[]) {
   const QString pictures = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
   const QString defaultFolder = QDir(pictures.isEmpty() ? QDir::homePath() : pictures).filePath(QStringLiteral("XerahS"));
   xerahs::settings::ApplicationSettingsStore settings(QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("application-settings.json"), defaultFolder);
+  // ES-020 on decision ES-020-RETENTION-2026-11-23: the configured retention
+  // for the editor's private files, enforced at startup once the settings
+  // store has loaded, so the user's limits govern both sweeps.
+  {
+    const auto retention = xerahs::settings::retentionLimits(settings.current().values);
+    const auto now = QDateTime::currentDateTimeUtc();
+    const auto temporaryDirectory = xerahs::app::editorTemporaryDirectory();
+    if (!temporaryDirectory.isEmpty()) xerahs::app::sweepEditorTemporaryFiles(temporaryDirectory, now, retention.temporaryDays, retention.secureDelete);
+    xerahs::editor::EditorRecoveryStore::sweepExpired(xerahs::editor::EditorRecoveryStore::defaultDirectory(), now, retention.recoveryDays, retention.secureDelete);
+  }
   const auto uploadCatalogPath = QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("upload-destinations.json");
   auto uploadCredentials = std::make_shared<xerahs::app::SecretServiceCredentialStore>();
   xerahs::app::CaptureActionPorts capturePorts; capturePorts.uploadCatalogPath = uploadCatalogPath;

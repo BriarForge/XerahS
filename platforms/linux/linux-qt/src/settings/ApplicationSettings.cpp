@@ -25,6 +25,12 @@ bool oneOf(const QJsonValue &value, std::initializer_list<const char *> allowed)
   for (const char *candidate : allowed) if (value.toString() == QLatin1String(candidate)) return true;
   return false;
 }
+bool validGeneralValue(const QString &key, const QJsonValue &value) {
+  // ES-020 on decision ES-020-RETENTION-2026-11-23: the configured limits.
+  if (key == "editorRetention.temporaryDays") return integerInRange(value, 0, 30);
+  if (key == "editorRetention.recoveryDays") return integerInRange(value, 0, 90);
+  return value.isBool();
+}
 bool validCaptureValue(const QString &key, const QJsonValue &value) {
   if (key == "delayedCapture.seconds") return integerInRange(value, 1, 60);
   if (key == "delayedCapture.source") return oneOf(value, {"full-screen", "monitor", "active-window", "region"});
@@ -45,6 +51,9 @@ bool validCaptureValue(const QString &key, const QJsonValue &value) {
 QVector<SettingField> settingFields() {
   return {{"saveFolder", Section::General, "profile", "workflow"}, {"filenamePattern", Section::General, "profile", "workflow"},
     {"startAtLogin", Section::General, "profile"}, {"showTrayIcon", Section::General, "profile"},
+    {"editorRetention.temporaryDays", Section::General, "profile"},
+    {"editorRetention.recoveryDays", Section::General, "profile"},
+    {"editorRetention.secureDelete", Section::General, "profile"},
     {"regionCapture.quickConfirm", Section::Capture, "profile"}, {"regionCapture.snapping", Section::Capture, "profile"},
     {"regionCapture.includeCursor", Section::Capture, "profile"},
     {"playCaptureSound", Section::Capture, "profile"}, {"showNotification", Section::Capture, "profile"}, {"privateNotifications", Section::Capture, "profile"},
@@ -82,6 +91,10 @@ QJsonObject defaultSettings(const QString &saveFolder) {
   QJsonObject bindings; const auto defaults = HotkeyBindings::defaults();
   for (auto it = defaults.entries.cbegin(); it != defaults.entries.cend(); ++it) bindings.insert(it.key(), it.value());
   return {{"saveFolder", saveFolder}, {"filenamePattern", workflows::CaptureOutput{}.pattern}, {"startAtLogin", false},
+    // ES-020 on decision ES-020-RETENTION-2026-11-23: the reference's
+    // defaults (no overwrite, opt-in-ish cleanup) plus this edition's landed
+    // 24 h temp bound made configurable; recovery gains an age bound.
+    {"editorRetention.temporaryDays", 1}, {"editorRetention.recoveryDays", 7}, {"editorRetention.secureDelete", false},
     {"regionCapture.quickConfirm", true}, {"regionCapture.snapping", true},
     {"regionCapture.includeCursor", false},
     {"showTrayIcon", true}, {"playCaptureSound", false}, {"showNotification", true}, {"privateNotifications", false},
@@ -109,6 +122,22 @@ xerahs::capture::SessionSettings regionSessionSettings(const QJsonObject &values
   };
   const auto cursor = values.value("regionCapture.includeCursor");
   return {enabled("regionCapture.quickConfirm"), enabled("regionCapture.snapping"), cursor.isBool() && cursor.toBool()};
+}
+
+RetentionLimits retentionLimits(const QJsonObject &values) {
+  // ES-020 on decision ES-020-RETENTION-2026-11-23. The store's repair path
+  // guarantees validity after load; this resolver still refuses malformed
+  // values instead of guessing.
+  RetentionLimits limits;
+  const auto days = [&values](const char *key, int fallback) {
+    const auto value = values.value(QLatin1String(key));
+    return value.isDouble() && value.toDouble() == std::floor(value.toDouble()) && value.toDouble() >= 0 ? int(value.toDouble()) : fallback;
+  };
+  limits.temporaryDays = days("editorRetention.temporaryDays", limits.temporaryDays);
+  limits.recoveryDays = days("editorRetention.recoveryDays", limits.recoveryDays);
+  const auto secure = values.value(QLatin1String("editorRetention.secureDelete"));
+  limits.secureDelete = secure.isBool() && secure.toBool();
+  return limits;
 }
 HotkeyBindings hotkeys(const QJsonObject &values) {
   HotkeyBindings result; const auto object = values.value("hotkeys").toObject();
@@ -139,6 +168,7 @@ SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder,
     } else if (field.key == "hotkeys") valid = value.isObject() && value.toObject().size() <= maximumHotkeyBindings;
     else if (field.section == Section::Recording) valid = value.isString() && value.toString().size() <= 4096 && !value.toString().contains(QChar(0));
     else if (field.section == Section::Capture) valid = validCaptureValue(field.key, value);
+    else if (field.section == Section::General) valid = validGeneralValue(field.key, value);
     else valid = value.isBool();
     result.fields.insert(field.key, valid ? FieldState::Valid : FieldState::Invalid);
     if (!valid) { result.values.insert(field.key, defaults.value(field.key)); result.diagnostics.append(field.key + ": invalid value repaired"); }

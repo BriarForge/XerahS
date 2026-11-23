@@ -1866,9 +1866,9 @@
       "previous_note": "Audit 2026-11-04: Clauses: keyboard navigation, visible focus, screen-reader names/state, high contrast, non-colour-only selection, zoom-independent targets. NativeSurfaceAccessibilityTest::nativeSurfaces(editor) traverses enabled controls under a black/white/yellow high-contrast palette and enlarged font, checking native accessible names, focus style state and visible regions. AnnotationObjectNavigatorTest::nativeKeyboardSelectionPreservesDocumentHistoryAndLabels checks native accessible object names/state and keyboard selection/return-to-canvas; selection is also shown by dashed outlines and fixed black/white handles. EditorCanvasTest::explicitToolsAreCheckedAccessibleAndSelectNeverCreates checks accessible checked state; hitTargetsStaySixScreenPixelsAtLowZoom and resizeHandlesPreviewAndCommitOnceAtEveryRotationAndZoom verify fixed screen-space interaction targets. Direct offscreen navigator run passes despite the ctest private-bus wrapper being socket-blocked."
     },
     "ES-020": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "Explicit output authority and private temporary storage exist; approved configured editor temp/recovery retention and secure-delete limits are still an unanswered policy gate.",
+      "note": "Explicit output authority, redacted results and private temporary storage have direct automated evidence, and the retention gate is settled and built (decision ES-020-RETENTION-2026-11-23, resolved by the build loop under delegated owner-block authority): editorRetention.temporaryDays (default 1, 0..30, 0 = sweep every startup), editorRetention.recoveryDays (default 7, 0..90, 0 = count-only) and editorRetention.secureDelete (default off) are validated settings with General-tab rows, enforced at startup once the settings store has loaded - the temp sweep unlinks abandoned preparation files past the bound (reusing the private-directory checks), and the recovery age sweep reuses the store's per-file lock, exited-owner and valid-savedAt pattern so a live editor's record is never an age candidate. Secure delete, when on, overwrites with one zero-fill pass and fdatasync before unlink through the shared storage primitive, with shred's documented in-place-overwrite caveat stated in the settings UI and the decision record. The overwrite is observed through the POSIX open-handle proof (the unlinked descriptor reads zeros). Implemented candidate; remaining is live desktop qualification (a physical gate), not a product gap.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
@@ -1882,9 +1882,9 @@
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "blocked",
+        "classification": "implemented",
         "spec_line": 97,
-        "coverage": "Explicit output authority, redacted results and private temporary storage have direct automated evidence. Recovery cleanup now preserves protected/newer/live records and exact snapshots, and failed publication does not delete existing work. These changes do not implement the still-unapproved configured temp/recovery retention and secure-delete limits; the policy gate remains blocked.",
+        "coverage": "Explicit output authority, redacted results and private temporary storage have direct automated evidence. Recovery cleanup now preserves protected/newer/live records and exact snapshots, and failed publication does not delete existing work. The configured retention gate is settled and built (decision ES-020-RETENTION-2026-11-23): three validated settings with General-tab rows and startup enforcement - the configured temp age sweep, the recovery age sweep with the live-owner guard, and the best-effort one-pass overwrite with the shred-documented caveat - each red-proven and observed through the POSIX open-handle proof.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
@@ -1909,43 +1909,79 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "635e6ef5e8a799b28fe8ea718e5ac45fcc84c54a9dcea2ccd36dd5307fae959f"
+            "sha256": "e932d1021ebd0ddf9c9d602a2416264e4e4b596b524eb7fe772c60d660e632e4"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
-            "sha256": "5ce26e7a894308a4d7f9f72f1f113e01f8d8d7c895aa027c93e575d9c10c0f98"
+            "sha256": "1d2ce82cc78f81ab74daee90781386f512e0282fc1b9e78748ef913a3c079d39"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/EditorTemporaryFiles.cpp",
+            "sha256": "243963a7230ff2db7cc5d95f8b6aa2950cc9555dbe7cf52733782f437ec1dc59"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
+            "sha256": "524750ce6de0c264b6a61406d0c3441299e040ac0e7720c2382965a81c91c67b"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+            "sha256": "3944435161d108ef063752a06762add56c686e12d4b2af9d1a59e6efd958111b"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
+            "sha256": "91e2d1730d3dadd8a6e43dab61fc715b35363237e263107f11203fc9e2fe6506",
             "method": "managedTemporaryRetentionKeepsRecentForeignAndLinkedFiles",
             "line": 60
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-            "sha256": "c4a9497988cb385777aa710dc7de9702b54d804cb0d06a0255334e67b5def1c1",
+            "sha256": "91e2d1730d3dadd8a6e43dab61fc715b35363237e263107f11203fc9e2fe6506",
+            "method": "managedTemporaryRetentionFollowsTheConfiguredLimitsAndOverwrites",
+            "line": 87
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+            "sha256": "91e2d1730d3dadd8a6e43dab61fc715b35363237e263107f11203fc9e2fe6506",
             "method": "managedPreparationTemporaryIsPrivateAndRemovedAtTaskEnd",
-            "line": 82
+            "line": 125
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
             "method": "failedPublicationDoesNotPruneExistingRecovery",
-            "sha256": "295dfbb12635ce2c60e13363285dd497d34c20aab59a3e6b0de32e8662f5000b",
-            "line": 217
+            "sha256": "8174030a27e947262d0b0aa1c9ec27a5f5bd51be1436f27693bac7f46e04d6e3",
+            "line": 261
           },
           {
             "path": "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
             "method": "removalPreservesNewerOrChangedRecords",
-            "sha256": "295dfbb12635ce2c60e13363285dd497d34c20aab59a3e6b0de32e8662f5000b",
-            "line": 237
+            "sha256": "8174030a27e947262d0b0aa1c9ec27a5f5bd51be1436f27693bac7f46e04d6e3",
+            "line": 281
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
+            "method": "sweepExpiredPrunesOnlyOldRecordsWithExitedOwners",
+            "sha256": "8174030a27e947262d0b0aa1c9ec27a5f5bd51be1436f27693bac7f46e04d6e3",
+            "line": 173
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+            "method": "retentionLimitsDefaultsRoundTripAndRepair",
+            "sha256": "1b7c63786e57b71092e6acc9ee5a7307ec5ff7d47b5884e9f48d0ef0d8b7bf6b",
+            "line": 387
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+            "method": "retentionLimitsDialogAppliesAndCancels",
+            "sha256": "1b7c63786e57b71092e6acc9ee5a7307ec5ff7d47b5884e9f48d0ef0d8b7bf6b",
+            "line": 298
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "Audit 2026-11-04: Clauses: explicit output consent; no editor content in logs/support; temporary/recovery retention and secure-delete limits. EditorSaveTest::resultsReportDestinationFormatAndRecoverabilityAndNeverCarryPrivatePayloads and EditorSourceTest::capturedSourceRejectsEmptyOversizedInputAndRedactsCallbackExceptions prove redacted errors. EditorTaskTest::cancelAndDirtyCloseLeaveClipboardFilesAndUploadUntouched proves no implicit upload/save/copy. New EditorSaveTest::managedPreparationTemporaryIsPrivateAndRemovedAtTaskEnd and managedTemporaryRetentionKeepsRecentForeignAndLinkedFiles test owner-private managed preparation/upload storage, task-end unlink, startup 24-hour sweep and preservation of recent, unrelated, shared and symlinked files/directories. Preset assets and default managed capture upload temporaries now use that production directory; editor uploads prepare bytes in memory. Decision: temporary preparation/private managed upload files are deleted at task end and swept on startup after 24 hours; no editor content belongs in logs or support output. Deletion is unlink, with no physical-erasure guarantee on SSD/COW storage. Remains partial: crash-abandoned same-directory save temporaries and legacy unmanaged temporary locations do not yet have startup discovery/retention, and comprehensive support-output privacy proof is not complete. Capture-upload transport fixtures remain socket-blocked. Recovery is not implemented and no recovery-content retention claim is made.",
+      "previous_note": "Explicit output authority and private temporary storage exist; approved configured editor temp/recovery retention and secure-delete limits were still an unanswered policy gate.",
       "blocked_reason": "Explicit output authority and private temporary storage exist; approved configured editor temp/recovery retention and secure-delete limits are still an unanswered policy gate."
     },
     "ES-021": {

@@ -109,6 +109,24 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   auto *pattern = new QLineEdit(general); pattern->setMaxLength(4096); pattern->setAccessibleName(text("Filename pattern")); form->addRow(text("&Filename pattern"), pattern);
   auto *login = new QCheckBox(text("Start XerahS at &login"), general); login->setAccessibleName(text("Start XerahS at login")); form->addRow(login);
   auto *tray = new QCheckBox(text("Show &tray icon"), general); tray->setAccessibleName(text("Show tray icon")); form->addRow(tray);
+  // ES-020 on decision ES-020-RETENTION-2026-11-23: the configured limits.
+  auto *retentionBox = new QGroupBox(text("Private file retention"), general); auto *retentionForm = new QFormLayout(retentionBox);
+  auto *temporaryDays = spin(retentionBox, text("Temporary file retention"), 0, 30, text(" days"));
+  temporaryDays->setObjectName("retentionTemporaryDays");
+  auto *recoveryDays = spin(retentionBox, text("Crash recovery retention"), 0, 90, text(" days"));
+  recoveryDays->setObjectName("retentionRecoveryDays");
+  retentionForm->addRow(text("&Temporary files older than"), temporaryDays);
+  retentionForm->addRow(text("Crash &recovery older than"), recoveryDays);
+  auto *secureDelete = new QCheckBox(text("&Overwrite files before deleting (secure delete)"), retentionBox);
+  secureDelete->setObjectName("retentionSecureDelete"); secureDelete->setAccessibleName(secureDelete->text());
+  retentionForm->addRow(secureDelete);
+  auto *retentionNote = new QLabel(text("Startup removes abandoned editor preparation files past the temporary limit (0 = every start) "
+      "and crash-recovery documents past the recovery limit (0 = keep until the eight-record bound). Secure delete overwrites files once "
+      "before removal; on SSD, copy-on-write or mirrored storage overwriting cannot guarantee erasure - the same caveat GNU shred documents."), retentionBox);
+  retentionNote->setWordWrap(true); retentionNote->setTextFormat(Qt::PlainText);
+  retentionNote->setAccessibleName(text("Private file retention limits and the secure-delete caveat"));
+  retentionForm->addRow(retentionNote);
+  form->addRow(retentionBox);
   auto *exportSettings = new QPushButton(text("Export settings…"), general);
   exportSettings->setObjectName("exportSettings"); exportSettings->setAccessibleName(exportSettings->text()); form->addRow(exportSettings);
   auto *importSettings = new QPushButton(text("Import settings…"), general);
@@ -194,6 +212,10 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     quickConfirm->setChecked(draft->value("regionCapture.quickConfirm").toBool());
     snapping->setChecked(draft->value("regionCapture.snapping").toBool());
     includeCursor->setChecked(draft->value("regionCapture.includeCursor").toBool());
+    // ES-020: the retention limits, prefilled from the draft.
+    findChild<QSpinBox *>("retentionTemporaryDays")->setValue(draft->value("editorRetention.temporaryDays").toInt());
+    findChild<QSpinBox *>("retentionRecoveryDays")->setValue(draft->value("editorRetention.recoveryDays").toInt());
+    findChild<QCheckBox *>("retentionSecureDelete")->setChecked(draft->value("editorRetention.secureDelete").toBool());
     sound->setChecked(draft->value("playCaptureSound").toBool()); notification->setChecked(draft->value("showNotification").toBool());
     privateNotification->setChecked(draft->value("privateNotifications").toBool());
     delaySeconds->setValue(draft->value("delayedCapture.seconds").toInt()); select(delaySource, draft->value("delayedCapture.source"));
@@ -218,6 +240,10 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     draft->insert("regionCapture.quickConfirm", quickConfirm->isChecked());
     draft->insert("regionCapture.snapping", snapping->isChecked());
     draft->insert("regionCapture.includeCursor", includeCursor->isChecked());
+    // ES-020: the retention limits.
+    draft->insert("editorRetention.temporaryDays", findChild<QSpinBox *>("retentionTemporaryDays")->value());
+    draft->insert("editorRetention.recoveryDays", findChild<QSpinBox *>("retentionRecoveryDays")->value());
+    draft->insert("editorRetention.secureDelete", findChild<QCheckBox *>("retentionSecureDelete")->isChecked());
     draft->insert("playCaptureSound", sound->isChecked()); draft->insert("showNotification", notification->isChecked());
     draft->insert("privateNotifications", privateNotification->isChecked());
     draft->insert("delayedCapture.seconds", delaySeconds->value()); draft->insert("delayedCapture.source", delaySource->currentData().toString());
