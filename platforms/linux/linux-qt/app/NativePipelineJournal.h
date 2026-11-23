@@ -33,6 +33,11 @@ public:
   JournalListing listRecovering() const;
   JournalWrite recordFileUpload(const FileUploadHistoryRecord &upload, FileUploadJournalState state = FileUploadJournalState::Terminal) const;
   JournalWrite erase(const QString &id, const QByteArray &expected) const;
+  // CORE-027 on decision CORE-027-STORE-RETENTION-2026-11-23: the startup age
+  // sweep over journal records (by createdAt). retentionDays <= 0 keeps
+  // today's unbounded behaviour; corrupt records stay with the quarantine
+  // path. Returns the removed count.
+  static int sweepExpired(const QString &directory, const QDateTime &now, int retentionDays, bool secureDelete);
 private:
   QString m_directory;
 };

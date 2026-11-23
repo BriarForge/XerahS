@@ -1,5 +1,6 @@
 #include "NativePrivateRecords.h"
 #include "actions/PipelineJournal.h"
+#include "storage/PrivateJsonFile.h"
 #include <QDir>
 #include <QFile>
 #include <QUuid>
@@ -156,6 +157,30 @@ RecordWrite NativePrivateRecords::erase(const QString &id, const QByteArray &exp
   if (::unlinkat(directory.value, target.constData(), 0) != 0) return failure("pipeline-journal-write-failed");
   if (::fsync(directory.value) != 0) return failure("pipeline-journal-durability-unknown");
   return {true, {}};
+}
+
+int NativePrivateRecords::sweep(const std::function<bool(const QByteArray &, const QString &)> &expired, bool secureDelete) const {
+  if (!expired) return 0;
+  auto directory = root(m_directory, false);
+  if (directory.value < 0) return 0;
+  if (::flock(directory.value, LOCK_EX | LOCK_NB) != 0) return 0;
+  const auto ids = names(directory.value);
+  if (!ids.diagnostic.isEmpty() && ids.ids.size() >= qsizetype(maximumEntries)) return 0;
+  int removed = 0;
+  for (const auto &id : ids.ids) {
+    const auto target = filename(id);
+    const auto actual = read(directory.value, target);
+    if (!actual.diagnostic.isEmpty() || !actual.bytes) continue;   // quarantine paths own unreadable records
+    if (m_validate && !m_validate(*actual.bytes, id)) continue;
+    if (!expired(*actual.bytes, id)) continue;
+    // The directory flock serializes writers, so the path-based overwrite is
+    // race-free here; retention, not erasure, is the guarantee.
+    if (secureDelete) xerahs::storage::overwriteForRemoval(QDir(m_directory).filePath(id + QStringLiteral(".json")));
+    if (::unlinkat(directory.value, target.constData(), 0) != 0) continue;
+    ++removed;
+  }
+  if (removed > 0 && ::fsync(directory.value) != 0) return removed;
+  return removed;
 }
 RecordWrite NativePrivateRecords::quarantine(const QString &id, const QByteArray &expected) const {
   if (!validJournalTaskId(id) || (m_validate && m_validate(expected, id))) return failure("pipeline-journal-invalid");

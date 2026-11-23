@@ -115,13 +115,16 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   temporaryDays->setObjectName("retentionTemporaryDays");
   auto *recoveryDays = spin(retentionBox, text("Crash recovery retention"), 0, 90, text(" days"));
   recoveryDays->setObjectName("retentionRecoveryDays");
+  auto *historyDays = spin(retentionBox, text("Workflow history retention"), 0, 365, text(" days"));
+  historyDays->setObjectName("retentionHistoryDays");
   retentionForm->addRow(text("&Temporary files older than"), temporaryDays);
   retentionForm->addRow(text("Crash &recovery older than"), recoveryDays);
+  retentionForm->addRow(text("&Workflow history older than"), historyDays);
   auto *secureDelete = new QCheckBox(text("&Overwrite files before deleting (secure delete)"), retentionBox);
   secureDelete->setObjectName("retentionSecureDelete"); secureDelete->setAccessibleName(secureDelete->text());
   retentionForm->addRow(secureDelete);
-  auto *retentionNote = new QLabel(text("Startup removes abandoned editor preparation files past the temporary limit (0 = every start) "
-      "and crash-recovery documents past the recovery limit (0 = keep until the eight-record bound). Secure delete overwrites files once "
+  auto *retentionNote = new QLabel(text("Startup removes abandoned editor preparation files past the temporary limit (0 = every start), crash-recovery documents past the recovery limit "
+      "(0 = keep until the eight-record bound) and workflow history records past the history limit (0 = keep unbounded). Secure delete overwrites files once "
       "before removal; on SSD, copy-on-write or mirrored storage overwriting cannot guarantee erasure - the same caveat GNU shred documents."), retentionBox);
   retentionNote->setWordWrap(true); retentionNote->setTextFormat(Qt::PlainText);
   retentionNote->setAccessibleName(text("Private file retention limits and the secure-delete caveat"));
@@ -215,6 +218,7 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     // ES-020: the retention limits, prefilled from the draft.
     findChild<QSpinBox *>("retentionTemporaryDays")->setValue(draft->value("editorRetention.temporaryDays").toInt());
     findChild<QSpinBox *>("retentionRecoveryDays")->setValue(draft->value("editorRetention.recoveryDays").toInt());
+    findChild<QSpinBox *>("retentionHistoryDays")->setValue(draft->value("editorRetention.historyDays").toInt());
     findChild<QCheckBox *>("retentionSecureDelete")->setChecked(draft->value("editorRetention.secureDelete").toBool());
     sound->setChecked(draft->value("playCaptureSound").toBool()); notification->setChecked(draft->value("showNotification").toBool());
     privateNotification->setChecked(draft->value("privateNotifications").toBool());
@@ -243,6 +247,7 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     // ES-020: the retention limits.
     draft->insert("editorRetention.temporaryDays", findChild<QSpinBox *>("retentionTemporaryDays")->value());
     draft->insert("editorRetention.recoveryDays", findChild<QSpinBox *>("retentionRecoveryDays")->value());
+    draft->insert("editorRetention.historyDays", findChild<QSpinBox *>("retentionHistoryDays")->value());
     draft->insert("editorRetention.secureDelete", findChild<QCheckBox *>("retentionSecureDelete")->isChecked());
     draft->insert("playCaptureSound", sound->isChecked()); draft->insert("showNotification", notification->isChecked());
     draft->insert("privateNotifications", privateNotification->isChecked());

@@ -21,6 +21,17 @@ JournalWrite NativePipelineJournal::replace(const QString &id, const std::option
 JournalWrite NativePipelineJournal::erase(const QString &id, const QByteArray &expected) const {
   return records(m_directory).erase(id, expected);
 }
+
+int NativePipelineJournal::sweepExpired(const QString &directory, const QDateTime &now, int retentionDays, bool secureDelete) {
+  if (retentionDays <= 0 || !now.isValid()) return 0;
+  const auto bound = now.addSecs(-qint64(retentionDays) * 24 * 60 * 60);
+  // The store's own validator gates the sweep: a corrupt or unparseable
+  // record is never a retention candidate (the quarantine path owns it).
+  return records(directory).sweep([&](const QByteArray &bytes, const QString &id) {
+    const auto parsed = xerahs::actions::parsePipelineJournal(bytes, id);
+    return parsed.record && parsed.record->createdAt.isValid() && parsed.record->createdAt <= bound;
+  }, secureDelete);
+}
 JournalWrite NativePipelineJournal::recordFileUpload(const FileUploadHistoryRecord &upload, FileUploadJournalState state) const {
   using namespace xerahs::actions;
   if ((upload.origin != "file-upload" && upload.origin != "watch-folder") || !QDir::isAbsolutePath(upload.path))

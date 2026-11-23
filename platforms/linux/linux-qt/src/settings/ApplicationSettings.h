@@ -46,6 +46,8 @@ xerahs::capture::SessionSettings regionSessionSettings(const QJsonObject &values
 struct RetentionLimits {
   int temporaryDays = 1;    // 0 = sweep every startup
   int recoveryDays = 7;     // 0 = count-only
+  // CORE-027 on decision CORE-027-STORE-RETENTION-2026-11-23.
+  int historyDays = 30;     // 0 = unbounded
   bool secureDelete = false;
 };
 RetentionLimits retentionLimits(const QJsonObject &values);

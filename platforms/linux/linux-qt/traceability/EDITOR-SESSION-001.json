@@ -1921,11 +1921,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
-            "sha256": "524750ce6de0c264b6a61406d0c3441299e040ac0e7720c2382965a81c91c67b"
+            "sha256": "2c6c638c10d3574f7e1333c1c19b39439cf9dcec18777a76f3eefb022dec071f"
           },
           {
             "path": "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-            "sha256": "3944435161d108ef063752a06762add56c686e12d4b2af9d1a59e6efd958111b"
+            "sha256": "e9af96ee2faf9099340a4cbfaed4b065754e9318bdefa8e286ac5fefcd0a6109"
           }
         ],
         "test_anchors": [
@@ -1968,13 +1968,13 @@
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
             "method": "retentionLimitsDefaultsRoundTripAndRepair",
-            "sha256": "1b7c63786e57b71092e6acc9ee5a7307ec5ff7d47b5884e9f48d0ef0d8b7bf6b",
-            "line": 387
+            "sha256": "32be15dd36c560d435768b134263ed0c2de8cb92a7cbb03abb9120bbf57d1d3f",
+            "line": 394
           },
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
             "method": "retentionLimitsDialogAppliesAndCancels",
-            "sha256": "1b7c63786e57b71092e6acc9ee5a7307ec5ff7d47b5884e9f48d0ef0d8b7bf6b",
+            "sha256": "32be15dd36c560d435768b134263ed0c2de8cb92a7cbb03abb9120bbf57d1d3f",
             "line": 298
           }
         ],

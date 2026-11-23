@@ -206,6 +206,10 @@ int main(int argc, char *argv[]) {
     const auto temporaryDirectory = xerahs::app::editorTemporaryDirectory();
     if (!temporaryDirectory.isEmpty()) xerahs::app::sweepEditorTemporaryFiles(temporaryDirectory, now, retention.temporaryDays, retention.secureDelete);
     xerahs::editor::EditorRecoveryStore::sweepExpired(xerahs::editor::EditorRecoveryStore::defaultDirectory(), now, retention.recoveryDays, retention.secureDelete);
+    // CORE-027 on decision CORE-027-STORE-RETENTION-2026-11-23: bounded
+    // retention for the private history stores, same startup pass.
+    xerahs::app::NativePipelineJournal::sweepExpired(xerahs::app::NativePipelineJournal::defaultDirectory(), now, retention.historyDays, retention.secureDelete);
+    xerahs::app::NativeWorkflowExecutions::sweepExpired(xerahs::app::NativeWorkflowExecutions::defaultDirectory(), now, retention.historyDays, retention.secureDelete);
   }
   const auto uploadCatalogPath = QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("upload-destinations.json");
   auto uploadCredentials = std::make_shared<xerahs::app::SecretServiceCredentialStore>();

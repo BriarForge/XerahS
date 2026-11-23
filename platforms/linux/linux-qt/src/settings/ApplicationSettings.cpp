@@ -29,6 +29,9 @@ bool validGeneralValue(const QString &key, const QJsonValue &value) {
   // ES-020 on decision ES-020-RETENTION-2026-11-23: the configured limits.
   if (key == "editorRetention.temporaryDays") return integerInRange(value, 0, 30);
   if (key == "editorRetention.recoveryDays") return integerInRange(value, 0, 90);
+  // CORE-027 on decision CORE-027-STORE-RETENTION-2026-11-23: the bound for
+  // the workflow-execution and pipeline-journal stores.
+  if (key == "editorRetention.historyDays") return integerInRange(value, 0, 365);
   return value.isBool();
 }
 bool validCaptureValue(const QString &key, const QJsonValue &value) {
@@ -53,6 +56,7 @@ QVector<SettingField> settingFields() {
     {"startAtLogin", Section::General, "profile"}, {"showTrayIcon", Section::General, "profile"},
     {"editorRetention.temporaryDays", Section::General, "profile"},
     {"editorRetention.recoveryDays", Section::General, "profile"},
+    {"editorRetention.historyDays", Section::General, "profile"},
     {"editorRetention.secureDelete", Section::General, "profile"},
     {"regionCapture.quickConfirm", Section::Capture, "profile"}, {"regionCapture.snapping", Section::Capture, "profile"},
     {"regionCapture.includeCursor", Section::Capture, "profile"},
@@ -94,7 +98,10 @@ QJsonObject defaultSettings(const QString &saveFolder) {
     // ES-020 on decision ES-020-RETENTION-2026-11-23: the reference's
     // defaults (no overwrite, opt-in-ish cleanup) plus this edition's landed
     // 24 h temp bound made configurable; recovery gains an age bound.
+    // CORE-027 on decision CORE-027-STORE-RETENTION-2026-11-23: the private
+    // history stores gain a default-on bound (0 = unbounded, user choice).
     {"editorRetention.temporaryDays", 1}, {"editorRetention.recoveryDays", 7}, {"editorRetention.secureDelete", false},
+    {"editorRetention.historyDays", 30},
     {"regionCapture.quickConfirm", true}, {"regionCapture.snapping", true},
     {"regionCapture.includeCursor", false},
     {"showTrayIcon", true}, {"playCaptureSound", false}, {"showNotification", true}, {"privateNotifications", false},
@@ -135,6 +142,7 @@ RetentionLimits retentionLimits(const QJsonObject &values) {
   };
   limits.temporaryDays = days("editorRetention.temporaryDays", limits.temporaryDays);
   limits.recoveryDays = days("editorRetention.recoveryDays", limits.recoveryDays);
+  limits.historyDays = days("editorRetention.historyDays", limits.historyDays);
   const auto secure = values.value(QLatin1String("editorRetention.secureDelete"));
   limits.secureDelete = secure.isBool() && secure.toBool();
   return limits;

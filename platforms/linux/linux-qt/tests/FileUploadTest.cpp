@@ -903,6 +903,88 @@ private slots:
     }
   }
 
+  // CORE-027 on decision CORE-027-STORE-RETENTION-2026-11-23: bounded
+  // retention across the private stores. The sweep removes exactly the old
+  // valid records; retention 0 keeps today's unbounded behaviour; corrupt
+  // records are never retention candidates (the quarantine path owns them);
+  // secure delete overwrites before unlink - observed through the POSIX
+  // open-handle proof.
+  void storeRetentionSweepRemovesOnlyOldValidRecords() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    const auto now = QDateTime::currentDateTimeUtc();
+    NativePipelineJournal journal(dir.filePath(QStringLiteral("journal")));
+    auto upload = [&](const QDateTime &createdAt) {
+      FileUploadHistoryRecord record;
+      record.taskId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+      record.path = writeFile(dir, QStringLiteral("source.txt"), QByteArray("source"));
+      record.origin = QStringLiteral("file-upload"); record.destinationName = QStringLiteral("Fixture");
+      record.createdAt = createdAt;
+      const auto path = dir.filePath(QStringLiteral("journal/") + record.taskId + QStringLiteral(".json"));
+      return std::pair{journal.recordFileUpload(record).stored ? path : QString(), record.taskId};
+    };
+    const auto oldUpload = upload(now.addDays(-40));
+    const auto freshUpload = upload(now);
+    QVERIFY(!oldUpload.first.isEmpty() && !freshUpload.first.isEmpty());
+    const QString invalidId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    {
+      QFile invalid(dir.filePath(QStringLiteral("journal/") + invalidId + QStringLiteral(".json")));
+      QVERIFY(invalid.open(QIODevice::WriteOnly));
+      invalid.write("not json");
+    }
+    // Retention 0 is unbounded: nothing is removed by age.
+    QCOMPARE(NativePipelineJournal::sweepExpired(dir.filePath(QStringLiteral("journal")), now, 0, false), 0);
+    QVERIFY(QFile::exists(oldUpload.first));
+    // The 30-day bound removes exactly the old journal record.
+    QCOMPARE(NativePipelineJournal::sweepExpired(dir.filePath(QStringLiteral("journal")), now, 30, false), 1);
+    QVERIFY(!QFile::exists(oldUpload.first));
+    QVERIFY(QFile::exists(freshUpload.first));
+    QVERIFY(QFile::exists(dir.filePath(QStringLiteral("journal/") + invalidId + QStringLiteral(".json"))));
+
+    // Executions by startedAt: serialized records with chosen timestamps.
+    NativeWorkflowExecutions executions(dir.filePath(QStringLiteral("executions")));
+    auto execution = [&](const QDateTime &startedAt) {
+      xerahs::workflows::WorkflowExecutionRecord record;
+      record.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+      record.origin = QStringLiteral("native-shell");
+      record.state = QStringLiteral("admitted");
+      record.startedAt = startedAt;
+      // A real capture-workflow snapshot: validSnapshot refuses an empty one.
+      record.settings = xerahs::workflows::workflowSnapshot(xerahs::workflows::defaultCaptureWorkflows().entries.first());
+      const auto bytes = xerahs::workflows::serializeWorkflowExecution(record);
+      const auto write = executions.writer()(record.id, {}, bytes);
+      return write.stored ? dir.filePath(QStringLiteral("executions/") + record.id + QStringLiteral(".json")) : QString{};
+    };
+    const auto oldExecution = execution(now.addDays(-40));
+    const auto freshExecution = execution(now);
+    QVERIFY(!oldExecution.isEmpty() && !freshExecution.isEmpty());
+    const QString invalidExecutionId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    {
+      QFile invalid(dir.filePath(QStringLiteral("executions/") + invalidExecutionId + QStringLiteral(".json")));
+      QVERIFY(invalid.open(QIODevice::WriteOnly));
+      invalid.write("not json");
+    }
+    QCOMPARE(NativeWorkflowExecutions::sweepExpired(dir.filePath(QStringLiteral("executions")), now, 0, false), 0);
+    QCOMPARE(NativeWorkflowExecutions::sweepExpired(dir.filePath(QStringLiteral("executions")), now, 30, false), 1);
+    QVERIFY(!QFile::exists(oldExecution));
+    QVERIFY(QFile::exists(freshExecution));
+    QVERIFY(QFile::exists(dir.filePath(QStringLiteral("executions/") + invalidExecutionId + QStringLiteral(".json"))));
+
+    // Secure delete: the held handle reads zeros after the sweep.
+    const auto overwriteUpload = upload(now.addDays(-40));
+    QVERIFY(!overwriteUpload.first.isEmpty());
+    QFile held(overwriteUpload.first);
+    QVERIFY(held.open(QIODevice::ReadOnly));
+    QCOMPARE(NativePipelineJournal::sweepExpired(dir.filePath(QStringLiteral("journal")), now, 30, true), 1);
+    QVERIFY(!QFile::exists(overwriteUpload.first));
+    QVERIFY(held.seek(0));
+    for (char byte : held.readAll()) QCOMPARE(byte, '\0');
+    // The fresh journal record still lists; the invalid file carries a
+    // diagnostic entry and stays with the quarantine path's concern.
+    int valid = 0;
+    for (const auto &entry : journal.list().entries) if (entry.parsed.record) ++valid;
+    QCOMPARE(valid, 1);
+  }
+
   void sentRequestWithoutAResponseIsInterruptedNotAFailure() {
     QTemporaryDir dir; QVERIFY(dir.isValid());
     HttpFixture http; http.dropAfterBody = true; QVERIFY(http.server.listen(QHostAddress::LocalHost));

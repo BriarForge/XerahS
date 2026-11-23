@@ -302,32 +302,38 @@ private slots:
       xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [] {});
       auto *temporary = dialog.findChild<QSpinBox *>("retentionTemporaryDays");
       auto *recovery = dialog.findChild<QSpinBox *>("retentionRecoveryDays");
+      auto *history = dialog.findChild<QSpinBox *>("retentionHistoryDays");
       auto *secure = dialog.findChild<QCheckBox *>("retentionSecureDelete");
-      QVERIFY(temporary && recovery && secure);
-      QCOMPARE(temporary->value(), 1); QCOMPARE(recovery->value(), 7); QVERIFY(!secure->isChecked());
+      QVERIFY(temporary && recovery && history && secure);
+      QCOMPARE(temporary->value(), 1); QCOMPARE(recovery->value(), 7);
+      QCOMPARE(history->value(), 30); QVERIFY(!secure->isChecked());
       // The shred-documented caveat is visible next to the checkbox.
       bool caveat = false;
       for (auto *label : dialog.findChildren<QLabel *>())
         if (label->accessibleName() == "Private file retention limits and the secure-delete caveat" &&
             label->text().contains("cannot guarantee erasure")) caveat = true;
       QVERIFY(caveat);
-      temporary->setValue(0); recovery->setValue(90); secure->setChecked(true);
+      temporary->setValue(0); recovery->setValue(90); history->setValue(365); secure->setChecked(true);
       dialog.reject();
       const auto limits = retentionLimits(store.current().values);
-      QCOMPARE(limits.temporaryDays, 1); QCOMPARE(limits.recoveryDays, 7); QVERIFY(!limits.secureDelete);
+      QCOMPARE(limits.temporaryDays, 1); QCOMPARE(limits.recoveryDays, 7);
+      QCOMPARE(limits.historyDays, 30); QVERIFY(!limits.secureDelete);
     }
     {
       xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [] {});
       dialog.findChild<QSpinBox *>("retentionTemporaryDays")->setValue(2);
       dialog.findChild<QSpinBox *>("retentionRecoveryDays")->setValue(14);
+      dialog.findChild<QSpinBox *>("retentionHistoryDays")->setValue(60);
       dialog.findChild<QCheckBox *>("retentionSecureDelete")->setChecked(true);
       dialog.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->click();
       const auto limits = retentionLimits(store.current().values);
-      QCOMPARE(limits.temporaryDays, 2); QCOMPARE(limits.recoveryDays, 14); QVERIFY(limits.secureDelete);
+      QCOMPARE(limits.temporaryDays, 2); QCOMPARE(limits.recoveryDays, 14);
+      QCOMPARE(limits.historyDays, 60); QVERIFY(limits.secureDelete);
     }
     ApplicationSettingsStore reopened(dir.filePath("settings.json"), dir.path());
     const auto persisted = retentionLimits(reopened.current().values);
-    QCOMPARE(persisted.temporaryDays, 2); QCOMPARE(persisted.recoveryDays, 14); QVERIFY(persisted.secureDelete);
+    QCOMPARE(persisted.temporaryDays, 2); QCOMPARE(persisted.recoveryDays, 14);
+    QCOMPARE(persisted.historyDays, 60); QVERIFY(persisted.secureDelete);
     QVERIFY(reopened.current().diagnostics.isEmpty());
   }
 
@@ -384,13 +390,15 @@ private slots:
   }
 
   // ES-020 on decision ES-020-RETENTION-2026-11-23: the configured limits.
+  // CORE-027 on decision CORE-027-STORE-RETENTION-2026-11-23: historyDays.
   void retentionLimitsDefaultsRoundTripAndRepair() {
     QTemporaryDir dir; const auto path = dir.filePath("settings.json");
     const auto defaults = defaultSettings(dir.path());
     QCOMPARE(defaults.value("editorRetention.temporaryDays").toInt(), 1);
     QCOMPARE(defaults.value("editorRetention.recoveryDays").toInt(), 7);
+    QCOMPARE(defaults.value("editorRetention.historyDays").toInt(), 30);
     QCOMPARE(defaults.value("editorRetention.secureDelete").toBool(), false);
-    const QStringList keys{"editorRetention.temporaryDays", "editorRetention.recoveryDays", "editorRetention.secureDelete"};
+    const QStringList keys{"editorRetention.temporaryDays", "editorRetention.recoveryDays", "editorRetention.historyDays", "editorRetention.secureDelete"};
     // Old files without the keys load with defaults and no diagnostics.
     auto old = defaults; for (const auto &key : keys) old.remove(key);
     QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(QJsonDocument(QJsonObject{{"version", 1}, {"values", old}}).toJson()); file.close();
@@ -399,15 +407,18 @@ private slots:
     // The decided bounds round-trip: 0 keeps today's behaviour for recovery
     // (count-only) and the reference's startup-clean for temporary files.
     auto values = store.current().values;
-    values.insert("editorRetention.temporaryDays", 0); values.insert("editorRetention.recoveryDays", 90); values.insert("editorRetention.secureDelete", true);
+    values.insert("editorRetention.temporaryDays", 0); values.insert("editorRetention.recoveryDays", 90);
+    values.insert("editorRetention.historyDays", 365); values.insert("editorRetention.secureDelete", true);
     QVERIFY(store.save(values).isEmpty());
     ApplicationSettingsStore reopened(path, dir.path()); QCOMPARE(reopened.current().values, values); QVERIFY(reopened.current().diagnostics.isEmpty());
     const auto resolved = retentionLimits(values);
-    QCOMPARE(resolved.temporaryDays, 0); QCOMPARE(resolved.recoveryDays, 90); QVERIFY(resolved.secureDelete);
+    QCOMPARE(resolved.temporaryDays, 0); QCOMPARE(resolved.recoveryDays, 90);
+    QCOMPARE(resolved.historyDays, 365); QVERIFY(resolved.secureDelete);
     // Out-of-range or wrongly-typed values are repaired to the defaults.
     const QVector<QPair<QString, QJsonValue>> invalid{{"editorRetention.temporaryDays", -1}, {"editorRetention.temporaryDays", 31},
       {"editorRetention.temporaryDays", 1.5}, {"editorRetention.temporaryDays", "1"}, {"editorRetention.temporaryDays", true},
       {"editorRetention.recoveryDays", -1}, {"editorRetention.recoveryDays", 91}, {"editorRetention.recoveryDays", 7.5},
+      {"editorRetention.historyDays", -1}, {"editorRetention.historyDays", 366}, {"editorRetention.historyDays", 30.5},
       {"editorRetention.secureDelete", 1}, {"editorRetention.secureDelete", "yes"}};
     for (const auto &entry : invalid) {
       auto bad = values; bad.insert(entry.first, entry.second);
@@ -418,9 +429,11 @@ private slots:
     }
     // The resolver keeps the decided defaults for malformed values.
     const auto fallback = retentionLimits(QJsonObject{});
-    QCOMPARE(fallback.temporaryDays, 1); QCOMPARE(fallback.recoveryDays, 7); QVERIFY(!fallback.secureDelete);
+    QCOMPARE(fallback.temporaryDays, 1); QCOMPARE(fallback.recoveryDays, 7);
+    QCOMPARE(fallback.historyDays, 30); QVERIFY(!fallback.secureDelete);
     const auto malformed = retentionLimits(QJsonObject{{"editorRetention.temporaryDays", 2.5}, {"editorRetention.secureDelete", QJsonValue()}});
-    QCOMPARE(malformed.temporaryDays, 1); QCOMPARE(malformed.recoveryDays, 7); QVERIFY(!malformed.secureDelete);
+    QCOMPARE(malformed.temporaryDays, 1); QCOMPARE(malformed.recoveryDays, 7);
+    QCOMPARE(malformed.historyDays, 30); QVERIFY(!malformed.secureDelete);
   }
   void scrollingCaptureSettingsDefaultsRoundTripAndRepair() {
     QTemporaryDir dir; const auto path = dir.filePath("settings.json");
@@ -849,7 +862,8 @@ private slots:
     const QMap<QString, QPair<int, int>> ranges{{"delayedCapture.seconds", {1, 60}}, {"autoCapture.intervalMs", {1000, 86400000}}, {"autoCapture.count", {1, 10000}},
       {"autoCapture.durationMinutes", {1, 1440}}, {"scrollingCapture.settleMs", {0, 5000}}, {"scrollingCapture.wheelSteps", {1, 50}}, {"scrollingCapture.headerBand", {0, 2000}},
       {"scrollingCapture.footerBand", {0, 2000}}, {"scrollingCapture.maxHeight", {1000, 100000}}, {"scrollingCapture.maxFrames", {2, 500}},
-      {"editorRetention.temporaryDays", {0, 30}}, {"editorRetention.recoveryDays", {0, 90}}};
+      {"editorRetention.temporaryDays", {0, 30}}, {"editorRetention.recoveryDays", {0, 90}},
+      {"editorRetention.historyDays", {0, 365}}};
     for (auto it = ranges.cbegin(); it != ranges.cend(); ++it) {
       const auto [low, high] = it.value();
       matrix[it.key()] = {{low, high, (low + high) / 2}, {low - 1, high + 1, low + 0.5, QString::number(low), true, QJsonValue(QJsonValue::Null), QJsonArray{}, QJsonObject{}, nan, inf, -std::numeric_limits<double>::infinity(), 1e300, -1e300, std::numeric_limits<int>::min()}};

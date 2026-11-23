@@ -45,4 +45,16 @@ QJsonObject NativeWorkflowExecutions::result(const QString &id) const {
   }
   return workflowExecutionError("workflow-execution-not-found");
 }
+
+int NativeWorkflowExecutions::sweepExpired(const QString &directory, const QDateTime &now, int retentionDays, bool secureDelete) {
+  if (retentionDays <= 0 || !now.isValid()) return 0;
+  const auto bound = now.addSecs(-qint64(retentionDays) * 24 * 60 * 60);
+  // Same validator as the store: an invalid record is never a retention
+  // candidate, and the sweep's own read runs under the directory flock.
+  NativeWorkflowExecutions store(directory);
+  return store.m_records->sweep([&](const QByteArray &bytes, const QString &id) {
+    const auto record = parseWorkflowExecution(bytes, id);
+    return record && record->startedAt.isValid() && record->startedAt <= bound;
+  }, secureDelete);
+}
 } // namespace xerahs::app
