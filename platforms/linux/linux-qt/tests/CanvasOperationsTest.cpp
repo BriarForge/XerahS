@@ -4,6 +4,8 @@
 
 #include <QBuffer>
 #include <QColorSpace>
+#include <QFile>
+#include <QTemporaryDir>
 #include <QTest>
 
 #include <cmath>
@@ -375,8 +377,121 @@ private slots:
     QCOMPARE(result.image->at(14, 11), Argb(0xFF0000FF));  // the card centre
   }
 
-  void backgroundValidationAndCancellationReturnNoPartialResult() {
+  // EC-013 image kind: the asset paints cover-scaled (the reference's
+  // UniformToFill Fill layout), and the app prepare seam resolves the file
+  // behind loadRaster's inserted-image safety rules.
+  void backgroundImageKindCoversTheCanvas() {
     const ArgbImage source = backgroundSource();
+    CanvasOperation op; op.action = CanvasAction::Background;
+    op.background.kind = BackgroundPolicy::Kind::Image;
+    op.background.image = solidImage(5, 3, 0xFF008080);   // uniform teal: scaling-invariant
+    op.background.margin = 2; op.background.padding = 1;
+    op.background.cornerRadius = 0; op.background.shadowRadius = 0;
+    const auto result = applyCanvasOperation(document(12, 8), source, op);
+    QVERIFY(!result.error && result.changed && result.image);
+    QCOMPARE(result.image->width, qint64(9)); QCOMPARE(result.image->height, qint64(9));
+    QCOMPARE(result.image->at(0, 0), Argb(0xFF008080));    // the cover-scaled asset fills the margin
+    QCOMPARE(result.image->at(8, 8), Argb(0xFF008080));
+    QCOMPARE(result.image->at(3, 3), Argb(0xFF112233));    // the content is unchanged on the card
+    // A wide three-band asset discriminates the Fill layout (UniformToFill):
+    // the scale follows the height (9/40 = 0.225 > 9/80), so the scaled width
+    // (18) overflows and crops to the source's centre window [20, 60] - the
+    // white outer quarters drop out and the red/blue halves remain.
+    ArgbImage split = solidImage(80, 40, 0xFFFFFFFF);
+    for (qint64 y = 0; y < 40; ++y) {
+      for (qint64 x = 20; x < 40; ++x) split.pixels[std::size_t(y * split.width + x)] = 0xFFFF0000;
+      for (qint64 x = 40; x < 60; ++x) split.pixels[std::size_t(y * split.width + x)] = 0xFF0000FF;
+    }
+    op.background.image = split;
+    const auto cropped = applyCanvasOperation(document(12, 8), source, op);
+    QVERIFY(!cropped.error && cropped.changed && cropped.image);
+    QCOMPARE(cropped.image->at(1, 1), Argb(0xFFFF0000));   // the centre crop: no white edge shows
+    QCOMPARE(cropped.image->at(2, 1), Argb(0xFFFF0000));    // canvas x=2 -> source ~30.6, red
+    QCOMPARE(cropped.image->at(6, 1), Argb(0xFF0000FF));   // canvas x=6 -> source ~48.4, blue
+    QCOMPARE(cropped.image->at(8, 1), Argb(0xFF0000FF));   // still inside the blue half
+  }
+
+  void backgroundImageKindRequiresAResolvedAsset() {
+    const ArgbImage source = backgroundSource();
+    CanvasOperation op; op.action = CanvasAction::Background;
+    op.background.kind = BackgroundPolicy::Kind::Image;
+    op.background.margin = 2; op.background.padding = 1; op.background.shadowRadius = 0;
+    op.background.imagePath = QStringLiteral("chosen.png");
+    const auto missing = applyCanvasOperation(document(12, 8), source, op);
+    QCOMPARE(missing.error, std::optional<QString>(diagnostic::documentInvalid));
+    QVERIFY(!missing.document && !missing.image);
+  }
+
+  void backgroundImageKindResolvesThroughTheInsertedImageRules() {
+    const ArgbImage source = backgroundSource();
+    QTemporaryDir dir;
+    const QImage asset(6, 4, QImage::Format_ARGB32);
+    // A uniform asset file: cover-scaled to the whole margin band.
+    QImage assetPixels = asset;
+    assetPixels.fill(qRgb(0, 128, 128));
+    QVERIFY(assetPixels.save(dir.filePath(QStringLiteral("asset.png"))));
+    CanvasOperation op; op.action = CanvasAction::Background;
+    op.background.kind = BackgroundPolicy::Kind::Image;
+    op.background.imagePath = dir.filePath(QStringLiteral("asset.png"));
+    op.background.margin = 2; op.background.padding = 1; op.background.cornerRadius = 0;
+    op.background.shadowRadius = 0; op.background.smartPadding = false;
+    const auto resolved = xerahs::app::prepareCanvasEdit(withSource(QImage(12, 8, QImage::Format_ARGB32)), QImage(12, 8, QImage::Format_ARGB32), op);
+    QVERIFY(!resolved.result.error);
+    QVERIFY(resolved.result.changed);
+    // The prepared edit carries the composed pixels as its immutable source
+    // (the core's image field is reset after encoding).
+    QCOMPARE(resolved.source.size(), QSize(18, 14));
+    QCOMPARE(resolved.source.pixel(0, 0), 0xFF008080u);   // the cover-scaled asset fills the margin
+    QCOMPARE(resolved.source.pixel(17, 13), 0xFF008080u);
+    // A corrupt file refuses with loadRaster's typed diagnostic, no partial edit.
+    QFile corrupt(dir.filePath(QStringLiteral("corrupt.png")));
+    QVERIFY(corrupt.open(QIODevice::WriteOnly));
+    corrupt.write("not a png at all");
+    corrupt.close();
+    op.background.imagePath = corrupt.fileName();
+    const auto failed = xerahs::app::prepareCanvasEdit(withSource(QImage(12, 8, QImage::Format_ARGB32)), QImage(12, 8, QImage::Format_ARGB32), op);
+    QVERIFY(failed.result.error);
+    QVERIFY(!failed.result.changed);
+    // The typed diagnostic is loadRaster's stable decode failure code.
+    QCOMPARE(*failed.result.error, QStringLiteral("source-unsupported"));
+    // A missing path refuses the same way.
+    op.background.imagePath = dir.filePath(QStringLiteral("absent.png"));
+    const auto absent = xerahs::app::prepareCanvasEdit(withSource(QImage(12, 8, QImage::Format_ARGB32)), QImage(12, 8, QImage::Format_ARGB32), op);
+    QVERIFY(absent.result.error && !absent.result.changed);
+    QCOMPARE(*absent.result.error, QStringLiteral("source-unsupported"));
+  }
+
+  // EC-014's background clause reconciled: with the committed model an
+  // applied background is in the source, so flatten composites it exactly.
+  void backgroundThenFlattenCompositesTheAppliedBackground() {
+    const ArgbImage source = backgroundSource();
+    auto d = document(12, 8);
+    auto onContent = rectangle({3, 2}, {5, 4});
+    onContent.style.fillColor = 0xFF00FF00;
+    onContent.style.opacity = 1;
+    d.annotations = {onContent};
+    CanvasOperation background;
+    background.action = CanvasAction::Background;
+    background.background.kind = BackgroundPolicy::Kind::Solid;
+    background.background.solid = 0xFF202020;
+    background.background.margin = 2; background.background.padding = 1;
+    background.background.cornerRadius = 0; background.background.shadowRadius = 0;
+    const auto composed = applyCanvasOperation(d, source, background);
+    QVERIFY(!composed.error && composed.changed && composed.document && composed.image);
+    CanvasOperation flatten;
+    flatten.action = CanvasAction::Flatten;
+    const auto flattened = applyCanvasOperation(*composed.document, *composed.image, flatten);
+    QVERIFY(!flattened.error && flattened.changed && flattened.image);
+    QCOMPARE(flattened.image->width, qint64(9));
+    // The flattened composite keeps the composed background and bakes the
+    // visible annotation over it; the annotation object is cleared.
+    QCOMPARE(flattened.image->at(0, 0), Argb(0xFF202020));
+    QCOMPARE(flattened.image->at(8, 8), Argb(0xFF202020));
+    QVERIFY(flattened.image->at(4, 4) != Argb(0xFF112233));   // the annotation is baked, not the bare content
+    QCOMPARE(flattened.document->annotations.size(), size_t(0));
+  }
+
+  void backgroundValidationAndCancellationReturnNoPartialResult() {    const ArgbImage source = backgroundSource();
     CanvasOperation op; op.action = CanvasAction::Background;
     op.background.kind = BackgroundPolicy::Kind::Solid;
     op.background.margin = 2; op.background.padding = 2; op.background.cornerRadius = 2;

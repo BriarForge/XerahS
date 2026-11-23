@@ -2711,6 +2711,51 @@ private slots:
     QCOMPARE(saved.pixel(45, 30), qRgb(105, 100, 100));     // the source (35,20) centre, unchanged
   }
 
+  // EC-013's image kind on the same journey: the injected picker chooses a
+  // real asset file, and the composed background carries its cover-scaled
+  // pixels into the saved PNG behind the content.
+  void backgroundImageKindComposesThePickedFileIntoTheSavedPng() {
+    QTemporaryDir dir;
+    QImage asset(50, 20, QImage::Format_ARGB32);
+    asset.fill(qRgb(200, 60, 10));
+    const auto assetPath = dir.filePath(QStringLiteral("asset.png"));
+    QVERIFY(asset.save(assetPath));
+    const auto path = dir.filePath(QStringLiteral("background-image.png"));
+    QVERIFY(fixture().save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path));
+    QVERIFY(window);
+    window->show(); window->activateWindow(); QTRY_VERIFY(window->isActiveWindow());
+    auto *canvas = window->findChild<EditorCanvas *>();
+    QTimer::singleShot(0, [&] {
+      auto *modal = qobject_cast<CanvasBackgroundDialog *>(QApplication::activeModalWidget());
+      QVERIFY2(modal, "background dialog did not open");
+      if (!modal) return;
+      modal->setBackgroundFilePicker([assetPath] { return assetPath; });
+      modal->findChild<QComboBox *>("backgroundKind")->setCurrentIndex(3);
+      modal->chooseBackgroundImage();
+      QCOMPARE(modal->imagePath(), assetPath);
+      modal->findChild<QDoubleSpinBox *>("backgroundMargin")->setValue(5);
+      modal->findChild<QDoubleSpinBox *>("backgroundPadding")->setValue(5);
+      modal->findChild<QDoubleSpinBox *>("backgroundShadow")->setValue(0);
+      modal->findChild<QCheckBox *>("backgroundSmart")->setChecked(false);
+      modal->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Ok)->click();
+    });
+    trigger(*window, "backgroundImage");
+    QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 80.0);
+    QTRY_COMPARE(canvas->annotationDocument().canvasHeight, 60.0);
+    trigger(*window, "saveImage");
+    const QImage saved(path);
+    QCOMPARE(saved.size(), QSize(80, 60));
+    // The asset (50x20) cover-scales to the whole 80x60 canvas (the scale
+    // follows the width), so the margin band carries its colour everywhere.
+    QCOMPARE(saved.pixel(2, 2), qRgb(200, 60, 10));
+    QCOMPARE(saved.pixel(77, 57), qRgb(200, 60, 10));
+    // The content keeps its own pixels on the card.
+    QCOMPARE(saved.pixel(45, 30), qRgb(105, 100, 100));
+    trigger(*window, "undo");
+    QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 60.0);
+  }
+
   void cancellingAndClosingOpenRetireTheLiveWorker() {
     QTemporaryDir dir; const QString path = dir.filePath("current.png"), target = dir.filePath("large.png");
     const QImage original = fixture(); QVERIFY(original.save(path));

@@ -39,10 +39,15 @@ struct AutoCropPolicy {
 // pixel colour, rounded card, gaussian shadow, square margin band in the
 // chosen kind. Defaults are the reference's own.
 struct BackgroundPolicy {
-  enum class Kind { Transparent, Solid, Gradient };
+  enum class Kind { Transparent, Solid, Gradient, Image };
   Kind kind = Kind::Transparent;
   Argb solid = 0xFF222222;                                   // reference default
   Argb gradientFrom = 0xFFDD2476, gradientTo = 0xFFFF512F;   // reference default, vertical top to bottom
+  // Image kind: the user's chosen file, and the decoded asset resolved by
+  // the caller before the compose (the core seam never does file I/O). A
+  // missing asset refuses with a typed error.
+  QString imagePath;
+  std::optional<ArgbImage> image;
   double margin = 80, padding = 40;                          // reference defaults
   double cornerRadius = 20;                                  // reference default
   bool smartPadding = true;                                  // reference default

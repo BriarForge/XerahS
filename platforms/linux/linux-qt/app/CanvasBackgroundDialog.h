@@ -6,6 +6,8 @@
 
 #include <QDialog>
 
+#include <functional>
+
 class QCheckBox;
 class QComboBox;
 class QDialogButtonBox;
@@ -28,6 +30,12 @@ public:
   // policy never depends on struct defaults after this dialog.
   xerahs::editor::CanvasOperation operation() const;
   void accept() override;
+  // Test seam, as in BackgroundRemoverDialog: the Choose button opens the
+  // native file picker unless a picker is injected.
+  using FilePicker = std::function<QString()>;
+  void setBackgroundFilePicker(FilePicker picker) { m_picker = std::move(picker); }
+  void chooseBackgroundImage();
+  QString imagePath() const { return m_imagePath; }
 
 private:
   void pickColor(QPushButton *button, QColor &color);
@@ -35,10 +43,14 @@ private:
 
   QComboBox *m_kind = nullptr;
   QPushButton *m_solid = nullptr, *m_gradientFrom = nullptr, *m_gradientTo = nullptr;
+  QPushButton *m_chooseImage = nullptr;
+  QLabel *m_imagePathLabel = nullptr;
   QDoubleSpinBox *m_margin = nullptr, *m_padding = nullptr, *m_corner = nullptr, *m_shadow = nullptr;
   QCheckBox *m_smart = nullptr;
   QDialogButtonBox *m_buttons = nullptr;
   QLabel *m_status = nullptr;
+  FilePicker m_picker;
+  QString m_imagePath;
   QColor m_solidColor{34, 34, 34};          // #FF222222, the reference default
   QColor m_gradientFromColor{221, 36, 118};  // #FFDD2476, the reference default
   QColor m_gradientToColor{255, 81, 47};     // #FFFF512F, the reference default

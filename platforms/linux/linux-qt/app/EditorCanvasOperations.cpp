@@ -1,5 +1,7 @@
 #include "EditorCanvasOperations.h"
 
+#include "RasterSource.h"
+
 #include <QBuffer>
 #include <QColorSpace>
 
@@ -24,6 +26,29 @@ PreparedCanvasEdit prepare(const AnnotationDocument &document, const QImage &sou
       qint64(source.width()) * source.height() > kMaxPixels) return fail(diagnostic::documentInvalid);
   const QImage argb = source.convertToFormat(QImage::Format_ARGB32);
   if (argb.isNull()) return fail(diagnostic::documentTooLarge);
+  // EC-013: an Image background is resolved here, behind the same safety and
+  // durability rules as inserted images (loadRaster's encoded-byte ceiling,
+  // orientation pass, bounded decode and typed diagnostics); the pure core
+  // seam never does file I/O. The decode's progress occupies the 0..10 band
+  // before the source conversion.
+  CanvasOperation resolved = operation;
+  if (resolved.action == CanvasAction::Background && resolved.background.kind == BackgroundPolicy::Kind::Image &&
+      !resolved.background.image) {
+    if (resolved.background.imagePath.isEmpty()) return fail(diagnostic::documentInvalid);
+    const auto loaded = loadRaster(resolved.background.imagePath,
+        {control.cancelled, [&](int value) { progress(control, value / 10); }});
+    if (!loaded.diagnostic.isEmpty()) return fail(loaded.diagnostic);
+    const QImage asset = loaded.image.convertToFormat(QImage::Format_ARGB32);
+    if (asset.isNull() || asset.width() < 1 || asset.height() < 1) return fail(diagnostic::documentInvalid);
+    ArgbImage decoded{asset.width(), asset.height(), {}};
+    decoded.pixels.resize(std::size_t(decoded.width * decoded.height));
+    for (int y = 0; y < asset.height(); ++y) {
+      if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
+      const auto *row = reinterpret_cast<const QRgb *>(asset.constScanLine(y));
+      std::copy_n(row, asset.width(), decoded.pixels.begin() + std::size_t(y) * asset.width());
+    }
+    resolved.background.image = std::move(decoded);
+  }
   ArgbImage input{argb.width(), argb.height(), {}};
   input.pixels.resize(std::size_t(input.width * input.height));
   for (int y = 0; y < argb.height(); ++y) {
@@ -34,7 +59,7 @@ PreparedCanvasEdit prepare(const AnnotationDocument &document, const QImage &sou
   }
   const CanvasControl engineControl{control.cancelled, [&](int value) { progress(control, 10 + value * 70 / 100); }};
   PreparedCanvasEdit prepared;
-  prepared.result = applyCanvasOperation(document, input, operation, engineControl);
+  prepared.result = applyCanvasOperation(document, input, resolved, engineControl);
   if (!prepared.result.changed || prepared.result.error) {
     if (!prepared.result.error) prepared.source = source;
     return prepared;

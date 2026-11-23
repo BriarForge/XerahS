@@ -120,6 +120,33 @@ same decode/safety rules as inserted images), the reference's Wallpaper kind
 (not one of the SPEC's four), gradient presets (furniture), and EC-014's
 flatten background clause which this unblocks.
 
+## The image kind (decided and built 2026-11-23, same slice continuation)
+
+- **Paint rule:** the reference's Image mode is an ImageBrush at the Fill
+  layout (`Stretch.UniformToFill`, BackgroundSettingsPanel picks the file,
+  `ApplyImageBackground` -> `TryCreateImageBrushFromPath(filePath,
+  DesktopWallpaperLayout.Fill, ...)`), so the chosen image paints the whole
+  margin band cover-scaled: uniform scale to fill the canvas, centred,
+  overflow cropped at the canvas bound, sampled with the house bilinear
+  (deterministic, edge-clamped).
+- **Safety rules:** "Background assets MUST follow the same safety and
+  durability rules as inserted images" means the app prepare seam resolves the
+  chosen path through `loadRaster` - the validated native decode shared by
+  editor loading and comparison (encoded-byte ceiling 1 GiB, orientation
+  applied once, bounded dimensions, the typed stable diagnostics) - before
+  the pure core compose runs; the core seam never does file I/O and refuses
+  an Image kind without a resolved asset with the existing typed error. A
+  corrupt or missing file fails the whole edit with `source-unsupported` and
+  no partial output.
+- **EC-014 reconciliation:** with the committed model an applied background
+  is already in the source, so flatten's existing composite satisfies the
+  background clause: source + applied background + visible annotations
+  composite into the new immutable source, one history entry, annotations
+  cleared (backgroundThenFlattenCompositesTheAppliedBackground).
+- The dialog's Choose button opens the native file picker; tests inject the
+  picker through the same seam pattern as BackgroundRemoverDialog
+  (setBackgroundFilePicker + chooseBackgroundImage).
+
 ## Sources
 
 - ShareX.ImageEditor `Integration/ImageEditorOptions.cs` (defaults; read from

@@ -7,6 +7,8 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -33,6 +35,7 @@ CanvasBackgroundDialog::CanvasBackgroundDialog(QWidget *parent) : QDialog(parent
   m_kind->addItem(tr("Transparent"));
   m_kind->addItem(tr("Solid colour"));
   m_kind->addItem(tr("Gradient"));
+  m_kind->addItem(tr("Image"));
 
   m_solid = new QPushButton(this);
   m_solid->setObjectName(QStringLiteral("backgroundSolid"));
@@ -43,6 +46,13 @@ CanvasBackgroundDialog::CanvasBackgroundDialog(QWidget *parent) : QDialog(parent
   m_gradientTo = new QPushButton(this);
   m_gradientTo->setObjectName(QStringLiteral("backgroundGradientTo"));
   m_gradientTo->setAccessibleName(tr("Gradient bottom colour"));
+
+  m_chooseImage = new QPushButton(tr("Choose…"), this);
+  m_chooseImage->setObjectName(QStringLiteral("backgroundImageChoose"));
+  m_chooseImage->setAccessibleName(tr("Choose a background image"));
+  m_imagePathLabel = new QLabel(this);
+  m_imagePathLabel->setObjectName(QStringLiteral("backgroundImagePath"));
+  m_imagePathLabel->setAccessibleName(tr("Chosen background image"));
 
   const auto number = [&](const QString &name, const QString &label, double value, double maximum) {
     auto *spin = new QDoubleSpinBox(this);
@@ -69,11 +79,15 @@ CanvasBackgroundDialog::CanvasBackgroundDialog(QWidget *parent) : QDialog(parent
   auto *gradientRow = new QHBoxLayout;
   gradientRow->addWidget(m_gradientFrom);
   gradientRow->addWidget(m_gradientTo);
+  auto *imageRow = new QHBoxLayout;
+  imageRow->addWidget(m_chooseImage);
+  imageRow->addWidget(m_imagePathLabel, 1);
 
   auto *form = new QFormLayout;
   form->addRow(tr("&Kind"), m_kind);
   form->addRow(tr("Solid &colour"), solidRow);
   form->addRow(tr("&Gradient"), gradientRow);
+  form->addRow(tr("&Image"), imageRow);
   form->addRow(tr("&Margin"), m_margin);
   form->addRow(tr("&Padding"), m_padding);
   form->addRow(tr("Corner &radius"), m_corner);
@@ -91,6 +105,7 @@ CanvasBackgroundDialog::CanvasBackgroundDialog(QWidget *parent) : QDialog(parent
   connect(m_solid, &QPushButton::clicked, this, [this] { pickColor(m_solid, m_solidColor); });
   connect(m_gradientFrom, &QPushButton::clicked, this, [this] { pickColor(m_gradientFrom, m_gradientFromColor); });
   connect(m_gradientTo, &QPushButton::clicked, this, [this] { pickColor(m_gradientTo, m_gradientToColor); });
+  connect(m_chooseImage, &QPushButton::clicked, this, [this] { chooseBackgroundImage(); });
 
   auto *layout = new QVBoxLayout(this);
   layout->addLayout(form);
@@ -113,9 +128,26 @@ void CanvasBackgroundDialog::refreshKinds() {
   m_solid->setEnabled(kind == 1);
   m_gradientFrom->setEnabled(kind == 2);
   m_gradientTo->setEnabled(kind == 2);
+  m_chooseImage->setEnabled(kind == 3);
   m_solid->setText(colorName(m_solidColor));
   m_gradientFrom->setText(colorName(m_gradientFromColor));
   m_gradientTo->setText(colorName(m_gradientToColor));
+}
+
+void CanvasBackgroundDialog::chooseBackgroundImage() {
+  FilePicker picker = m_picker;
+  if (!picker)
+    picker = [this] {
+      return QFileDialog::getOpenFileName(this, tr("Choose a background image"), QString(),
+                                          tr("Images (*.png *.jpg *.jpeg *.bmp *.webp *.gif)"));
+    };
+  const QString path = picker();
+  if (path.isEmpty()) return;
+  m_imagePath = path;
+  // The decode and its typed failures belong to the commit path's resolution
+  // (loadRaster, the inserted-image rules); the label shows the choice.
+  m_imagePathLabel->setText(QFileInfo(path).fileName());
+  m_imagePathLabel->setToolTip(path);
 }
 
 xerahs::editor::CanvasOperation CanvasBackgroundDialog::operation() const {
@@ -124,8 +156,10 @@ xerahs::editor::CanvasOperation CanvasBackgroundDialog::operation() const {
   switch (m_kind->currentIndex()) {
     case 1: op.background.kind = xerahs::editor::BackgroundPolicy::Kind::Solid; break;
     case 2: op.background.kind = xerahs::editor::BackgroundPolicy::Kind::Gradient; break;
+    case 3: op.background.kind = xerahs::editor::BackgroundPolicy::Kind::Image; break;
     default: op.background.kind = xerahs::editor::BackgroundPolicy::Kind::Transparent; break;
   }
+  op.background.imagePath = m_imagePath;
   op.background.solid = m_solidColor.rgba();
   op.background.gradientFrom = m_gradientFromColor.rgba();
   op.background.gradientTo = m_gradientToColor.rgba();

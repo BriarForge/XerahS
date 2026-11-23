@@ -188,7 +188,9 @@ std::optional<ArgbImage> composeBackgroundImage(const ArgbImage &source, const B
   };
 
   // 1. Margin band in the chosen kind. Solid fills the whole canvas; the
-  // gradient runs top to bottom over the full height, exactly one row each.
+  // gradient runs top to bottom over the full height, exactly one row each;
+  // the image is cover-scaled (the reference's UniformToFill Fill layout:
+  // uniform scale to fill, centred, overflow cropped at the canvas bound).
   if (policy.kind == BackgroundPolicy::Kind::Solid) {
     std::fill(image.pixels.begin(), image.pixels.end(), policy.solid);
   } else if (policy.kind == BackgroundPolicy::Kind::Gradient) {
@@ -203,6 +205,20 @@ std::optional<ArgbImage> composeBackgroundImage(const ArgbImage &source, const B
                        channel(policy.gradientFrom & 255, policy.gradientTo & 255, t);
       const auto begin = image.pixels.begin() + std::ptrdiff_t(y * g.width);
       std::fill(begin, begin + std::ptrdiff_t(g.width), row);
+    }
+  } else if (policy.kind == BackgroundPolicy::Kind::Image && policy.image) {
+    const ArgbImage &asset = *policy.image;
+    const double scale = std::max(double(g.width) / double(asset.width), double(g.height) / double(asset.height));
+    const double offsetX = (double(g.width) - double(asset.width) * scale) / 2;
+    const double offsetY = (double(g.height) - double(asset.height) * scale) / 2;
+    for (qint64 y = 0; y < g.height; ++y) {
+      if (cancelled(control)) return std::nullopt;
+      for (qint64 x = 0; x < g.width; ++x) {
+        const double sx = (x + 0.5 - offsetX) / scale - 0.5;
+        const double sy = (y + 0.5 - offsetY) / scale - 0.5;
+        image.pixels[std::size_t(y * g.width + x)] = bilinear(asset, sx, sy);
+      }
+      progress(control, int((y + 1) * 25 / g.height));
     }
   }
   progress(control, 25);
@@ -520,6 +536,11 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
       if (!std::isfinite(policy.margin) || policy.margin < 0 || !std::isfinite(policy.padding) || policy.padding < 0 ||
           !std::isfinite(policy.cornerRadius) || policy.cornerRadius < 0 || policy.cornerRadius > 255 ||
           !std::isfinite(policy.shadowRadius) || policy.shadowRadius < 0 || policy.shadowRadius > 100)
+        return failure(diagnostic::documentInvalid);
+      // The image asset is resolved by the caller (the core seam does no file
+      // I/O); an Image kind without a valid resolved asset is refused.
+      if (policy.kind == BackgroundPolicy::Kind::Image &&
+          (!policy.image || !validSize(policy.image->width, policy.image->height)))
         return failure(diagnostic::documentInvalid);
       background = backgroundGeometry(source, policy, control);
       if (!background) return failure(QStringLiteral("canvas-cancelled"));

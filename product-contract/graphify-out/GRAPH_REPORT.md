@@ -1,17 +1,17 @@
 # Graph Report - product-contract  (2026-11-23)
 
 ## Corpus Check
-- 114 files · ~176,995 words
+- 114 files · ~177,220 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 16 file(s) not represented in the graph (top: .feature 16)
 
 ## Summary
-- 1435 nodes · 1710 edges · 77 communities (76 shown, 1 thin omitted)
+- 1436 nodes · 1711 edges · 77 communities (76 shown, 1 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 24 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `be8a05fa`
+- Built from commit: `a1bd592e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -419,8 +419,8 @@ Cohesion: 0.53
 Nodes (6): FN-012, FN-024, path-mode-components, path-mode-rejects-absolute, path-mode-rejects-drive, path-mode-rejects-traversal
 
 ### Community 75 - "EC-013 background composition (decided 2026-11-23)"
-Cohesion: 0.33
-Nodes (5): Decision, EC-013 background composition (decided 2026-11-23), Question, Research, Sources
+Cohesion: 0.29
+Nodes (6): Decision, EC-013 background composition (decided 2026-11-23), Question, Research, Sources, The image kind (decided and built 2026-11-23, same slice continuation)
 
 ### Community 76 - "RC-003/004/012/022/027 and CORE-014: the physical topology authority"
 Cohesion: 0.33
@@ -428,23 +428,23 @@ Nodes (5): Choice, Impact, Problem, RC-003/004/012/022/027 and CORE-014: the phy
 
 ## Knowledge Gaps
 - **282 isolated node(s):** `Capture result topology snapshot`, `Desktop physical coordinate space`, `DXGI WinRT Win32 capture`, `Half-open physical selection rectangle`, `IEEE754 floor epsilon mapping` (+277 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 931 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 932 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Product Contract` connect `Product Contract` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Contract approval review — 2026-08-31`, `Document`, `Conformance vector format`, `backlog.json`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract completion status`, `Native implementation readiness`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
-  _High betweenness centrality (0.056) - this node is a cross-community bridge._
+- **Why does `Product Contract` connect `INTERFACE-CATALOG-001 Native and agent interfaces` to `REGION-CAPTURE-001 Interactive region capture`, `POST-CAPTURE-ACTIONS-001 Post-capture actions`, `MOBILE-PLATFORM-001 Native mobile applications`, `SETTINGS-CATALOG-001 Application settings catalog`, `WORKFLOW-CATALOG-001 Workflow and action catalog`, `FILENAME-GENERATION-001 Filename generation`?**
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._
 - **What connects `Capture result topology snapshot`, `Desktop physical coordinate space`, `DXGI WinRT Win32 capture` to the rest of the system?**
   _282 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `REGION-CAPTURE-001 Interactive region capture` be split into smaller, more focused modules?**
   _Cohesion score 0.05129561078794289 - nodes in this community are weakly interconnected._
-- **Why does `Product Contract` connect `INTERFACE-CATALOG-001 Native and agent interfaces` to `REGION-CAPTURE-001 Interactive region capture`, `POST-CAPTURE-ACTIONS-001 Post-capture actions`, `MOBILE-PLATFORM-001 Native mobile applications`, `SETTINGS-CATALOG-001 Application settings catalog`, `WORKFLOW-CATALOG-001 Workflow and action catalog`, `FILENAME-GENERATION-001 Filename generation`?**
-  _High betweenness centrality (0.055) - this node is a cross-community bridge._
+- **Why does `FILENAME-GENERATION-001 Filename generation` connect `FILENAME-GENERATION-001 Filename generation` to `FN-023`, `Filename deterministic acceptance vectors`, `FN-021`, `FN-002`, `FN-022`, `FN-012`, `INTERFACE-CATALOG-001 Native and agent interfaces`, `Product Contract reviews`, `FN-026`, `Product Contract manifest`?**
+  _High betweenness centrality (0.046) - this node is a cross-community bridge._
 - **Should `CORE-PLATFORM-001 Native platform capability foundation` be split into smaller, more focused modules?**
   _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._
-- **Why does `Document` connect `Document` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Conformance vector format`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SESSION-001`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
-  _High betweenness centrality (0.032) - this node is a cross-community bridge._
+- **Why does `Product Contract` connect `Product Contract` to `EDITOR-ANNOTATIONS-001 Annotation tools`, `Contract approval review — 2026-08-31`, `Document`, `Conformance vector format`, `backlog.json`, `EDITOR-UTILITIES-001 Image utility suite`, `Product Contract completion status`, `Native implementation readiness`, `EDITOR-OUTPUT-ACTIONS-001 Output and task actions`, `EDITOR-CANVAS-001 Canvas and image operations`, `EDITOR-SETTINGS-001 Editor settings`, `EDITOR-EFFECTS-001 Image effects`?**
+  _High betweenness centrality (0.044) - this node is a cross-community bridge._
 - **Should `EDITOR-ANNOTATIONS-001 Annotation tools` be split into smaller, more focused modules?**
   _Cohesion score 0.046511627906976744 - nodes in this community are weakly interconnected._
