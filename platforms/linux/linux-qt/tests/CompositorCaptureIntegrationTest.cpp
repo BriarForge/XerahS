@@ -8,11 +8,13 @@
 #include "capture/ScreenTopology.h"
 #include "capture/CompositorErrors.h"
 #include "settings/ApplicationSettings.h"
+#include "workflows/CaptureWorkflows.h"
 
 #include <QApplication>
 #include <QColorSpace>
 #include <QDir>
 #include <QFileDevice>
+#include <QRegularExpression>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
@@ -108,6 +110,43 @@ CompositorFrame accepted(const CaptureDisplay &display, const QImage &image) {
   frame.singleOutputBufferOriginProven = true;
   return frame;
 }
+// CORE-014: a frozen display built from the real primary screen, so the
+// monitor source's screenAt/primaryScreen identity resolution runs the
+// production matching path against the real screen's stable identity. The
+// compositor name on Wayland equals the QScreen name; offscreen Qt reports
+// no name, so the fixture supplies the compositor address the injected
+// frame reader answers to (an unnamed display is never capturable by
+// compositor identity, and the honest refusal is covered by the
+// nameless-output refusal row).
+CaptureDisplays realScreenDisplays() {
+  auto *screen = QGuiApplication::primaryScreen();
+  if (!screen) return {};
+  const auto geometry = screen->geometry();
+  const LogicalRect logical{double(geometry.x()), double(geometry.y()),
+                            double(geometry.x() + geometry.width()), double(geometry.y() + geometry.height())};
+  const auto mapped = snapshotScreenTopology({{screen->name(), screen->manufacturer(), screen->model(),
+                                               screen->serialNumber(), logical, screen->devicePixelRatio(), 0, {}, true}});
+  if (mapped.size() != 1) return {};
+  CaptureDisplays displays(1);
+  displays[0].mapping = mapped[0];
+  displays[0].outputName = QStringLiteral("Offscreen-Primary");
+  return displays;
+}
+// CORE-014: a window discovery stub with a known active window, so the
+// active-window source's target rect is deterministic. Without one the
+// source reports the honest target-lost refusal.
+class FixedWindows final : public WindowDiscovery {
+public:
+  std::vector<SnapTarget> targets(const Topology &, qint64) override { ++targetCalls; return {}; }
+  std::optional<SnapTarget> activeWindow(const Topology &, qint64) override {
+    ++windowCalls;
+    if (!hasWindow) return std::nullopt;
+    return SnapTarget{rect};
+  }
+  int targetCalls = 0, windowCalls = 0;
+  bool hasWindow = true;
+  PhysicalRect rect{16, 12, 80, 60};
+};
 class EmptyWindows final : public WindowDiscovery {
 public:
   int calls = 0;
@@ -571,6 +610,79 @@ private slots:
     QCOMPARE(notices.size(), 1);
     QCOMPARE(notices[0][1].toString(),
              compositorCaptureFailureMessage(QStringLiteral("compositor-source-mismatch")));
+  }
+
+  // CORE-014: named behavioral evidence for the cursor option on the three
+  // whole-source captures. Every source routes through the compositor-native
+  // path when the option is on, is captured with the cursor paint requested,
+  // and its identified target is what the crop carries: the whole desktop
+  // (full-screen), the display under the cursor (monitor, resolved through
+  // the real screen's identity), the focused window (active-window, injected),
+  // or the honest target-lost refusal when no window exists.
+  void wholeSourcesCaptureThroughTheCompositorCursorPath_data() {
+    QTest::addColumn<QString>("source");
+    QTest::newRow("full-screen") << QStringLiteral("full-screen");
+    QTest::newRow("monitor") << QStringLiteral("monitor");
+    QTest::newRow("active-window") << QStringLiteral("active-window");
+    QTest::newRow("active-window-lost") << QStringLiteral("active-window-lost");
+  }
+
+  void wholeSourcesCaptureThroughTheCompositorCursorPath() {
+    // Regression guard for the succeeded-title formatting: the capture
+    // notification path must not emit a spurious QString::arg warning.
+    QTest::failOnWarning(QRegularExpression(QStringLiteral("^QString::arg: ")));
+    QFETCH(QString, source);
+    const bool lost = source == QLatin1String("active-window-lost");
+    const QString capture = lost ? QStringLiteral("active-window") : source;
+    CaptureDisplays screens = capture == QLatin1String("monitor") ? realScreenDisplays()
+                                                                 : oneOutput(kLogical, kScale, QStringLiteral("Hypr-Synthetic-1"));
+    QVERIFY(!screens.empty());
+    const auto &mapping = screens.front().mapping;
+    auto windows = std::make_unique<FixedWindows>();
+    windows->hasWindow = !lost;
+    Harness harness(std::move(screens));
+    QVERIFY(!harness.screens.empty());
+    harness.controller->setWindowDiscovery(std::move(windows));
+    auto values = harness.store.current().values;
+    values.insert(QStringLiteral("regionCapture.includeCursor"), true);
+    QVERIFY(harness.save(values));
+
+    const QImage frame = scene({int(mapping.physical.width()), int(mapping.physical.height())}, true);
+    harness.reader.setFirst(accepted(harness.screens.front(), frame));
+    harness.deliverPortal = true;
+    auto workflow = xerahs::workflows::defaultCaptureWorkflows().entries[0];
+    workflow.capture = capture;
+    workflow.actions = QStringList{QStringLiteral("save")};
+    workflow.output.directory = harness.outputs;
+    workflow.output.pattern = QStringLiteral("whole-%widthx%height");
+    QSignalSpy notices(harness.controller.get(), &CaptureController::notify);
+    harness.controller->captureWorkflow(workflow);
+    QTRY_VERIFY(!harness.controller->busy());
+    QCOMPARE(harness.reader.calls.load(), 1);
+    QVERIFY(harness.reader.includeCursor.load());
+    QCOMPARE(harness.portalCalls, 0);
+    QCOMPARE(overlays().size(), 0);
+    if (lost) {
+      // CORE-014: the target-lost result is explicit; nothing is captured.
+      QVERIFY(!harness.controller->lastPipelineResult());
+      QCOMPARE(QDir(harness.outputs).entryList(QDir::Files).size(), 0);
+      QCOMPARE(notices.size(), 1);
+      QVERIFY(notices[0][1].toString().contains(QStringLiteral("No active window")));
+      return;
+    }
+    const auto receipt = harness.controller->lastPipelineResult();
+    QVERIFY(receipt && receipt->file);
+    const QImage saved(receipt->file->path);
+    if (capture == QLatin1String("active-window")) {
+      QCOMPARE(saved.size(), QSize(64, 48));
+      QCOMPARE(saved, frame.copy(16, 12, 64, 48));
+    } else {
+      // Full-screen takes the whole desktop; monitor takes the whole
+      // display - the same pixels with one display.
+      QCOMPARE(saved.size(), QSize(int(mapping.physical.width()), int(mapping.physical.height())));
+      QCOMPARE(saved, frame);
+    }
+    QCOMPARE(stampCount(saved), kStampRect.width() * kStampRect.height());
   }
 };
 

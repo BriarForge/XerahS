@@ -14,14 +14,19 @@
 #include <QFile>
 #include <QAbstractButton>
 #include <QApplication>
+#include <QColorSpace>
+#include <QComboBox>
 #include <QDialog>
 #include <QDir>
 #include <QMenu>
 #include <QPointer>
+#include <QRegularExpression>
+#include <QSpinBox>
 #include <QSystemTrayIcon>
 #include <QTemporaryDir>
 #include <QSignalSpy>
 #include <QTest>
+#include <QTimer>
 #include <QToolButton>
 #include <memory>
 
@@ -117,6 +122,107 @@ private slots:
     shell.commands.action(QStringLiteral("capture-last-region"))->trigger();
     QCOMPARE(notices.size(), 1);
     QVERIFY(notices.first().at(1).toString().contains(QStringLiteral("last-region-invalid")));
+  }
+
+  // CORE-014's delay side on the real shell (CORE-016 activation): the
+  // countdown is the shell's own schedule, and when it fires its downstream
+  // starts the capture source through the compositor path with the cursor
+  // option applied. The default workflow's save action then writes the
+  // delivered frame, and the remembered delay choice persists.
+  void delayedCaptureStartsTheCompositorCursorPathOnTheRealShell() {
+    QTest::failOnWarning(QRegularExpression(QStringLiteral("^QString::arg: ")));
+    Shell shell(root.path()); shell.attach();
+    auto values = shell.settings.current().values;
+    values.insert(QStringLiteral("regionCapture.includeCursor"), true);
+    values.insert(QStringLiteral("delayedCapture.seconds"), 1);
+    values.insert(QStringLiteral("delayedCapture.source"), QStringLiteral("full-screen"));
+    QVERIFY(shell.settings.save(values).isEmpty());
+
+    // The sanctioned observation seams on the shell's real controller: a
+    // frozen one-output session and the injected frame reader. The default
+    // portal path is never taken when the cursor option is on.
+    const auto mapped = xerahs::capture::snapshotScreenTopology(
+        {{QStringLiteral("Panel"), QStringLiteral("Maker"), QStringLiteral("Model"), QStringLiteral("delay"),
+          {0, 0, 200, 120}, 1, 0, {}, true}});
+    QCOMPARE(mapped.size(), size_t(1));
+    CaptureDisplays displays(1);
+    displays[0].mapping = mapped[0];
+    displays[0].outputName = QStringLiteral("Hypr-Synthetic-1");
+    shell.capture.setTopologyReader([&displays] { return displays; });
+    struct Injected {
+      std::atomic<int> calls{0};
+      std::atomic<bool> includeCursor{false};
+      QString requestedName;   // written by the worker, read after it settles
+      CompositorFrame frame;
+      CompositorFrame operator()(const CompositorFrameRequest &request) {
+        ++calls;
+        includeCursor.store(request.includeCursor);
+        requestedName = request.outputName;
+        return frame;
+      }
+    } injected;
+    QImage delivered(200, 120, QImage::Format_ARGB32);
+    delivered.setColorSpace(QColorSpace::SRgb);
+    delivered.fill(qRgb(30, 200, 90));
+    injected.frame.status = CompositorFrame::Status::Captured;
+    injected.frame.image = delivered;
+    injected.frame.outputName = QStringLiteral("Hypr-Synthetic-1");
+    injected.frame.logicalX = 0;
+    injected.frame.logicalY = 0;
+    injected.frame.bufferWidth = 200;
+    injected.frame.bufferHeight = 120;
+    injected.frame.scale = 1;
+    injected.frame.transform = 0;
+    injected.frame.cursorPaintRequested = true;
+    injected.frame.cursorPaintedIntoFrame = true;
+    injected.frame.singleOutputBufferOriginProven = true;
+    shell.capture.setCompositorCapture(
+        [&injected](const CompositorFrameRequest &request) { return injected(request); });
+
+    // The command opens the modal prompt prefilled with the remembered
+    // choice; accept it so the real countdown starts.
+    QTimer::singleShot(0, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+      QVERIFY2(dialog, "delay prompt did not open");
+      if (!dialog) return;
+      auto *seconds = dialog->findChild<QSpinBox *>(QStringLiteral("delaySeconds"));
+      auto *source = dialog->findChild<QComboBox *>(QStringLiteral("delaySource"));
+      QVERIFY2(seconds && source, "delay prompt fields");
+      if (seconds && source) {
+        QCOMPARE(seconds->value(), 1);
+        QCOMPARE(source->currentData().toString(), QStringLiteral("full-screen"));
+      }
+      dialog->accept();   // always close so trigger() cannot hang
+    });
+    shell.commands.action(QStringLiteral("capture-after-delay"))->trigger();
+
+    // The prompt's own save persisted the remembered choice, and the
+    // shell's schedule is counting down.
+    QCOMPARE(shell.settings.current().values.value(QStringLiteral("delayedCapture.seconds")).toInt(), 1);
+    QVERIFY(shell.settings.current().values.value(QStringLiteral("delayedCapture.source")).toString() == QStringLiteral("full-screen"));
+    // The shell's own countdown window is up: the schedule is counting.
+    QWidget *countdown = nullptr;
+    for (auto *widget : QApplication::topLevelWidgets())
+      if (widget->objectName() == QLatin1String("captureCountdown")) countdown = widget;
+    QVERIFY(countdown && countdown->isVisible());
+    // The real 1 s countdown fires; the downstream activation starts the
+    // full-screen capture through the compositor path, cursor applied.
+    QTRY_COMPARE_WITH_TIMEOUT(injected.calls.load(), 1, 15000);
+    QVERIFY(!countdown->isVisible());
+    // Observe the capture running, then settled: only after the owned work
+    // returned are the worker's writes to the record visible here.
+    QTRY_VERIFY(shell.capture.busy());
+    QTRY_VERIFY(!shell.capture.busy());
+    QVERIFY(injected.includeCursor.load());
+    QCOMPARE(injected.requestedName, QStringLiteral("Hypr-Synthetic-1"));
+    const auto receipt = shell.capture.lastPipelineResult();
+    QVERIFY(receipt && receipt->file);
+    QVERIFY(receipt->file->path.startsWith(shell.folder));
+    QCOMPARE(QImage(receipt->file->path), delivered);
+    // The default workflow also copies to the clipboard; offscreen the stub
+    // clipboard never confirms ownership, so that one action fails alone
+    // (PCA-024) and the workflow ends partial. The delay-side evidence is
+    // the compositor request and the saved pixels above.
   }
   void lastRegionCommandIsSharedAndRefusesStaleGeometryBeforeAcquisition() {
     Shell shell(root.path()); shell.attach();

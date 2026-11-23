@@ -12,6 +12,7 @@
 #include "SecretServiceCredentialStore.h"
 #include "features/CommandWindowAttach.h"
 #include "features/ShellFeatures.h"
+#include "features/UploadFeature.h"
 #include "settings/ApplicationSettings.h"
 #include "shell/ActivationDispatcher.h"
 #include <QApplication>
@@ -49,6 +50,10 @@ struct Shell {
     windowOwner = std::make_unique<ApplicationWindow>(commands); home = windowOwner.get();  // After the installers, as in main().
   }
   ApplicationWindow &window() { return *windowOwner; }
+  // The watch service is parented to the application and references this
+  // stack object's context, window-scoped controller and watch store; it
+  // must be stopped while those are still alive, before the members go.
+  ~Shell() { stopWatchFolders(); }
   void attach() { commands.populate(&menu, CommandSurface::Tray); tray.setContextMenu(&menu); attachCommandWindow(ctx, *windowOwner, menu); }
 };
 

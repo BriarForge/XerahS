@@ -63,6 +63,18 @@ void drainWatchFolders() {
   if (auto service = lifetime().service) service->finishCheckpoint();
 }
 
+void stopWatchFolders() {
+  // The service references the AppContext, the window-scoped upload
+  // controller and the watch store by reference; it is parented to the
+  // application, so a teardown that destroys those while the service still
+  // runs would leave it calling into freed objects on its next tick. Stop
+  // and retire it while its referents are still alive.
+  if (auto service = lifetime().service) {
+    service->stop();
+    service->deleteLater();
+  }
+}
+
 void installUpload(AppContext &ctx) {
   auto &state = lifetime();
   state.uploadFile = ctx.commands.add(CommandSpec{QStringLiteral("upload-file"), QStringLiteral("Upload file…"),

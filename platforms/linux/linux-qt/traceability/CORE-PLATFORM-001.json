@@ -873,7 +873,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Full-screen/monitor/active-window entry points and errors are tested; RC-TOPOLOGY-AUTHORITY-2026-11-20's mapping authority is decided and both build halves are landed: named per-output compositor captures on proven grids, and the multi-display compose seam (composeCapturedFrames) that cross-checks every captured frame against the frozen session before placing it at the packed origin - a full-desktop or cross-monitor cursor-inclusive capture now composes one desktop from per-output frames, refused whole on any mismatch, with the session's topology check requiring exactly the frozen compositor names. Remaining: screenshot cursor/delay polish on the monitor/window flows, and live desktop qualification on real mixed-scale/rotated hardware.",
+      "note": "Full-screen/monitor/active-window entry points and errors are tested; RC-TOPOLOGY-AUTHORITY-2026-11-20's mapping authority is decided and both build halves are landed: named per-output compositor captures on proven grids, and the multi-display compose seam (composeCapturedFrames) that cross-checks every captured frame against the frozen session before placing it at the packed origin - a full-desktop or cross-monitor cursor-inclusive capture now composes one desktop from per-output frames, refused whole on any mismatch, with the session's topology check requiring exactly the frozen compositor names. The cursor/delay evidence tail is landed as named behavioral evidence on the three whole-source captures: with the cursor option on, full-screen, monitor and active-window all route through the compositor-native path with the cursor paint requested (CompositorCaptureIntegrationTest::wholeSourcesCaptureThroughTheCompositorCursorPath: the whole desktop for full-screen, the real screen identity resolving the display-under-cursor for monitor, the injected focused-window rect for active-window, and the honest target-lost refusal when no window exists), and the shell's own delayed capture counts down on the real schedule and its downstream activation starts the full-screen source through the compositor path with the cursor option applied, saving the delivered frame through the default workflow (ShellCommandsTest::delayedCaptureStartsTheCompositorCursorPathOnTheRealShell). Remaining: live desktop qualification on real mixed-scale/rotated hardware (a physical gate).",
       "evidence": [
         "platforms/linux/linux-qt/app/CaptureController.cpp",
         "platforms/linux/linux-qt/app/capture/CompositorFrame.cpp",
@@ -887,28 +887,32 @@
       "audit": {
         "classification": "partial",
         "spec_line": 64,
-        "coverage": "Full-screen, monitor and active-window capture entry points and error paths exist. The newly referenced cursor integration tests exercise region capture (RC-013) only. Cursor and delay options for the three CORE-014 capture sources have no named behavioral evidence on this row and remain open, along with authoritative mixed-scale physical mapping and complete supported-target qualification.",
+        "coverage": "Full-screen, monitor and active-window capture entry points and error paths exist, and the cursor and delay options for the three CORE-014 capture sources now have named behavioral evidence: the compositor whole-source journeys (cursor flag asserted, per-source crop pinned, display-under-cursor resolved through the real screen identity, injected active-window rect, honest target-lost refusal) and the real-shell delayed capture whose countdown downstream starts the full-screen source through the compositor path with the cursor option applied and saves the delivered frame through the default workflow. Remaining: live desktop qualification on real mixed-scale/rotated hardware, and complete supported-target qualification.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/ScreenTopology.cpp",
-            "sha256": "82abbb797b34b3f5b14f050427a3d65e8f0e86dd4a2bbb8dba3e6bbab9e996f5"
+            "sha256": "6dde3951f6af55738873efc24e2394834d79e138b50eab9948ddaeac21b2bebc"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureController.cpp",
-            "sha256": "409978c57ca359387ea05e0557941dc0ab4d3b7604b2b8d2c507826da1dd6c5a"
+            "sha256": "d0db2a170dfcebe95b41c272f858d6a30140eb8582d2c997be4eaaa462bcdcd0"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
-            "sha256": "47fc1c27510701304706bcc6a8c66105fc0f5f99a4c7fdbfb6ac431a167e073d"
+            "sha256": "7b1028a673dfa17aa9c2678371c83f21ab145f79278246e3be6f1378dd24db21"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+            "sha256": "34b2c58c83c0b9964a10a1518cef8dac9ec2e5fcfbd9293e5a6166c07655d306"
           }
         ],
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "Full-screen/monitor/active-window entry points and errors are tested, and RC-TOPOLOGY-AUTHORITY-2026-11-20 settles the mapping authority this row was waiting on: QScreen logical space (zxdg_output-derived) identifies the requested target, per-display physical bounds are each display's own-scale extents (mode-verified), and the packed arrangement is endorsed only for proven grid tilings - a named output is captured by its own compositor identity inside such a layout, and anything unprovable fails closed with compositor-layout-unproven. Remaining: the cross-monitor composite from per-output frames on proven grids, screenshot cursor/delay polish, and live desktop qualification."
+      "previous_note": "Full-screen/monitor/active-window entry points and errors are tested; RC-TOPOLOGY-AUTHORITY-2026-11-20's mapping authority is decided and both build halves are landed: named per-output compositor captures on proven grids, and the multi-display compose seam (composeCapturedFrames) that cross-checks every captured frame against the frozen session before placing it at the packed origin - a full-desktop or cross-monitor cursor-inclusive capture now composes one desktop from per-output frames, refused whole on any mismatch, with the session's topology check requiring exactly the frozen compositor names. Remaining: screenshot cursor/delay polish on the monitor/window flows, and live desktop qualification on real mixed-scale/rotated hardware."
     },
     "CORE-015": {
       "status": "implemented",

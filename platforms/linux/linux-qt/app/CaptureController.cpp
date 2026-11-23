@@ -891,11 +891,20 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt, b
   if (!m_lastRegionDiagnostic.isEmpty()) body += "; Last-region storage needs review.";
   if (!receipt->diagnostic.isEmpty()) body += "; Capture result storage needs review.";
   if (!executionConfirmed) body += "; Workflow execution storage could not confirm the outcome. Check capture result history before retrying.";
-  const auto title = result.state == xerahs::actions::PipelineState::Cancelled ? QStringLiteral("Capture actions cancelled · %1") :
-      result.state == xerahs::actions::PipelineState::Interrupted ? QStringLiteral("Capture actions interrupted · %1") :
-      terminal != "succeeded" ? QStringLiteral("Capture actions %2 · %1") :
-      result.retry ? QStringLiteral("Capture actions retried · %1") : sourceTitle(QStringLiteral("captured · %1"));
-  emit notify(title.arg(size, terminal), body, executionConfirmed && terminal == "succeeded" &&
+  // Each branch is formatted with only the arguments its placeholders name;
+  // a surplus multi-arg is a spurious QString::arg warning on every capture.
+  QString title;
+  if (result.state == xerahs::actions::PipelineState::Cancelled)
+    title = QStringLiteral("Capture actions cancelled · %1").arg(size);
+  else if (result.state == xerahs::actions::PipelineState::Interrupted)
+    title = QStringLiteral("Capture actions interrupted · %1").arg(size);
+  else if (terminal != QStringLiteral("succeeded"))
+    title = QStringLiteral("Capture actions %2 · %1").arg(size, terminal);
+  else if (result.retry)
+    title = QStringLiteral("Capture actions retried · %1").arg(size);
+  else
+    title = sourceTitle(QStringLiteral("captured · %1")).arg(size);
+  emit notify(title, body, executionConfirmed && terminal == "succeeded" &&
       receipt->diagnostic.isEmpty() && m_lastRegionDiagnostic.isEmpty());
 }
 
