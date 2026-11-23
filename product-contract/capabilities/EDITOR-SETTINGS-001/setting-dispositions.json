@@ -1,0 +1,1717 @@
+{
+  "schema": "https://xerahs.com/schemas/setting-disposition-v1.json",
+  "capability": "EDITOR-SETTINGS-001",
+  "decision_record": "decisions/ESET-001-editor-ledger-dispositions.md",
+  "records": [
+    {
+      "ledger_id": "SET-BACKGROUND-REMOVER-OPTIONS-SELECTED-DEVICE-001",
+      "name": "SelectedDevice",
+      "value_family": "enum",
+      "default": "Auto",
+      "validation": "One of Auto, CPU, GPU (built from the linked runtime's providers); other values are invalid and recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Device policy for background-removal inference; Auto answers from the linked runtime honestly and an explicit unavailable device is a typed refusal, never a silent CPU fallback.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-BACKGROUND-REMOVER-OPTIONS-SELECTED-MODEL-FILE-NAME-001",
+      "name": "SelectedModelFileName",
+      "value_family": "string",
+      "default": "",
+      "validation": "Plain string, at most 256 characters, no control characters; names resolve inside the verified model store directory.",
+      "scope": "global",
+      "privacy": "private-local",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "The background remover's selected model file; adoption requires the catalogue's verified provenance (EU-010) and the file name never carries secret material.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-ACCENT-COLOR-001",
+      "name": "AccentColor",
+      "value_family": "runtime-only",
+      "default": "#FF3E83F2",
+      "validation": "Never loaded or saved: a stored AccentColor alias is classified non-persistent, round-trips unchanged and cannot override the AccentColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-AccentColor diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Derived convenience colour resolved from AccentColorHex for display; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-ACCENT-COLOR-HEX-001",
+      "name": "AccentColorHex",
+      "value_family": "color",
+      "default": "#FF3E83F2",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-AccentColorHex diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Manual editor accent colour; applied when UseSystemAccentColor is off or no usable desktop accent exists; the reference's #3E83F2 in canonical explicit-alpha form.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-ARROW-STYLE-001",
+      "name": "ArrowStyle",
+      "value_family": "enum",
+      "default": "Classic",
+      "validation": "One of Classic, Modern, Double, Basic, Line (reference members, PascalCase); other values are invalid and recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-ArrowStyle diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default arrowhead style for new Arrow objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-AUTO-CLOSE-EDITOR-ON-TASK-001",
+      "name": "AutoCloseEditorOnTask",
+      "value_family": "boolean",
+      "default": false,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-AutoCloseEditorOnTask diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Task-mode editor windows close after the task completes instead of staying open; never bypasses an unsaved-work decision.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-AUTO-COPY-IMAGE-TO-CLIPBOARD-001",
+      "name": "AutoCopyImageToClipboard",
+      "value_family": "boolean",
+      "default": false,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-AutoCopyImageToClipboard diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Completed task images copy to the clipboard automatically when enabled.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-COLOR-001",
+      "name": "BackgroundColor",
+      "value_family": "runtime-only",
+      "default": "#FF222222",
+      "validation": "Never loaded or saved: a stored BackgroundColor alias is classified non-persistent, round-trips unchanged and cannot override the BackgroundColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from BackgroundColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-COLOR-HEX-001",
+      "name": "BackgroundColorHex",
+      "value_family": "color",
+      "default": "#FF222222",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Solid-kind background colour (EC-013 decided default #FF222222).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-GRADIENT-COLOR1-001",
+      "name": "BackgroundGradientColor1",
+      "value_family": "runtime-only",
+      "default": "#FFDD2476",
+      "validation": "Never loaded or saved: a stored BackgroundGradientColor1 alias is classified non-persistent, round-trips unchanged and cannot override the BackgroundGradientColor1Hex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from BackgroundGradientColor1Hex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-GRADIENT-COLOR1-HEX-001",
+      "name": "BackgroundGradientColor1Hex",
+      "value_family": "color",
+      "default": "#FFDD2476",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Gradient-kind top colour (EC-013 decided default #FFDD2476).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-GRADIENT-COLOR2-001",
+      "name": "BackgroundGradientColor2",
+      "value_family": "runtime-only",
+      "default": "#FFFF512F",
+      "validation": "Never loaded or saved: a stored BackgroundGradientColor2 alias is classified non-persistent, round-trips unchanged and cannot override the BackgroundGradientColor2Hex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from BackgroundGradientColor2Hex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-GRADIENT-COLOR2-HEX-001",
+      "name": "BackgroundGradientColor2Hex",
+      "value_family": "color",
+      "default": "#FFFF512F",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Gradient-kind bottom colour (EC-013 decided default #FFFF512F).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-IMAGE-PATH-001",
+      "name": "BackgroundImagePath",
+      "value_family": "path",
+      "default": "",
+      "validation": "Portable path string, empty by default; a chosen file resolves through the inserted-image safety rules and the pure core never does file I/O for it.",
+      "scope": "global",
+      "privacy": "private-local",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Image-kind background asset, cover-scaled per the reference's UniformToFill layout (EC-013 image kind).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-MARGIN-001",
+      "name": "BackgroundMargin",
+      "value_family": "number",
+      "default": 80,
+      "validation": "Finite number, 0..1000 inclusive (EC-013); non-finite or mistyped values recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Square outer band in the chosen kind's colour around the composed card (EC-013 default 80, the reference's own).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-PADDING-001",
+      "name": "BackgroundPadding",
+      "value_family": "number",
+      "default": 40,
+      "validation": "Finite number, 0..1000 inclusive (EC-013).",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Padding band in the source's exact top-left colour between content and card (EC-013 default 40).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-ROUNDED-CORNER-001",
+      "name": "BackgroundRoundedCorner",
+      "value_family": "number",
+      "default": 20,
+      "validation": "Finite number, 0..255 inclusive (EC-013).",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Card corner radius with deterministic supersampled coverage (EC-013 default 20).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-SHADOW-RADIUS-001",
+      "name": "BackgroundShadowRadius",
+      "value_family": "number",
+      "default": 30,
+      "validation": "Finite number, 0..100 inclusive (EC-013); 0 removes the shadow.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Gaussian card shadow through the house kernel (EC-013 default 30, sigma radius/3, +10 drop, alpha 80/255).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-SMART-PADDING-001",
+      "name": "BackgroundSmartPadding",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Smart padding per the reference's own rule: top-left pixel target, tolerance 30 per RGBA channel inclusive, per-edge uniform-border insets, disabled without a border, annotations excluded and translated with the content (EC-013).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-TYPE-001",
+      "name": "BackgroundType",
+      "value_family": "enum",
+      "default": "Transparent",
+      "validation": "One of Transparent, Solid, Gradient, Image (the EC-013 kinds); other values are invalid and recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "The composed background's kind for one committed, fully undoable canvas operation (EC-013).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BLUR-STRENGTH-001",
+      "name": "BlurStrength",
+      "value_family": "number",
+      "default": 30,
+      "validation": "Finite number, 0..100 inclusive; fractional values allowed; non-finite or mistyped values recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-BlurStrength diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default strength for new Blur objects; a new object records the strength current at pointer-down.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BORDER-COLOR-001",
+      "name": "BorderColor",
+      "value_family": "runtime-only",
+      "default": "#FFFF0000",
+      "validation": "Never loaded or saved: a stored BorderColor alias is classified non-persistent, round-trips unchanged and cannot override the BorderColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-BorderColor diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Derived convenience colour resolved from BorderColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BORDER-COLOR-HEX-001",
+      "name": "BorderColorHex",
+      "value_family": "color",
+      "default": "#FFFF0000",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-BorderColorHex diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default stroke colour (alpha-preserving); the reference's PrimaryColor #FFF23C3C was rejected in favour of the ES rectangle qualification red that this edition ships.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-BORDER-STYLE-001",
+      "name": "BorderStyle",
+      "value_family": "enum",
+      "default": "Solid",
+      "validation": "One of Solid, Dash, Dot, DashDot, DashDotDot (reference members, PascalCase); other values are invalid and recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-BorderStyle diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default border style for Rectangle, Ellipse, Line and Arrow.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-CORNER-RADIUS-001",
+      "name": "CornerRadius",
+      "value_family": "integer",
+      "default": 0,
+      "validation": "Finite integer, 0..10000 inclusive; the decided default 0 is the EA-005 undecorated rectangle (the reference 4 would change the shipped look of new rectangles).",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-CornerRadius diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default corner radius for new Rectangle objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-CURSOR-TYPE-001",
+      "name": "CursorType",
+      "value_family": "enum",
+      "default": "Default",
+      "validation": "One of the 28 reference CursorType members; other values are invalid and recover per field. This edition draws Default and Arrow; other members stay inert data and new Cursor objects record Default.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-CursorType diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default cursor stamp for new Cursor annotations.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-FAVORITE-EFFECTS-001",
+      "name": "FavoriteEffects",
+      "value_family": "collection",
+      "default": [
+        "resize_image",
+        "resize_canvas",
+        "crop_image",
+        "auto_crop_image",
+        "rotate_90_clockwise",
+        "rotate_90_counter_clockwise",
+        "rotate_180",
+        "flip_horizontal",
+        "flip_vertical"
+      ],
+      "validation": "Array of stable effect IDs, order retained, duplicates removed, retired IDs tolerated; seeded once on first run and never re-seeded after (the reference's DefaultFavoriteEffects with stable Linux IDs).",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-FavoriteEffects diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Favorite effects pinned in the effects browser.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-FILL-COLOR-001",
+      "name": "FillColor",
+      "value_family": "runtime-only",
+      "default": "#00000000",
+      "validation": "Never loaded or saved: a stored FillColor alias is classified non-persistent, round-trips unchanged and cannot override the FillColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-FillColor diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Derived convenience colour resolved from FillColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-FILL-COLOR-HEX-001",
+      "name": "FillColorHex",
+      "value_family": "color",
+      "default": "#00000000",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-FillColorHex diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default fill colour, fully transparent; the reference's Colors.Transparent hex #00FFFFFF was rejected in favour of the ES rectangle qualification's #00000000 (visually identical at alpha zero).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-HIGHLIGHT-FILL-COLOR-001",
+      "name": "HighlightFillColor",
+      "value_family": "runtime-only",
+      "default": "#FFFFFF00",
+      "validation": "Never loaded or saved: a stored HighlightFillColor alias is classified non-persistent, round-trips unchanged and cannot override the HighlightFillColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from HighlightFillColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-HIGHLIGHT-FILL-COLOR-HEX-001",
+      "name": "HighlightFillColorHex",
+      "value_family": "color",
+      "default": "#FFFFFF00",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default fill for new Highlight objects (the reference's Colors.Yellow).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-IS-WINDOW-MAXIMIZED-001",
+      "name": "IsWindowMaximized",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "window",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-IsWindowMaximized diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Remembered maximized state, separate from the normal size; saved only after the editor accepts close.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-LAST-USED-ANNOTATION-TOOL-001",
+      "name": "LastUsedAnnotationTool",
+      "value_family": "enum",
+      "default": "Rectangle",
+      "validation": "One of the 20 reference EditorTool members; only creation tools are remembered (not Select, Image, Emoji, Crop, CutOut) and a stored non-remembered name opens Rectangle.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-LastUsedAnnotationTool diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "The tool a new editor window starts with; written when a window selects a remembered tool, read only when a window opens, never applied live to other windows.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-MAGNIFIER-ELLIPSE-001",
+      "name": "MagnifierEllipse",
+      "value_family": "boolean",
+      "default": false,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-MagnifierEllipse diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default region shape for new Magnify objects; the reference has no Blur, Pixelate or Highlight region default, so those stay rectangular.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-MAGNIFIER-STRENGTH-001",
+      "name": "MagnifierStrength",
+      "value_family": "number",
+      "default": 2,
+      "validation": "Finite number, 0..10 inclusive (the reference toolbar maximum).",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-MagnifierStrength diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default magnification strength for new Magnify objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-MAX-RECENT-IMAGE-FILES-001",
+      "name": "MaxRecentImageFiles",
+      "value_family": "integer",
+      "default": 10,
+      "validation": "Finite integer, 1..100 inclusive; decreasing it removes the oldest entries.",
+      "scope": "global",
+      "privacy": "private-local",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-MaxRecentImageFiles diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Private local retention bound for remembered recent images.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-PIXELATE-STRENGTH-001",
+      "name": "PixelateStrength",
+      "value_family": "number",
+      "default": 20,
+      "validation": "Finite number, 0..200 inclusive (the reference toolbar maximum); 0 keeps the renderer's built-in strength.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-PixelateStrength diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default strength for new Pixelate objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-QUICK-CROP-001",
+      "name": "QuickCrop",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "When enabled, finishing a crop selection applies the crop immediately instead of waiting for an explicit apply action (the reference's crop-overlay behaviour).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-RECENT-EFFECTS-001",
+      "name": "RecentEffects",
+      "value_family": "collection",
+      "default": [],
+      "validation": "Array of stable effect IDs, most-recent-first, bounded to 10 (the reference EffectBrowserPanel.MaxRecentEffects); retired IDs stay inert data.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-RecentEffects diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Recently applied effects feeding the effects browser ordering; user-removed favorites never re-add themselves.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-RECENT-IMAGE-FILES-001",
+      "name": "RecentImageFiles",
+      "value_family": "collection",
+      "default": [],
+      "validation": "Array of at most 100 encoded entries, at most the validated maximum distinct absolute paths, valid platform path syntax; an invalid collection recovers to empty and a valid list without explicit opt-in is ignored with a recovery record.",
+      "scope": "global",
+      "privacy": "private-local",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-RecentImageFiles diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Private local recently opened images, newest first, deduplicated by platform path rules, removable individually or together; opt-in gated, never telemetry or support data.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-REMEMBER-WINDOW-STATE-001",
+      "name": "RememberWindowState",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "window",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-RememberWindowState diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Local layout memory; false stops persistence and excludes size/maximized state from both stored versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SHADOW-001",
+      "name": "Shadow",
+      "value_family": "boolean",
+      "default": false,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-Shadow diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default shadow enablement for Rectangle, Ellipse, Line and Arrow.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SHADOW-BLUR-RADIUS-001",
+      "name": "ShadowBlurRadius",
+      "value_family": "number",
+      "default": 4,
+      "validation": "Finite number, 0..1000 pixels inclusive; non-finite or mistyped values recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-ShadowBlurRadius diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default shadow blur radius (the reference's Annotation.DefaultShadowBlurRadius).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SHADOW-COLOR-001",
+      "name": "ShadowColor",
+      "value_family": "runtime-only",
+      "default": "#80000000",
+      "validation": "Never loaded or saved: a stored ShadowColor alias is classified non-persistent, round-trips unchanged and cannot override the ShadowColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-ShadowColor diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Derived convenience colour resolved from ShadowColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SHADOW-COLOR-HEX-001",
+      "name": "ShadowColorHex",
+      "value_family": "color",
+      "default": "#80000000",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-ShadowColorHex diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default shadow colour (the reference's Annotation.DefaultShadowColorHex).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SHADOW-OFFSET-X-001",
+      "name": "ShadowOffsetX",
+      "value_family": "number",
+      "default": 3,
+      "validation": "Finite number, -10000..10000 pixels inclusive; non-finite or mistyped values recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-ShadowOffsetX diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default horizontal shadow offset (the reference's Annotation.DefaultShadowOffsetX).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SHADOW-OFFSET-Y-001",
+      "name": "ShadowOffsetY",
+      "value_family": "number",
+      "default": 3,
+      "validation": "Finite number, -10000..10000 pixels inclusive; non-finite or mistyped values recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-ShadowOffsetY diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default vertical shadow offset (the reference's Annotation.DefaultShadowOffsetY).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SHADOW-OPACITY-001",
+      "name": "ShadowOpacity",
+      "value_family": "number",
+      "default": 1,
+      "validation": "Finite number, 0..1 inclusive; non-finite or mistyped values recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-ShadowOpacity diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default shadow opacity (the reference's Annotation.DefaultShadowOpacity).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SHOW-EXIT-CONFIRMATION-001",
+      "name": "ShowExitConfirmation",
+      "value_family": "boolean",
+      "default": false,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-ShowExitConfirmation diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Optional clean-exit confirmation only: unsaved work always offers Save, Discard and Cancel (the ESET-014 destructive gate), and the decided default off follows confirm-only-when-necessary guidance plus Flameshot's opt-in-only Esc confirmation.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SHOW-INSERT-IMAGE-DIALOG-001",
+      "name": "ShowInsertImageDialog",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "When enabled, inserting an image shows the reference's placement dialog before the insert is committed; disabled inserts at the default placement.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SHOW-NOTIFICATIONS-001",
+      "name": "ShowNotifications",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Gates the editor's non-modal status notifications; disabled hides toasts, never consent or error reporting.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-BORDER-COLOR-001",
+      "name": "SpeechBalloonBorderColor",
+      "value_family": "runtime-only",
+      "default": "#00FFFFFF",
+      "validation": "Never loaded or saved: a stored SpeechBalloonBorderColor alias is classified non-persistent, round-trips unchanged and cannot override the SpeechBalloonBorderColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from SpeechBalloonBorderColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-BORDER-COLOR-HEX-001",
+      "name": "SpeechBalloonBorderColorHex",
+      "value_family": "color",
+      "default": "#00FFFFFF",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default body/tail outline colour for new Speech Balloon objects (the reference's Colors.Transparent); absent keeps the legacy shared-stroke rule.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-FILL-COLOR-001",
+      "name": "SpeechBalloonFillColor",
+      "value_family": "runtime-only",
+      "default": "#FFF23C3C",
+      "validation": "Never loaded or saved: a stored SpeechBalloonFillColor alias is classified non-persistent, round-trips unchanged and cannot override the SpeechBalloonFillColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from SpeechBalloonFillColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-FILL-COLOR-HEX-001",
+      "name": "SpeechBalloonFillColorHex",
+      "value_family": "color",
+      "default": "#FFF23C3C",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default balloon fill for new Speech Balloon objects (the reference's PrimaryColor).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-FONT-FAMILY-001",
+      "name": "SpeechBalloonFontFamily",
+      "value_family": "string",
+      "default": "",
+      "validation": "Plain string, at most 256 characters, no control characters, Unicode normalized; the decided default is empty (platform default font) for the same reasons as TextFontFamily.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-SpeechBalloonFontFamily diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default font family for new Speech Balloon objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-FONT-SIZE-001",
+      "name": "SpeechBalloonFontSize",
+      "value_family": "number",
+      "default": 24,
+      "validation": "Finite number, 1..2000 pixels inclusive; fractional values allowed; the decided default 24 keeps the native fixed-size click box readable.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-SpeechBalloonFontSize diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default font size for new Speech Balloon objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TAIL-001",
+      "name": "SpeechBalloonTail",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default tail enablement for new Speech Balloon objects (reference default).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TEXT-BOLD-001",
+      "name": "SpeechBalloonTextBold",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-SpeechBalloonTextBold diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default bold weight for new Speech Balloon text (reference default).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TEXT-COLOR-001",
+      "name": "SpeechBalloonTextColor",
+      "value_family": "runtime-only",
+      "default": "#FFFAFAFA",
+      "validation": "Never loaded or saved: a stored SpeechBalloonTextColor alias is classified non-persistent, round-trips unchanged and cannot override the SpeechBalloonTextColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from SpeechBalloonTextColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TEXT-COLOR-HEX-001",
+      "name": "SpeechBalloonTextColorHex",
+      "value_family": "color",
+      "default": "#FFFAFAFA",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default text colour for new Speech Balloon objects (the reference's SecondaryColor).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TEXT-HORIZONTAL-ALIGNMENT-001",
+      "name": "SpeechBalloonTextHorizontalAlignment",
+      "value_family": "enum",
+      "default": "Center",
+      "validation": "One of Left, Center, Right (reference enum names); other values are invalid and recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-SpeechBalloonTextHorizontalAlignment diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default horizontal alignment for new Speech Balloon text (reference default).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TEXT-ITALIC-001",
+      "name": "SpeechBalloonTextItalic",
+      "value_family": "boolean",
+      "default": false,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-SpeechBalloonTextItalic diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default italic style for new Speech Balloon text (reference default).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-THICKNESS-001",
+      "name": "SpeechBalloonThickness",
+      "value_family": "integer",
+      "default": 4,
+      "validation": "Finite integer, 1..10000 inclusive.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default balloon outline thickness (the reference's per-type thickness).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPOTLIGHT-BLUR-001",
+      "name": "SpotlightBlur",
+      "value_family": "number",
+      "default": 0,
+      "validation": "Finite number, 0..200 inclusive (the reference toolbar maximum); 0 keeps the renderer's built-in behaviour.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-SpotlightBlur diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default blur outside a new Spotlight's region.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPOTLIGHT-ELLIPSE-001",
+      "name": "SpotlightEllipse",
+      "value_family": "boolean",
+      "default": false,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-SpotlightEllipse diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default region shape for new Spotlight objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-SPOTLIGHT-STRENGTH-001",
+      "name": "SpotlightStrength",
+      "value_family": "number",
+      "default": 30,
+      "validation": "Finite number, 0..100 inclusive (the reference toolbar maximum).",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-SpotlightStrength diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default strength for new Spotlight objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-STEP-BORDER-COLOR-001",
+      "name": "StepBorderColor",
+      "value_family": "runtime-only",
+      "default": "#00FFFFFF",
+      "validation": "Never loaded or saved: a stored StepBorderColor alias is classified non-persistent, round-trips unchanged and cannot override the StepBorderColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from StepBorderColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-STEP-BORDER-COLOR-HEX-001",
+      "name": "StepBorderColorHex",
+      "value_family": "color",
+      "default": "#00FFFFFF",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default step-circle outline colour (the reference's Colors.Transparent).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-STEP-FILL-COLOR-001",
+      "name": "StepFillColor",
+      "value_family": "runtime-only",
+      "default": "#FFF23C3C",
+      "validation": "Never loaded or saved: a stored StepFillColor alias is classified non-persistent, round-trips unchanged and cannot override the StepFillColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from StepFillColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-STEP-FILL-COLOR-HEX-001",
+      "name": "StepFillColorHex",
+      "value_family": "color",
+      "default": "#FFF23C3C",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default step-circle fill (the reference's PrimaryColor).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-STEP-FONT-SIZE-001",
+      "name": "StepFontSize",
+      "value_family": "number",
+      "default": 0,
+      "validation": "Finite number, 0..2000 pixels inclusive; the decided default 0 sizes the number from the step circle (the reference 30 does not fit the native 32-pixel click-created step).",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-StepFontSize diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default font size for new Step objects; 0 keeps the proportional size.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-STEP-TAIL-001",
+      "name": "StepTail",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default tail enablement for new Step objects (reference default).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-STEP-TEXT-BOLD-001",
+      "name": "StepTextBold",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default bold weight for new Step numbers (reference default).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-STEP-TEXT-COLOR-001",
+      "name": "StepTextColor",
+      "value_family": "runtime-only",
+      "default": "#FFFAFAFA",
+      "validation": "Never loaded or saved: a stored StepTextColor alias is classified non-persistent, round-trips unchanged and cannot override the StepTextColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from StepTextColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-STEP-TEXT-COLOR-HEX-001",
+      "name": "StepTextColorHex",
+      "value_family": "color",
+      "default": "#FFFAFAFA",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default step-number colour (the reference's SecondaryColor).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-STEP-THICKNESS-001",
+      "name": "StepThickness",
+      "value_family": "integer",
+      "default": 4,
+      "validation": "Finite integer, 1..10000 inclusive.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default step-circle outline thickness (the reference's per-type thickness).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-STEP-TYPE-001",
+      "name": "StepType",
+      "value_family": "string",
+      "default": "Numeric",
+      "validation": "Non-empty plain string, at most 64 characters, no control characters. The five EA-009 names (Numeric, UppercaseLetter, LowercaseLetter, UppercaseRoman, LowercaseRoman) are implemented; well-formed unknown names are preserved inert and new steps stay Numeric.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-StepType diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default numbering style for new Step objects (EA-009 mapping, both casings, no 3999 cap).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-TEXT-BOLD-001",
+      "name": "TextBold",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-TextBold diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default bold weight for new Text objects (reference default).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-TEXT-BORDER-COLOR-001",
+      "name": "TextBorderColor",
+      "value_family": "runtime-only",
+      "default": "#FFF23C3C",
+      "validation": "Never loaded or saved: a stored TextBorderColor alias is classified non-persistent, round-trips unchanged and cannot override the TextBorderColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from TextBorderColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-TEXT-BORDER-COLOR-HEX-001",
+      "name": "TextBorderColorHex",
+      "value_family": "color",
+      "default": "#FFF23C3C",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default colour of the regular Text box border (EA-008's text-box outline at max(1, stroke width)); the reference's PrimaryColor is the default pending this edition's per-type creation default store.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-TEXT-FONT-FAMILY-001",
+      "name": "TextFontFamily",
+      "value_family": "string",
+      "default": "",
+      "validation": "Plain string, at most 256 characters, no control characters, Unicode normalized; any name is valid data. The decided default is empty (the platform default font): the reference's Segoe UI is not shipped on Linux; an unavailable family resolves to the native default at use and the stored preference is never rewritten until the user saves a replacement.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-TextFontFamily diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default font family for new Text objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-TEXT-FONT-SIZE-001",
+      "name": "TextFontSize",
+      "value_family": "number",
+      "default": 24,
+      "validation": "Finite number, 1..2000 pixels inclusive; fractional values allowed. The decided default 24 keeps the native fixed-size click box readable; the reference 48 would overflow it.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-TextFontSize diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default font size for new Text objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-TEXT-HORIZONTAL-ALIGNMENT-001",
+      "name": "TextHorizontalAlignment",
+      "value_family": "enum",
+      "default": "Center",
+      "validation": "One of Left, Center, Right (reference enum names); other values are invalid and recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-TextHorizontalAlignment diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default horizontal alignment for new Text objects (reference default).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-TEXT-ITALIC-001",
+      "name": "TextItalic",
+      "value_family": "boolean",
+      "default": false,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-TextItalic diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default italic style for new Text objects (reference default).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-TEXT-TEXT-COLOR-001",
+      "name": "TextTextColor",
+      "value_family": "runtime-only",
+      "default": "#FFFAFAFA",
+      "validation": "Never loaded or saved: a stored TextTextColor alias is classified non-persistent, round-trips unchanged and cannot override the TextTextColorHex authority.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Derived convenience colour resolved from TextTextColorHex; excluded from both saved versions.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-TEXT-TEXT-COLOR-HEX-001",
+      "name": "TextTextColorHex",
+      "value_family": "color",
+      "default": "#FFFAFAFA",
+      "validation": "Canonical uppercase #AARRGGBB hexadecimal; opaque #RRGGBB input gains explicit FF alpha during normalization; malformed colours, names, short hex, whitespace or wrong types recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default text colour (the reference's SecondaryColor) for new Text objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-TEXT-THICKNESS-001",
+      "name": "TextThickness",
+      "value_family": "integer",
+      "default": 8,
+      "validation": "Finite integer, 1..10000 inclusive.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Not yet loaded or saved by the native edition; when its store lands, absent loads the decided default, invalid input recovers per field with its own diagnostic, and no legacy Avalonia value migrates implicitly.",
+      "effect": "Creation default stroke width for the new Text box border (the reference's per-type thickness).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "draft"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-THEME-001",
+      "name": "Theme",
+      "value_family": "enum",
+      "default": "Dark",
+      "validation": "One of Dark, Light, System; other values are invalid and recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-Theme diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Manual editor theme; System follows the desktop colour scheme, and the manual choice stays stored for when system theming is off.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-THICKNESS-001",
+      "name": "Thickness",
+      "value_family": "integer",
+      "default": 4,
+      "validation": "Finite integer, 1..10000 inclusive, within the production editor width limit; fractional or mistyped values recover per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-Thickness diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Creation default stroke width for new shapes; affects only subsequently created objects.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-TOOLBAR-ITEMS-001",
+      "name": "ToolbarItems",
+      "value_family": "collection",
+      "default": [],
+      "validation": "Array of at most 256 distinct action placements; typed Id/IsVisible/BeginGroup/Hotkey fields, validated single-chord additional hotkeys, protected-gesture policy and whole-change rejection; an explicit empty list is an explicit empty layout.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-ToolbarItems diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Editor toolbar layout; absence initializes the fourteen visible Edit/View commands and a present empty array stays empty (the native candidate layout documented in PREFERENCES-POLICY).",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-USE-SYSTEM-ACCENT-COLOR-001",
+      "name": "UseSystemAccentColor",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-UseSystemAccentColor diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Follow the desktop portal accent while retaining the saved manual accent colour.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-USE-SYSTEM-THEME-001",
+      "name": "UseSystemTheme",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-UseSystemTheme diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Follow the desktop colour scheme while retaining the saved manual theme.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-WINDOW-HEIGHT-001",
+      "name": "WindowHeight",
+      "value_family": "number",
+      "default": 720,
+      "validation": "Finite number, 1..16777215 logical pixels inclusive; clamped to the available work area on restore.",
+      "scope": "window",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-WindowHeight diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Remembered normal client height of the editor window.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-WINDOW-WIDTH-001",
+      "name": "WindowWidth",
+      "value_family": "number",
+      "default": 1280,
+      "validation": "Finite number, 1..16777215 logical pixels inclusive; clamped to the available work area on restore.",
+      "scope": "window",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-WindowWidth diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Remembered normal client width of the editor window.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-OPTIONS-ZOOM-TO-FIT-ON-OPEN-001",
+      "name": "ZoomToFitOnOpen",
+      "value_family": "boolean",
+      "default": false,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Absent loads the decided default; an invalid stored value recovers to the default with a value-free invalid-ZoomToFitOnOpen diagnostic; no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Opened images fit the window instead of opening at 1:1.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-TOOLBAR-ITEM-OPTIONS-BEGIN-GROUP-001",
+      "name": "BeginGroup",
+      "value_family": "boolean",
+      "default": null,
+      "validation": "Boolean or absent/null; an absent group flag inherits the action's native group default, and a true boundary carries forward to the next visible command.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Carried inside ToolbarItems entries: an invalid entry rejects the stored array with the invalid-ToolbarItems recovery (known defaults regenerate within the remaining collection capacity, compatible unknown entries retained); no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Per-entry separator placement in the toolbar.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-TOOLBAR-ITEM-OPTIONS-HOTKEY-001",
+      "name": "Hotkey",
+      "value_family": "string",
+      "default": "",
+      "validation": "Per-entry string, at most 64 characters; non-empty values are one canonical single chord (Ctrl/Alt/Shift/Meta in order, ASCII letters/digits, F1..F35 or documented named keys); protected gestures refuse reassignment and duplicates reject as one change.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Carried inside ToolbarItems entries: an invalid entry rejects the stored array with the invalid-ToolbarItems recovery (known defaults regenerate within the remaining collection capacity, compatible unknown entries retained); no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Per-entry additional hotkey; empty means none and protected defaults remain available.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-TOOLBAR-ITEM-OPTIONS-ID-001",
+      "name": "Id",
+      "value_family": "string",
+      "default": "",
+      "validation": "Per-entry lowercase ASCII action identifier, at most 80 characters; duplicate placements are rejected as one change.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Carried inside ToolbarItems entries: an invalid entry rejects the stored array with the invalid-ToolbarItems recovery (known defaults regenerate within the remaining collection capacity, compatible unknown entries retained); no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "The placement's stable action ID; unknown compatible entries stay inactive and round-trip unchanged.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    },
+    {
+      "ledger_id": "SET-IMAGE-EDITOR-TOOLBAR-ITEM-OPTIONS-IS-VISIBLE-001",
+      "name": "IsVisible",
+      "value_family": "boolean",
+      "default": true,
+      "validation": "Boolean only; any other JSON type is invalid and recovers per field.",
+      "scope": "global",
+      "privacy": "public-preference",
+      "migration": "Carried inside ToolbarItems entries: an invalid entry rejects the stored array with the invalid-ToolbarItems recovery (known defaults regenerate within the remaining collection capacity, compatible unknown entries retained); no legacy Avalonia settings are read or migrated implicitly.",
+      "effect": "Per-entry toolbar visibility; a hidden command keeps its fixed menu and protected shortcut reachable.",
+      "platforms": {
+        "windows": "required",
+        "macos": "required",
+        "linux": "required"
+      },
+      "status": "approved"
+    }
+  ]
+}

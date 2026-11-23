@@ -1,0 +1,48 @@
+{
+  "$schema": "../schemas/approval-record.schema.json",
+  "schema_version": 1,
+  "decision_id": "APPROVAL-2026-11-23-ESET-001-EDITOR-LEDGER-DISPOSITIONS",
+  "recorded_on": "2026-11-23",
+  "authority": {
+    "role": "maintainer",
+    "identity": "The XerahS build loop under the maintainer's delegated owner-block authority (root AGENTS.md Stewardship); decided by agent opencode (GLM 5.3) with the sources recorded in decisions/ESET-001-editor-ledger-dispositions.md"
+  },
+  "source": {
+    "kind": "delegated-owner-block-decision",
+    "statement": "Decision ESET-001-EDITOR-LEDGER-DISPOSITIONS-2026-11-23 settles the per-field ledger semantics and defaults for every one of the 100 settings-ledger rows linked to EDITOR-SETTINGS-001, the open question the ESET-001 row named ('full accepted per-field contract names/defaults/migration/privacy/dispositions/downstream effects remain absent'). Each row now carries a machine-readable disposition record in capabilities/EDITOR-SETTINGS-001/setting-dispositions.json validated against the pinned setting-disposition-v1 schema: 58 approved records whose defaults are normative under SETCAT-002 (user outcome, boundary behavior and Linux platform result exercised through the published conformance vectors and the native store suites, with Windows and macOS Required in their own adapters) and 42 decided draft records (per-type creation defaults, background composition knobs, background-remover selection, QuickCrop and the insert-image/notification switches) whose defaults stay non-normative until acceptance evidence exists. Approved defaults follow the ShareX cross-platform reference read directly (ImageEditorOptions.cs, Annotation.cs shadow constants) unless a recorded decision diverges, and every divergence names its reason in the record: CornerRadius 0 per EA-005, empty font families and 24px font sizes per the native fixed-size click boxes, StepFontSize 0 per the 32-pixel step circle, red border and transparent black fill per the ES rectangle qualification, and ShowExitConfirmation false - the one newly adjudicated divergence - because unsaved work always offers Save, Discard and Cancel (ESET-014's destructive gate) and Cloudscape's confirm-only-when-necessary guidance plus Flameshot's opt-in-only Esc confirmation (issue #3749, PR #3758) support no extra clean-exit prompt. Sources fetched 2026-11-23: cloudscape.design/patterns/general/unsaved-changes, github.com/flameshot-org/flameshot/issues/3749 (+PR #3758), github.com/ShareX/ShareX/issues/8435. Built in the same commit: tools/setting-dispositions/check.py - the shared SETCAT-020 fixture machinery that proves schema validity, the exact 100/100 ledger bijection and per-family vector coverage (7 approved families, runtime-only exempt) and emits the generated coverage report; fourteen new EDITOR-SETTINGS-001 vectors (defaults-<family> and invalid-<family> per approved family) running through the existing load-settings conformance operation so the contract defaults execute against production - one real catch en route: the first invalid-string vector used a 234-character family name that the 256-character validation honestly accepts, fixed to a genuinely over-limit 300 characters. The checker and its 13 self-tests are registered as ctest setting-dispositions/-selftest in the linux-qt suite. Activation stays gated: ESET-015 still needs upgrade and atomic-failure conformance fixtures and the Windows/macOS adapters, and the report lists the approved fields no vector exercises yet (the toolbar item entry fields and the effects-list fields, covered today by native ToolbarPreferences and EffectsStore tests behind their own seams). No SPEC MUST changed; EDITOR-SETTINGS-001 moves 0.1.0 to 0.1.1 for the published artifacts and the contract moves 0.4.5 to 0.4.6. The other fifteen packages carry forward to contract 0.4.6 unchanged in normative text from 0.4.5, where the 2026-11-23 CORE-027 record approved them; the deciding agent verified that carry-forward by inspecting this commit's diff, which touches no other capability package's SPEC.md."
+  },
+  "decision": "approved",
+  "scope": {
+    "contract_version": "0.4.6",
+    "packages": [
+      "FILENAME-GENERATION-001",
+      "POST-CAPTURE-ACTIONS-001",
+      "REGION-CAPTURE-001",
+      "EDITOR-SESSION-001",
+      "EDITOR-ANNOTATIONS-001",
+      "EDITOR-EFFECTS-001",
+      "EDITOR-CANVAS-001",
+      "EDITOR-OUTPUT-ACTIONS-001",
+      "EDITOR-SETTINGS-001",
+      "EDITOR-UTILITIES-001",
+      "SETTINGS-CATALOG-001",
+      "WORKFLOW-CATALOG-001",
+      "INTERFACE-CATALOG-001",
+      "CORE-PLATFORM-001",
+      "COMPATIBILITY-CATALOG-001",
+      "MOBILE-PLATFORM-001"
+    ]
+  },
+  "effects": {
+    "normative_contract": true,
+    "implementation_authorized": true,
+    "activation_authorized": false,
+    "census_closed": false,
+    "release_authorized": false
+  },
+  "remaining_gates": [
+    "ESET-015 activation coverage: upgrade and atomic-failure conformance fixtures plus the Windows and macOS adapters",
+    "42 draft records need acceptance evidence before their defaults become normative; the 822 SETTINGS-CATALOG-001 rows reuse the same machinery family by family",
+    "conformance before activation; release requires Mike"
+  ]
+}

@@ -374,7 +374,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Complete settings-ledger semantic/default/migration/privacy/downstream/platform acceptance is still absent; native field declarations cannot approve it.",
+      "note": "The 100 EDITOR-SETTINGS-001 rows now carry schema-valid approved/draft dispositions with a machine-checked 100/100 ledger bijection (decision ESET-001-EDITOR-LEDGER-DISPOSITIONS-2026-11-23, tools/setting-dispositions/check.py in ctest); the 822 rows linked to this package still have no per-row semantic/default/migration/privacy/downstream/platform acceptance, so the ledger-wide MUST remains open family by family.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
@@ -420,7 +420,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Current field outcomes and boundaries have native tests; complete ledger defaults are not established by initializer/reference declarations.",
+      "note": "Fifty-eight editor-row defaults are now normative with recorded acceptance evidence (user outcome, boundary behavior, Linux platform result through the defaults/invalid conformance vectors and native suites); 42 decided editor drafts and the 822 application-ledger rows still lack acceptance evidence, so initializer declarations remain non-normative there.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
@@ -1016,7 +1016,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Full approved settings-ledger dispositions, all value families/upgrades/downgrades and all three adapters are not accepted; native boundary coverage does not activate this package.",
+      "note": "The generated-coverage machinery now exists and runs in ctest (tools/setting-dispositions/check.py: schema validity, ledger bijection, per-family boundary vectors, coverage report), proving 100/100 editor-row dispositions with 7/7 approved families covered on Linux; activation of any package still requires all linked rows accepted, upgrade/downgrade fixtures, secret redaction where applicable and all three platform adapters.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",

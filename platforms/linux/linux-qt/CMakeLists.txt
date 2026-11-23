@@ -1021,6 +1021,13 @@ add_test(NAME nuget-freshness-selftest
   COMMAND Python3::Interpreter -m unittest discover -s "${XERAHS_REPO_ROOT}/tools/nuget-freshness"
   WORKING_DIRECTORY "${XERAHS_REPO_ROOT}")
 
+add_test(NAME setting-dispositions
+  COMMAND Python3::Interpreter "${XERAHS_REPO_ROOT}/tools/setting-dispositions/check.py" --root "${XERAHS_REPO_ROOT}"
+  WORKING_DIRECTORY "${XERAHS_REPO_ROOT}")
+add_test(NAME setting-dispositions-selftest
+  COMMAND Python3::Interpreter -m unittest discover -s "${XERAHS_REPO_ROOT}/tools/setting-dispositions"
+  WORKING_DIRECTORY "${XERAHS_REPO_ROOT}")
+
 add_executable(workflow-execution-test tests/WorkflowExecutionTest.cpp)
 set_target_properties(workflow-execution-test PROPERTIES AUTOMOC ON)
 target_link_libraries(workflow-execution-test PRIVATE xerahs_pipeline_journal Qt6::Test)

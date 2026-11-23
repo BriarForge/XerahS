@@ -104,13 +104,13 @@
   "requirements": {
     "ESET-001": {
       "disposition": "Required",
-      "status": "partial",
-      "vectors": [],
-      "note": "Full accepted per-field contract names/defaults/migration/privacy/dispositions/downstream effects remain absent; reference defaults are not product approval.",
+      "status": "implemented",
+      "vectors": ["defaults-boolean", "defaults-integer", "defaults-number", "defaults-string", "defaults-enum", "defaults-color", "defaults-collection"],
+      "note": "Implemented candidate: all 100 ledger rows linked to this package carry schema-valid dispositions in product-contract/capabilities/EDITOR-SETTINGS-001/setting-dispositions.json (decision ESET-001-EDITOR-LEDGER-DISPOSITIONS-2026-11-23) - 58 approved records with normative, conformance-executed defaults and 42 decided drafts - with the 100/100 ledger bijection, schema validity and per-family vector coverage machine-checked by tools/setting-dispositions/check.py (ctest setting-dispositions). Activation remains gated by ESET-015.",
       "audit": {
-        "classification": "blocked",
+        "classification": "implemented",
         "spec_line": 9,
-        "coverage": "Full accepted per-field contract names/defaults/migration/privacy/dispositions/downstream effects remain absent; reference defaults are not product approval.",
+        "coverage": "All 100 ledger rows carry stable names, value families, decided defaults with sources, validation, scope, privacy, migration, downstream effects and three-platform dispositions; 58 approved defaults are exercised by the defaults-<family> conformance vectors against production and the native store suites; 42 draft records name decided semantics without acceptance evidence yet.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {
@@ -124,6 +124,10 @@
           {
             "path": "platforms/linux/linux-qt/app/NativeEditorPreferences.cpp",
             "sha256": "9d711006b4870235280b9d947fbb48074a9c66f909d260f0e3d22927de522f2b"
+          },
+          {
+            "path": "product-contract/capabilities/EDITOR-SETTINGS-001/setting-dispositions.json",
+            "sha256": "3b0b58c6697329d48c636aa99d264db77d23e0d8eea90f6272c040d65bb5f884"
           }
         ],
         "test_anchors": [
@@ -137,10 +141,13 @@
         "revalidated_from_revision": "fdc728fb6c33dc0a7685205e77dfdcfd37217db6",
         "prior_trace_snapshot_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6"
       },
-      "previous_note": "PREFERENCES-POLICY documents native metadata, bounded validation, scope, privacy, missing-marker migration and ledger links for the current model. The full ledger and approved shared semantics remain Required; this foundation does not activate the package. Toolbar candidate metadata covers Id/IsVisible/nullable BeginGroup/Hotkey, limits, unknown preservation and protected gestures; shared approval remains Required.",
-      "blocked_reason": "Full accepted per-field contract names/defaults/migration/privacy/dispositions/downstream effects remain absent; reference defaults are not product approval.",
+      "previous_note": "Full accepted per-field contract names/defaults/migration/privacy/dispositions/downstream effects remain absent; reference defaults are not product approval. PREFERENCES-POLICY documents native metadata, bounded validation, scope, privacy, missing-marker migration and ledger links for the current model; toolbar candidate metadata covers Id/IsVisible/nullable BeginGroup/Hotkey, limits, unknown preservation and protected gestures; shared approval remained Required.",
       "evidence": [
-        "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
+        "product-contract/capabilities/EDITOR-SETTINGS-001/setting-dispositions.json",
+        "product-contract/decisions/ESET-001-editor-ledger-dispositions.md",
+        "tools/setting-dispositions/check.py",
+        "product-contract/capabilities/EDITOR-SETTINGS-001/test-vectors.json"
       ]
     },
     "ESET-002": {
@@ -770,9 +777,23 @@
       "vectors": [
         "invalid-field-isolation",
         "recent-deduplication",
-        "unknown-round-trip"
+        "unknown-round-trip",
+        "defaults-boolean",
+        "invalid-boolean",
+        "defaults-integer",
+        "invalid-integer",
+        "defaults-number",
+        "invalid-number",
+        "defaults-string",
+        "invalid-string",
+        "defaults-enum",
+        "invalid-enum",
+        "defaults-color",
+        "invalid-color",
+        "defaults-collection",
+        "invalid-collection"
       ],
-      "note": "Native default/boundary/unknown/atomic coverage is substantial, but every approved ledger field and all three adapter activation fixtures are not published.",
+      "note": "Conformance now exercises every approved value family's default and invalid boundary through the Linux adapter (17/17), with the 100/100 ledger bijection and per-family coverage machine-checked by the setting-dispositions ctest. Remaining for activation: upgrade and atomic-failure conformance fixtures, the Windows and macOS adapters, and acceptance evidence for the 42 draft records.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-COLOR.md",
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
@@ -782,12 +803,15 @@
         "platforms/linux/linux-qt/app/ANNOTATION-COLOR-EVIDENCE.json",
         "platforms/linux/linux-qt/app/ANNOTATION-THICKNESS.md",
         "platforms/linux/linux-qt/app/ANNOTATION-THICKNESS-EVIDENCE.json",
-        "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
+        "product-contract/capabilities/EDITOR-SETTINGS-001/test-vectors.json",
+        "product-contract/capabilities/EDITOR-SETTINGS-001/setting-dispositions.json",
+        "tools/setting-dispositions/check.py"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 56,
-        "coverage": "Native default/boundary/unknown/atomic coverage is substantial, but every approved ledger field and all three adapter activation fixtures are not published.",
+        "coverage": "Every approved value family (boolean, integer, number, string, enum, color, collection; runtime-only exempt) has defaults-<family> and invalid-<family> vectors running production load-settings; native suites keep per-field boundaries, unknown round-trip, atomic failure and upgrade read-only handling. Upgrade/atomic conformance fixtures, the two other platform adapters and the 42 draft records' acceptance evidence remain before activation.",
         "reviewed_at_revision": "c40a0c02dbd743fb15af1b106229ffffa34d0da6",
         "production_anchors": [
           {

@@ -2,10 +2,12 @@
   "schema_version": 2,
   "capability": "EDITOR-SETTINGS-001",
   "comparison": "subset",
+  "requirement_ids": ["ESET-001", "ESET-002", "ESET-015"],
   "vectors": [
     {
       "id": "invalid-field-isolation",
       "operation": "load-settings",
+      "requirements": ["ESET-002"],
       "input": {
         "stored": {
           "Theme": "Dark",
@@ -23,6 +25,7 @@
     {
       "id": "recent-deduplication",
       "operation": "recent-files-add",
+      "requirements": ["ESET-012"],
       "input": {
         "platform": "windows",
         "existing": [
@@ -38,6 +41,7 @@
     {
       "id": "unknown-round-trip",
       "operation": "settings-round-trip",
+      "requirements": ["ESET-002", "ESET-003"],
       "input": {
         "stored": {
           "Theme": "Light",
@@ -54,6 +58,221 @@
         "FutureOption": {
           "enabled": true
         }
+      }
+    },
+    {
+      "id": "defaults-boolean",
+      "operation": "load-settings",
+      "requirements": ["ESET-001", "ESET-015"],
+      "input": {
+        "stored": {}
+      },
+      "expected": {
+        "UseSystemTheme": true,
+        "UseSystemAccentColor": true,
+        "RememberWindowState": true,
+        "IsWindowMaximized": true,
+        "TextBold": true,
+        "TextItalic": false,
+        "SpeechBalloonTextBold": true,
+        "SpeechBalloonTextItalic": false,
+        "AutoCopyImageToClipboard": false,
+        "AutoCloseEditorOnTask": false,
+        "ZoomToFitOnOpen": false,
+        "ShowExitConfirmation": false,
+        "Shadow": false,
+        "MagnifierEllipse": false,
+        "SpotlightEllipse": false
+      }
+    },
+    {
+      "id": "invalid-boolean",
+      "operation": "load-settings",
+      "requirements": ["ESET-002", "ESET-015"],
+      "input": {
+        "stored": {
+          "Shadow": "yes"
+        }
+      },
+      "expected": {
+        "Shadow": false,
+        "diagnostic": "invalid-Shadow"
+      }
+    },
+    {
+      "id": "defaults-integer",
+      "operation": "load-settings",
+      "requirements": ["ESET-001", "ESET-015"],
+      "input": {
+        "stored": {}
+      },
+      "expected": {
+        "Thickness": 4,
+        "CornerRadius": 0,
+        "MaxRecentImageFiles": 10
+      }
+    },
+    {
+      "id": "invalid-integer",
+      "operation": "load-settings",
+      "requirements": ["ESET-002", "ESET-009", "ESET-015"],
+      "input": {
+        "stored": {
+          "Thickness": 0
+        }
+      },
+      "expected": {
+        "Thickness": 4,
+        "diagnostic": "invalid-Thickness"
+      }
+    },
+    {
+      "id": "defaults-number",
+      "operation": "load-settings",
+      "requirements": ["ESET-001", "ESET-015"],
+      "input": {
+        "stored": {}
+      },
+      "expected": {
+        "BlurStrength": 30,
+        "PixelateStrength": 20,
+        "MagnifierStrength": 2,
+        "SpotlightStrength": 30,
+        "SpotlightBlur": 0,
+        "ShadowBlurRadius": 4,
+        "ShadowOpacity": 1,
+        "ShadowOffsetX": 3,
+        "ShadowOffsetY": 3,
+        "TextFontSize": 24,
+        "SpeechBalloonFontSize": 24,
+        "StepFontSize": 0,
+        "WindowWidth": 1280,
+        "WindowHeight": 720
+      }
+    },
+    {
+      "id": "invalid-number",
+      "operation": "load-settings",
+      "requirements": ["ESET-002", "ESET-009", "ESET-015"],
+      "input": {
+        "stored": {
+          "BlurStrength": 101
+        }
+      },
+      "expected": {
+        "BlurStrength": 30,
+        "diagnostic": "invalid-BlurStrength"
+      }
+    },
+    {
+      "id": "defaults-string",
+      "operation": "load-settings",
+      "requirements": ["ESET-001", "ESET-008", "ESET-015"],
+      "input": {
+        "stored": {}
+      },
+      "expected": {
+        "TextFontFamily": "",
+        "SpeechBalloonFontFamily": "",
+        "StepType": "Numeric"
+      }
+    },
+    {
+      "id": "invalid-string",
+      "operation": "load-settings",
+      "requirements": ["ESET-002", "ESET-008", "ESET-015"],
+      "input": {
+        "stored": {
+          "TextFontFamily": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        }
+      },
+      "expected": {
+        "TextFontFamily": "",
+        "diagnostic": "invalid-TextFontFamily"
+      }
+    },
+    {
+      "id": "defaults-enum",
+      "operation": "load-settings",
+      "requirements": ["ESET-001", "ESET-015"],
+      "input": {
+        "stored": {}
+      },
+      "expected": {
+        "Theme": "Dark",
+        "LastUsedAnnotationTool": "Rectangle",
+        "BorderStyle": "Solid",
+        "ArrowStyle": "Classic",
+        "CursorType": "Default",
+        "TextHorizontalAlignment": "Center",
+        "SpeechBalloonTextHorizontalAlignment": "Center"
+      }
+    },
+    {
+      "id": "invalid-enum",
+      "operation": "load-settings",
+      "requirements": ["ESET-002", "ESET-015"],
+      "input": {
+        "stored": {
+          "Theme": "Sepia"
+        }
+      },
+      "expected": {
+        "Theme": "Dark",
+        "diagnostic": "invalid-Theme"
+      }
+    },
+    {
+      "id": "defaults-color",
+      "operation": "load-settings",
+      "requirements": ["ESET-001", "ESET-007", "ESET-015"],
+      "input": {
+        "stored": {}
+      },
+      "expected": {
+        "AccentColorHex": "#FF3E83F2",
+        "BorderColorHex": "#FFFF0000",
+        "FillColorHex": "#00000000",
+        "ShadowColorHex": "#80000000"
+      }
+    },
+    {
+      "id": "invalid-color",
+      "operation": "load-settings",
+      "requirements": ["ESET-002", "ESET-007", "ESET-015"],
+      "input": {
+        "stored": {
+          "BorderColorHex": "#GGHHII"
+        }
+      },
+      "expected": {
+        "BorderColorHex": "#FFFF0000",
+        "diagnostic": "invalid-BorderColorHex"
+      }
+    },
+    {
+      "id": "defaults-collection",
+      "operation": "load-settings",
+      "requirements": ["ESET-001", "ESET-012", "ESET-015"],
+      "input": {
+        "stored": {}
+      },
+      "expected": {
+        "RecentImageFiles": []
+      }
+    },
+    {
+      "id": "invalid-collection",
+      "operation": "load-settings",
+      "requirements": ["ESET-002", "ESET-012", "ESET-015"],
+      "input": {
+        "stored": {
+          "RecentImageFiles": "not-an-array"
+        }
+      },
+      "expected": {
+        "RecentImageFiles": [],
+        "diagnostic": "invalid-RecentImageFiles"
       }
     }
   ]
